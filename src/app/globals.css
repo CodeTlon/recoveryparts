@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Defaults (los reescribe layout.tsx desde demo-config.ts). Esquema semántico:
+       cada rol existe para que el MISMO componente funcione en claro y oscuro. */
+    --demo-bg: #ffffff;
+    --demo-surface: #f5f0e8;        /* cards y secciones alternas */
+    --demo-surface-alt: #ffffff;    /* segundo tono / cards destacadas / inputs */
+    --demo-heading: #1a1a1a;
+    --demo-text: #1a1a1a;
+    --demo-muted: #6b6b6b;          /* texto secundario (color real, no opacity) */
+    --demo-border: #e7ddcf;
+    --demo-accent: #c8a96e;         /* CTA / highlight */
+    --demo-on-accent: #1a1a1a;      /* texto sobre el accent */
+    --demo-structural: #1a1a1a;     /* bandas (navbar / footer / stats) */
+    --demo-on-structural: #ffffff;
+    --demo-font: Inter;
+    --demo-radius: 0.75rem;         /* botones, chips, inputs, cards chicas */
+    --demo-radius-lg: 1rem;         /* cards grandes, frames de imagen */
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background-color: var(--demo-bg);
+    color: var(--demo-text);
+    font-family: var(--demo-font), sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Selección y foco de teclado en naranja industrial (#ff6b35) — antes
+     se usaba el azul por defecto del navegador, que choca con el tema. */
+  ::selection { background-color: #ff6b35; color: #0a192f; }
+
+  :focus-visible {
+    outline: 2px solid #ff6b35;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Scrollbar fino acorde al dark navy (Firefox + WebKit) */
+  html { scrollbar-width: thin; scrollbar-color: #44474d #08132a; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #08132a; }
+  ::-webkit-scrollbar-thumb {
+    background: #44474d;
+    border: 2px solid #08132a;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #ff6b35; }
+}
+
+@layer components {
+  /* Etiqueta "eyebrow" reutilizable (antes era un bloque inline repetido 10 veces) */
+  .eyebrow {
+    @apply text-sm font-semibold uppercase tracking-[0.3em] mb-3;
+    color: var(--demo-accent);
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold mb-4;
+    color: var(--demo-heading);
+  }
+  .section-subtitle {
+    @apply text-lg max-w-2xl mx-auto;
+    color: var(--demo-muted);
+  }
+  .section-pad { @apply py-20 md:py-28; }
+
+  /* Card temática: el tratamiento (borde / sombra / glass) lo decide
+     data-cards en <html>, seteado desde style.cards del config. */
+  .card {
+    @apply p-6 transition-all duration-200;
+    background-color: var(--demo-surface);
+    border-radius: var(--demo-radius-lg);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold transition-all duration-200;
+    background-color: var(--demo-accent);
+    color: var(--demo-on-accent);
+    border-radius: var(--demo-radius);
+  }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold border-2 transition-all duration-200;
+    border-color: var(--demo-accent);
+    color: var(--demo-accent);
+    border-radius: var(--demo-radius);
+  }
+  .btn-outline:hover { background-color: var(--demo-accent); color: var(--demo-on-accent); }
+}
+
+@layer utilities {
+  /* Tratamiento de superficies según style.cards ──────────────── */
+  [data-cards='shadow'] .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+  [data-cards='border'] .card {
+    border: 1px solid var(--demo-border);
+  }
+  [data-cards='border'] .card:hover {
+    border-color: var(--demo-accent);
+  }
+  [data-cards='glass'] .card {
+    border: 1px solid var(--demo-border);
+    background-color: color-mix(in srgb, var(--demo-surface) 70%, transparent);
+    backdrop-filter: blur(12px);
+  }
+}
