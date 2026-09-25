@@ -1,62 +1,35 @@
-# CodeTlon Demo Template (Nivel 0)
+# Recovery Parts
 
-Template para demos visuales de clientes. Sin backend, sin lógica. Solo UI.
+Sitio público + campus virtual de Recovery Parts, academia de capacitación técnica en Córdoba, Argentina. Construido a partir de un demo de venta; el alcance funcional completo vive en `docs/ESPECIFICACION.md`.
 
-## Uso rápido
+## Stack
+
+Next.js 15.5.25 (App Router) · TypeScript · Tailwind CSS · Supabase (Auth + Postgres + RLS) · Resend.
+
+## Setup
 
 ```bash
 npm install
-npm run dev
+npm run dev          # http://localhost:3000
+npm run build && npm start   # build de producción (para Lighthouse)
+npx playwright test  # E2E
 ```
 
-Abre http://localhost:3000
+Variables de entorno: ver `AGENTS.md` → "Variables de Entorno" y `.env.example`.
 
-## Cómo personalizar
+## Contexto para desarrollo (humano o IA)
 
-**Solo hay un archivo que tocar:** `src/lib/demo-config.ts`
-
-Ahí configurás:
-- `business` — nombre, teléfono, email, dirección, WhatsApp
-- `brand` — colores HEX y Google Font
-- `images` — paths locales (en `public/images/`) o URLs de Picsum
-- `sections` — `true`/`false` por sección para mostrar u ocultar
-- `content` — servicios, testimonios, FAQ, precios, equipo, stats
-
-## Secciones disponibles
-
-| Key | Nombre | Típico para |
-|---|---|---|
-| `hero` | Hero | Todos |
-| `about` | Nosotros | Todos |
-| `services` | Servicios | Todos |
-| `gallery` | Galería | Peluquerías, tatuajes, restaurantes |
-| `pricing` | Precios | Gimnasios, software, suscripciones |
-| `testimonials` | Testimonios | Todos |
-| `faq` | Preguntas frecuentes | Clínicas, estudios |
-| `contact` | Contacto | Todos |
-| `team` | Equipo | Agencias, estudios, clínicas |
-| `schedule` | Turnero | Peluquerías, clínicas, masajes |
-| `stats` | Métricas | Empresas con track record |
-| `cta` | Call to Action | Todos |
-
-## Imágenes
-
-Si no tenés imágenes del cliente, usá URLs de Picsum:
-```ts
-hero: "https://picsum.photos/1920/1080?random=1",
-gallery: [
-  "https://picsum.photos/800/600?random=2",
-  "https://picsum.photos/800/600?random=3",
-]
-```
-
----
-
-*CodeTlon Demo Template v1.0*
+- `AGENTS.md` — identidad del proyecto, stack, roles, rutas, env, quirks.
+- `ARCHITECTURE.md` — esquema de datos, RLS, flujo de auth.
+- `docs/ESPECIFICACION.md` — especificación funcional completa (RF-01 a RF-57).
+- `TASKS.md` — roadmap de implementación.
 
 ## Licencia
 
-Este template (y cualquier proyecto generado a partir de él) es software propietario de
-CodeTlon o del cliente correspondiente. Incluye `LICENSE` (all-rights-reserved) y
-`"license": "UNLICENSED"` en `package.json` por defecto — actualizar el titular del copyright
-al entregar el proyecto a un cliente.
+Software propietario de CodeTlon / Recovery Parts (all-rights-reserved). Ver `LICENSE`.
+
+## Changelog
+
+| Versión | Fecha | Cambio |
+|---|---|---|
+| v0.1.0 | 2026-09-25 | Fundación del proyecto real: repo, limpieza de dead code del demo, contexto (`AGENTS.md`/`ARCHITECTURE.md`), `TASKS.md` con el desglose de RF-01 a RF-57 |

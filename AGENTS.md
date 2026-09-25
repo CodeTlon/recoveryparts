@@ -1,0 +1,97 @@
+# AGENTS.md — Recovery Parts
+
+> Contexto del proyecto para cualquier agente de IA (Claude Code, OpenCode, Codex CLI, Cursor, etc.).
+> Este archivo es la fuente única de verdad — no dupliques su contenido en configs específicas de una herramienta.
+> Detalle técnico profundo (esquema de DB, flujos de auth): `ARCHITECTURE.md`.
+> Especificación funcional completa (todas las RF, con estado 🟢/🟡/🔴): `docs/ESPECIFICACION.md` — es la fuente de la verdad del alcance, léela antes de implementar cualquier feature nueva.
+
+---
+
+## Identidad del Proyecto
+
+- **Cliente:** Recovery Parts — academia de capacitación técnica (reparación de celulares/computadoras, oficios creativos), Córdoba, Argentina.
+- **Tipo:** L3 — Sitio público multipágina con CMS + Campus virtual multi-rol (Alumno / Profesor / Administrador).
+- **Generado:** 2026-09-25, a partir de un demo de venta (`~/Escritorio/recoveryparts`, ver `docs/ESPECIFICACION.md` sección "Guía para el agente" — la demo es referencia visual, su lógica es 100% mock y se reemplaza por completo).
+- **URL Producción:** pendiente
+- **Repo GitHub:** `CodeTlon/recoveryparts`
+- **Deploy prod (main):** Vercel (por defecto — sin jobs background ni n8n; revisar si el alcance crece)
+- **Deploy dev (rama `dev`):** Vercel Preview
+
+## Reglas duras (no negociables, ver `docs/ESPECIFICACION.md` sección "Guía para el agente")
+
+1. **No implementar nada marcado 🔴 (excluido) en la spec**, ni lo que está en la sección "Fuera de alcance": pagos/cobros, inscripción transaccional, asistencia desde celular, cursos virtuales, carreras (agrupación multi-curso). El precio se **muestra**, nunca se cobra desde este sistema.
+2. Antes de implementar algo marcado 🟡 (pendiente/no confirmado) en la spec, **preguntar al usuario** o dejarlo configurable — no asumir.
+3. Toda ruta del campus requiere sesión; la autorización por rol **se valida en el servidor** (middleware + revalidación en Server Actions/Route Handlers), nunca solo en el cliente.
+4. El sitio público es de solo lectura para todos excepto el Administrador (vía CMS del campus).
+5. Si se confirma un ítem 🟡 con el usuario, actualizar `docs/ESPECIFICACION.md` (🟡→🟢 + changelog de la spec) en el mismo commit.
+
+## Stack
+
+- Next.js **15.5.25** (App Router), TypeScript, Tailwind CSS 3.4, `next/font` (Montserrat).
+- Supabase: Auth + Postgres (RLS) + Storage. **Dos proyectos**: `recoveryparts-dev` / `recoveryparts-prod` (ver sección DB abajo).
+- Resend (formulario de contacto del sitio público — solo envía email, no persiste en DB salvo pedido explícito).
+- Testing: Playwright E2E (3 viewports, foco en flujo login→dashboard→RBAC de los 3 roles) + Lighthouse en producción.
+- Pendiente de instalar (no están en el demo original): `shadcn/ui`, `react-hook-form` + `zod`, `resend` + `@react-email/components`, `@supabase/ssr` + `@supabase/supabase-js`.
+
+## Modelo de roles y estados
+
+3 roles en `profiles.rol`: `alumno` | `profesor` | `administrador`. Un alumno tiene, por cada curso en el que está matriculado, un estado en `matriculas.estado`: `activo` | `suspendido` | `desertor` | `inactivo` (el admin puede reactivar manualmente; **nunca se borran datos**, se mantiene el vínculo histórico con el curso — RF-56/RF-57). Dar de baja o marcar desertor requiere `motivo_baja` obligatorio (RF-55).
+
+Alta de profesor/alumno: la hace el Administrador desde el campus (B0.1) → invitación por email vía Supabase Auth (`admin.inviteUserByEmail()`), rol propuesto viaja en `user_metadata`, un trigger en `auth.users` crea la fila en `profiles`. Detalle completo en `ARCHITECTURE.md` → "Auth y RLS".
+
+## Rutas
+
+**Público** (SSR/SSG, editable por Admin vía CMS): `/`, `/galeria`, `/cursos`, `/cursos/[slug]`.
+**Auth:** `/login`, `/activar` (landing de invitación/reset — implicit flow, ver `ARCHITECTURE.md`), `/recuperar`.
+**Campus** (route groups gateados por rol en su `layout.tsx`): `(campus)/alumno/*`, `(campus)/profesor/*`, `(campus)/admin/*`.
+
+## Variables de Entorno
+
+```
+# .env.development.local → npm run dev → Supabase recoveryparts-dev
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# .env.production.local → npm run build && npm start → Supabase recoveryparts-prod
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Resend (mismo valor en ambos entornos salvo pedido del cliente)
+RESEND_API_KEY=
+RESEND_FROM_NAME=
+RESEND_FROM_EMAIL=
+COMPANY_EMAIL=
+```
+Infra 100% manual del usuario (creación de proyectos Supabase, dominios, deploy) — excepción: migraciones contra `-dev` vía `scripts/db-sync-dev.mjs` (ver `deploy.md` de la fábrica). PROD se promueve siempre a mano.
+
+## Diseño — Decisiones Clave
+
+- **Paleta** (ya implementada en `tailwind.config.ts`, ver `client-assets/recoveryparts/brand/brand-config.json` en el repo de la fábrica): fondo navy profundo `#08132a`, superficies `#101b33`/`#151f37`, acento naranja industrial `#ff6b35`.
+- **Tipografía:** Montserrat (única, headings y body).
+- **Estilo:** "Industrial Technical Narrative" — técnico, de taller, bordes rectos (`radius: sharp`).
+
+## Quirks y Advertencias
+
+- El demo original (`~/Escritorio/recoveryparts`, no tocar — es la referencia de venta) tenía dos fuentes de contenido desincronizadas: `demo-config.ts` (no usado por las páginas) vs. arrays hardcodeados inline. En el proyecto real la única fuente de verdad es la base de datos (tablas `cursos`/`testimonios`/`faq`/`galeria_fotos`) — no reintroducir un config estático paralelo.
+- `/curso` (singular, estática, hardcodeada a "iPhone") se reemplaza por `/cursos/[slug]` dinámica.
+- Fotos de egresados actuales son stock (pravatar) con nombres inventados — quedan como placeholder hasta que el cliente entregue material real (ver `TASKS.md`).
+- Invitaciones de Supabase Auth usan **implicit flow** (`#access_token=...` en el hash), no `?code=` — la página `/activar` tiene que ser un client component que parsea el hash y llama `setSession()` explícito. Ver Bug 35 en `bugs.md` de la fábrica.
+- En Server Components/Route Handlers usar siempre `supabase.auth.getUser()` para revalidar sesión, nunca `getSession()` (riesgo de rotación de refresh token — Bug 31 de la fábrica).
+
+## Comandos Rápidos
+
+```bash
+npm run dev          # Dev server
+npm run build         # Build producción
+npm start             # Serve producción (para Lighthouse)
+npx playwright test   # Tests E2E
+npx tsc --noEmit       # Type-check
+```
+
+## Historial de Cambios
+
+| Fecha | Rama | Cambio |
+|-------|------|--------|
+| 2026-09-25 | dev | Fundación del proyecto real a partir del demo — repo, contexto (AGENTS.md/ARCHITECTURE.md), limpieza de dead code, TASKS.md |
