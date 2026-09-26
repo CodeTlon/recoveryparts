@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, ipDeLaRequest } from '@/lib/rate-limit'
 import { safeNextPath, siteUrl } from '@/lib/site-url'
+import { enviarContrasenaActualizada } from '@/lib/mail'
 
 export type ActionState = { error?: string; success?: string }
 
@@ -123,9 +124,9 @@ export async function recuperarActualizarAction(
   // Invalida el resto de las sesiones abiertas de este usuario (si la
   // contraseña se cambió porque alguien más tenía acceso, esto lo saca).
   // Incluye a la sesión actual: por eso mandamos a /login, no al home del rol.
-  // TODO(email): avisar "Tu contraseña fue cambiada" — pendiente de Resend.
   const admin = createAdminClient()
   await admin.auth.admin.signOut(user.id, 'global').catch(() => {})
+  if (user.email) await enviarContrasenaActualizada(user.email)
 
   redirect('/login?actualizado=1')
 }

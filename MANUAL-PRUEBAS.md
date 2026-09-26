@@ -44,3 +44,14 @@ se construyen o tocan esas features.
 - [ ] Responder la encuesta → no puede volver a responder (ni reenviando el form a mano)
 - [ ] Los resultados en `/admin/cursos/[id]` muestran el promedio (rating) o el listado de respuestas (texto), sin mostrar de quién es cada una
 - [ ] `/admin/reportes` refleja los números de al menos 2 cursos con estados variados (activo/finalizado/desertor)
+
+## Sitio público y CMS
+- [ ] Editar el Hero desde `/admin/sitio` → se refleja en la Home sin redeploy
+- [ ] Marcar un curso como "Destacado" → aparece en "Capacitaciones Destacadas" de la Home; sacarlo → desaparece
+- [ ] Cargar una foto en `/admin/galeria` en cada categoría → aparece agrupada en `/galeria`, el lightbox navega con las flechas
+- [ ] Cargar un testimonio y un ítem de FAQ → aparecen en la Home; ocultarlos (botón "Publicado"/"Oculto") → desaparecen sin borrarlos
+- [ ] Buscar/filtrar en `/cursos` por texto, área y tipo → la lista se combina correctamente; buscar algo que no existe → mensaje "No encontramos cursos" + link de WhatsApp
+- [ ] Entrar a `/cursos/[slug]` de un curso con kit cargado → aparece el bloque "Kit necesario" con los links de compra; un curso sin kit no muestra el bloque
+- [ ] Enviar el formulario de contacto de la Home → llega el mail a `COMPANY_EMAIL` y la consulta aparece en `/admin/contactos`
+- [ ] Reenviar el formulario de contacto más de 5 veces seguidas → bloquea con el mensaje de rate limit
+- [ ] `/sitemap.xml` incluye los cursos publicados; `/robots.txt` bloquea `/admin`, `/alumno`, `/profesor`, `/login`

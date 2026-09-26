@@ -13,18 +13,18 @@
 
 ## Estructura de carpetas
 
-Auth (B0/B1) + Cursos/Alumnos/Cupos/Material (B2-B5) implementados. Falta: Kit editor
-(B6/B7 — la columna existe, no el form), Encuestas (B8), Reportes (B9) y todo el
-Sitio público + CMS (A1-A4) — ver `TASKS.md` para el detalle vivo.
+Todo el alcance de `docs/ESPECIFICACION.md` está implementado salvo RF-35 (ZIP de
+material, necesita Storage real), RF-47 obligatoriedad estricta, RF-51/RF-52 (niveles
+de curso, demanda no dictada) y testing/docs finales — ver `TASKS.md` para el detalle vivo.
 
 ```
 src/
 ├── app/
-│   ├── (public)/                     # objetivo — hoy sigue en app/page.tsx, app/curso/page.tsx sueltos (sin tocar en este bloque)
-│   │   ├── page.tsx                  # Home (A1)
-│   │   ├── galeria/page.tsx          # A2
-│   │   ├── cursos/page.tsx           # A3 — listado dinámico, con búsqueda/filtros
-│   │   └── cursos/[slug]/page.tsx    # A4 — detalle dinámico
+│   ├── page.tsx                      # ✅ Home (A1) — hero/áreas/destacados/egresados/testimonios/faq/contacto, todo de la DB
+│   ├── galeria/page.tsx              # ✅ A2 — agrupada por categoría + lightbox
+│   ├── cursos/page.tsx               # ✅ A3 — listado dinámico, búsqueda/filtros client-side
+│   ├── cursos/[slug]/page.tsx        # ✅ A4 — detalle, generateStaticParams con try/catch (Bug 24)
+│   ├── sitemap.ts / robots.ts        # ✅ SEO obligatorio (checklist universal pre-entrega)
 │   ├── login/page.tsx                # ✅ real — useFormState + loginAction
 │   ├── activar/page.tsx              # ✅ client component — parsea hash de invite (Bug 35)
 │   ├── recuperar/page.tsx            # ✅ solicita reset (PKCE)
@@ -43,12 +43,20 @@ src/
 │       ├── admin/cursos/page.tsx     # ✅ listado
 │       ├── admin/cursos/nuevo/page.tsx # ✅ alta (genera el calendario de clases)
 │       ├── admin/cursos/[id]/page.tsx  # ✅ edición + kit + matricular alumnos + estado matrícula + encuesta
-│       └── admin/reportes/page.tsx     # ✅ ocupación, deserción, día con más bajas, velocidad de llenado
+│       ├── admin/reportes/page.tsx     # ✅ ocupación, deserción, día con más bajas, velocidad de llenado
+│       ├── admin/sitio/page.tsx        # ✅ hero/áreas/stats/contacto (singleton `sitio_config`)
+│       ├── admin/galeria/page.tsx      # ✅ CRUD `galeria_fotos`
+│       ├── admin/testimonios/page.tsx  # ✅ CRUD `testimonios`
+│       ├── admin/egresados/page.tsx    # ✅ CRUD `egresados`
+│       ├── admin/faq/page.tsx          # ✅ CRUD `faq`
+│       └── admin/contactos/page.tsx    # ✅ bandeja de consultas del form público (RF-42)
 ├── components/
-│   ├── layout/         # SiteNav, SiteFooter, WhatsAppButton (ya existían, reusados)
-│   └── campus/          # ✅ CampusShell, InvitarUsuarioForm, CursoForm (+ KitItemsEditor),
-│                        #    AgregarAlumnoForm, MatriculaEstadoForm, ClaseRow, MaterialManager,
-│                        #    EncuestaManager (admin), EncuestaAlumnoForm
+│   ├── layout/          # SiteNav (sin cambios), SiteFooter y WhatsAppButton ahora async — leen `getSitioConfig()`
+│   ├── public/           # ✅ CursosCatalogo, TemarioAcordeon, GaleriaLightbox, ContactoForm, FaqAccordion
+│   └── campus/           # ✅ CampusShell, InvitarUsuarioForm, CursoForm (+ KitItemsEditor),
+│                         #    AgregarAlumnoForm, MatriculaEstadoForm, ClaseRow, MaterialManager,
+│                         #    EncuestaManager (admin), EncuestaAlumnoForm, CmsFotoForm/TestimonioForm/
+│                         #    FaqForm/EgresadoForm/SitioForm, CmsRowActions (toggle publicado + borrar)
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts    # ✅ browser client
@@ -56,19 +64,34 @@ src/
 │   │   ├── admin.ts      # ✅ service_role, SOLO en Server Actions
 │   │   └── middleware.ts # ✅ updateSession — usado por src/middleware.ts
 │   ├── actions/
-│   │   ├── auth.ts        # ✅ login/logout/recuperar (invalida sesiones al cambiar clave)
+│   │   ├── auth.ts        # ✅ login/logout/recuperar (invalida sesiones y avisa por mail al cambiar clave)
 │   │   ├── usuarios.ts     # ✅ invitar + toggleCuentaActiva (admin-only)
 │   │   ├── cursos.ts       # ✅ crear/editar (valida superposición aula+profesor, kit_items) + dar de baja
-│   │   ├── matriculas.ts   # ✅ agregar alumno a curso (reusa o invita) + cambiar estado (deserción con n_clase)
+│   │   ├── matriculas.ts   # ✅ agregar alumno a curso (reusa o invita, avisa por mail) + cambiar estado
 │   │   ├── clases.ts       # ✅ editar tema + suspender/reprogramar clase
 │   │   ├── material.ts     # ✅ subir/liberar/eliminar material
-│   │   └── encuestas.ts    # ✅ crear/eliminar pregunta, responder (anónima), leer resultados (admin client)
+│   │   ├── encuestas.ts    # ✅ crear/eliminar pregunta, responder (anónima), leer resultados (admin client)
+│   │   ├── cms.ts          # ✅ sitio_config + galeria/testimonios/faq/egresados (CRUD simple) + contactos
+│   │   └── contacto.ts     # ✅ form público: honeypot + rate limit + guarda + notifica
 │   ├── auth-helpers.ts   # ✅ getUserAndProfile / requireAlumno / requireProfesor / requireAdmin / nombreCompleto
-│   ├── rate-limit.ts      # ✅ limitador en memoria (login, recuperar — por IP y por email)
+│   ├── rate-limit.ts      # ✅ limitador en memoria (login, recuperar, contacto — por IP y/o email)
 │   ├── site-url.ts        # ✅ siteUrl() + safeNextPath() (allowlist de redirects)
+│   ├── sitio.ts            # ✅ getSitioConfig() — lee el singleton con fallback si la fila no existe
+│   ├── resend.ts           # ✅ cliente Resend con placeholder de key (Bug 32, no rompe build sin .env)
+│   ├── mail.ts             # ✅ enviarCursoAsignado / enviarContrasenaActualizada / enviarContactoRecibido
 │   └── validations/       # objetivo — hoy los schemas Zod viven inline en cada action
-└── middleware.ts          # ✅ protege (campus)/*, revalida sesión — Next 15 clásico (no `proxy.ts`, eso es Next 16+)
+├── middleware.ts          # ✅ protege (campus)/*, revalida sesión — Next 15 clásico (no `proxy.ts`, eso es Next 16+)
+emails/                    # ✅ BaseEmail (layout compartido, navy+naranja) + ContactoRecibido/CursoAsignado/ContrasenaActualizada
 ```
+
+**Imágenes de contenido (CMS):** todo lo que carga el Admin como URL (fotos de galería,
+egresados, testimonios, imágenes de curso, foto de profesor) se renderiza con `<img>`
+plano, NO `next/image` — el dominio es arbitrario (el Admin pega cualquier URL) y
+`next.config.mjs` exige `remotePatterns` explícitos por hostname. `next/image` sigue
+usándose para los assets fijos de `/public` (logo, hero por defecto). Si el proyecto
+real termina centralizando todo en Supabase Storage, se puede migrar agregando el
+hostname `[ref].supabase.co` a `remotePatterns` — pero como el campo es una URL libre,
+lo más simple es dejarlo así permanentemente.
 
 ## Rutas públicas
 
@@ -95,7 +118,8 @@ Route groups `(campus)/alumno`, `(campus)/profesor`, `(campus)/admin`, cada uno 
 
 Helpers SQL reusados en RLS (patrón `vimet`): `is_admin()`, `is_profesor()`, `horarios_se_superponen()`.
 Migraciones: `0001_auth_profiles.sql` (auth) · `0002_cursos_matriculas.sql` (cursos+clases+matriculas,
-en un solo archivo porque sus RLS se referencian cruzadas) · `0003_material.sql` · `0004_encuestas.sql`.
+en un solo archivo porque sus RLS se referencian cruzadas) · `0003_material.sql` · `0004_encuestas.sql` ·
+`0005_sitio_publico.sql` (sitio_config, galeria_fotos, testimonios, faq, egresados, contactos + `cursos.destacado`).
 
 | Tabla | Campos clave | RLS |
 |---|---|---|
@@ -109,7 +133,10 @@ en un solo archivo porque sus RLS se referencian cruzadas) · `0003_material.sql
 | `encuesta_preguntas` | `id`, `curso_id`, `pregunta`, `tipo` (`rating`\|`texto`), `orden` — RF-47 | select admin/profesor dueño/alumno matriculado · write solo admin |
 | `encuesta_completada` | `matricula_id` (PK, FK matriculas), `completed_at` — marca "ya respondió", SIN el contenido | select propia + admin · insert propia (una sola vez, PK) |
 | `encuesta_respuestas` | `id`, `pregunta_id`, `respuesta`, `created_at` — **sin ninguna columna de alumno/matrícula**, anónima de verdad | insert: alumno matriculado en el curso de esa pregunta · **sin policy de select** (los reportes leen con `createAdminClient()` desde una Server Action que valida admin/profesor-dueño a mano, ver `lib/actions/encuestas.ts`) |
-| `contactos` | RF-42 — el cliente pidió explícitamente que la consulta del form de contacto quede visible para el personal interno, no solo por mail (excepción a la regla general "solo Resend") | objetivo — no creada todavía |
+| `sitio_config` | Singleton (`id=1`, `check`). `hero`/`areas`/`stats`/`contacto` jsonb — textos e imágenes editables de la Home | select público (`true`) · update solo admin (sin insert/delete, la fila la siembra la migración) |
+| `contactos` | `id`, `nombre`, `email`, `telefono`, `mensaje`, `leido` — RF-42, el cliente pidió explícitamente que la consulta quede visible para el personal interno, no solo por mail (excepción a "solo Resend") | insert público (`true`, cualquiera sin sesión) · select/update solo admin |
+
+`galeria_fotos`, `testimonios`, `faq`, `egresados` comparten el mismo patrón de RLS: select si `publicado=true` o admin, resto de operaciones solo admin. `cursos.destacado`/`orden_destacado` controlan qué aparece en "Capacitaciones Destacadas" de la Home.
 
 **Cupos (B4):** se derivan en runtime (`cupo_total - count(matriculas activas)` del curso), no se gestionan como contador separado que pueda desincronizarse — se calcula en el server (`admin/cursos`, `profesor`, `agregarAlumnoACursoAction`), nunca en el cliente.
 

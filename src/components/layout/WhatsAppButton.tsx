@@ -1,12 +1,12 @@
-import { demoConfig } from '@/lib/demo-config'
+import { getSitioConfig } from '@/lib/sitio'
 import { WhatsAppIcon } from './SocialIcons'
 
-export default function WhatsAppButton() {
-  const { business } = demoConfig
+export default async function WhatsAppButton() {
+  const { contacto } = await getSitioConfig()
 
   return (
     <a
-      href={`https://wa.me/${business.whatsapp}?text=Hola! Quiero consultar por un turno.`}
+      href={`https://wa.me/${contacto.whatsapp}?text=Hola! Quiero consultar por un turno.`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"

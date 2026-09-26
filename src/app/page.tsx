@@ -1,19 +1,13 @@
-// ============================================================
-// DEMO — Home (Recovery Parts)
-// Fiel al diseño Stitch "home_recovery_parts" (Industrial
-// Technical Narrative): hero a pantalla, Capacitaciones Destacadas
-// (3 cards) y Construyendo Profesionales (grid). Mock estático.
-// Fotos reales (flyers) desde /public/images.
-// ============================================================
-
 import Link from 'next/link'
-import Image from 'next/image'
-import { ArrowRight, ArrowUpRight, ChevronRight, CircuitBoard } from 'lucide-react'
-import { demoConfig } from '@/lib/demo-config'
+import { ArrowRight, ArrowUpRight, ChevronRight, CircuitBoard, Cpu, Palette } from 'lucide-react'
 import WhatsAppButton from '@/components/layout/WhatsAppButton'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
+import { createClient } from '@/lib/supabase/server'
+import { getSitioConfig } from '@/lib/sitio'
+import { ContactoForm } from '@/components/public/ContactoForm'
+import { FaqAccordion } from '@/components/public/FaqAccordion'
 
 const gridBg: React.CSSProperties = {
   backgroundImage:
@@ -21,14 +15,18 @@ const gridBg: React.CSSProperties = {
   backgroundSize: '24px 24px',
 }
 
-const CURSOS = [
-  { img: '/images/curso-iphone.jpg', mod: 'MOD-IP01', tags: ['4 Meses', 'Presencial'], title: 'Reparación de iPhone', desc: 'Diagnóstico avanzado, micro-soldadura y reemplazo de componentes a nivel placa.', foot: 'Próximo inicio: 15 Oct', href: '/cursos' },
-  { img: '/images/curso-notebooks.jpg', mod: 'MOD-NB02', tags: ['6 Meses', 'Híbrido'], title: 'Hardware de Notebooks', desc: 'Análisis esquemático, reballing y reparación integral de equipos portátiles multimarca.', foot: 'Próximo inicio: 02 Nov', href: '/cursos' },
-  { img: '/images/curso-neon.jpg', mod: 'MOD-NL03', tags: ['2 Meses', 'Presencial'], title: 'Cartelería Neón LED', desc: 'Diseño, ruteo y ensamblaje de sistemas de iluminación LED personalizados y comerciales.', foot: 'Cupos limitados', href: '/cursos' },
-]
+export default async function Home() {
+  const supabase = await createClient()
+  const sitio = await getSitioConfig()
 
-export default function Home() {
-  const waCurso = `https://wa.me/${demoConfig.business.whatsapp}?text=${encodeURIComponent('Hola, quiero info de los cursos de Recovery Parts')}`
+  const [{ data: destacados }, { data: egresados }, { data: testimonios }, { data: faqs }] = await Promise.all([
+    supabase.from('cursos').select('id, slug, titulo, descripcion, tipo, area, duracion_semanas, imagenes').eq('publicado', true).eq('estado', 'activo').eq('destacado', true).order('orden_destacado').limit(3),
+    supabase.from('egresados').select('*').eq('publicado', true).order('orden').limit(10),
+    supabase.from('testimonios').select('*').eq('publicado', true).order('orden').limit(6),
+    supabase.from('faq').select('id, pregunta, respuesta').eq('publicado', true).order('orden'),
+  ])
+
+  const waCurso = `https://wa.me/${sitio.contacto.whatsapp}?text=${encodeURIComponent('Hola, quiero info de los cursos de Recovery Parts')}`
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col">
@@ -37,11 +35,10 @@ export default function Home() {
       <main className="flex-grow pt-20">
         {/* Hero */}
         <section className="relative w-full min-h-[80vh] flex items-center justify-center border-b border-outline-variant overflow-hidden">
-          <Image src="/images/hero.jpg" alt="" fill priority sizes="100vw" className="object-cover" />
-          {/* Overlays: dejan ver la foto (antes la tapaban casi por completo) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={sitio.hero.imagen_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/75 to-surface/40" />
           <div className="absolute inset-0 bg-surface/15" />
-          {/* Glow naranja para dar profundidad/calidez al hero */}
           <div className="absolute -top-1/3 right-0 h-[600px] w-[600px] rounded-full bg-accent/20 blur-[140px] pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-surface to-transparent" />
           <div className="absolute inset-0" style={gridBg} />
@@ -51,12 +48,8 @@ export default function Home() {
               <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
               <span className="text-xs text-on-surface-variant uppercase tracking-widest">Inscripciones Abiertas</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-on-surface max-w-4xl mb-6 tracking-tight leading-[1.1]">
-              Dominá la tecnología en el <br className="hidden md:block" /> corazón de Córdoba
-            </h1>
-            <p className="text-lg text-on-surface-variant max-w-xl mb-10 leading-relaxed">
-              Formación técnica 100% práctica en reparación y microelectrónica.
-            </p>
+            <h1 className="text-4xl md:text-6xl font-bold text-on-surface max-w-4xl mb-6 tracking-tight leading-[1.1]">{sitio.hero.titulo}</h1>
+            <p className="text-lg text-on-surface-variant max-w-xl mb-10 leading-relaxed">{sitio.hero.subtitulo}</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/cursos" className="bg-accent text-white font-bold uppercase tracking-widest px-8 py-4 rounded hover:opacity-90 transition-opacity flex items-center justify-center gap-2 group">
                 Ver Cursos <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -68,85 +61,134 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Capacitaciones Destacadas */}
-        <section id="capacitaciones" className="w-full py-14 md:py-20 border-b border-outline-variant bg-surface">
-          <div className="max-w-[1280px] mx-auto px-4 md:px-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-              <div>
-                <h2 className="text-3xl font-semibold text-on-surface mb-2">Capacitaciones Destacadas</h2>
-                <p className="text-on-surface-variant">Especializaciones de alta demanda técnica.</p>
+        {/* Áreas */}
+        <section className="w-full py-14 md:py-20 border-b border-outline-variant bg-surface-container">
+          <div className="max-w-[1280px] mx-auto px-4 md:px-12 grid sm:grid-cols-2 gap-6">
+            {[
+              { icon: Cpu, ...sitio.areas.tecnico },
+              { icon: Palette, ...sitio.areas.diseno },
+            ].map(({ icon: Icon, titulo, descripcion }) => (
+              <div key={titulo} className="bg-surface-container-low border border-outline-variant rounded-lg p-8">
+                <Icon size={32} className="text-accent mb-4" />
+                <h3 className="text-xl font-semibold text-on-surface mb-2">{titulo}</h3>
+                <p className="text-on-surface-variant">{descripcion}</p>
               </div>
-              <Link href="/cursos" className="text-sm font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider">
-                Ver catálogo completo <ChevronRight size={16} />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {CURSOS.map(({ img, mod, tags, title, desc, foot, href }) => (
-                <Link key={mod} href={href} className="group bg-surface-container-low border border-outline-variant rounded overflow-hidden transition-all duration-300 hover:border-secondary flex flex-col">
-                  <div className="h-56 border-b border-outline-variant bg-surface relative overflow-hidden">
-                    <Image src={img} alt={title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <div className="p-6 flex-grow flex flex-col">
-                    <div className="flex gap-2 mb-4">
-                      {tags.map((t, i) => (
-                        <span key={t} className={`px-2 py-1 rounded text-xs border ${i === 1 ? 'border-accent/40 text-accent bg-accent/10' : 'border-outline-variant text-on-surface-variant bg-surface'}`}>{t}</span>
-                      ))}
-                    </div>
-                    <h3 className="text-xl font-semibold text-on-surface mb-2">{title}</h3>
-                    <p className="text-on-surface-variant mb-6 flex-grow">{desc}</p>
-                    <div className="pt-4 border-t border-outline-variant flex justify-between items-center mt-auto">
-                      <span className="text-sm font-semibold text-on-surface">{foot}</span>
-                      <ArrowUpRight size={20} className="text-secondary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* Construyendo Profesionales */}
-        <section id="egresados" className="w-full py-14 md:py-20 bg-surface-container border-b border-outline-variant">
-          <div className="max-w-[1280px] mx-auto px-4 md:px-12">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold text-on-surface mb-4">Construyendo Profesionales</h2>
-              <p className="text-on-surface-variant max-w-2xl mx-auto">Cada camada se gradúa con su grupo. Estas son algunas de las últimas promociones de egresados.</p>
-            </div>
-            {/* ponytail: bento que tesela exacto (2 destacadas 2x2 + 8 simples = 4×4, sin huecos) */}
-            <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[160px] md:auto-rows-[190px] gap-4">
-              {[
-                { n: 1,  tag: 'Reparación de iPhone',  fecha: '05/06/2026', big: true },
-                { n: 5,  tag: 'Reparación de Notebooks', fecha: '18/05/2026' },
-                { n: 3,  tag: 'Reparación de PC',      fecha: '02/05/2026' },
-                { n: 4,  tag: 'Carteles Neón LED',     fecha: '20/04/2026' },
-                { n: 2,  tag: 'Reparación de Android', fecha: '10/04/2026' },
-                { n: 6,  tag: 'Microsoldadura',        fecha: '22/03/2026' },
-                { n: 7,  tag: 'Cambio de Glass',       fecha: '08/03/2026' },
-                { n: 8,  tag: 'Reparación de TV',      fecha: '28/02/2026', big: true },
-                { n: 9,  tag: 'Estampado',             fecha: '10/02/2026' },
-                { n: 10, tag: 'Reparación de iPhone',  fecha: '31/01/2026' },
-              ].map((e) => (
-                <div key={e.n} className={`relative overflow-hidden rounded border border-outline-variant bg-surface group ${e.big ? 'md:col-span-2 md:row-span-2' : ''}`}>
-                  <Image src={`/images/egresado-${e.n}.jpg`} alt={`Egresados ${e.tag} — Recovery Parts (${e.fecha})`} fill sizes={e.big ? '(max-width: 768px) 50vw, 50vw' : '(max-width: 768px) 50vw, 25vw'} className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/85 to-transparent">
-                    <div className="text-xs md:text-sm font-semibold text-white">Egresados {e.tag} · {e.fecha}</div>
-                  </div>
+        {/* Capacitaciones Destacadas */}
+        {!!destacados?.length && (
+          <section id="capacitaciones" className="w-full py-14 md:py-20 border-b border-outline-variant bg-surface">
+            <div className="max-w-[1280px] mx-auto px-4 md:px-12">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+                <div>
+                  <h2 className="text-3xl font-semibold text-on-surface mb-2">Capacitaciones Destacadas</h2>
+                  <p className="text-on-surface-variant">Especializaciones de alta demanda técnica.</p>
                 </div>
-              ))}
-            </div>
+                <Link href="/cursos" className="text-sm font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider">
+                  Ver catálogo completo <ChevronRight size={16} />
+                </Link>
+              </div>
 
-            <div className="text-center mt-14">
-              <a href={waCurso} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-accent text-white font-bold uppercase tracking-widest px-8 py-4 rounded hover:opacity-90 transition-opacity group">
-                Quiero inscribirme <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {destacados.map((c) => (
+                  <Link key={c.id} href={`/cursos/${c.slug}`} className="group bg-surface-container-low border border-outline-variant rounded overflow-hidden transition-all duration-300 hover:border-secondary flex flex-col">
+                    <div className="h-56 border-b border-outline-variant bg-surface relative overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {c.imagenes?.[0] && <img src={c.imagenes[0]} alt={c.titulo} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
+                    </div>
+                    <div className="p-6 flex-grow flex flex-col">
+                      <div className="flex gap-2 mb-4">
+                        <span className="px-2 py-1 rounded text-xs border border-outline-variant text-on-surface-variant bg-surface">{c.tipo === 'taller' ? 'Taller' : 'Curso'}</span>
+                        <span className="px-2 py-1 rounded text-xs border border-accent/40 text-accent bg-accent/10">{c.duracion_semanas} semanas</span>
+                      </div>
+                      <h3 className="text-xl font-semibold text-on-surface mb-2">{c.titulo}</h3>
+                      <p className="text-on-surface-variant mb-6 flex-grow line-clamp-3">{c.descripcion}</p>
+                      <div className="pt-4 border-t border-outline-variant flex justify-end items-center mt-auto">
+                        <ArrowUpRight size={20} className="text-secondary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Construyendo Profesionales */}
+        {!!egresados?.length && (
+          <section id="egresados" className="w-full py-14 md:py-20 bg-surface-container border-b border-outline-variant">
+            <div className="max-w-[1280px] mx-auto px-4 md:px-12">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl font-semibold text-on-surface mb-4">Construyendo Profesionales</h2>
+                <p className="text-on-surface-variant max-w-2xl mx-auto">Cada camada se gradúa con su grupo. Estas son algunas de las últimas promociones de egresados.</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[160px] md:auto-rows-[190px] gap-4">
+                {egresados.map((e) => (
+                  <div key={e.id} className={`relative overflow-hidden rounded border border-outline-variant bg-surface group ${e.destacado ? 'md:col-span-2 md:row-span-2' : ''}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={e.foto_url} alt={`${e.nombre} — ${e.especialidad}`} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/85 to-transparent">
+                      <div className="text-xs md:text-sm font-semibold text-white">{e.nombre} · {e.especialidad}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center mt-14">
+                <a href={waCurso} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-accent text-white font-bold uppercase tracking-widest px-8 py-4 rounded hover:opacity-90 transition-opacity group">
+                  Quiero inscribirme <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Testimonios */}
+        {!!testimonios?.length && (
+          <section className="w-full py-14 md:py-20 border-b border-outline-variant bg-surface">
+            <div className="max-w-[1280px] mx-auto px-4 md:px-12">
+              <h2 className="text-3xl font-semibold text-on-surface mb-12 text-center">Lo que dicen nuestros alumnos</h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {testimonios.map((t) => (
+                  <div key={t.id} className="bg-surface-container-low border border-outline-variant rounded-lg p-6">
+                    <p className="text-on-surface-variant mb-4">&ldquo;{t.comentario}&rdquo;</p>
+                    <p className="font-semibold text-on-surface">{t.nombre}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* FAQ */}
+        {!!faqs?.length && (
+          <section className="w-full py-14 md:py-20 border-b border-outline-variant bg-surface-container">
+            <div className="max-w-[1280px] mx-auto px-4 md:px-12">
+              <h2 className="text-3xl font-semibold text-on-surface mb-12 text-center">Preguntas frecuentes</h2>
+              <FaqAccordion items={faqs} />
+            </div>
+          </section>
+        )}
+
+        {/* Contacto */}
+        <section id="contacto" className="w-full py-14 md:py-20 bg-surface">
+          <div className="max-w-[1280px] mx-auto px-4 md:px-12 grid md:grid-cols-2 gap-12 items-start">
+            <div>
+              <h2 className="text-3xl font-semibold text-on-surface mb-4">¿Tenés dudas?</h2>
+              <p className="text-on-surface-variant mb-6 max-w-md">Dejanos tu consulta y te contactamos, o escribinos directo por WhatsApp.</p>
+              <a href={waCurso} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-outline-variant text-on-surface font-bold uppercase tracking-widest px-6 py-3 rounded hover:border-secondary hover:text-secondary transition-colors">
+                <WhatsAppIcon size={18} /> Escribinos por WhatsApp
               </a>
+            </div>
+            <div className="max-w-md w-full md:ml-auto">
+              <ContactoForm />
             </div>
           </div>
         </section>
       </main>
 
       <SiteFooter />
-
       <WhatsAppButton />
     </div>
   )

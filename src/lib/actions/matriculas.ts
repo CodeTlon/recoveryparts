@@ -6,6 +6,7 @@ import { requireAdmin, getUserAndProfile } from '@/lib/auth-helpers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { siteUrl } from '@/lib/site-url'
+import { enviarCursoAsignado } from '@/lib/mail'
 import type { ActionState } from '@/lib/actions/auth'
 
 const agregarSchema = z.object({
@@ -53,7 +54,7 @@ export async function agregarAlumnoACursoAction(_prevState: ActionState, formDat
       .maybeSingle()
     if (yaMatriculado) return { error: 'Ese alumno ya está matriculado en este curso.' }
 
-    // TODO(email): mandar aviso "Te sumaron al curso {curso.titulo}" sin token — pendiente de setup de Resend (Backend/Email).
+    await enviarCursoAsignado(email, d.nombre, curso.titulo)
   } else {
     const admin = createAdminClient()
     const { data: invitado, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {

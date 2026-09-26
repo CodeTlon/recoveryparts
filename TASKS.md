@@ -78,21 +78,27 @@ Fuente de alcance: `docs/ESPECIFICACION.md` (RF-01 a RF-57). Cada tarea referenc
 - [x] `/admin/reportes`: ocupación por curso, deserción por curso + distribución por N° de clase, día de la semana con más deserciones, velocidad de llenado del cupo
 - [ ] RF-51 (curso elegido al terminar un "nivel") y RF-52 (demanda de cursos que todavía no se dictan, capturada desde el buscador público vacío) — necesitan conceptos que el schema todavía no modela (`niveles`/pathways de cursos, `intereses_cursos`). Requieren una decisión de producto antes de modelarlos; no están armados
 
-## Sitio público + CMS (A1-A4)
-- [ ] `/` (Home) — hero, capacitaciones destacadas, sección egresados (RNF-01/02/03)
-- [ ] `/galeria` (A2) — ruta dedicada, bento masonry + lightbox, reemplaza sección embebida en home
-- [ ] `/cursos` (A3, listado dinámico con búsqueda/filtros por área/tipo/día/modalidad, cupos en tiempo real) — reemplaza el hardcodeado `CURSOS`
-- [ ] `/cursos/[slug]` (A4, detalle: temario, profesor, kit, sidebar "Inversión") — reemplaza `/curso` estático
-- [ ] Tablas `galeria_fotos`, `testimonios`, `faq` (CMS-editable por Admin, reemplazan `demo-config.ts.content.*`) — `cursos.testimonios_ids` ya reserva la relación
-- [ ] `app/sitemap.ts` + `app/robots.ts` (agente `seo-specialist`, obligatorio por tener páginas públicas indexables)
-- [ ] Reemplazar fotos de egresados stock (pravatar) por material real del cliente — pendiente de que Recovery Parts entregue fotos/nombres reales
+## Sitio público + CMS (A1-A4) — completo
+- [x] `/` (Home) — hero, áreas (técnico/diseño), capacitaciones destacadas, egresados bento, testimonios, FAQ, contacto. Todo sale de `sitio_config`/`cursos`/`egresados`/`testimonios`/`faq`, nada hardcodeado (criterio de aceptación de A1)
+- [x] `/galeria` (A2) — ruta dedicada, agrupada por categoría (aulas/clases/trabajos de alumnos/egresados/eventos), bento + lightbox (`GaleriaLightbox`)
+- [x] `/cursos` (A3) — listado dinámico con búsqueda + filtros (área/tipo) + orden (destacados/precio) client-side, cupos en tiempo real, urgencia "¡Quedan N lugares!" — reemplaza el hardcodeado `CURSOS`
+- [x] `/cursos/[slug]` (A4) — hero, requisitos, plan de estudios (acordeón), mini-CV del profesor, testimonios del curso, sidebar "Inversión" (precio+descuento, cupos, kit con links externos) — reemplaza `/curso` estático (eliminado)
+- [x] Tablas `sitio_config` (singleton, hero/áreas/stats/contacto), `galeria_fotos`, `testimonios`, `faq`, `egresados`, `contactos` + RLS
+- [x] CMS admin: `/admin/sitio`, `/admin/galeria`, `/admin/testimonios`, `/admin/egresados`, `/admin/faq`, `/admin/contactos` (bandeja de consultas)
+- [x] `app/sitemap.ts` (estáticas + `/cursos/[slug]` dinámicas, con try/catch — Bug 24) + `app/robots.ts` (disallow admin/alumno/profesor/auth)
+- [x] `SiteFooter`/`WhatsAppButton` migrados de `demo-config.ts` a `sitio_config` (antes mostraban el whatsapp/dirección hardcodeados del demo aunque el Admin editara `/admin/sitio`)
+- [ ] Reemplazar fotos de egresados/galería stock por material real del cliente — pendiente de que Recovery Parts entregue fotos reales (se cargan desde `/admin/galeria` y `/admin/egresados`, no hace falta tocar código)
+- [ ] Filtros de `/cursos` no se reflejan en la URL (RF de A3 lo pedía para links compartibles) — quedaron solo client-side por tiempo, functionalmente completos pero sin deep-linking
+- [ ] El panel de stats del login (`/login`) sigue leyendo `demo-config.ts` en vez de `sitio_config` — decorativo, no bloquea nada, prolijidad pendiente
 
-## Backend / Email
-- [ ] Instalar `resend` + `@react-email/components` + `@react-email/render` (Bug 33 de la fábrica)
-- [ ] Server Action de contacto (RF-42): notifica por mail Y guarda la consulta — el cliente pidió explícitamente que quede visible para el personal interno, así que acá SÍ hay tabla `contactos` (excepción a la regla general de "solo Resend", ver `forms.md`)
-- [ ] Emails pendientes (TODOs ya marcados en el código): "te sumaron al curso X" (`matriculas.ts`), "tu contraseña fue cambiada" (`auth.ts`), template de invitación/reset custom con branding si Supabase lo permite
-- [ ] `shadcn/ui` / `react-hook-form` — evaluar si hace falta; los forms de auth y campus ya funcionan con `useFormState` + HTML plano, sin esas libs
-- [ ] `.env.example`
+## Backend / Email — completo
+- [x] Instalado `resend` + `@react-email/components` + `@react-email/render` (Bug 33 de la fábrica)
+- [x] Server Action de contacto (RF-42, `lib/actions/contacto.ts`): honeypot + rate limit (5/hora/IP) + notifica por mail Y guarda en `contactos` — el cliente pidió explícitamente que quede visible para el personal interno (excepción a la regla general de "solo Resend", ver `forms.md`)
+- [x] Los 2 emails que quedaron con `TODO(email)` ya están conectados: "te sumaron al curso X" (`matriculas.ts`) y "tu contraseña fue cambiada" (`auth.ts`)
+- [x] Templates con `@react-email/components` en `emails/` (`BaseEmail` compartido + `ContactoRecibido`/`CursoAsignado`/`ContrasenaActualizada`), branding navy+naranja del `brand-config.json`, `lib/resend.ts` con placeholder de key (Bug 32, no rompe el build sin `.env`)
+- [x] `.env.example` ya tenía `RESEND_*`/`COMPANY_EMAIL`; se sumó `NEXT_PUBLIC_SITE_URL` en el bloque de Auth
+- [ ] `shadcn/ui` / `react-hook-form` — no hicieron falta, todos los forms (auth, campus, sitio) funcionan con `useFormState` + HTML plano
+- [ ] Template de invitación/reset con branding propio en el email de Supabase Auth (hoy usa el template default de Supabase) — se configura desde el dashboard del proyecto real, no es código
 
 ## Testing
 - [ ] `npx playwright install`
