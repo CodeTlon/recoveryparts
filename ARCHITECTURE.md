@@ -42,11 +42,13 @@ src/
 │       ├── admin/usuarios/page.tsx   # ✅ invitar + listar + activar/desactivar cuenta (RF-56)
 │       ├── admin/cursos/page.tsx     # ✅ listado
 │       ├── admin/cursos/nuevo/page.tsx # ✅ alta (genera el calendario de clases)
-│       └── admin/cursos/[id]/page.tsx  # ✅ edición + matricular alumnos + cambiar estado de matrícula
+│       ├── admin/cursos/[id]/page.tsx  # ✅ edición + kit + matricular alumnos + estado matrícula + encuesta
+│       └── admin/reportes/page.tsx     # ✅ ocupación, deserción, día con más bajas, velocidad de llenado
 ├── components/
 │   ├── layout/         # SiteNav, SiteFooter, WhatsAppButton (ya existían, reusados)
-│   └── campus/          # ✅ CampusShell, InvitarUsuarioForm, CursoForm, AgregarAlumnoForm,
-│                        #    MatriculaEstadoForm, ClaseRow, MaterialManager
+│   └── campus/          # ✅ CampusShell, InvitarUsuarioForm, CursoForm (+ KitItemsEditor),
+│                        #    AgregarAlumnoForm, MatriculaEstadoForm, ClaseRow, MaterialManager,
+│                        #    EncuestaManager (admin), EncuestaAlumnoForm
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts    # ✅ browser client
@@ -56,10 +58,11 @@ src/
 │   ├── actions/
 │   │   ├── auth.ts        # ✅ login/logout/recuperar (invalida sesiones al cambiar clave)
 │   │   ├── usuarios.ts     # ✅ invitar + toggleCuentaActiva (admin-only)
-│   │   ├── cursos.ts       # ✅ crear/editar (valida superposición aula+profesor) + dar de baja
+│   │   ├── cursos.ts       # ✅ crear/editar (valida superposición aula+profesor, kit_items) + dar de baja
 │   │   ├── matriculas.ts   # ✅ agregar alumno a curso (reusa o invita) + cambiar estado (deserción con n_clase)
 │   │   ├── clases.ts       # ✅ editar tema + suspender/reprogramar clase
-│   │   └── material.ts     # ✅ subir/liberar/eliminar material
+│   │   ├── material.ts     # ✅ subir/liberar/eliminar material
+│   │   └── encuestas.ts    # ✅ crear/eliminar pregunta, responder (anónima), leer resultados (admin client)
 │   ├── auth-helpers.ts   # ✅ getUserAndProfile / requireAlumno / requireProfesor / requireAdmin / nombreCompleto
 │   ├── rate-limit.ts      # ✅ limitador en memoria (login, recuperar — por IP y por email)
 │   ├── site-url.ts        # ✅ siteUrl() + safeNextPath() (allowlist de redirects)
@@ -92,7 +95,7 @@ Route groups `(campus)/alumno`, `(campus)/profesor`, `(campus)/admin`, cada uno 
 
 Helpers SQL reusados en RLS (patrón `vimet`): `is_admin()`, `is_profesor()`, `horarios_se_superponen()`.
 Migraciones: `0001_auth_profiles.sql` (auth) · `0002_cursos_matriculas.sql` (cursos+clases+matriculas,
-en un solo archivo porque sus RLS se referencian cruzadas) · `0003_material.sql`.
+en un solo archivo porque sus RLS se referencian cruzadas) · `0003_material.sql` · `0004_encuestas.sql`.
 
 | Tabla | Campos clave | RLS |
 |---|---|---|
@@ -103,7 +106,9 @@ en un solo archivo porque sus RLS se referencian cruzadas) · `0003_material.sql
 | `materiales` | `id`, `curso_id`, `clase_id` (nullable), `titulo`, `tipo` (`pdf`\|`link`), `url`, `liberado_en` (timestamptz nullable — null=no liberado, pasado=liberado; hace de liberación automática-por-fecha y manual a la vez), `orden` | select alumnos matriculados **activo** en ese curso (una vez liberado) + profesor dueño + admin · insert/update/delete profesor dueño + admin |
 | `galeria_fotos` | `id`, `url`, `categoria` (`egresados`\|`eventos`), `alt`, `orden`, `publicado` | objetivo — no creada todavía |
 | `testimonios`, `faq` | contenido + `publicado`, `orden` | objetivo — no creada todavía (`cursos.testimonios_ids` ya reserva la FK) |
-| `encuestas_fin_curso` / `respuestas_encuesta` | RF-47 — pregunta(s) + respuesta por alumno/matrícula | objetivo — no creada todavía |
+| `encuesta_preguntas` | `id`, `curso_id`, `pregunta`, `tipo` (`rating`\|`texto`), `orden` — RF-47 | select admin/profesor dueño/alumno matriculado · write solo admin |
+| `encuesta_completada` | `matricula_id` (PK, FK matriculas), `completed_at` — marca "ya respondió", SIN el contenido | select propia + admin · insert propia (una sola vez, PK) |
+| `encuesta_respuestas` | `id`, `pregunta_id`, `respuesta`, `created_at` — **sin ninguna columna de alumno/matrícula**, anónima de verdad | insert: alumno matriculado en el curso de esa pregunta · **sin policy de select** (los reportes leen con `createAdminClient()` desde una Server Action que valida admin/profesor-dueño a mano, ver `lib/actions/encuestas.ts`) |
 | `contactos` | RF-42 — el cliente pidió explícitamente que la consulta del form de contacto quede visible para el personal interno, no solo por mail (excepción a la regla general "solo Resend") | objetivo — no creada todavía |
 
 **Cupos (B4):** se derivan en runtime (`cupo_total - count(matriculas activas)` del curso), no se gestionan como contador separado que pueda desincronizarse — se calcula en el server (`admin/cursos`, `profesor`, `agregarAlumnoACursoAction`), nunca en el cliente.
@@ -116,6 +121,8 @@ en un solo archivo porque sus RLS se referencian cruzadas) · `0003_material.sql
 - RF-11 (alumno con un solo curso entra directo, sin listado intermedio): implementado literal.
 - RF-14 ("al finalizar el curso, el alumno queda sin curso asignado"): interpretado como `matricula.estado = 'finalizado'`, NO se borra el vínculo (consistente con RF-57 "nunca se borran datos").
 - RF-33 ("visualiza pero no descarga"): interpretado como sin botón de descarga explícito (el material abre en pestaña nueva) — no hay DRM real a nivel navegador, sería una falsa sensación de seguridad prometer más que eso con este stack.
+- RF-47 ("encuesta obligatoria"): implementado como disponible-pero-no-forzada — no hay ningún gate que bloquee otra pantalla hasta responder. Confirmar si hace falta forzarlo antes de la entrega.
+- RF-51/RF-52 (curso elegido al pasar de "nivel", demanda de cursos no dictados): NO implementados — necesitan modelar `niveles`/pathways de cursos y un formulario público de interés que hoy no existen. Requieren definición de producto primero.
 
 ## Fuera de alcance (no implementar)
 

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { FileText, Video, ExternalLink } from 'lucide-react'
 import { requireAlumno } from '@/lib/auth-helpers'
 import { createClient } from '@/lib/supabase/server'
+import { EncuestaAlumnoForm } from '@/components/campus/EncuestaAlumnoForm'
 
 export default async function AlumnoCursoPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = await requireAlumno()
@@ -37,6 +38,17 @@ export default async function AlumnoCursoPage({ params }: { params: Promise<{ id
       .lte('liberado_en', new Date().toISOString())
       .order('orden'),
   ])
+
+  let preguntasEncuesta: { id: number; pregunta: string; tipo: string }[] = []
+  let encuestaCompletada = true
+  if (matricula.estado === 'finalizado') {
+    const [{ data: preguntas }, { data: completada }] = await Promise.all([
+      supabase.from('encuesta_preguntas').select('id, pregunta, tipo').eq('curso_id', cursoId).order('orden'),
+      supabase.from('encuesta_completada').select('matricula_id').eq('matricula_id', matricula.id).maybeSingle(),
+    ])
+    preguntasEncuesta = preguntas ?? []
+    encuestaCompletada = !!completada
+  }
 
   return (
     <>
@@ -92,6 +104,13 @@ export default async function AlumnoCursoPage({ params }: { params: Promise<{ id
           )}
         </div>
       </section>
+
+      {matricula.estado === 'finalizado' && preguntasEncuesta.length > 0 && !encuestaCompletada && (
+        <section className="mt-16">
+          <h2 className="text-xl font-semibold text-on-surface mb-4">Encuesta de fin de curso</h2>
+          <EncuestaAlumnoForm matriculaId={matricula.id} preguntas={preguntasEncuesta} />
+        </section>
+      )}
     </>
   )
 }

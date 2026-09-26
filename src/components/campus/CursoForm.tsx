@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
+import { Plus, X } from 'lucide-react'
 import type { ActionState } from '@/lib/actions/auth'
 
 const field =
@@ -29,6 +31,43 @@ export type CursoFormValues = {
   precio: number
   precio_descuento: number | null
   publicado: boolean
+  kit_items: KitItem[]
+}
+
+export type KitItem = { nombre: string; descripcion: string; precio: number; link: string }
+
+// RF-45/46: kit de insumos por curso — lista dinámica, se manda como JSON en un
+// input oculto (cursoSchema.parse en la Server Action espera un string JSON).
+function KitItemsEditor({ initial }: { initial: KitItem[] }) {
+  const [items, setItems] = useState<KitItem[]>(initial.length ? initial : [])
+
+  function update(i: number, field: keyof KitItem, value: string) {
+    setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, [field]: field === 'precio' ? Number(value) || 0 : value } : it)))
+  }
+
+  return (
+    <div className="space-y-3">
+      <input type="hidden" name="kit_items" value={JSON.stringify(items)} />
+      {items.map((it, i) => (
+        <div key={i} className="grid grid-cols-[1fr_1fr_100px_1fr_auto] gap-2 items-center">
+          <input value={it.nombre} onChange={(e) => update(i, 'nombre', e.target.value)} placeholder="Ítem (ej. Soldador)" className={input} />
+          <input value={it.descripcion} onChange={(e) => update(i, 'descripcion', e.target.value)} placeholder="Descripción" className={input} />
+          <input type="number" min={0} step="0.01" value={it.precio} onChange={(e) => update(i, 'precio', e.target.value)} placeholder="Precio" className={input} />
+          <input value={it.link} onChange={(e) => update(i, 'link', e.target.value)} placeholder="Link de compra" className={input} />
+          <button type="button" onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))} className="text-on-surface-variant hover:text-red-400 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => setItems((prev) => [...prev, { nombre: '', descripcion: '', precio: 0, link: '' }])}
+        className="text-sm font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1"
+      >
+        <Plus size={16} /> Agregar ítem
+      </button>
+    </div>
+  )
 }
 
 function SubmitButton({ label: text }: { label: string }) {
@@ -165,6 +204,11 @@ export function CursoForm({
           <span className={label}>Precio con descuento (opcional)</span>
           <input type="number" name="precio_descuento" min={0} step="0.01" defaultValue={d.precio_descuento ?? ''} className={input} />
         </label>
+      </div>
+
+      <div>
+        <span className={`${label} block mb-2`}>Kit necesario (opcional)</span>
+        <KitItemsEditor initial={d.kit_items ?? []} />
       </div>
 
       <label className="flex items-center gap-2 text-sm text-on-surface">

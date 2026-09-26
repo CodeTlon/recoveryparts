@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, BookOpen } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, BarChart3 } from 'lucide-react'
 import { requireAdmin, nombreCompleto } from '@/lib/auth-helpers'
 import { CampusShell, type CampusLink } from '@/components/campus/CampusShell'
 
@@ -6,6 +6,7 @@ const LINKS: CampusLink[] = [
   { label: 'Inicio', href: '/admin', icon: LayoutDashboard },
   { label: 'Cursos', href: '/admin/cursos', icon: BookOpen },
   { label: 'Usuarios', href: '/admin/usuarios', icon: Users },
+  { label: 'Reportes', href: '/admin/reportes', icon: BarChart3 },
 ]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

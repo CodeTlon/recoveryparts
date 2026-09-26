@@ -5,6 +5,8 @@ import { CursoForm } from '@/components/campus/CursoForm'
 import { editarCursoAction } from '@/lib/actions/cursos'
 import { AgregarAlumnoForm } from '@/components/campus/AgregarAlumnoForm'
 import { MatriculaEstadoForm } from '@/components/campus/MatriculaEstadoForm'
+import { EncuestaManager } from '@/components/campus/EncuestaManager'
+import { obtenerResultadosEncuesta } from '@/lib/actions/encuestas'
 
 type MatriculaConAlumno = {
   id: number
@@ -30,6 +32,7 @@ export default async function EditarCursoPage({ params }: { params: Promise<{ id
       .order('created_at', { ascending: false }),
   ])
   const matriculas = matriculasData as unknown as MatriculaConAlumno[] | null
+  const preguntasEncuesta = await obtenerResultadosEncuesta(cursoId)
 
   if (!curso) notFound()
 
@@ -64,6 +67,7 @@ export default async function EditarCursoPage({ params }: { params: Promise<{ id
             precio: curso.precio,
             precio_descuento: curso.precio_descuento,
             publicado: curso.publicado,
+            kit_items: curso.kit_items,
           }}
         />
       </section>
@@ -100,6 +104,11 @@ export default async function EditarCursoPage({ params }: { params: Promise<{ id
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="text-xl font-semibold text-on-surface mb-4">Encuesta de fin de curso</h2>
+        <EncuestaManager cursoId={cursoId} preguntas={preguntasEncuesta ?? []} />
       </section>
     </>
   )

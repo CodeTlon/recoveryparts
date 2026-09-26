@@ -63,16 +63,20 @@ Fuente de alcance: `docs/ESPECIFICACION.md` (RF-01 a RF-57). Cada tarea referenc
 - [x] Alumno: ve solo el título de la próxima clase (RF-37) + material liberado (visualización, no botón de descarga — RF-33)
 - [ ] RF-35 (ZIP de todo el material al finalizar el curso) — necesita Supabase Storage; no se puede probar sin el proyecto real, queda para cuando exista
 
-## Kit / Precio informativo (B6-ish, RF-38 a RF-46)
+## Kit / Precio informativo (B6-ish, RF-38 a RF-46) — completo (falta el sitio público)
 - [x] `cursos.kit_items` (jsonb: nombre + descripción + precio referencia + link externo) — sin carrito ni stock (explícitamente fuera de alcance)
-- [ ] Editor de `kit_items` en `/admin/cursos/[id]` (hoy solo existe la columna; falta el form) + sidebar "Inversión" en `/cursos/[slug]` (precio + kit, informativo)
+- [x] Editor de `kit_items` en `/admin/cursos/[id]` (`KitItemsEditor`, filas dinámicas)
+- [ ] Sidebar "Inversión" en `/cursos/[slug]` (precio + kit, informativo) — sección "Sitio público + CMS" abajo
 
-## Fin de curso (B8, RF-47)
-- [ ] Tabla `encuestas_fin_curso` / `respuestas_encuesta`
-- [ ] Flujo de encuesta obligatoria al finalizar curso
+## Fin de curso (B8, RF-47) — completo
+- [x] Tablas `encuesta_preguntas` (por curso) + `encuesta_completada` (quién respondió) + `encuesta_respuestas` (anónima, sin id de alumno)
+- [x] Admin: crear/eliminar preguntas y ver resultados agregados (promedio si es rating, lista si es texto) desde `/admin/cursos/[id]`
+- [x] Alumno: responde una vez que su matrícula queda `finalizado`, no puede repetir (`/alumno/cursos/[id]`)
+- [ ] Nivel de obligatoriedad real (RF-47 dice "obligatoria") — hoy es opcional a criterio del alumno, no hay gate que bloquee otra cosa hasta responder; confirmar con el cliente si hace falta forzarlo
 
-## Reportes y Administración (B9, RF-48 a RF-55)
-- [ ] Dashboard Admin: reportes de deserción / estado de alumnos por curso
+## Reportes y Administración (B9, RF-48 a RF-50) — completo lo que el schema actual permite
+- [x] `/admin/reportes`: ocupación por curso, deserción por curso + distribución por N° de clase, día de la semana con más deserciones, velocidad de llenado del cupo
+- [ ] RF-51 (curso elegido al terminar un "nivel") y RF-52 (demanda de cursos que todavía no se dictan, capturada desde el buscador público vacío) — necesitan conceptos que el schema todavía no modela (`niveles`/pathways de cursos, `intereses_cursos`). Requieren una decisión de producto antes de modelarlos; no están armados
 
 ## Sitio público + CMS (A1-A4)
 - [ ] `/` (Home) — hero, capacitaciones destacadas, sección egresados (RNF-01/02/03)

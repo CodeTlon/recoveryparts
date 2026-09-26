@@ -36,3 +36,11 @@ se construyen o tocan esas features.
 - [ ] Profesor sube un material sin liberar → el alumno NO lo ve hasta que el profesor toque el rayo ("Liberar ahora")
 - [ ] Alumno ve el título de la próxima clase pero no el temario de clases futuras (RF-37)
 - [ ] Marcar a un alumno como "Inactivo"/"Desertor" → deja de ver el material del curso (RLS exige `matriculas.estado = 'activo'`)
+
+## Kit, encuesta y reportes
+- [ ] Cargar 2-3 ítems de kit en `/admin/cursos/[id]`, guardar y volver a entrar → persisten (probar también borrar uno)
+- [ ] Admin crea una pregunta de encuesta (rating y texto) para un curso
+- [ ] Marcar la matrícula de un alumno como "Finalizado" → le aparece la encuesta en `/alumno/cursos/[id]`
+- [ ] Responder la encuesta → no puede volver a responder (ni reenviando el form a mano)
+- [ ] Los resultados en `/admin/cursos/[id]` muestran el promedio (rating) o el listado de respuestas (texto), sin mostrar de quién es cada una
+- [ ] `/admin/reportes` refleja los números de al menos 2 cursos con estados variados (activo/finalizado/desertor)

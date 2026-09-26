@@ -46,15 +46,26 @@ const cursoSchema = z.object({
   precio: z.coerce.number().min(0),
   precio_descuento: z.coerce.number().min(0).optional().or(z.literal('')),
   publicado: z.coerce.boolean().optional(),
+  kit_items: z
+    .array(z.object({ nombre: z.string().trim(), descripcion: z.string().trim(), precio: z.number().min(0), link: z.string().trim() }))
+    .default([])
+    .transform((items) => items.filter((it) => it.nombre)), // descarta filas vacías que el usuario no llegó a borrar
 })
 
 function parseCursoForm(formData: FormData) {
   const raw = Object.fromEntries(formData)
+  let kitItems: unknown = []
+  try {
+    kitItems = JSON.parse(String(raw.kit_items || '[]'))
+  } catch {
+    kitItems = []
+  }
   return cursoSchema.safeParse({
     ...raw,
     dias_semana: formData.getAll('dias_semana'),
     publicado: formData.get('publicado') === 'on',
     precio_descuento: raw.precio_descuento || undefined,
+    kit_items: kitItems,
   })
 }
 
@@ -102,6 +113,7 @@ export async function crearCursoAction(_prevState: ActionState, formData: FormDa
       cupo_total: d.cupo_total,
       precio: d.precio,
       precio_descuento: d.precio_descuento || null,
+      kit_items: d.kit_items,
       publicado: d.publicado ?? false,
     })
     .select('id')
@@ -176,6 +188,7 @@ export async function editarCursoAction(_prevState: ActionState, formData: FormD
       precio: d.precio,
       precio_descuento: d.precio_descuento || null,
       precio_actualizado_en: new Date().toISOString().slice(0, 10),
+      kit_items: d.kit_items,
       publicado: d.publicado ?? false,
     })
     .eq('id', cursoId)
