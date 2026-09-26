@@ -35,12 +35,18 @@ function SubmitButton() {
 function LoginForm() {
   const searchParams = useSearchParams()
   const next = searchParams.get('next') ?? ''
+  const actualizado = searchParams.get('actualizado') === '1'
   const initialState: ActionState = {}
   const [state, formAction] = useFormState(loginAction, initialState)
 
   return (
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="next" value={next} />
+      {actualizado && !state.error && (
+        <p className="text-sm text-on-surface bg-surface-container-high border border-outline-variant rounded px-4 py-2.5">
+          Tu contraseña se actualizó. Iniciá sesión con la nueva.
+        </p>
+      )}
       {state.error && (
         <p role="alert" className="text-sm text-red-400 bg-red-950/40 border border-red-900/60 rounded px-4 py-2.5">
           {state.error}

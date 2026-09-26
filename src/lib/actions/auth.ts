@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, ipDeLaRequest } from '@/lib/rate-limit'
 import { safeNextPath, siteUrl } from '@/lib/site-url'
 
@@ -75,9 +76,15 @@ export async function recuperarSolicitarAction(
   }
   if (!parsed.success) return generic
 
+  // RF: rate limit por IP Y por email (ej. 5 cada 15 min) — así un atacante no
+  // rota de IP para seguir bombardeando la misma casilla, ni usa un solo email
+  // ajeno para agotar el límite de todas las demás IPs.
   const ip = await ipDeLaRequest()
-  if (!rateLimit(`recuperar:${ip}`, 5, 60_000)) {
-    return { error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' }
+  const QUINCE_MIN = 15 * 60_000
+  const okIp = rateLimit(`recuperar:ip:${ip}`, 5, QUINCE_MIN)
+  const okEmail = rateLimit(`recuperar:email:${parsed.data.email.toLowerCase()}`, 5, QUINCE_MIN)
+  if (!okIp || !okEmail) {
+    return { error: 'Demasiados intentos. Esperá unos minutos y volvé a intentar.' }
   }
 
   const supabase = await createClient()
@@ -113,10 +120,12 @@ export async function recuperarActualizarAction(
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password })
   if (error) return { error: 'No pudimos actualizar la contraseña. Probá de nuevo.' }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('rol')
-    .eq('id', user.id)
-    .maybeSingle()
-  redirect((profile?.rol && ROLE_HOME[profile.rol]) || '/alumno')
+  // Invalida el resto de las sesiones abiertas de este usuario (si la
+  // contraseña se cambió porque alguien más tenía acceso, esto lo saca).
+  // Incluye a la sesión actual: por eso mandamos a /login, no al home del rol.
+  // TODO(email): avisar "Tu contraseña fue cambiada" — pendiente de Resend.
+  const admin = createAdminClient()
+  await admin.auth.admin.signOut(user.id, 'global').catch(() => {})
+
+  redirect('/login?actualizado=1')
 }

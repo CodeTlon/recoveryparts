@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { siteUrl } from '@/lib/site-url'
 import type { ActionState } from '@/lib/actions/auth'
@@ -10,6 +11,7 @@ import type { ActionState } from '@/lib/actions/auth'
 const invitarSchema = z.object({
   email: z.string().trim().min(1, 'Ingresá un email').email('Email inválido'),
   nombre: z.string().trim().min(1, 'Ingresá un nombre').max(120),
+  apellido: z.string().trim().min(1, 'Ingresá un apellido').max(120),
   telefono: z.string().trim().max(40).optional(),
   rol: z.enum(['alumno', 'profesor'], { message: 'Rol inválido' }),
 })
@@ -26,6 +28,7 @@ export async function invitarUsuarioAction(_prevState: ActionState, formData: Fo
     data: {
       rol: parsed.data.rol,
       nombre: parsed.data.nombre,
+      apellido: parsed.data.apellido,
       telefono: parsed.data.telefono || null,
     },
     redirectTo: `${siteUrl()}/activar`,
@@ -40,4 +43,16 @@ export async function invitarUsuarioAction(_prevState: ActionState, formData: Fo
 
   revalidatePath('/admin/usuarios')
   return { success: `Invitación enviada a ${parsed.data.email}.` }
+}
+
+// RF-56: reactivación manual de cuenta por el Admin. El trigger
+// profiles_block_privilege_self_update (0001) ya impide que un no-admin toque
+// esta columna sobre sí mismo — acá solo falta la acción del lado admin.
+export async function toggleCuentaActivaAction(profileId: string, activar: boolean) {
+  const { profile: admin } = await requireAdmin()
+  if (profileId === admin.id) return // no desactivarse a sí mismo por error de UI
+
+  const supabase = await createClient()
+  await supabase.from('profiles').update({ cuenta_activa: activar }).eq('id', profileId)
+  revalidatePath('/admin/usuarios')
 }

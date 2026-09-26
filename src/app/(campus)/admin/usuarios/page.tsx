@@ -1,15 +1,16 @@
 import { requireAdmin } from '@/lib/auth-helpers'
 import { createClient } from '@/lib/supabase/server'
 import { InvitarUsuarioForm } from '@/components/campus/InvitarUsuarioForm'
+import { toggleCuentaActivaAction } from '@/lib/actions/usuarios'
 
 const ROL_LABEL: Record<string, string> = { alumno: 'Alumno', profesor: 'Profesor', administrador: 'Admin' }
 
 export default async function UsuariosPage() {
-  await requireAdmin()
+  const { profile: yo } = await requireAdmin()
   const supabase = await createClient()
   const { data: usuarios } = await supabase
     .from('profiles')
-    .select('id, nombre, email, rol, cuenta_activa, created_at')
+    .select('id, nombre, apellido, email, rol, cuenta_activa, created_at')
     .order('created_at', { ascending: false })
 
   return (
@@ -31,12 +32,13 @@ export default async function UsuariosPage() {
               <th className="font-semibold px-4 py-3 md:px-6 md:py-4">Email</th>
               <th className="font-semibold px-4 py-3 md:px-6 md:py-4">Rol</th>
               <th className="font-semibold px-4 py-3 md:px-6 md:py-4">Estado</th>
+              <th className="font-semibold px-4 py-3 md:px-6 md:py-4"></th>
             </tr>
           </thead>
           <tbody>
             {(usuarios ?? []).map((u) => (
               <tr key={u.id} className="border-t border-outline-variant text-on-surface">
-                <td className="px-4 py-3 md:px-6 md:py-4 font-medium">{u.nombre || '—'}</td>
+                <td className="px-4 py-3 md:px-6 md:py-4 font-medium">{`${u.nombre} ${u.apellido}`.trim() || '—'}</td>
                 <td className="px-4 py-3 md:px-6 md:py-4 text-on-surface-variant">{u.email}</td>
                 <td className="px-4 py-3 md:px-6 md:py-4 text-on-surface-variant">{ROL_LABEL[u.rol] ?? u.rol}</td>
                 <td className="px-4 py-3 md:px-6 md:py-4">
@@ -44,11 +46,20 @@ export default async function UsuariosPage() {
                     {u.cuenta_activa ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
+                <td className="px-4 py-3 md:px-6 md:py-4">
+                  {u.id !== yo.id && (
+                    <form action={toggleCuentaActivaAction.bind(null, u.id, !u.cuenta_activa)}>
+                      <button type="submit" className="text-xs font-semibold text-secondary hover:text-primary transition-colors">
+                        {u.cuenta_activa ? 'Desactivar' : 'Reactivar'}
+                      </button>
+                    </form>
+                  )}
+                </td>
               </tr>
             ))}
             {!usuarios?.length && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-on-surface-variant">
+                <td colSpan={5} className="px-4 py-6 text-center text-on-surface-variant">
                   Todavía no hay usuarios.
                 </td>
               </tr>

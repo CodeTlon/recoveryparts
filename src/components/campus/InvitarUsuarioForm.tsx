@@ -39,7 +39,10 @@ export function InvitarUsuarioForm() {
       )}
       <div className="grid sm:grid-cols-2 gap-3">
         <label className={field}>
-          <input name="nombre" required placeholder="Nombre y apellido" className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline" />
+          <input name="nombre" required placeholder="Nombre" className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline" />
+        </label>
+        <label className={field}>
+          <input name="apellido" required placeholder="Apellido" className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline" />
         </label>
         <label className={field}>
           <input type="email" name="email" required placeholder="email@ejemplo.com" className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline" />

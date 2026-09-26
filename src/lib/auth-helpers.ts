@@ -6,6 +6,7 @@ export type Rol = 'alumno' | 'profesor' | 'administrador'
 export type Profile = {
   id: string
   nombre: string
+  apellido: string
   telefono: string | null
   email: string
   rol: Rol
@@ -17,6 +18,10 @@ const ROLE_HOME: Record<Rol, string> = {
   alumno: '/alumno',
   profesor: '/profesor',
   administrador: '/admin',
+}
+
+export function nombreCompleto(p: Pick<Profile, 'nombre' | 'apellido' | 'email'>): string {
+  return `${p.nombre} ${p.apellido}`.trim() || p.email
 }
 
 export async function getUserAndProfile() {

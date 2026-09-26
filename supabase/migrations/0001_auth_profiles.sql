@@ -17,6 +17,7 @@ end$$;
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nombre text not null default '',
+  apellido text not null default '',
   telefono text,
   email text,
   rol rol_usuario not null default 'alumno',
@@ -66,11 +67,12 @@ begin
     rol_final := meta_rol::rol_usuario;
   end if;
 
-  insert into public.profiles (id, email, nombre, telefono, rol)
+  insert into public.profiles (id, email, nombre, apellido, telefono, rol)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'nombre', ''),
+    coalesce(new.raw_user_meta_data->>'apellido', ''),
     nullif(new.raw_user_meta_data->>'telefono', ''),
     rol_final
   )

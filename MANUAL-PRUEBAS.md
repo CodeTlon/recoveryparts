@@ -12,7 +12,27 @@ se construyen o tocan esas features.
 - [ ] Login con contraseña incorrecta → mensaje de error genérico, sin distinguir "no existe" de "contraseña mal"
 - [ ] 10 intentos de login fallidos seguidos desde la misma red → bloquea con "Demasiados intentos" (rate limit)
 - [ ] `/recuperar` con un email real → llega el mail; con un email que no existe → mismo mensaje genérico (sin filtrar si existe la cuenta)
-- [ ] Completar `/recuperar/nueva-clave` desde el link del mail → aterriza en el home del rol y el login viejo deja de funcionar
+- [ ] Completar `/recuperar/nueva-clave` desde el link del mail → redirige a `/login?actualizado=1` (mensaje de éxito) y la contraseña vieja deja de funcionar
+- [ ] Si había otra pestaña/dispositivo con sesión abierta, tras cambiar la contraseña esa sesión también queda cerrada (revisar al recargar)
 - [ ] Entrar a `/admin`, `/alumno` o `/profesor` sin sesión → redirige a `/login?next=...`
 - [ ] Loguearse como alumno e intentar entrar a `/admin` manualmente por URL → redirige a `/alumno` (no accede)
 - [ ] Cerrar sesión desde el botón del sidebar → vuelve a pedir login al reintentar entrar al campus
+- [ ] Admin desactiva una cuenta desde `/admin/usuarios` → ese usuario ya no puede loguearse (mensaje "cuenta desactivada") · reactivarla lo vuelve a permitir
+
+## Cursos, matrícula y calendario
+- [ ] Crear un curso en `/admin/cursos/nuevo` con días/horario/aula → se genera el calendario completo de clases (revisar en `/profesor/cursos/[id]`)
+- [ ] Crear un segundo curso con el mismo aula y horario superpuesto → bloquea con el mensaje de conflicto (RF-17)
+- [ ] Asignar el mismo profesor a dos cursos con horario superpuesto → bloquea (RF-18)
+- [ ] Agregar un alumno nuevo (email que no existe) a un curso → recibe invitación; agregar un alumno que YA tiene cuenta de otro curso → se vincula directo, sin invitación nueva (RF-13)
+- [ ] Llenar el cupo del curso e intentar agregar un alumno más → bloquea "No quedan cupos"
+- [ ] Profesor marca a un alumno como "Desertor" con motivo y fecha → guarda `n_clase_desercion` coherente con el calendario
+- [ ] Suspender o reprogramar una clase y volver a marcar una deserción posterior → esa clase no suma al conteo (RF-38)
+- [ ] Admin reactiva una matrícula desertora → vuelve a "Activo" y limpia motivo/fecha de baja
+- [ ] Alumno con un solo curso activo entra a `/alumno` → aterriza directo en el curso, sin listado intermedio (RF-11)
+- [ ] Alumno con 2+ cursos activos entra a `/alumno` → ve el listado y puede navegar a cada uno
+
+## Material de estudio
+- [ ] Profesor sube un material con "Liberar ahora" tildado → aparece inmediato en `/alumno/cursos/[id]`
+- [ ] Profesor sube un material sin liberar → el alumno NO lo ve hasta que el profesor toque el rayo ("Liberar ahora")
+- [ ] Alumno ve el título de la próxima clase pero no el temario de clases futuras (RF-37)
+- [ ] Marcar a un alumno como "Inactivo"/"Desertor" → deja de ver el material del curso (RLS exige `matriculas.estado = 'activo'`)
