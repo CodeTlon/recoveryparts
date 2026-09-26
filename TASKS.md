@@ -14,24 +14,27 @@ Fuente de alcance: `docs/ESPECIFICACION.md` (RF-01 a RF-57). Cada tarea referenc
 - [x] `AGENTS.md` + `ARCHITECTURE.md` (contexto agnóstico de herramienta)
 - [x] `.claude/CLAUDE.md` (pointer) + `settings.json` + `commands/cambio.md` + `commands/cerrar.md` + `ERRORES.md`
 - [x] `MANUAL-PRUEBAS.md` (scaffold)
-- [ ] `README.md` completo (Changelog + setup + deploy)
-- [ ] Registrar en `memory/MEMORY.md` del hub de la fábrica
+- [x] `README.md` completo (Changelog + setup + deploy)
+- [x] Registrar en `memory/MEMORY.md` del hub de la fábrica
 
 ## Auth e Invitaciones (B0, RF-01 a RF-11)
-- [ ] Instalar `@supabase/ssr` + `@supabase/supabase-js`
-- [ ] `lib/supabase/client.ts` + `server.ts` + `admin.ts`
-- [ ] Tabla `profiles` + trigger `handle_new_user` + trigger anti-escalación de privilegios
-- [ ] `middleware.ts` — protege `(campus)/*`, revalida con `getUser()`
-- [ ] Flujo de invitación (Admin invita profesor/alumno) — `admin.inviteUserByEmail()`
-- [ ] `/activar` (client component, implicit flow hash → `setSession()`)
-- [ ] `/login` real (reemplaza el mock de `demo-users.ts`)
-- [ ] `/recuperar` (PKCE flow, `resetPasswordForEmail`)
-- [ ] `lib/auth-helpers.ts` — `requireAlumno` / `requireProfesor` / `requireAdmin`
+- [x] Instalar `@supabase/ssr` + `@supabase/supabase-js` + `zod`
+- [x] `lib/supabase/client.ts` + `server.ts` + `admin.ts` + `middleware.ts`
+- [x] Tabla `profiles` + trigger `handle_new_user` + trigger anti-escalación de privilegios (`supabase/migrations/0001_auth_profiles.sql`)
+- [x] `middleware.ts` — protege `(campus)/*`, revalida con `getUser()`
+- [x] Flujo de invitación (Admin invita profesor/alumno) — `admin.inviteUserByEmail()` desde `/admin/usuarios`
+- [x] `/activar` (client component, implicit flow hash → `setSession()`)
+- [x] `/login` real (reemplaza el mock de `demo-users.ts`, eliminado)
+- [x] `/recuperar` + `/recuperar/nueva-clave` (PKCE flow, `resetPasswordForEmail` + `/auth/confirm`)
+- [x] `lib/auth-helpers.ts` — `requireAlumno` / `requireProfesor` / `requireAdmin`
+- [x] Rate limiting en memoria de login/recuperar (`lib/rate-limit.ts`)
+- [ ] Aplicar la migración contra `recoveryparts-dev` (pendiente de que el usuario cree los dos proyectos Supabase — ver Backend/Email más abajo) y probar el flujo end-to-end con un email real
+- [ ] `npx playwright install` + E2E del flujo login→dashboard→RBAC (movido a la sección Testing, sigue pendiente)
 
 ## Roles y Permisos (B1, RF-01 a RF-11)
-- [ ] Helpers SQL `is_admin()` / `is_profesor()`
-- [ ] RLS de `profiles` (select propio + admin, update con trigger anti-escalación)
-- [ ] Layouts gate por rol: `(campus)/alumno|profesor|admin/layout.tsx`
+- [x] Helpers SQL `is_admin()` / `is_profesor()`
+- [x] RLS de `profiles` (select propio + admin, update con trigger anti-escalación)
+- [x] Layouts gate por rol: `(campus)/alumno|profesor|admin/layout.tsx` + dashboards placeholder (crecen con B2/B3)
 
 ## Alumnos (B2, RF-12 a RF-15, RF-54 a RF-57)
 - [ ] Tabla `matriculas` (estado activo/suspendido/desertor/inactivo, `motivo_baja` obligatorio en baja — RF-55)

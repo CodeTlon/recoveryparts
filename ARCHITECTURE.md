@@ -11,37 +11,48 @@
 | Campus de un rol específico | "Rutas del campus" + la tabla correspondiente en "Esquema de datos" |
 | RLS / permisos | "Esquema de datos" (columna RLS de cada tabla) + `security-owasp.md` de la fábrica |
 
-## Estructura de carpetas (objetivo, se completa en FASE 5+)
+## Estructura de carpetas
+
+Auth (B0/B1) ya implementada — resto sigue siendo objetivo, se completa en los bloques que faltan (ver `TASKS.md`).
 
 ```
 src/
 ├── app/
-│   ├── (public)/
+│   ├── (public)/                     # objetivo — hoy sigue en app/page.tsx, app/curso/page.tsx sueltos
 │   │   ├── page.tsx                  # Home (A1)
 │   │   ├── galeria/page.tsx          # A2
 │   │   ├── cursos/page.tsx           # A3 — listado dinámico
 │   │   └── cursos/[slug]/page.tsx    # A4 — detalle dinámico
-│   ├── login/page.tsx
-│   ├── activar/page.tsx              # client component — parsea hash de invite/reset
-│   ├── recuperar/page.tsx
+│   ├── login/page.tsx                # ✅ real — useFormState + loginAction
+│   ├── activar/page.tsx              # ✅ client component — parsea hash de invite (Bug 35)
+│   ├── recuperar/page.tsx            # ✅ solicita reset (PKCE)
+│   ├── recuperar/nueva-clave/page.tsx  # ✅ setea la nueva contraseña
+│   ├── auth/confirm/route.ts         # ✅ exchange de `?code=` (PKCE) — SOLO ese flujo, ver AGENTS.md quirks
 │   └── (campus)/
-│       ├── alumno/layout.tsx         # gate: requireAlumno()
-│       ├── alumno/...
-│       ├── profesor/layout.tsx       # gate: requireProfesor()
-│       ├── profesor/...
-│       ├── admin/layout.tsx          # gate: requireAdmin()
-│       └── admin/...
+│       ├── alumno/layout.tsx         # ✅ gate: requireAlumno()
+│       ├── alumno/page.tsx           # ✅ placeholder — crece con Cursos (B3)
+│       ├── profesor/layout.tsx       # ✅ gate: requireProfesor()
+│       ├── profesor/page.tsx         # ✅ placeholder
+│       ├── admin/layout.tsx          # ✅ gate: requireAdmin()
+│       ├── admin/page.tsx            # ✅ KPI mínimo (total usuarios)
+│       └── admin/usuarios/page.tsx   # ✅ invitar + listar usuarios
 ├── components/
-│   ├── layout/        # SiteNav, SiteFooter, WhatsAppButton (ya existen, reusar)
-│   └── campus/         # nuevos, por rol
+│   ├── layout/         # SiteNav, SiteFooter, WhatsAppButton (ya existían, reusados)
+│   └── campus/          # ✅ CampusShell.tsx (sidebar+drawer genérico), InvitarUsuarioForm.tsx
 ├── lib/
 │   ├── supabase/
-│   │   ├── client.ts    # browser client
-│   │   ├── server.ts    # server client (cookies)
-│   │   └── admin.ts      # service_role, SOLO en Server Actions
-│   ├── auth-helpers.ts   # getUserAndProfile / requireAlumno / requireProfesor / requireAdmin
-│   └── validations/       # esquemas Zod por entidad
-└── middleware.ts          # protege (campus)/*, revalida sesión
+│   │   ├── client.ts    # ✅ browser client
+│   │   ├── server.ts    # ✅ server client (cookies)
+│   │   ├── admin.ts      # ✅ service_role, SOLO en Server Actions
+│   │   └── middleware.ts # ✅ updateSession — usado por src/middleware.ts
+│   ├── actions/
+│   │   ├── auth.ts        # ✅ loginAction / logoutAction / recuperarSolicitarAction / recuperarActualizarAction
+│   │   └── usuarios.ts     # ✅ invitarUsuarioAction (admin-only)
+│   ├── auth-helpers.ts   # ✅ getUserAndProfile / requireAlumno / requireProfesor / requireAdmin
+│   ├── rate-limit.ts      # ✅ limitador en memoria (login, recuperar)
+│   ├── site-url.ts        # ✅ siteUrl() + safeNextPath() (allowlist de redirects)
+│   └── validations/       # objetivo — hoy los schemas Zod viven inline en cada action
+└── middleware.ts          # ✅ protege (campus)/*, revalida sesión — Next 15 clásico (no `proxy.ts`, eso es Next 16+)
 ```
 
 ## Rutas públicas

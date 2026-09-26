@@ -206,7 +206,7 @@ export default function CursoDemo() {
                 </div>
               </div>
 
-              <Link href="/plataforma?role=alumno" className="text-center text-sm text-on-surface-variant hover:text-secondary transition-colors">
+              <Link href="/login" className="text-center text-sm text-on-surface-variant hover:text-secondary transition-colors">
                 ← Volver al campus
               </Link>
             </div>

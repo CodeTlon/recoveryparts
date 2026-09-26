@@ -31,7 +31,8 @@
 - Supabase: Auth + Postgres (RLS) + Storage. **Dos proyectos**: `recoveryparts-dev` / `recoveryparts-prod` (ver sección DB abajo).
 - Resend (formulario de contacto del sitio público — solo envía email, no persiste en DB salvo pedido explícito).
 - Testing: Playwright E2E (3 viewports, foco en flujo login→dashboard→RBAC de los 3 roles) + Lighthouse en producción.
-- Pendiente de instalar (no están en el demo original): `shadcn/ui`, `react-hook-form` + `zod`, `resend` + `@react-email/components`, `@supabase/ssr` + `@supabase/supabase-js`.
+- Ya instalado: `@supabase/ssr` + `@supabase/supabase-js` + `zod`.
+- Pendiente de instalar (no están en el demo original): `shadcn/ui`, `react-hook-form`, `resend` + `@react-email/components`.
 
 ## Modelo de roles y estados
 
@@ -42,12 +43,16 @@ Alta de profesor/alumno: la hace el Administrador desde el campus (B0.1) → inv
 ## Rutas
 
 **Público** (SSR/SSG, editable por Admin vía CMS): `/`, `/galeria`, `/cursos`, `/cursos/[slug]`.
-**Auth:** `/login`, `/activar` (landing de invitación/reset — implicit flow, ver `ARCHITECTURE.md`), `/recuperar`.
+**Auth:** `/login`, `/activar` (landing de invitación — implicit flow, ver `ARCHITECTURE.md`), `/recuperar` + `/recuperar/nueva-clave` (reset — PKCE vía `/auth/confirm`).
 **Campus** (route groups gateados por rol en su `layout.tsx`): `(campus)/alumno/*`, `(campus)/profesor/*`, `(campus)/admin/*`.
 
 ## Variables de Entorno
 
 ```
+# Usado para armar links de email (invitación / recuperar contraseña). Mismo
+# valor en ambos entornos salvo que cambie el dominio.
+NEXT_PUBLIC_SITE_URL=
+
 # .env.development.local → npm run dev → Supabase recoveryparts-dev
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -79,6 +84,9 @@ Infra 100% manual del usuario (creación de proyectos Supabase, dominios, deploy
 - Fotos de egresados actuales son stock (pravatar) con nombres inventados — quedan como placeholder hasta que el cliente entregue material real (ver `TASKS.md`).
 - Invitaciones de Supabase Auth usan **implicit flow** (`#access_token=...` en el hash), no `?code=` — la página `/activar` tiene que ser un client component que parsea el hash y llama `setSession()` explícito. Ver Bug 35 en `bugs.md` de la fábrica.
 - En Server Components/Route Handlers usar siempre `supabase.auth.getUser()` para revalidar sesión, nunca `getSession()` (riesgo de rotación de refresh token — Bug 31 de la fábrica).
+- `/auth/confirm` (route handler) SOLO maneja el flujo PKCE de `resetPasswordForEmail` (`?code=`). No mezclar con el flujo de invitación (hash, arriba) — son dos mecanismos distintos aunque ambos "activan" una cuenta.
+- Rate limiting de `loginAction`/`recuperarSolicitarAction` es en memoria por instancia (`lib/rate-limit.ts`, patrón calcado de `vimet`) — no persiste entre cold starts ni se comparte entre instancias serverless. Alcanza para frenar scripts básicos; si el tráfico crece, migrar a Upstash/Redis con la misma firma.
+- El alta de usuarios es SOLO por invitación del Admin (`admin.inviteUserByEmail`, ver `/admin/usuarios`) — no hay `signUp` público. El trigger `handle_new_user` solo respeta el `rol` del metadata cuando `auth.users.invited_at is not null`, así que un eventual signUp público jamás podría auto-asignarse admin/profesor (cae siempre en `alumno`).
 
 ## Comandos Rápidos
 
@@ -95,3 +103,4 @@ npx tsc --noEmit       # Type-check
 | Fecha | Rama | Cambio |
 |-------|------|--------|
 | 2026-09-25 | dev | Fundación del proyecto real a partir del demo — repo, contexto (AGENTS.md/ARCHITECTURE.md), limpieza de dead code, TASKS.md |
+| 2026-09-26 | dev | Auth e Invitaciones (B0) + Roles y Permisos (B1): tabla `profiles` + RLS + triggers, clients Supabase (`@supabase/ssr`), middleware de sesión, `/login` `/activar` `/recuperar` `/recuperar/nueva-clave` reales, invitación de usuarios desde `/admin/usuarios`, layouts gateados `(campus)/alumno\|profesor\|admin`. Reemplaza el mock `/plataforma` + `demo-users.ts` (eliminados) |

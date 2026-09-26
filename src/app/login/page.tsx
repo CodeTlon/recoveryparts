@@ -1,20 +1,13 @@
 'use client'
 
-// ============================================================
-// DEMO — Login (Recovery Parts)
-// Estilo Stitch "Industrial Technical Narrative". Mock: no valida
-// contra backend, el rol se decide por el email (ver demo-users).
-// Credenciales NO se muestran acá → CREDENCIALES-DEMO.md.
-// ponytail: sin auth real.
-// ============================================================
-
+import { Suspense } from 'react'
+import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Lock, Mail, ArrowRight } from 'lucide-react'
 import { demoConfig } from '@/lib/demo-config'
-import { USERS, roleByEmail } from '@/lib/demo-users'
+import { loginAction, type ActionState } from '@/lib/actions/auth'
 
 const gridBg: React.CSSProperties = {
   backgroundImage:
@@ -22,21 +15,70 @@ const gridBg: React.CSSProperties = {
   backgroundSize: '24px 24px',
 }
 
-export default function LoginDemo() {
-  const router = useRouter()
-  const [email, setEmail] = useState(USERS[2].email) // alumno por defecto
-  const [password, setPassword] = useState('demo1234')
+const field =
+  'flex items-center gap-3 px-4 py-3 border border-outline-variant rounded bg-surface-container-low focus-within:border-accent transition-colors'
 
-  const submit = (e: React.FormEvent) => { e.preventDefault(); router.push(`/plataforma?role=${roleByEmail(email)}`) }
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full py-3 text-sm font-semibold uppercase tracking-wide bg-accent text-white rounded transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 group"
+    >
+      {pending ? 'Ingresando…' : 'Ingresar'}
+      {!pending && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
+    </button>
+  )
+}
 
-  const field = 'flex items-center gap-3 px-4 py-3 border border-outline-variant rounded bg-surface-container-low focus-within:border-accent transition-colors'
+function LoginForm() {
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') ?? ''
+  const initialState: ActionState = {}
+  const [state, formAction] = useFormState(loginAction, initialState)
 
+  return (
+    <form action={formAction} className="space-y-3">
+      <input type="hidden" name="next" value={next} />
+      {state.error && (
+        <p role="alert" className="text-sm text-red-400 bg-red-950/40 border border-red-900/60 rounded px-4 py-2.5">
+          {state.error}
+        </p>
+      )}
+      <label className={field}>
+        <Mail size={16} className="text-on-surface-variant" />
+        <input
+          type="email"
+          name="email"
+          autoComplete="email"
+          required
+          placeholder="tu@email.com"
+          className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline"
+        />
+      </label>
+      <label className={field}>
+        <Lock size={16} className="text-on-surface-variant" />
+        <input
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          required
+          placeholder="••••••••"
+          className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline"
+        />
+      </label>
+      <SubmitButton />
+    </form>
+  )
+}
+
+export default function LoginPage() {
   return (
     <main className="min-h-screen bg-surface text-on-surface flex flex-col md:flex-row" style={gridBg}>
       {/* Panel de marca (industrial) */}
       <section className="hidden md:flex md:w-1/2 flex-col justify-between p-12 border-r border-outline-variant bg-surface-container-lowest relative overflow-hidden">
         <Image src="/images/hero.jpg" alt="" fill priority sizes="50vw" className="object-cover opacity-25" />
-        {/* Glow naranja para dar profundidad (igual que el hero) */}
         <div className="absolute -bottom-1/4 -left-1/4 h-[500px] w-[500px] rounded-full bg-accent/15 blur-[130px] pointer-events-none" />
         <Link href="/" className="relative inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary transition-colors w-fit">
           <ArrowLeft size={16} /> Volver al sitio
@@ -50,7 +92,6 @@ export default function LoginDemo() {
             Campus técnico de microelectrónica y reparación de precisión.
           </p>
 
-          {/* Franja de stats: da peso al bloque y reduce el vacío del panel */}
           <div className="mt-10 flex gap-8">
             {demoConfig.content.stats.slice(0, 3).map((s) => (
               <div key={s.label}>
@@ -77,25 +118,12 @@ export default function LoginDemo() {
           <h1 className="text-2xl font-bold text-primary mt-1">Ingresá a tu campus</h1>
           <p className="text-sm mt-1 mb-8 text-on-surface-variant">Acceso para alumnos, profesores y administración.</p>
 
-          <form onSubmit={submit} className="space-y-3">
-            <label className={field}>
-              <Mail size={16} className="text-on-surface-variant" />
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com"
-                className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline" />
-            </label>
-            <label className={field}>
-              <Lock size={16} className="text-on-surface-variant" />
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
-                className="bg-transparent outline-none text-sm w-full text-on-surface placeholder:text-outline" />
-            </label>
-            <button type="submit"
-              className="w-full py-3 text-sm font-semibold uppercase tracking-wide bg-accent text-white rounded transition-opacity hover:opacity-90 flex items-center justify-center gap-2 group">
-              Ingresar <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          </form>
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
 
           <p className="text-center text-xs mt-6 text-on-surface-variant">
-            Demo · el acceso real se conecta a la base de alumnos.
+            <Link href="/recuperar" className="hover:text-secondary transition-colors">¿Olvidaste tu contraseña?</Link>
           </p>
         </div>
       </section>
