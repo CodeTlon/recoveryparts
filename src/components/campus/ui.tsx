@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef } from 'react'
+import { Inbox } from 'lucide-react'
 import type { R } from '@/app/campus/admin/actions'
 
 export function PageHead({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
@@ -16,7 +17,14 @@ export function PageHead({ title, sub, action }: { title: string; sub?: string; 
 }
 
 export function Empty({ children }: { children: React.ReactNode }) {
-  return <div className="card p-8 text-center text-on-surface-variant">{children}</div>
+  return (
+    <div className="card flex flex-col items-center gap-3 p-10 text-center text-on-surface-variant">
+      <span aria-hidden className="grid h-12 w-12 place-items-center rounded-full bg-accent/10 text-accent">
+        <Inbox size={22} />
+      </span>
+      <div>{children}</div>
+    </div>
+  )
 }
 
 export function Badge({ tone = 'neutral', children }: { tone?: 'ok' | 'bad' | 'warn' | 'neutral'; children: React.ReactNode }) {

@@ -3,29 +3,52 @@
 @tailwind utilities;
 
 @layer base {
+  /* Fuente única de los colores de marca (RNF-01) para CSS y para componentes
+     con canvas/WebGL que no pueden leer clases de Tailwind. Mantener en
+     sintonía con tailwind.config.ts. */
+  :root {
+    --rp-surface: #08132a;
+    --rp-on-surface: #e6ecff;
+    --rp-brand: #1e3a8a;
+    --rp-brand-light: #3b5bdb;
+    --rp-accent: #f97316;
+    --rp-accent-hover: #ea580c;
+    --rp-outline-variant: #44474d;
+  }
+
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background-color: #08132a;
-    color: #e6ecff;
+    background-color: var(--rp-surface);
+    color: var(--rp-on-surface);
     font-family: var(--font-montserrat), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
 
-  ::selection { background-color: #f97316; color: #08132a; }
+  ::selection { background-color: var(--rp-accent); color: var(--rp-surface); }
 
   :focus-visible {
-    outline: 2px solid #f97316;
+    outline: 2px solid var(--rp-accent);
     outline-offset: 2px;
     border-radius: 2px;
   }
 
-  html { scrollbar-width: thin; scrollbar-color: #44474d #08132a; }
+  html { scrollbar-width: thin; scrollbar-color: var(--rp-outline-variant) var(--rp-surface); }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: #08132a; }
-  ::-webkit-scrollbar-thumb { background: #44474d; border: 2px solid #08132a; border-radius: 6px; }
-  ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+  ::-webkit-scrollbar-track { background: var(--rp-surface); }
+  ::-webkit-scrollbar-thumb { background: var(--rp-outline-variant); border: 2px solid var(--rp-surface); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--rp-accent); }
+
+  /* Respeta la preferencia del sistema: sin movimiento no hay animación ni scroll suave. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @layer components {
