@@ -20,7 +20,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }: { eyeb
 
       <div className="grid-bg flex items-center justify-center p-6 lg:bg-none">
         <div className="w-full max-w-sm animate-fade-up">
-          <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Volver al sitio</Link>
+          <Link href="/" className="mb-8 flex w-fit items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Volver al sitio</Link>
           <Image src="/images/logo.png" alt="Recovery Parts" width={64} height={64} className="mb-6 h-16 w-16 lg:hidden" />
           <span className="text-xs font-semibold uppercase tracking-widest text-accent">{eyebrow}</span>
           <h1 className="mt-1 text-2xl font-bold">{title}</h1>
