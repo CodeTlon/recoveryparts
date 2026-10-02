@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run type-check)",
+      "Bash(npm run build)",
+      "Bash(npm run db:reset)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git add*)",
+      "Bash(git commit*)"
+    ],
+    "deny": [
+      "Bash(npm run db:push:production*)",
+      "Bash(git push --force*)",
+      "Read(./.env.production)",
+      "Read(./.env.test)"
+    ]
+  }
+}

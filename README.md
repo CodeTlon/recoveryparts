@@ -20,5 +20,5 @@ Requiere Node ≥ 20 y Docker. Entornos y ramas: `docs/ENTORNOS.md`.
 - `docs/ESPECIFICACION-ACADEMIA.md` — especificación funcional (v0.6).
 - `docs/ENTORNOS.md` — entornos, ramas, CI y configuración única.
 - `docs/ARQUITECTURA.md` — capas, seguridad, modelo de datos y flujos.
-- `docs/DECISIONES.md` — registro de decisiones.
+- `.ai/context/DECISIONS.md` — registro de decisiones.
 - `docs/SETUP-SUPABASE.md` — puesta en marcha de la base y Auth.
