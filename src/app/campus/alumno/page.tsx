@@ -70,7 +70,7 @@ export default async function AlumnoHome() {
               )}
 
               {i.estado === 'activo' && prox && (
-                <p className="mb-4 flex items-center gap-2 text-sm text-on-surface-variant"><CalendarDays size={16} /> Próxima clase: <span className="font-semibold text-on-surface">#{prox.numero} · {prox.titulo}</span> ({fechaAR(prox.fecha)})</p>
+                <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-on-surface-variant"><CalendarDays size={16} /> <span className="whitespace-nowrap">Próxima clase:</span> <span className="font-semibold text-on-surface">#{prox.numero} · {prox.titulo}</span> ({fechaAR(prox.fecha)})</p>
               )}
 
               {i.estado === 'activo' && (
