@@ -1,6 +1,8 @@
 import { requireRole } from '@/lib/auth'
 import { DIAS } from '@/lib/types'
 import { Empty, PageHead } from '@/components/campus/ui'
+import AnimatedBar from '@/components/ui/AnimatedBar'
+import Reveal from '@/components/ui/Reveal'
 
 type Insc = { alumno_id: string; curso_id: string; estado: string; n_clase_desercion: number | null; motivo_desercion: string | null; creado_en: string }
 type Curso = { id: string; nombre: string; cupo: number; creado_en: string; fecha_inicio: string | null; horarios_curso: { dia_semana: number }[] }
@@ -8,11 +10,11 @@ type Curso = { id: string; nombre: string; cupo: number; creado_en: string; fech
 const pct = (a: number, b: number) => (b ? Math.round((1000 * a) / b) / 10 : 0)
 
 function Bar({ v, max }: { v: number; max: number }) {
-  return <div className="h-2 w-full rounded-full bg-surface-container-highest"><div className="h-2 rounded-full bg-accent" style={{ width: `${max ? (100 * v) / max : 0}%` }} /></div>
+  return <AnimatedBar value={v} max={max} />
 }
 
 function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
-  return <section className="card p-6"><h2 className="text-lg font-semibold">{title}</h2>{note && <p className="mb-4 text-xs text-on-surface-variant">{note}</p>}<div className={note ? '' : 'mt-4'}>{children}</div></section>
+  return <Reveal className="h-full"><section className="card h-full p-6"><h2 className="text-lg font-semibold">{title}</h2>{note && <p className="mb-4 text-xs text-on-surface-variant">{note}</p>}<div className={note ? '' : 'mt-4'}>{children}</div></section></Reveal>
 }
 
 export default async function Reportes() {
