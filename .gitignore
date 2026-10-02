@@ -13,3 +13,12 @@ yarn-error.log*
 Thumbs.db
 *.tsbuildinfo
 next-env.d.ts
+
+# Entornos con secretos reales (no se commitean). .env.development es solo local y sí se versiona.
+.env.test
+.env.production
+docs/CUENTAS-*.md
+
+# Caché de la CLI de Supabase
+supabase/.temp/
+supabase/.branches/

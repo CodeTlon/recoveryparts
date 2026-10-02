@@ -16,7 +16,7 @@ function SubmitButton() {
   )
 }
 
-export type Material = { id: number; titulo: string; tipo: string; url: string; liberado_en: string | null }
+export type Material = { id: number; titulo: string; tipo: string; url: string | null; storage_path?: string | null; liberado_en: string | null }
 
 export function MaterialManager({ cursoId, materiales }: { cursoId: number; materiales: Material[] }) {
   const [state, formAction] = useFormState(subirMaterialAction, {} as ActionState)
@@ -30,11 +30,12 @@ export function MaterialManager({ cursoId, materiales }: { cursoId: number; mate
         <div className="grid sm:grid-cols-2 gap-3">
           <input name="titulo" required placeholder="Título del material" className={input} />
           <select name="tipo" defaultValue="pdf" className={input}>
-            <option value="pdf">PDF</option>
+            <option value="pdf">PDF (archivo o link)</option>
             <option value="link">Link de video</option>
           </select>
         </div>
-        <input name="url" required type="url" placeholder="https://…" className={`${input} w-full`} />
+        <input name="archivo" type="file" accept="application/pdf" aria-label="Archivo PDF (máx. 25 MB)" className={`${input} w-full`} />
+        <input name="url" type="url" placeholder="o pegá un link: https://… (obligatorio si es video)" className={`${input} w-full`} />
         <label className="flex items-center gap-2 text-sm text-on-surface">
           <input type="checkbox" name="liberar_ahora" defaultChecked /> Liberar ahora
         </label>

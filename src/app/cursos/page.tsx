@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
-import WhatsAppButton from '@/components/layout/WhatsAppButton'
 import { createClient } from '@/lib/supabase/server'
+import { getSitioConfig } from '@/lib/sitio'
 import { CursosCatalogo, type CursoCatalogo } from '@/components/public/CursosCatalogo'
 
 export const metadata: Metadata = {
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function CursosPage() {
+  const sitio = await getSitioConfig()
   const supabase = await createClient()
   const { data: cursos } = await supabase
     .from('cursos')
@@ -52,10 +53,9 @@ export default async function CursosPage() {
           <h1 className="text-3xl md:text-5xl font-bold text-primary mb-3 tracking-tight">Cursos y Talleres</h1>
           <p className="text-lg text-on-surface-variant max-w-2xl">Formación técnica 100% práctica en Córdoba.</p>
         </header>
-        <CursosCatalogo cursos={catalogo} />
+        <CursosCatalogo cursos={catalogo} whatsapp={sitio.contacto.whatsapp} />
       </main>
       <SiteFooter />
-      <WhatsAppButton />
     </div>
   )
 }

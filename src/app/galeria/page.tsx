@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
-import WhatsAppButton from '@/components/layout/WhatsAppButton'
 import { createClient } from '@/lib/supabase/server'
 import { GaleriaLightbox } from '@/components/public/GaleriaLightbox'
 
@@ -42,7 +41,6 @@ export default async function GaleriaPage() {
         {!fotos?.length && <p className="text-on-surface-variant text-center py-20">Todavía no hay fotos cargadas.</p>}
       </main>
       <SiteFooter />
-      <WhatsAppButton />
     </div>
   )
 }
