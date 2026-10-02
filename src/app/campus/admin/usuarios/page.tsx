@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Reveal from '@/components/ui/Reveal'
 import { requireRole } from '@/lib/auth'
 import { ActionForm, Badge, Empty, Field, PageHead, Select } from '@/components/campus/ui'
 import { actualizarPerfil, cambiarEmail, crearUsuario, reenviarInvitacion, setEstadoCuenta } from '../actions'
@@ -47,8 +48,10 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
           {users.map((u) => {
             const [tone, label] = ESTADO[u.estado_cuenta as keyof typeof ESTADO]
             return (
-              <li key={u.id} className="card p-4">
+              <Reveal key={u.id} y={8}>
+              <li className="card p-4 transition-colors hover:border-outline">
                 <div className="flex flex-wrap items-center gap-3">
+                  <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-light to-accent text-sm font-bold text-white">{`${u.nombre?.[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">{u.apellido}, {u.nombre} <span className="ml-2 text-xs font-normal uppercase text-on-surface-variant">{u.rol}</span></p>
                     <p className="truncate text-sm text-on-surface-variant">{u.email}{u.telefono ? ` · ${u.telefono}` : ''}</p>
@@ -86,6 +89,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                   </div>
                 </details>
               </li>
+              </Reveal>
             )
           })}
         </ul>
