@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
+import Reveal from '@/components/ui/Reveal'
 import CursoCard from '@/components/public/CursoCard'
 import CursosFilters from '@/components/public/CursosFilters'
 import DemandaForm from '@/components/public/DemandaForm'
@@ -53,7 +54,7 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {lista.map((c) => <CursoCard key={c.id} c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} />)}
+              {lista.map((c, i) => <Reveal key={c.id} delay={Math.min(i, 8) * 0.05} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} /></Reveal>)}
             </div>
           )}
         </section>

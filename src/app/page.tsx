@@ -5,6 +5,8 @@ import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import CursoCard from '@/components/public/CursoCard'
 import ContactForm from '@/components/public/ContactForm'
+import Reveal from '@/components/ui/Reveal'
+import CountUp from '@/components/ui/CountUp'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, type Area } from '@/lib/types'
@@ -71,7 +73,7 @@ export default async function Home() {
             <div className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
               <h2 className="mb-10 text-3xl font-bold md:text-4xl">Capacitaciones destacadas</h2>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {destacados.map((c) => <CursoCard key={c.id} c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} />)}
+                {destacados.map((c, i) => <Reveal key={c.id} delay={i * 0.06} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} /></Reveal>)}
               </div>
             </div>
           </section>
@@ -105,7 +107,7 @@ export default async function Home() {
               </div>
               <dl className="grid grid-cols-3 gap-4 self-center text-center">
                 {([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const).map(([k, l]) => (
-                  s.stats[k] != null && <div key={k} className="card p-5"><dd className="text-3xl font-bold text-accent md:text-4xl">{s.stats[k]}</dd><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt></div>
+                  s.stats[k] != null && <div key={k} className="card p-5"><dd className="text-3xl font-bold text-accent md:text-4xl"><CountUp to={Number(s.stats[k])} /></dd><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt></div>
                 ))}
               </dl>
             </div>

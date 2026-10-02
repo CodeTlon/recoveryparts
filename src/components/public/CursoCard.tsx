@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import SpotlightCard from '@/components/ui/SpotlightCard'
 import { Clock, Flame, CalendarDays, Wrench } from 'lucide-react'
 import { AREA_LABEL, DIAS, TIPO_LABEL, formatPrecio, precioFinal, type CursoPublico, type Horario } from '@/lib/types'
 
@@ -30,7 +31,8 @@ export function Precio({ c, size = 'text-sm' }: { c: CursoPublico; size?: string
 export default function CursoCard({ c, horarios }: { c: CursoPublico; horarios: Horario[] }) {
   const h = horarioTexto(horarios)
   return (
-    <Link href={`/cursos/${c.slug}`} className="card group flex flex-col overflow-hidden transition-colors hover:border-secondary">
+    <SpotlightCard className="h-full">
+    <Link href={`/cursos/${c.slug}`} className="group flex h-full flex-col">
       <div className="relative aspect-[4/3] overflow-hidden border-b border-outline-variant bg-surface-container">
         {c.imagen_url
           ? <Image src={c.imagen_url} alt={c.nombre} fill sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -52,5 +54,6 @@ export default function CursoCard({ c, horarios }: { c: CursoPublico; horarios: 
         </div>
       </div>
     </Link>
+    </SpotlightCard>
   )
 }
