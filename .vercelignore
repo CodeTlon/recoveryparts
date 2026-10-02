@@ -1,0 +1,21 @@
+# Lo que NO debe subirse a Vercel si se despliega con `vercel deploy` (CLI).
+# Con la integración de GitHub rige .gitignore: estos archivos tampoco se commitean.
+
+# Cuentas y datos de prueba de homologación
+docs/CUENTAS-*.md
+scripts/
+.env.development
+.env.test
+.env.production
+.env*.local
+
+# Base de datos y operación: no hacen falta para ejecutar la app
+supabase/
+.github/
+
+# Documentación interna y herramientas de desarrollo
+docs/
+.claude/
+client-assets/
+*.md
+!README.md

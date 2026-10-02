@@ -7,7 +7,7 @@ La app está lista para conectarse; solo falta crear el proyecto y cargar las cl
 ## 1. Crear el proyecto
 1. Entrá a https://supabase.com y creá un proyecto (región São Paulo).
 2. En **Project Settings › API** copiá `Project URL`, `anon key` y `service_role key`.
-3. Copiá `.env.example` a `.env.staging` (o `.env.production`) y completá los valores; `npm run dev:staging` lo usa. **La `service_role` nunca se commitea ni se usa en el cliente.**
+3. Copiá `.env.example` a `.env.test` (o `.env.production`) y completá los valores; `npm run dev:test` lo usa. **La `service_role` nunca se commitea ni se usa en el cliente.**
 
 ## 2. Correr las migraciones
 Con la CLI (`npm i -g supabase`):

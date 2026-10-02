@@ -7,11 +7,11 @@ Academia de cursos y talleres técnicos (Córdoba). Next.js 15 (App Router) + Ta
 npm run db:start && npm run dev   # desarrollo: Supabase LOCAL (Docker) + app con .env.devment
 npm run seed:dev                  # cuentas/datos de PRUEBA locales (imprime contraseñas)
 npm run db:reset                  # rehacer la base local desde las migraciones
-npm run dev:staging               # app local contra homologación (.env.staging)
-npm run db:push:staging | db:push:production   # aplicar migraciones (pide confirmación)
+npm run dev:test               # app local contra homologación (.env.test)
+npm run db:push:test | db:push:production   # aplicar migraciones (pide confirmación)
 npm run build | type-check
 ```
-Tres entornos: **desarrollo** (local) → **homologación** (`staging`, Supabase remoto de pruebas) → **producción** (`main`). Ramas `feature/* → dev → staging → main`, siempre por PR. Detalle en `docs/ENTORNOS.md`.
+Tres entornos: **desarrollo** (local) → **homologación** (`test`, Supabase remoto de pruebas) → **producción** (`main`). Ramas `feature/* → dev → test → main`, siempre por PR. Detalle en `docs/ENTORNOS.md`.
 Sin variables de Supabase el sitio compila y muestra vacíos; el campus redirige a `/login`.
 
 ## Versiones que no hay que subir a ciegas
@@ -42,7 +42,7 @@ Node ≥ 20. `@supabase/supabase-js` **2.100.0** y `@supabase/ssr` **0.9.0** est
 ## Base de datos
 - **Nunca editar una migración ya aplicada**: se agrega una nueva (`NNNN_*.sql`) y se prueba con `npm run db:reset`.
 - Toda tabla nueva lleva RLS + políticas por rol (la CI falla si falta).
-- Nunca correr `seed:*` contra producción (el script se niega si `APP_ENV` no es devment/staging).
+- Nunca correr `seed:*` contra producción (el script se niega si `APP_ENV` no es devment/test).
 
 ## Convenciones
 - Español rioplatense en la UI (voseo). Comentarios con el ID del requisito (`RF-xx`) cuando implementan uno.

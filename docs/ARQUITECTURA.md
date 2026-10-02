@@ -42,7 +42,7 @@ Vistas públicas con solo columnas seguras: `cursos_publicos` (incluye `cupos_di
 - **Contacto**: el formulario guarda en `contactos` (bandeja del admin). El mail de aviso requiere un webhook/SMTP (ver SETUP).
 
 ## Entornos
-Desarrollo (Supabase local en Docker), homologación (`staging`) y producción (`main`). Ver `docs/ENTORNOS.md`.
+Desarrollo (Supabase local en Docker), homologación (`test`) y producción (`main`). Ver `docs/ENTORNOS.md`.
 
 ## Qué no existe a propósito
 Pagos, inscripciones, asistencia, stock, registro público, WhatsApp flotante/bot, videos alojados (solo links), modalidad virtual, carreras.

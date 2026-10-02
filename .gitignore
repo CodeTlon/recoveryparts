@@ -17,7 +17,7 @@ next-env.d.ts
 docs/CUENTAS-HOMOLOGACION.md
 
 # Entornos con secretos reales (no se commitean). .env.development es solo local y sí se versiona.
-.env.staging
+.env.test
 .env.production
 
 # Caché de la CLI de Supabase

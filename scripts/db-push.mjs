@@ -1,11 +1,11 @@
-// Aplica las migraciones pendientes a un entorno remoto. Uso: npm run db:push:staging | db:push:production
+// Aplica las migraciones pendientes a un entorno remoto. Uso: npm run db:push:test | db:push:production
 // Lee SUPABASE_DB_URL de .env.<entorno> (o del entorno, en CI). Muestra primero qué se va a aplicar.
 import { readFileSync, existsSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline/promises'
 
 const target = process.argv[2]
-if (!['staging', 'production'].includes(target)) { console.error('Uso: node scripts/db-push.mjs <staging|production>'); process.exit(1) }
+if (!['test', 'production'].includes(target)) { console.error('Uso: node scripts/db-push.mjs <test|production>'); process.exit(1) }
 
 const file = `.env.${target}`
 const env = { ...process.env }

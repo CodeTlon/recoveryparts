@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "next dev",
-    "dev:staging": "node --env-file=.env.staging node_modules/next/dist/bin/next dev",
+    "dev:test": "node --env-file=.env.test node_modules/next/dist/bin/next dev",
     "build": "next build",
     "start": "next start",
     "type-check": "tsc --noEmit",
@@ -13,10 +13,10 @@
     "db:stop": "supabase stop",
     "db:status": "supabase status",
     "db:reset": "supabase db reset",
-    "db:push:staging": "node scripts/db-push.mjs staging",
+    "db:push:test": "node scripts/db-push.mjs test",
     "db:push:production": "node scripts/db-push.mjs production",
     "seed:dev": "ENV_FILE=.env.development node scripts/seed-pruebas.mjs --confirmo-no-produccion",
-    "seed:staging": "ENV_FILE=.env.staging node scripts/seed-pruebas.mjs --confirmo-no-produccion"
+    "seed:test": "ENV_FILE=.env.test node scripts/seed-pruebas.mjs --confirmo-no-produccion"
   },
   "dependencies": {
     "@supabase/ssr": "0.9.0",

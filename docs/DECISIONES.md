@@ -4,11 +4,11 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
-| 2026-10-01 | Tres entornos: desarrollo (Supabase local) → homologación (`staging`, Supabase remoto actual) → producción (`main`); ramas `feature/* → dev → staging → main` por PR | Pedido del cliente; homologación es espejo de producción |
-| 2026-10-01 | Hosting en GitHub + Vercel; CI en GitHub Actions; migraciones automáticas al mergear a `staging`/`main` | Despliegue directo con Next.js y un entorno por rama |
+| 2026-10-01 | Tres entornos: desarrollo (Supabase local) → homologación (`test`, Supabase remoto actual) → producción (`main`); ramas `feature/* → dev → test → main` por PR | Pedido del cliente; homologación es espejo de producción |
+| 2026-10-01 | Hosting en GitHub + Vercel; CI en GitHub Actions; migraciones automáticas al mergear a `test`/`main` | Despliegue directo con Next.js y un entorno por rama |
 | 2026-10-01 | Registro público desactivado también en `supabase/config.toml` (local) y por migración en la base | Defensa en profundidad; en los proyectos remotos se desactiva en el panel de Auth |
 | 2026-10-01 | Proyecto local con `project_id = recoveryparts-dev` | Existía un volumen Docker viejo `recoveryparts` con otro esquema y datos; no se tocó |
-| 2026-10-01 | `seed-homologacion.mjs` pasa a `seed-pruebas.mjs` con `ENV_FILE` y se niega a correr si `APP_ENV` no es devment/staging | Poder sembrar desarrollo y homologación sin riesgo de tocar producción |
+| 2026-10-01 | `seed-homologacion.mjs` pasa a `seed-pruebas.mjs` con `ENV_FILE` y se niega a correr si `APP_ENV` no es devment/test | Poder sembrar desarrollo y homologación sin riesgo de tocar producción |
 | 2026-10-01 | Perfil y rol solo si el usuario fue **invitado** (`invited_at`); migración 0006 reemplaza a la 0005 | El registro público estaba habilitado en Auth y permitía autoasignarse `rol=admin`. La 0005 rechazaba en el INSERT y bloqueaba también las invitaciones legítimas (GoTrue marca `invited_at` después de crear el usuario) |
 | 2026-10-01 | Fijar `supabase-js 2.100.0` y `ssr 0.9.0` | Las versiones recientes exigen Node 22; el entorno usa Node 20 |
 | 2026-10-01 | Cuentas de prueba en `@homologacion.example.com` | Supabase rechaza el dominio `.test`; `example.com` no recibe mails |

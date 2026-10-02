@@ -1,6 +1,6 @@
 // Cuentas y datos de PRUEBA para desarrollo (Supabase local) u homologación. Idempotente.
 // Uso: ENV_FILE=.env.development node scripts/seed-pruebas.mjs --confirmo-no-produccion
-//      ENV_FILE=.env.staging     node scripts/seed-pruebas.mjs --confirmo-no-produccion
+//      ENV_FILE=.env.test     node scripts/seed-pruebas.mjs --confirmo-no-produccion
 // Se niega a correr si APP_ENV=production. Emails @homologacion.example.com (fáciles de borrar).
 // No envía ningún mail. Las contraseñas se generan al azar y se imprimen al final.
 import { createClient } from '@supabase/supabase-js'
@@ -14,8 +14,8 @@ if (!process.argv.includes('--confirmo-no-produccion')) {
 }
 
 const env = Object.fromEntries(readFileSync(ENV_FILE, 'utf8').split('\n').filter((l) => l.includes('=') && !l.startsWith('#')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]))
-if (env.APP_ENV === 'production' || !['development', 'staging'].includes(env.APP_ENV ?? '')) {
-  console.error(`Abortado: ${ENV_FILE} no declara APP_ENV=development|staging (APP_ENV=${env.APP_ENV ?? 'sin definir'}).`)
+if (env.APP_ENV === 'production' || !['development', 'test'].includes(env.APP_ENV ?? '')) {
+  console.error(`Abortado: ${ENV_FILE} no declara APP_ENV=development|test (APP_ENV=${env.APP_ENV ?? 'sin definir'}).`)
   process.exit(1)
 }
 console.log(`Entorno: ${env.APP_ENV} → ${env.NEXT_PUBLIC_SUPABASE_URL}`)

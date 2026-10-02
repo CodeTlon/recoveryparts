@@ -5,19 +5,19 @@
 | Entorno | Rama | App | Supabase | Archivo de variables |
 |---|---|---|---|---|
 | **Desarrollo** | `feature/*` → `dev` | `npm run dev` en tu máquina | **Local** (Docker, `npm run db:start`), propio de cada dev | `.env.devment` (versionado, claves demo públicas) |
-| **Homologación** | `staging` | Vercel (preview estable de `staging`) | Proyecto remoto de pruebas (`kdgjcgtuknexzimnpksz`) | `.env.staging` (gitignored) · Vercel env *Preview/staging* |
+| **Homologación** | `test` | Vercel (preview estable de `test`) | Proyecto remoto de pruebas (`kdgjcgtuknexzimnpksz`) | `.env.test` (gitignored) · Vercel env *Preview/test* |
 | **Producción** | `main` | Vercel (Production) | Proyecto remoto de producción (**a crear**) | `.env.production` (gitignored) · Vercel env *Production* |
 
 Homologación es un espejo de producción: mismo código, mismas migraciones, datos de prueba. **Nunca** se cargan datos reales en homologación ni se corre el seed en producción.
 
 ## Flujo de ramas
 ```
-feature/mi-cambio ──PR──▶ dev ──PR──▶ staging ──PR──▶ main
+feature/mi-cambio ──PR──▶ dev ──PR──▶ test ──PR──▶ main
    (local + Supabase local)  (CI)     (homologación)   (producción, con aprobación)
 ```
-- Las features salen de `dev` y vuelven por pull request. Nunca se commitea directo a `dev`, `staging` ni `main`.
-- Se promueve siempre en ese orden. Un cambio llega a `main` solo si ya pasó por `staging`.
-- Hotfix urgente: `hotfix/*` desde `main` → PR a `main` y luego se baja el cambio a `staging` y `dev`.
+- Las features salen de `dev` y vuelven por pull request. Nunca se commitea directo a `dev`, `test` ni `main`.
+- Se promueve siempre en ese orden. Un cambio llega a `main` solo si ya pasó por `test`.
+- Hotfix urgente: `hotfix/*` desde `main` → PR a `main` y luego se baja el cambio a `test` y `dev`.
 
 ## Día a día (desarrollo)
 ```bash
@@ -28,28 +28,28 @@ npm run dev            # usa .env.devment → http://localhost:3000
 npm run db:reset       # tirar la base local y rehacerla desde las migraciones
 npm run db:stop
 ```
-Para probar contra homologación desde tu máquina: `npm run dev:staging`.
+Para probar contra homologación desde tu máquina: `npm run dev:test`.
 
 ## Cambios en la base
 1. Crear una migración **nueva** en `supabase/migrations/` (`NNNN_descripcion.sql`). **Nunca editar una ya aplicada**: se corrige con otra migración.
 2. Probarla desde cero: `npm run db:reset`.
-3. Se aplica a homologación al mergear a `staging` (workflow `deploy-db.yml`) o a mano con `npm run db:push:staging` (muestra qué va a aplicar y pide confirmación).
+3. Se aplica a homologación al mergear a `test` (workflow `deploy-db.yml`) o a mano con `npm run db:push:test` (muestra qué va a aplicar y pide confirmación).
 4. A producción solo desde `main`, con aprobación del environment `production`.
 
 ## Qué hace la CI
-- **En cada PR** a `dev`/`staging`/`main`: type-check + build, y levanta un Supabase vacío, aplica todas las migraciones y verifica que **todas las tablas tengan RLS** y que **un registro público no genere perfil**.
-- **Al mergear** a `staging` o `main` con cambios en `supabase/migrations/**`: aplica las migraciones al Supabase de ese entorno.
+- **En cada PR** a `dev`/`test`/`main`: type-check + build, y levanta un Supabase vacío, aplica todas las migraciones y verifica que **todas las tablas tengan RLS** y que **un registro público no genere perfil**.
+- **Al mergear** a `test` o `main` con cambios en `supabase/migrations/**`: aplica las migraciones al Supabase de ese entorno.
 
 ## Configuración que hay que hacer una vez (no se puede desde el código)
 **GitHub** (Settings)
-- Proteger `main`, `staging` y `dev`: exigir pull request y que pasen los checks `Tipos y build` y `Migraciones desde cero + reglas`; sin push directo.
-- *Environments* → crear `staging` y `production`; en `production` activar **Required reviewers**.
+- Proteger `main`, `test` y `dev`: exigir pull request y que pasen los checks `Tipos y build` y `Migraciones desde cero + reglas`; sin push directo.
+- *Environments* → crear `test` y `production`; en `production` activar **Required reviewers**.
 - Secrets por environment: `SUPABASE_DB_URL` (conexión directa de cada proyecto).
 
 **Vercel**
 - Production Branch = `main`.
 - Variables de *Production* → proyecto Supabase de producción. Variables de *Preview* → proyecto de homologación.
-- Dominio estable para la rama `staging` (por ejemplo `staging.tudominio.com`), asignado a la rama en *Settings › Domains*.
+- Dominio estable para la rama `test` (por ejemplo `test.tudominio.com`), asignado a la rama en *Settings › Domains*.
 - Los previews de las ramas `feature/*` usan el Supabase de homologación (no hay backend local en la nube): no probar ahí nada destructivo.
 
 **Supabase (cada proyecto remoto)**
@@ -59,4 +59,4 @@ Para probar contra homologación desde tu máquina: `npm run dev:staging`.
 - SMTP propio: pendiente hasta tener dominio (ver `SETUP-SUPABASE.md`).
 
 ## Qué NO va en git
-`.env.staging`, `.env.production`, `.env*.local`, `docs/CUENTAS-HOMOLOGACION.md`. Las claves `service_role` y las contraseñas de base viven solo en esos archivos y en los secrets de GitHub/Vercel.
+`.env.test`, `.env.production`, `.env*.local`, `docs/CUENTAS-HOMOLOGACION.md`. Las claves `service_role` y las contraseñas de base viven solo en esos archivos y en los secrets de GitHub/Vercel.
