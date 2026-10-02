@@ -1,140 +1,63 @@
-'use client'
-
-// ============================================================
-// DEMO — Catálogo de cursos (Recovery Parts)
-// Grid de cursos con buscador + filtro por categoría. Data
-// estática (mock); el filtro corre client-side sobre el array.
-// Estilo Industrial Technical Narrative, flyers reales.
-// ============================================================
-
-import { useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Search, Clock, ArrowUpRight, SlidersHorizontal } from 'lucide-react'
+import { Suspense } from 'react'
+import type { Metadata } from 'next'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
+import CursoCard from '@/components/public/CursoCard'
+import CursosFilters from '@/components/public/CursosFilters'
+import DemandaForm from '@/components/public/DemandaForm'
+import { getCursos, getHorarios, getSettings, waLink } from '@/lib/data'
 
-const CURSOS = [
-  { title: 'Reparación de iPhone',        cat: 'Reparación',        img: '/images/curso-iphone.jpg',       meta: '12 clases · 2 hs', price: '$25.000 + 3×$65.000' },
-  { title: 'Reparación de Computadoras',  cat: 'Reparación',        img: '/images/curso-computadoras.jpg', meta: '16 clases · 2 hs', price: '$25.000 + 3×$65.000' },
-  { title: 'Reparación de Notebooks',     cat: 'Reparación',        img: '/images/curso-notebooks.jpg',    meta: '12 clases · 2 hs', price: '$25.000 + 3×$65.000' },
-  { title: 'Cambio de Glass',             cat: 'Reparación',        img: '/images/curso-glass.jpg',        meta: '2 clases intensivas', price: '$25.000 + 3×$65.000' },
-  { title: 'Carteles Neón LED',           cat: 'Oficios Creativos', img: '/images/curso-neon.jpg',         meta: 'Taller práctico', price: '$25.000 + 3×$65.000' },
-  { title: 'Estampado y Sublimación',     cat: 'Oficios Creativos', img: '/images/curso-estampados.jpg',   meta: 'Taller práctico', price: '$25.000 + 3×$65.000' },
-]
+export const metadata: Metadata = { title: 'Cursos y talleres' }
+export const dynamic = 'force-dynamic' // cupos en tiempo real
 
-const CATS = ['Todos', 'Reparación', 'Oficios Creativos']
+type SP = Record<string, string | undefined>
 
-const gridBg: React.CSSProperties = {
-  backgroundImage:
-    'linear-gradient(to right, rgba(143,144,151,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(143,144,151,0.05) 1px, transparent 1px)',
-  backgroundSize: '24px 24px',
-}
+export default async function CursosPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const f = await searchParams
+  const [cursos, horarios, settings] = await Promise.all([getCursos(), getHorarios(), getSettings()])
 
-export default function CursosPage() {
-  const [q, setQ] = useState('')
-  const [cat, setCat] = useState('Todos')
-
-  const cursos = CURSOS.filter(
-    (c) => (cat === 'Todos' || c.cat === cat) && c.title.toLowerCase().includes(q.toLowerCase())
+  const q = f.q?.trim().toLowerCase()
+  let lista = cursos.filter((c) =>
+    (!f.area || c.area === f.area) &&
+    (!f.tipo || c.tipo === f.tipo) &&
+    (!f.nivel || c.nivel?.toLowerCase() === f.nivel) &&
+    (!f.dia || horarios.some((h) => h.curso_id === c.id && String(h.dia_semana) === f.dia)) &&
+    (!q || `${c.nombre} ${c.descripcion ?? ''}`.toLowerCase().includes(q))
   )
+  if (f.orden === 'precio') lista = [...lista].sort((a, b) => (a.precio ?? Infinity) - (b.precio ?? Infinity))
+  else if (f.orden === 'proximos') lista = [...lista].sort((a, b) => (a.fecha_inicio ?? '9999').localeCompare(b.fecha_inicio ?? '9999'))
+  else lista = [...lista].sort((a, b) => Number(b.destacado) - Number(a.destacado))
+
+  const wa = waLink(settings.contacto.whatsapp, 'Hola! No encontré el curso que busco.')
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
-
       <main className="flex-grow pt-20">
-        {/* Header */}
-        <section className="border-b border-outline-variant" style={gridBg}>
-          <div className="max-w-[1280px] mx-auto px-4 md:px-12 py-16">
-            <div className="inline-flex items-center gap-2 border border-outline-variant bg-surface-container-low px-3 py-1 rounded mb-6">
-              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-xs text-on-surface-variant uppercase tracking-widest">Catálogo 2026</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-on-surface mb-4 tracking-tight">Catálogo de Cursos</h1>
-            <p className="text-lg text-on-surface-variant max-w-2xl">Capacitaciones 100% prácticas en reparación técnica y oficios creativos. Grupos reducidos, equipos reales.</p>
-
-            {/* Buscador + filtros */}
-            <div className="mt-10 flex flex-col lg:flex-row gap-4 lg:items-center">
-              <div className="relative flex-grow max-w-md">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                <input
-                  type="text"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Buscar curso…"
-                  className="w-full bg-surface-container-low border border-outline-variant rounded pl-11 pr-4 py-3 text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-secondary transition-colors"
-                />
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <SlidersHorizontal size={16} className="text-on-surface-variant hidden md:block" />
-                {CATS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setCat(c)}
-                    className={`px-4 py-2 rounded text-sm font-semibold uppercase tracking-wide border transition-colors ${
-                      cat === c
-                        ? 'bg-accent text-white border-accent'
-                        : 'border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
+        <section className="grid-bg border-b border-outline-variant">
+          <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12">
+            <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Cursos y talleres</h1>
+            <p className="max-w-2xl text-lg text-on-surface-variant">Formación 100% presencial en La Rioja 345, Córdoba. Cursos de varios meses y talleres de 1 a 2 clases.</p>
+            <Suspense><CursosFilters /></Suspense>
           </div>
         </section>
 
-        {/* Grid */}
-        <section className="max-w-[1280px] mx-auto px-4 md:px-12 py-14">
-          <p className="text-sm text-on-surface-variant uppercase tracking-widest mb-6">
-            {cursos.length} curso{cursos.length === 1 ? '' : 's'} disponible{cursos.length === 1 ? '' : 's'}
-          </p>
-
-          {cursos.length === 0 ? (
-            <div className="border border-outline-variant rounded p-16 text-center text-on-surface-variant" style={gridBg}>
-              No encontramos cursos con esos filtros.
+        <section className="mx-auto max-w-[1280px] px-4 py-14 md:px-12">
+          <p className="mb-6 text-sm uppercase tracking-widest text-on-surface-variant">{lista.length} resultado{lista.length === 1 ? '' : 's'}</p>
+          {lista.length === 0 ? (
+            <div className="card grid-bg p-10 text-center">
+              <p className="mb-2 text-lg font-semibold">No encontramos cursos</p>
+              <p className="mb-6 text-on-surface-variant">Probá con otros filtros o contanos qué te gustaría aprender.</p>
+              <div className="mx-auto max-w-md"><DemandaForm /></div>
+              {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline mt-6">Consultar por WhatsApp</a>}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {cursos.map((c) => (
-                <Link
-                  key={c.title}
-                  href="/curso"
-                  className="group bg-surface-container-low border border-outline-variant rounded overflow-hidden transition-all duration-300 hover:border-secondary flex flex-col"
-                >
-                  <div className="relative aspect-[4/5] border-b border-outline-variant overflow-hidden">
-                    <Image
-                      src={c.img}
-                      alt={c.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <span className="absolute top-3 left-3 bg-surface/90 backdrop-blur border border-outline-variant px-2 py-1 rounded text-xs font-semibold text-accent uppercase tracking-wide">
-                      {c.cat}
-                    </span>
-                  </div>
-                  <div className="p-5 flex flex-col flex-grow">
-                    <h3 className="text-lg font-semibold text-on-surface mb-2">{c.title}</h3>
-                    <div className="flex items-center gap-2 text-on-surface-variant text-sm mb-5">
-                      <Clock size={15} /> {c.meta}
-                    </div>
-                    <div className="mt-auto pt-4 border-t border-outline-variant flex items-center justify-between">
-                      <span className="text-sm font-bold text-on-surface">{c.price}</span>
-                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-secondary uppercase tracking-wide">
-                        Ver curso <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {lista.map((c) => <CursoCard key={c.id} c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} />)}
             </div>
           )}
         </section>
       </main>
-
       <SiteFooter />
     </div>
   )

@@ -1,153 +1,163 @@
-// ============================================================
-// DEMO — Home (Recovery Parts)
-// Fiel al diseño Stitch "home_recovery_parts" (Industrial
-// Technical Narrative): hero a pantalla, Capacitaciones Destacadas
-// (3 cards) y Construyendo Profesionales (grid). Mock estático.
-// Fotos reales (flyers) desde /public/images.
-// ============================================================
-
-import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, ArrowUpRight, ChevronRight, CircuitBoard } from 'lucide-react'
-import { demoConfig } from '@/lib/demo-config'
-import WhatsAppButton from '@/components/layout/WhatsAppButton'
+import Link from 'next/link'
+import { ArrowRight, Star, ChevronDown } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
+import CursoCard from '@/components/public/CursoCard'
+import ContactForm from '@/components/public/ContactForm'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
+import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
+import { AREA_LABEL, type Area } from '@/lib/types'
 
-const gridBg: React.CSSProperties = {
-  backgroundImage:
-    'linear-gradient(to right, rgba(143,144,151,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(143,144,151,0.05) 1px, transparent 1px)',
-  backgroundSize: '24px 24px',
-}
+export const dynamic = 'force-dynamic'
 
-const CURSOS = [
-  { img: '/images/curso-iphone.jpg', mod: 'MOD-IP01', tags: ['4 Meses', 'Presencial'], title: 'Reparación de iPhone', desc: 'Diagnóstico avanzado, micro-soldadura y reemplazo de componentes a nivel placa.', foot: 'Próximo inicio: 15 Oct', href: '/cursos' },
-  { img: '/images/curso-notebooks.jpg', mod: 'MOD-NB02', tags: ['6 Meses', 'Híbrido'], title: 'Hardware de Notebooks', desc: 'Análisis esquemático, reballing y reparación integral de equipos portátiles multimarca.', foot: 'Próximo inicio: 02 Nov', href: '/cursos' },
-  { img: '/images/curso-neon.jpg', mod: 'MOD-NL03', tags: ['2 Meses', 'Presencial'], title: 'Cartelería Neón LED', desc: 'Diseño, ruteo y ensamblaje de sistemas de iluminación LED personalizados y comerciales.', foot: 'Cupos limitados', href: '/cursos' },
-]
+type Egresado = { id: string; nombre: string; especialidad: string; foto_url: string | null; destacado: boolean }
+type Testimonio = { id: string; nombre: string; curso: string | null; texto: string; puntaje: number; foto_url: string | null }
+type Faq = { id: string; pregunta: string; respuesta: string }
 
-export default function Home() {
-  const waCurso = `https://wa.me/${demoConfig.business.whatsapp}?text=${encodeURIComponent('Hola, quiero info de los cursos de Recovery Parts')}`
+export default async function Home() {
+  const [s, cursos, horarios, egresados, testimonios, faq] = await Promise.all([
+    getSettings(), getCursos(), getHorarios(),
+    query<Egresado[]>((sb) => sb.from('cms_egresados').select('*').order('orden').limit(10), []),
+    query<Testimonio[]>((sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
+    query<Faq[]>((sb) => sb.from('cms_faq').select('*').order('orden'), []),
+  ])
+  const destacados = cursos.filter((c) => c.destacado).slice(0, 6)
+  const wa = waLink(s.contacto.whatsapp)
+  const areas = (['diseno', 'tecnico'] as Area[])
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen flex flex-col">
+    <div className="min-h-screen bg-surface text-on-surface">
       <SiteNav />
-
-      <main className="flex-grow pt-20">
-        {/* Hero */}
-        <section className="relative w-full min-h-[80vh] flex items-center justify-center border-b border-outline-variant overflow-hidden">
-          <Image src="/images/hero.jpg" alt="" fill priority sizes="100vw" className="object-cover" />
-          {/* Overlays: dejan ver la foto (antes la tapaban casi por completo) */}
-          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/75 to-surface/40" />
-          <div className="absolute inset-0 bg-surface/15" />
-          {/* Glow naranja para dar profundidad/calidez al hero */}
-          <div className="absolute -top-1/3 right-0 h-[600px] w-[600px] rounded-full bg-accent/20 blur-[140px] pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-surface to-transparent" />
-          <div className="absolute inset-0" style={gridBg} />
-          <CircuitBoard size={420} strokeWidth={0.5} className="absolute text-primary opacity-[0.06] pointer-events-none" />
-          <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 md:px-12 flex flex-col items-center text-center py-20 md:py-24">
-            <div className="inline-flex items-center gap-2 border border-outline-variant bg-surface-container-low px-3 py-1 rounded mb-6">
-              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-xs text-on-surface-variant uppercase tracking-widest">Inscripciones Abiertas</span>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-on-surface max-w-4xl mb-6 tracking-tight leading-[1.1]">
-              Dominá la tecnología en el <br className="hidden md:block" /> corazón de Córdoba
-            </h1>
-            <p className="text-lg text-on-surface-variant max-w-xl mb-10 leading-relaxed">
-              Formación técnica 100% práctica en reparación y microelectrónica.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link href="/cursos" className="bg-accent text-white font-bold uppercase tracking-widest px-8 py-4 rounded hover:opacity-90 transition-opacity flex items-center justify-center gap-2 group">
-                Ver Cursos <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <a href={waCurso} target="_blank" rel="noopener noreferrer" className="border border-outline-variant text-on-surface font-bold uppercase tracking-widest px-8 py-4 rounded hover:border-secondary hover:text-secondary transition-colors flex items-center justify-center gap-2">
-                <WhatsAppIcon size={18} /> Reservar lugar
-              </a>
+      <main>
+        {/* 1 · Hero */}
+        <section className="relative flex min-h-[85vh] items-center overflow-hidden pt-20">
+          {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/85 to-surface/40" />
+          <div className="pointer-events-none absolute -bottom-1/4 -left-1/4 h-[500px] w-[500px] rounded-full bg-accent/20 blur-[130px]" />
+          <div className="relative mx-auto w-full max-w-[1280px] px-4 py-20 md:px-12">
+            <h1 className="mb-6 max-w-4xl text-4xl font-bold tracking-tight md:text-6xl">{s.hero.titulo || 'Aprendé un oficio con equipos reales'}</h1>
+            <p className="mb-10 max-w-2xl text-lg text-on-surface-variant md:text-xl">{s.hero.subtitulo || 'Cursos y talleres presenciales en Córdoba.'}</p>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/cursos" className="btn-primary !px-8 !py-4">{s.hero.cta_cursos || 'Ver cursos'} <ArrowRight size={18} /></Link>
+              {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline !px-8 !py-4"><WhatsAppIcon size={18} /> {s.hero.cta_whatsapp || 'WhatsApp'}</a>}
             </div>
           </div>
         </section>
 
-        {/* Capacitaciones Destacadas */}
-        <section id="capacitaciones" className="w-full py-14 md:py-20 border-b border-outline-variant bg-surface">
-          <div className="max-w-[1280px] mx-auto px-4 md:px-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-              <div>
-                <h2 className="text-3xl font-semibold text-on-surface mb-2">Capacitaciones Destacadas</h2>
-                <p className="text-on-surface-variant">Especializaciones de alta demanda técnica.</p>
-              </div>
-              <Link href="/cursos" className="text-sm font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider">
-                Ver catálogo completo <ChevronRight size={16} />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {CURSOS.map(({ img, mod, tags, title, desc, foot, href }) => (
-                <Link key={mod} href={href} className="group bg-surface-container-low border border-outline-variant rounded overflow-hidden transition-all duration-300 hover:border-secondary flex flex-col">
-                  <div className="h-56 border-b border-outline-variant bg-surface relative overflow-hidden">
-                    <Image src={img} alt={title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <div className="p-6 flex-grow flex flex-col">
-                    <div className="flex gap-2 mb-4">
-                      {tags.map((t, i) => (
-                        <span key={t} className={`px-2 py-1 rounded text-xs border ${i === 1 ? 'border-accent/40 text-accent bg-accent/10' : 'border-outline-variant text-on-surface-variant bg-surface'}`}>{t}</span>
-                      ))}
-                    </div>
-                    <h3 className="text-xl font-semibold text-on-surface mb-2">{title}</h3>
-                    <p className="text-on-surface-variant mb-6 flex-grow">{desc}</p>
-                    <div className="pt-4 border-t border-outline-variant flex justify-between items-center mt-auto">
-                      <span className="text-sm font-semibold text-on-surface">{foot}</span>
-                      <ArrowUpRight size={20} className="text-secondary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </div>
+        {/* 2 · Las dos áreas */}
+        <section className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
+          <div className="grid gap-6 md:grid-cols-2">
+            {areas.map((a) => {
+              const cfg = s.areas[a]
+              return (
+                <Link key={a} href={`/cursos?area=${a}`} className={`card group relative flex min-h-[300px] flex-col justify-end overflow-hidden p-8 transition-colors hover:border-accent ${a === 'diseno' ? 'border-t-4 border-t-accent' : 'border-t-4 border-t-brand-light'}`}>
+                  {cfg.imagen_url && <Image src={cfg.imagen_url} alt="" fill sizes="50vw" className="object-cover opacity-40 transition-opacity group-hover:opacity-50" />}
+                  <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-surface/20" />
+                  <div className="relative">
+                    <h2 className="mb-2 text-2xl font-bold">{cfg.titulo || AREA_LABEL[a]}</h2>
+                    {cfg.texto && <p className="mb-4 text-on-surface-variant">{cfg.texto}</p>}
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-wide text-secondary">Ver cursos <ArrowRight size={16} /></span>
                   </div>
                 </Link>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </section>
 
-        {/* Construyendo Profesionales */}
-        <section id="egresados" className="w-full py-14 md:py-20 bg-surface-container border-b border-outline-variant">
-          <div className="max-w-[1280px] mx-auto px-4 md:px-12">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold text-on-surface mb-4">Construyendo Profesionales</h2>
-              <p className="text-on-surface-variant max-w-2xl mx-auto">Cada camada se gradúa con su grupo. Estas son algunas de las últimas promociones de egresados.</p>
+        {/* 3 · Destacadas */}
+        {destacados.length > 0 && (
+          <section className="grid-bg border-y border-outline-variant">
+            <div className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
+              <h2 className="mb-10 text-3xl font-bold md:text-4xl">Capacitaciones destacadas</h2>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {destacados.map((c) => <CursoCard key={c.id} c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} />)}
+              </div>
             </div>
-            {/* ponytail: bento que tesela exacto (2 destacadas 2x2 + 8 simples = 4×4, sin huecos) */}
-            <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[160px] md:auto-rows-[190px] gap-4">
-              {[
-                { n: 1,  tag: 'Reparación de iPhone',  fecha: '05/06/2026', big: true },
-                { n: 5,  tag: 'Reparación de Notebooks', fecha: '18/05/2026' },
-                { n: 3,  tag: 'Reparación de PC',      fecha: '02/05/2026' },
-                { n: 4,  tag: 'Carteles Neón LED',     fecha: '20/04/2026' },
-                { n: 2,  tag: 'Reparación de Android', fecha: '10/04/2026' },
-                { n: 6,  tag: 'Microsoldadura',        fecha: '22/03/2026' },
-                { n: 7,  tag: 'Cambio de Glass',       fecha: '08/03/2026' },
-                { n: 8,  tag: 'Reparación de TV',      fecha: '28/02/2026', big: true },
-                { n: 9,  tag: 'Estampado',             fecha: '10/02/2026' },
-                { n: 10, tag: 'Reparación de iPhone',  fecha: '31/01/2026' },
-              ].map((e) => (
-                <div key={e.n} className={`relative overflow-hidden rounded border border-outline-variant bg-surface group ${e.big ? 'md:col-span-2 md:row-span-2' : ''}`}>
-                  <Image src={`/images/egresado-${e.n}.jpg`} alt={`Egresados ${e.tag} — Recovery Parts (${e.fecha})`} fill sizes={e.big ? '(max-width: 768px) 50vw, 50vw' : '(max-width: 768px) 50vw, 25vw'} className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-x-0 bottom-0 p-3 md:p-4 bg-gradient-to-t from-black/85 to-transparent">
-                    <div className="text-xs md:text-sm font-semibold text-white">Egresados {e.tag} · {e.fecha}</div>
-                  </div>
-                </div>
+          </section>
+        )}
+
+        {/* 4 · Egresados */}
+        {egresados.length > 0 && (
+          <section className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
+            <h2 className="mb-10 text-3xl font-bold md:text-4xl">Construyendo profesionales</h2>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:auto-rows-[200px]">
+              {egresados.map((e) => (
+                <figure key={e.id} className={`relative overflow-hidden rounded border border-outline-variant bg-surface-container ${e.destacado ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square md:aspect-auto'}`}>
+                  {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />}
+                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3 pt-10">
+                    <p className="text-sm font-semibold">{e.nombre}</p>
+                    <p className="text-xs text-on-surface-variant">{e.especialidad}</p>
+                  </figcaption>
+                </figure>
               ))}
             </div>
+          </section>
+        )}
 
-            <div className="text-center mt-14">
-              <a href={waCurso} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-accent text-white font-bold uppercase tracking-widest px-8 py-4 rounded hover:opacity-90 transition-opacity group">
-                Quiero inscribirme <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </a>
+        {/* 5 · Nosotros + stats */}
+        {(s.nosotros.titulo || s.nosotros.texto) && (
+          <section className="border-y border-outline-variant bg-surface-container-lowest">
+            <div className="mx-auto grid max-w-[1280px] gap-12 px-4 py-20 md:grid-cols-2 md:px-12">
+              <div>
+                <h2 className="mb-4 text-3xl font-bold md:text-4xl">{s.nosotros.titulo}</h2>
+                <p className="whitespace-pre-line text-lg text-on-surface-variant">{s.nosotros.texto}</p>
+              </div>
+              <dl className="grid grid-cols-3 gap-4 self-center text-center">
+                {([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const).map(([k, l]) => (
+                  s.stats[k] != null && <div key={k} className="card p-5"><dd className="text-3xl font-bold text-accent md:text-4xl">{s.stats[k]}</dd><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt></div>
+                ))}
+              </dl>
             </div>
+          </section>
+        )}
+
+        {/* 6 · Testimonios */}
+        {testimonios.length > 0 && (
+          <section className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
+            <h2 className="mb-10 text-3xl font-bold md:text-4xl">Lo que dicen nuestros alumnos</h2>
+            <div className="grid gap-6 md:grid-cols-3">
+              {testimonios.map((t) => (
+                <figure key={t.id} className="card flex flex-col p-6">
+                  <div className="mb-3 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={18} fill="currentColor" />)}</div>
+                  <blockquote className="flex-1 text-on-surface-variant">{t.texto}</blockquote>
+                  <figcaption className="mt-4 flex items-center gap-3">
+                    <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-surface-container-high">{t.foto_url && <Image src={t.foto_url} alt="" fill sizes="40px" className="object-cover" />}</span>
+                    <span><span className="block text-sm font-semibold">{t.nombre}</span>{t.curso && <span className="text-xs text-on-surface-variant">{t.curso}</span>}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 7 · FAQ */}
+        {faq.length > 0 && (
+          <section className="border-t border-outline-variant bg-surface-container-lowest">
+            <div className="mx-auto max-w-3xl px-4 py-20">
+              <h2 className="mb-8 text-center text-3xl font-bold md:text-4xl">Preguntas frecuentes</h2>
+              <div className="space-y-3">
+                {faq.map((f) => (
+                  <details key={f.id} className="card group p-5">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{f.pregunta}<ChevronDown size={20} className="shrink-0 transition-transform group-open:rotate-180" /></summary>
+                    <p className="mt-3 whitespace-pre-line text-on-surface-variant">{f.respuesta}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 8 · Contacto */}
+        <section id="contacto" className="scroll-mt-20 border-t border-outline-variant">
+          <div className="mx-auto max-w-2xl px-4 py-20">
+            <h2 className="mb-3 text-center text-3xl font-bold md:text-4xl">Contacto</h2>
+            <p className="mb-8 text-center text-on-surface-variant">Escribinos y te respondemos a la brevedad.</p>
+            <ContactForm />
           </div>
         </section>
       </main>
-
       <SiteFooter />
-
-      <WhatsAppButton />
     </div>
   )
 }

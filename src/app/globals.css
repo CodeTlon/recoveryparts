@@ -3,114 +3,48 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Defaults (los reescribe layout.tsx desde demo-config.ts). Esquema semántico:
-       cada rol existe para que el MISMO componente funcione en claro y oscuro. */
-    --demo-bg: #ffffff;
-    --demo-surface: #f5f0e8;        /* cards y secciones alternas */
-    --demo-surface-alt: #ffffff;    /* segundo tono / cards destacadas / inputs */
-    --demo-heading: #1a1a1a;
-    --demo-text: #1a1a1a;
-    --demo-muted: #6b6b6b;          /* texto secundario (color real, no opacity) */
-    --demo-border: #e7ddcf;
-    --demo-accent: #c8a96e;         /* CTA / highlight */
-    --demo-on-accent: #1a1a1a;      /* texto sobre el accent */
-    --demo-structural: #1a1a1a;     /* bandas (navbar / footer / stats) */
-    --demo-on-structural: #ffffff;
-    --demo-font: Inter;
-    --demo-radius: 0.75rem;         /* botones, chips, inputs, cards chicas */
-    --demo-radius-lg: 1rem;         /* cards grandes, frames de imagen */
-  }
-
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background-color: var(--demo-bg);
-    color: var(--demo-text);
-    font-family: var(--demo-font), sans-serif;
+    background-color: #08132a;
+    color: #e6ecff;
+    font-family: var(--font-montserrat), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
-  /* Selección y foco de teclado en naranja industrial (#ff6b35) — antes
-     se usaba el azul por defecto del navegador, que choca con el tema. */
-  ::selection { background-color: #ff6b35; color: #0a192f; }
+  ::selection { background-color: #f97316; color: #08132a; }
 
   :focus-visible {
-    outline: 2px solid #ff6b35;
+    outline: 2px solid #f97316;
     outline-offset: 2px;
     border-radius: 2px;
   }
 
-  /* Scrollbar fino acorde al dark navy (Firefox + WebKit) */
   html { scrollbar-width: thin; scrollbar-color: #44474d #08132a; }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: #08132a; }
-  ::-webkit-scrollbar-thumb {
-    background: #44474d;
-    border: 2px solid #08132a;
-    border-radius: 6px;
-  }
-  ::-webkit-scrollbar-thumb:hover { background: #ff6b35; }
+  ::-webkit-scrollbar-thumb { background: #44474d; border: 2px solid #08132a; border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: #f97316; }
 }
 
 @layer components {
-  /* Etiqueta "eyebrow" reutilizable (antes era un bloque inline repetido 10 veces) */
-  .eyebrow {
-    @apply text-sm font-semibold uppercase tracking-[0.3em] mb-3;
-    color: var(--demo-accent);
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(143,144,151,0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(143,144,151,0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
-
-  .section-title {
-    @apply text-3xl md:text-4xl font-bold mb-4;
-    color: var(--demo-heading);
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded px-6 py-3 text-sm font-semibold uppercase tracking-wide transition disabled:opacity-50 disabled:pointer-events-none;
   }
-  .section-subtitle {
-    @apply text-lg max-w-2xl mx-auto;
-    color: var(--demo-muted);
+  .btn-primary { @apply btn bg-accent text-white hover:bg-accent-hover; }
+  .btn-outline { @apply btn border-2 border-accent text-accent hover:bg-accent hover:text-white; }
+  .btn-ghost { @apply btn border border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary; }
+  .card { @apply rounded-lg border border-outline-variant bg-surface-container-low; }
+  .input {
+    @apply w-full rounded border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-accent focus:outline-none;
   }
-  .section-pad { @apply py-20 md:py-28; }
-
-  /* Card temática: el tratamiento (borde / sombra / glass) lo decide
-     data-cards en <html>, seteado desde style.cards del config. */
-  .card {
-    @apply p-6 transition-all duration-200;
-    background-color: var(--demo-surface);
-    border-radius: var(--demo-radius-lg);
-  }
-
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold transition-all duration-200;
-    background-color: var(--demo-accent);
-    color: var(--demo-on-accent);
-    border-radius: var(--demo-radius);
-  }
-  .btn-primary:hover { opacity: 0.9; }
-
-  .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold border-2 transition-all duration-200;
-    border-color: var(--demo-accent);
-    color: var(--demo-accent);
-    border-radius: var(--demo-radius);
-  }
-  .btn-outline:hover { background-color: var(--demo-accent); color: var(--demo-on-accent); }
-}
-
-@layer utilities {
-  /* Tratamiento de superficies según style.cards ──────────────── */
-  [data-cards='shadow'] .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  }
-  [data-cards='border'] .card {
-    border: 1px solid var(--demo-border);
-  }
-  [data-cards='border'] .card:hover {
-    border-color: var(--demo-accent);
-  }
-  [data-cards='glass'] .card {
-    border: 1px solid var(--demo-border);
-    background-color: color-mix(in srgb, var(--demo-surface) 70%, transparent);
-    backdrop-filter: blur(12px);
-  }
+  .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wider text-on-surface-variant; }
+  .badge { @apply inline-flex items-center rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide; }
 }

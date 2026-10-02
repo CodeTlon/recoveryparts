@@ -1,0 +1,22 @@
+name: Migraciones a Supabase
+# staging -> homologación (automático) · main -> producción (requiere aprobación del environment "production")
+on:
+  push:
+    branches: [staging, main]
+    paths: ['supabase/migrations/**']
+
+jobs:
+  migrar:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    env:
+      CI: 'true'
+      APP_ENV: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Aplicar migraciones pendientes
+        run: node scripts/db-push.mjs ${{ github.ref_name == 'main' && 'production' || 'staging' }}

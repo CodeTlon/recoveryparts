@@ -1,0 +1,168 @@
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import { CheckCircle2, Star, ExternalLink, MapPin, Clock, CalendarDays, Users } from 'lucide-react'
+import SiteNav from '@/components/layout/SiteNav'
+import SiteFooter from '@/components/layout/SiteFooter'
+import Accordion from '@/components/public/Accordion'
+import { Cupos, Precio, horarioTexto } from '@/components/public/CursoCard'
+import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
+import { AREA_LABEL, TIPO_LABEL, formatPrecio } from '@/lib/types'
+
+export const dynamic = 'force-dynamic'
+
+async function load(slug: string) {
+  const curso = (await getCursos()).find((c) => c.slug === slug)
+  return curso
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const c = await load((await params).slug)
+  return { title: c?.nombre ?? 'Curso', description: c?.descripcion?.slice(0, 150) }
+}
+
+export default async function CursoPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const c = await load(slug)
+  if (!c) notFound()
+
+  const [horarios, settings, modulos, kit, testimonios] = await Promise.all([
+    getHorarios().then((h) => h.filter((x) => x.curso_id === c.id)),
+    getSettings(),
+    query<{ id: string; titulo: string; items: string[] }[]>((sb) => sb.from('modulos_publicos').select('id, titulo, items').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>((sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
+  ])
+
+  const wa = waLink(settings.contacto.whatsapp, `Hola! Quiero info del curso ${c.nombre}`)
+  const totalKit = kit.reduce((s, k) => s + (k.precio ?? 0), 0)
+  const h = horarioTexto(horarios)
+  const row = 'flex items-start gap-3 text-sm text-on-surface-variant'
+
+  return (
+    <div className="flex min-h-screen flex-col bg-surface text-on-surface">
+      <SiteNav />
+      <main className="mx-auto w-full max-w-[1280px] flex-grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
+        <section className="mb-16 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
+          <div className={`flex flex-col gap-6 ${c.imagen_url ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+            <div className="flex flex-wrap gap-2">
+              <span className="badge border border-outline-variant bg-surface-container-high text-primary">{AREA_LABEL[c.area]}</span>
+              <span className="badge bg-accent text-white">{TIPO_LABEL[c.tipo]}</span>
+              {c.nivel && <span className="badge border border-outline-variant text-on-surface-variant">{c.nivel}</span>}
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{c.nombre}</h1>
+            {c.descripcion && <p className="max-w-2xl whitespace-pre-line border-l-2 border-accent pl-4 text-lg leading-relaxed text-on-surface-variant">{c.descripcion}</p>}
+          </div>
+          {c.imagen_url && (
+            <div className="relative h-64 overflow-hidden rounded border border-outline-variant bg-surface-container lg:col-span-5 lg:h-[380px]">
+              <Image src={c.imagen_url} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 42vw" className="object-cover" />
+            </div>
+          )}
+        </section>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="flex flex-col gap-12 lg:col-span-8">
+            {modulos.length > 0 && (
+              <section>
+                <h2 className="mb-1 text-2xl font-semibold">Plan de estudios</h2>
+                <p className="mb-5 text-sm text-on-surface-variant">{modulos.length} módulo{modulos.length === 1 ? '' : 's'}</p>
+                <Accordion items={modulos.map((m, i) => ({ id: m.id, n: String(i + 1).padStart(2, '0'), title: m.titulo, items: m.items }))} />
+              </section>
+            )}
+
+            {c.requisitos && (
+              <section>
+                <h2 className="mb-3 text-2xl font-semibold">Requisitos previos</h2>
+                <p className="whitespace-pre-line text-on-surface-variant">{c.requisitos}</p>
+              </section>
+            )}
+
+            {c.profesor_nombre && (
+              <section>
+                <h2 className="mb-4 text-2xl font-semibold">Tu profesor</h2>
+                <div className="card flex flex-col gap-5 p-6 sm:flex-row">
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-outline-variant bg-surface-container-high">
+                    {c.profesor_foto && <Image src={c.profesor_foto} alt={c.profesor_nombre} fill sizes="96px" className="object-cover" />}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">{c.profesor_nombre}</h3>
+                    {c.profesor_experiencia && <p className="mt-2 whitespace-pre-line text-sm text-on-surface-variant">{c.profesor_experiencia}</p>}
+                    {c.profesor_certificaciones && <p className="mt-2 flex gap-2 text-sm text-on-surface-variant"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-primary" /> {c.profesor_certificaciones}</p>}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {c.video_url && (
+              <section>
+                <h2 className="mb-4 text-2xl font-semibold">Conocé las clases</h2>
+                <a href={c.video_url} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>
+              </section>
+            )}
+
+            {kit.length > 0 && (
+              <section>
+                <h2 className="mb-1 text-2xl font-semibold">Kit necesario</h2>
+                <p className="mb-5 text-sm text-on-surface-variant">Precios de referencia{c.precio_actualizado_en ? `, actualizados al ${new Date(c.precio_actualizado_en + 'T00:00').toLocaleDateString('es-AR')}` : ''}. La compra se realiza en el sitio de nuestro socio.</p>
+                <ul className="card divide-y divide-outline-variant">
+                  {kit.map((k) => (
+                    <li key={k.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <div>
+                        <p className="font-semibold">{k.nombre}</p>
+                        {k.descripcion && <p className="text-sm text-on-surface-variant">{k.descripcion}</p>}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold">{formatPrecio(k.precio)}</span>
+                        {k.link_externo && <a href={k.link_externo} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Comprar <ExternalLink size={14} /></a>}
+                      </div>
+                    </li>
+                  ))}
+                  <li className="flex justify-between p-4 font-bold"><span>Total del kit</span><span>{formatPrecio(totalKit)}</span></li>
+                </ul>
+              </section>
+            )}
+
+            {testimonios.length > 0 && (
+              <section>
+                <h2 className="mb-4 text-2xl font-semibold">Opiniones</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {testimonios.map((t) => (
+                    <figure key={t.id} className="card p-5">
+                      <div className="mb-2 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}</div>
+                      <blockquote className="text-sm text-on-surface-variant">{t.texto}</blockquote>
+                      <figcaption className="mt-3 text-sm font-semibold">{t.nombre}</figcaption>
+                    </figure>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          <aside className="lg:col-span-4">
+            <div className="flex flex-col gap-6 lg:sticky lg:top-[100px]">
+              <div className="card flex flex-col gap-5 bg-surface-container p-6 shadow-lg shadow-black/40">
+                <h2 className="text-2xl font-semibold">Inversión</h2>
+                <div>
+                  <Precio c={c} size="text-4xl" />
+                  {c.descuento_pct ? <span className="badge ml-2 bg-accent text-white">-{c.descuento_pct}%</span> : null}
+                </div>
+                <div className="h-px bg-outline-variant" />
+                <ul className="flex flex-col gap-3">
+                  {h && <li className={row}><CalendarDays size={18} className="mt-0.5 shrink-0" /> {h}</li>}
+                  {c.aula && <li className={row}><MapPin size={18} className="mt-0.5 shrink-0" /> {c.aula} · La Rioja 345</li>}
+                  {c.duracion_semanas && <li className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {c.duracion_semanas} semanas</li>}
+                  <li className={row}><Users size={18} className="mt-0.5 shrink-0" /> <Cupos n={c.cupos_disponibles} /></li>
+                </ul>
+                {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-primary w-full !py-4">Consultar por WhatsApp</a>}
+                <p className="text-xs text-on-surface-variant">La inscripción y el pago se gestionan por el medio que te indiquemos al consultar.</p>
+              </div>
+              <Link href="/cursos" className="text-center text-sm text-on-surface-variant hover:text-secondary">← Ver todos los cursos</Link>
+            </div>
+          </aside>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  )
+}
