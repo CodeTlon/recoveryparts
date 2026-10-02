@@ -1,0 +1,50 @@
+name: CI
+on:
+  pull_request:
+    branches: [dev, test, main]
+  push:
+    branches: [dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Tipos y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run type-check
+      # El build no necesita Supabase: sin variables compila y muestra vacíos.
+      - run: npm run build
+
+  base-de-datos:
+    name: Migraciones desde cero + reglas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: 2.119.0 }
+      - name: Levantar Supabase local y aplicar migraciones + seed
+        run: supabase start -x realtime,edge-runtime,vector,logflare,imgproxy,studio,postgres-meta,supavisor
+      - name: Todas las tablas con RLS
+        run: |
+          out=$(psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -At -c "select string_agg(tablename, ',') from pg_tables where schemaname='public' and not rowsecurity")
+          test -z "$out" || { echo "Tablas sin RLS: $out"; exit 1; }
+      - name: El registro público no genera perfil
+        run: |
+          psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -At <<'SQL'
+          begin;
+          insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+            values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'x@x.com', '{"rol":"admin"}');
+          do $$ begin
+            if exists (select 1 from profiles where email = 'x@x.com') then raise exception 'un signup público generó perfil'; end if;
+          end $$;
+          rollback;
+          SQL
+      - if: always()
+        run: supabase stop --no-backup

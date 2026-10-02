@@ -7,7 +7,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "dev:test": "node --env-file=.env.test node_modules/next/dist/bin/next dev",
+    "db:start": "supabase start -x realtime,edge-runtime,vector,logflare,imgproxy,studio,postgres-meta,supavisor",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "db:push:test": "node scripts/db-push.mjs test",
+    "db:push:production": "node scripts/db-push.mjs production",
+    "seed:dev": "ENV_FILE=.env.development node scripts/seed-pruebas.mjs --confirmo-no-produccion",
+    "seed:test": "ENV_FILE=.env.test node scripts/seed-pruebas.mjs --confirmo-no-produccion"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",
@@ -15,6 +24,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "clsx": "^2.1.0",
+    "jszip": "3.10.1",
     "lucide-react": "^0.400.0",
     "next": "15.5.25",
     "react": "^18.3.0",
@@ -30,6 +40,10 @@
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "supabase": "2.119.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

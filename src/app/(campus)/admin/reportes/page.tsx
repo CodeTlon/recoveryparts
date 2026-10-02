@@ -10,6 +10,15 @@ export default async function ReportesPage() {
   await requireAdmin()
   const supabase = await createClient()
 
+  // RF-52: demanda de cursos que aún no se dictan (se agrupa por texto normalizado).
+  const { data: demandaRows } = await supabase.from('demanda_cursos').select('interes')
+  const demandaMap = new Map<string, number>()
+  for (const d of demandaRows ?? []) {
+    const k = d.interes.trim().toLowerCase()
+    demandaMap.set(k, (demandaMap.get(k) ?? 0) + 1)
+  }
+  const demanda = [...demandaMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15)
+
   const [{ data: cursosData }, { data: matriculasData }] = await Promise.all([
     supabase.from('cursos').select('id, titulo, cupo_total, created_at').neq('estado', 'de_baja'),
     supabase.from('matriculas').select('curso_id, estado, created_at, fecha_desercion, n_clase_desercion'),
@@ -59,8 +68,7 @@ export default async function ReportesPage() {
   // matrícula que llegó al cupo (si ya se llenó alguna vez).
   const velocidad = cursos.map((c) => {
     const activas = (porCurso.get(c.id) ?? [])
-      .filter((m) => m.estado !== 'inactivo')
-      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
     const seLleno = activas.length >= c.cupo_total
     const dias = seLleno
       ? Math.round((new Date(activas[c.cupo_total - 1].created_at).getTime() - new Date(c.created_at).getTime()) / 86_400_000)
@@ -149,6 +157,22 @@ export default async function ReportesPage() {
                 </tr>
               ))}
               {!velocidad.length && <tr><td colSpan={2} className="px-4 py-6 text-center text-on-surface-variant">Sin datos.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="mb-1 text-xl md:text-2xl font-semibold text-on-surface">Demanda de cursos que aún no se dictan</h2>
+        <p className="mb-4 text-sm text-on-surface-variant">Pedidos registrados desde el buscador del sitio (RF-52).</p>
+        <div className="bg-surface-container-low border border-outline-variant rounded-lg overflow-x-auto">
+          <table className="w-full min-w-[320px] text-sm">
+            <thead><tr className="text-left text-on-surface-variant uppercase text-xs tracking-wider"><th className="font-semibold px-4 py-3">Curso pedido</th><th className="font-semibold px-4 py-3">Pedidos</th></tr></thead>
+            <tbody>
+              {demanda.map(([k, n]) => (
+                <tr key={k} className="border-t border-outline-variant text-on-surface"><td className="px-4 py-3 capitalize">{k}</td><td className="px-4 py-3 text-on-surface-variant">{n}</td></tr>
+              ))}
+              {!demanda.length && <tr><td colSpan={2} className="px-4 py-6 text-center text-on-surface-variant">Todavía no hay pedidos.</td></tr>}
             </tbody>
           </table>
         </div>

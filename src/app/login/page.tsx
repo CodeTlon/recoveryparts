@@ -95,17 +95,9 @@ export default function LoginPage() {
           <span className="text-[10px] font-mono text-accent uppercase tracking-widest">Access_Terminal · V2.1</span>
           <h2 className="text-4xl font-bold text-primary uppercase tracking-tighter mt-2 leading-tight">{demoConfig.business.name}</h2>
           <p className="text-on-surface-variant mt-3 max-w-sm border-l-2 border-outline pl-4">
-            Campus técnico de microelectrónica y reparación de precisión.
+            Campus virtual de la academia: material, clases y novedades de tus cursos.
           </p>
 
-          <div className="mt-10 flex gap-8">
-            {demoConfig.content.stats.slice(0, 3).map((s) => (
-              <div key={s.label}>
-                <div className="text-3xl font-bold text-on-surface tracking-tight">{s.value}</div>
-                <div className="text-[11px] uppercase tracking-wider text-on-surface-variant mt-1">{s.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="relative flex gap-6 font-mono text-[10px] text-on-tertiary-container uppercase tracking-wider">

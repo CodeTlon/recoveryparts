@@ -1,5 +1,6 @@
 'use client'
 
+import { DemandaForm } from '@/components/public/DemandaForm'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search, ArrowUpRight, Zap } from 'lucide-react'
@@ -27,7 +28,8 @@ export type CursoCatalogo = {
 
 const fmtPrecio = (n: number) => n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
-export function CursosCatalogo({ cursos }: { cursos: CursoCatalogo[] }) {
+export function CursosCatalogo({ cursos, whatsapp }: { cursos: CursoCatalogo[]; whatsapp?: string }) {
+  const waHref = whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, busco un curso que no encontré en el sitio')}` : null
   const [q, setQ] = useState('')
   const [area, setArea] = useState('')
   const [tipo, setTipo] = useState('')
@@ -66,11 +68,15 @@ export function CursosCatalogo({ cursos }: { cursos: CursoCatalogo[] }) {
       </div>
 
       {!filtrados.length && (
-        <div className="text-center py-20 border border-outline-variant rounded-lg bg-surface-container-low">
-          <p className="text-on-surface-variant mb-4">No encontramos cursos con esa búsqueda.</p>
-          <a href="https://wa.me/?text=Hola,%20busco%20un%20curso%20que%20no%20encontr%C3%A9%20en%20el%20sitio" target="_blank" rel="noopener noreferrer" className="text-secondary hover:text-primary transition-colors font-semibold text-sm">
-            Contanos qué buscás por WhatsApp →
-          </a>
+        <div className="text-center py-16 px-4 border border-outline-variant rounded-lg bg-surface-container-low">
+          <p className="mb-1 text-lg font-semibold text-on-surface">No encontramos cursos con esa búsqueda</p>
+          <p className="mb-6 text-on-surface-variant">Contanos qué te gustaría aprender y te avisamos si lo dictamos.</p>
+          <DemandaForm />
+          {waHref && (
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-block text-secondary hover:text-primary transition-colors font-semibold text-sm">
+              O escribinos por WhatsApp →
+            </a>
+          )}
         </div>
       )}
 

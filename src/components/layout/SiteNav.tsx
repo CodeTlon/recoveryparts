@@ -1,64 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
-// Navbar compartido (home + catálogo). "Nosotros" y "Servicio Técnico" son
-// links de muestra (no existen esas páginas) — href="#", solo presencia visual.
+const LINKS = [
+  { href: '/', label: 'Inicio' },
+  { href: '/cursos', label: 'Cursos' },
+  { href: '/galeria', label: 'Galería' },
+  { href: '/#contacto', label: 'Contacto' },
+]
+
 export default function SiteNav() {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const link = 'text-on-surface-variant hover:text-secondary transition-colors'
+
   return (
-    <nav className="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant">
-      <div className="flex justify-between items-center px-4 md:px-12 h-20 w-full max-w-[1280px] mx-auto">
-        <Link href="/" onClick={close} className="flex items-center gap-2.5 text-lg sm:text-xl md:text-2xl font-bold text-on-surface uppercase tracking-tighter">
-          <Image src="/images/logo.png" alt="Recovery Parts" width={36} height={36} className="w-8 h-8 md:w-9 md:h-9 shrink-0" />
+    <nav className="fixed top-0 z-50 w-full border-b border-outline-variant bg-surface">
+      <div className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between px-4 md:px-12">
+        <Link href="/" onClick={close} className="flex items-center gap-2.5 text-lg font-bold uppercase tracking-tighter text-on-surface sm:text-xl md:text-2xl">
+          <Image src="/images/logo.png" alt="" width={36} height={36} className="h-8 w-8 shrink-0 md:h-9 md:w-9" />
           Recovery Parts
         </Link>
 
-        {/* Links desktop */}
-        <div className="hidden md:flex items-center gap-8 text-sm font-semibold uppercase tracking-wide">
-          <Link href="/cursos" className="text-on-surface-variant hover:text-secondary transition-colors">Cursos</Link>
-          <a href="#" className="text-on-surface-variant hover:text-secondary transition-colors">Nosotros</a>
-          <a href="#" className="text-on-surface-variant hover:text-secondary transition-colors">Servicio Técnico</a>
+        <div className="hidden items-center gap-8 text-sm font-semibold uppercase tracking-wide md:flex">
+          {LINKS.map((l) => <Link key={l.href} href={l.href} className={link}>{l.label}</Link>)}
         </div>
 
-        {/* CTA desktop */}
-        <Link href="/login" className="hidden md:inline-flex text-sm font-bold text-primary border border-outline-variant px-6 py-2 rounded hover:text-secondary hover:border-secondary transition-all uppercase tracking-wider">
-          Student Login
-        </Link>
+        <Link href="/login" className="btn-primary hidden !py-2 md:inline-flex">Campus</Link>
 
-        {/* Hamburguesa mobile */}
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Menú"
-          aria-expanded={open}
-          className="md:hidden inline-flex items-center justify-center w-11 h-11 -mr-1.5 rounded text-on-surface hover:text-secondary transition-colors"
-        >
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open}
+          className="-mr-1.5 inline-flex h-11 w-11 items-center justify-center rounded text-on-surface hover:text-secondary md:hidden">
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Menú desplegable mobile — siempre montado, abre/cierra con slide + fade */}
-      <div
-        aria-hidden={!open}
-        className={`md:hidden grid transition-[grid-template-rows,opacity] duration-300 ease-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}
-      >
-        <div className="overflow-hidden">
-          <div className="border-t border-outline-variant bg-surface px-4 pt-2 pb-4">
-            <Link href="/cursos" onClick={close} className="block px-3 py-3 rounded text-sm font-semibold uppercase tracking-wide text-on-surface-variant hover:text-secondary hover:bg-surface-container-low transition-colors">Cursos</Link>
-            <a href="#" onClick={close} className="block px-3 py-3 rounded text-sm font-semibold uppercase tracking-wide text-on-surface-variant hover:text-secondary hover:bg-surface-container-low transition-colors">Nosotros</a>
-            <a href="#" onClick={close} className="block px-3 py-3 rounded text-sm font-semibold uppercase tracking-wide text-on-surface-variant hover:text-secondary hover:bg-surface-container-low transition-colors">Servicio Técnico</a>
-            <Link href="/login" onClick={close} className="mt-2 flex items-center justify-center px-4 py-3 rounded text-sm font-bold uppercase tracking-wider text-primary border border-outline-variant hover:text-secondary hover:border-secondary transition-all">
-              Student Login
-            </Link>
-          </div>
+      {open && (
+        <div className="border-t border-outline-variant bg-surface px-4 pb-4 pt-2 md:hidden">
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} onClick={close} className={`block rounded px-3 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-surface-container-low ${link}`}>{l.label}</Link>
+          ))}
+          <Link href="/login" onClick={close} className="btn-primary mt-2 w-full">Campus</Link>
         </div>
-      </div>
+      )}
     </nav>
   )
 }

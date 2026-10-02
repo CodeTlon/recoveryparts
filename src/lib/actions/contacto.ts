@@ -35,3 +35,24 @@ export async function enviarConsultaAction(_prevState: ActionState, formData: Fo
   await enviarContactoRecibido({ nombre, email, telefono, mensaje })
   return { success: '¡Gracias! Te vamos a contactar a la brevedad.' }
 }
+
+const demandaSchema = z.object({
+  interes: z.string().trim().min(1, 'Contanos qué curso te interesa').max(200),
+  contacto: z.string().trim().max(120).optional(),
+  sitio_web: z.string().optional(), // honeypot
+})
+
+// RF-52: registra el interés en cursos que todavía no se dictan (alimenta el reporte de demanda).
+export async function registrarDemandaAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = demandaSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisá los datos' }
+  if (parsed.data.sitio_web) return { success: '¡Gracias! Registramos tu interés.' }
+
+  const ip = await ipDeLaRequest()
+  if (!rateLimit(`demanda:${ip}`, 5, 60 * 60_000)) return { error: 'Demasiados pedidos desde tu conexión. Probá más tarde.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('demanda_cursos').insert({ interes: parsed.data.interes, contacto: parsed.data.contacto || null })
+  if (error) return { error: 'No pudimos registrar tu interés. Probá de nuevo.' }
+  return { success: '¡Gracias! Registramos tu interés.' }
+}

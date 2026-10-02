@@ -12,7 +12,7 @@ export type SitioConfigData = {
 const DEFAULT: SitioConfigData = {
   hero: { titulo: 'Recovery Parts', subtitulo: 'Formación técnica en Córdoba.', imagen_url: '/images/hero.jpg' },
   areas: {
-    tecnico: { titulo: 'Servicio Técnico y Tecnológico', descripcion: '' },
+    tecnico: { titulo: 'Reparación y Tecnología', descripcion: '' },
     diseno: { titulo: 'Creación y Diseño', descripcion: '' },
   },
   stats: { aulas: 0, profesores: 0, egresados: 0 },

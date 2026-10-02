@@ -75,14 +75,13 @@ export async function agregarAlumnoACursoAction(_prevState: ActionState, formDat
 const estadoSchema = z.object({
   matricula_id: z.coerce.number().int().positive(),
   curso_id: z.coerce.number().int().positive(),
-  estado: z.enum(['activo', 'suspendido', 'desertor', 'inactivo']),
+  estado: z.enum(['activo', 'desertor']),
   motivo_baja: z.string().trim().max(500).optional(),
   fecha_desercion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 })
 
-// RF-15/RF-54/RF-55: cambia el estado de una matrícula. Motivo obligatorio
-// para desertor/inactivo. n_clase_desercion se calcula server-side contando
-// solo clases 'programada' (no suspendidas/reprogramadas, RF-38) hasta la fecha.
+// RF-15/RF-54/RF-55: marca Desertor o reactiva una matrícula. Motivo obligatorio
+// para desertor. n_clase_desercion lo calcula la base (solo clases 'programada').
 export async function cambiarEstadoMatriculaAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   // No usamos requireProfesor()/requireAdmin() acá: esta acción la puede
   // llamar CUALQUIERA de los dos roles (con distinto alcance), y esos
@@ -96,8 +95,8 @@ export async function cambiarEstadoMatriculaAction(_prevState: ActionState, form
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
   const d = parsed.data
 
-  if ((d.estado === 'desertor' || d.estado === 'inactivo') && !d.motivo_baja) {
-    return { error: 'El motivo es obligatorio para dar de baja o marcar deserción.' }
+  if (d.estado === 'desertor' && !d.motivo_baja) {
+    return { error: 'El motivo es obligatorio para marcar deserción.' }
   }
 
   const supabase = await createClient()
@@ -118,27 +117,15 @@ export async function cambiarEstadoMatriculaAction(_prevState: ActionState, form
     marcado_en: new Date().toISOString(),
   }
 
+  // El N° de clase y la limpieza al reactivar los resuelve el trigger de la base
+  // (migración 0007): no se pueden falsear desde el cliente.
   if (d.estado === 'desertor') {
-    const { count } = await supabase
-      .from('clases')
-      .select('*', { count: 'exact', head: true })
-      .eq('curso_id', d.curso_id)
-      .eq('estado', 'programada')
-      .lte('fecha', fechaDesercion)
     update.motivo_baja = d.motivo_baja
     update.fecha_desercion = fechaDesercion
-    update.n_clase_desercion = count ?? 0
-  } else if (d.estado === 'inactivo') {
-    update.motivo_baja = d.motivo_baja
-  } else {
-    // activo/suspendido: limpiar el rastro de una deserción previa (RF-56 — reactivación).
-    update.motivo_baja = null
-    update.fecha_desercion = null
-    update.n_clase_desercion = null
   }
 
   const { error } = await supabase.from('matriculas').update(update).eq('id', d.matricula_id)
-  if (error) return { error: 'No pudimos actualizar el estado.' }
+  if (error) return { error: error.message.includes('administrador') ? 'Solo un administrador puede hacer ese cambio.' : 'No pudimos actualizar el estado.' }
 
   revalidatePath(`/admin/cursos/${d.curso_id}`)
   return { success: 'Estado actualizado.' }

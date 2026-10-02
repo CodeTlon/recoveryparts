@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight, ChevronRight, CircuitBoard, Cpu, Palette } from 'lucide-react'
-import WhatsAppButton from '@/components/layout/WhatsAppButton'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
@@ -189,7 +188,6 @@ export default async function Home() {
       </main>
 
       <SiteFooter />
-      <WhatsAppButton />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { FileText, Video, ExternalLink } from 'lucide-react'
+import { FileText, Video, ExternalLink, Download } from 'lucide-react'
 import { requireAlumno } from '@/lib/auth-helpers'
 import { createClient } from '@/lib/supabase/server'
 import { EncuestaAlumnoForm } from '@/components/campus/EncuestaAlumnoForm'
@@ -12,7 +12,7 @@ export default async function AlumnoCursoPage({ params }: { params: Promise<{ id
 
   const { data: matricula } = await supabase
     .from('matriculas')
-    .select('id, estado, cursos(id, titulo, aula)')
+    .select('id, estado, motivo_baja, fecha_desercion, n_clase_desercion, cursos(id, titulo, aula)')
     .eq('curso_id', cursoId)
     .eq('alumno_id', user.id)
     .maybeSingle()
@@ -33,7 +33,7 @@ export default async function AlumnoCursoPage({ params }: { params: Promise<{ id
       .maybeSingle(),
     supabase
       .from('materiales')
-      .select('id, titulo, tipo, url')
+      .select('id, titulo, tipo, url, storage_path')
       .eq('curso_id', cursoId)
       .lte('liberado_en', new Date().toISOString())
       .order('orden'),
@@ -57,10 +57,22 @@ export default async function AlumnoCursoPage({ params }: { params: Promise<{ id
         <p className="text-lg text-on-surface-variant">Aula {curso.aula}</p>
       </header>
 
-      {matricula.estado !== 'activo' && (
-        <p className="mb-8 text-sm text-on-surface bg-surface-container-high border border-outline-variant rounded px-4 py-3">
-          Tu estado en este curso es &quot;{matricula.estado}&quot;. Contactá a la administración si creés que es un error.
-        </p>
+      {matricula.estado === 'desertor' && (
+        <div role="alert" className="mb-8 rounded border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm">
+          <p className="font-semibold text-red-200">
+            Fuiste dado de baja de este curso{matricula.fecha_desercion ? ` el ${new Date(matricula.fecha_desercion + 'T00:00').toLocaleDateString('es-AR')}` : ''}
+            {matricula.n_clase_desercion != null ? ` (clase ${matricula.n_clase_desercion})` : ''}.
+          </p>
+          {matricula.motivo_baja && <p className="mt-1 text-on-surface-variant">Motivo: {matricula.motivo_baja}</p>}
+          <p className="mt-1 text-on-surface-variant">Ya no tenés acceso al material. Contactá a la administración si creés que es un error.</p>
+        </div>
+      )}
+      {matricula.estado === 'finalizado' && (
+        <div className="mb-8">
+          <a href={`/api/cursos/${cursoId}/zip`} className="inline-flex items-center gap-2 rounded bg-accent px-5 py-3 text-sm font-semibold uppercase tracking-wide text-white transition-opacity hover:opacity-90">
+            <Download size={16} /> Descargar todos los PDFs (ZIP)
+          </a>
+        </div>
       )}
 
       <section className="mb-16">
@@ -81,9 +93,9 @@ export default async function AlumnoCursoPage({ params }: { params: Promise<{ id
         <h2 className="text-xl font-semibold text-on-surface mb-4">Material liberado</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {(materiales ?? []).map((m) => (
+            <div key={m.id} className="flex flex-col gap-2">
             <a
-              key={m.id}
-              href={m.url}
+              href={m.storage_path ? `/api/material/${m.id}` : (m.url ?? '#')}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-surface-container-low border border-outline-variant rounded-lg p-6 flex flex-col hover:border-secondary transition-colors group"
@@ -96,6 +108,12 @@ export default async function AlumnoCursoPage({ params }: { params: Promise<{ id
                 Ver <ExternalLink size={14} />
               </span>
             </a>
+            {m.storage_path && (
+              <a href={`/api/material/${m.id}?download=1`} className="inline-flex items-center justify-center gap-2 rounded border border-outline-variant px-3 py-2 text-sm font-semibold text-on-surface-variant transition-colors hover:border-secondary hover:text-secondary">
+                <Download size={16} /> Descargar PDF
+              </a>
+            )}
+            </div>
           ))}
           {!materiales?.length && (
             <p className="text-on-surface-variant bg-surface-container-low border border-outline-variant rounded-lg p-6 sm:col-span-2 lg:col-span-3">

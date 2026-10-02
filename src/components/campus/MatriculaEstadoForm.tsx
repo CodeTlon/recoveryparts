@@ -7,9 +7,7 @@ import type { ActionState } from '@/lib/actions/auth'
 
 const ESTADOS = [
   { value: 'activo', label: 'Activo' },
-  { value: 'suspendido', label: 'Suspendido' },
   { value: 'desertor', label: 'Desertor' },
-  { value: 'inactivo', label: 'Inactivo' },
 ] as const
 
 function SubmitButton() {
@@ -34,7 +32,7 @@ export function MatriculaEstadoForm({
 }) {
   const [state, formAction] = useFormState(cambiarEstadoMatriculaAction, {} as ActionState)
   const [estado, setEstado] = useState(estadoActual)
-  const requiereMotivo = estado === 'desertor' || estado === 'inactivo'
+  const requiereMotivo = estado === 'desertor'
 
   return (
     <form action={formAction} className="flex flex-col gap-2">
