@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { FileText, Link2, ExternalLink, ArrowLeft, CalendarDays } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { PageHead, Empty } from '@/components/campus/ui'
+import Reveal from '@/components/ui/Reveal'
 
 type Mat = { id: string; tipo: 'pdf' | 'link'; titulo: string; url: string | null; clase_numero: number | null; clase_titulo: string | null }
 
@@ -40,9 +41,11 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
 
       {porClase.size === 0 && <Empty>Todavía no hay material liberado. Va a aparecer acá a medida que avance el curso.</Empty>}
 
-      <div className="space-y-8">
-        {[...porClase.entries()].map(([titulo, items]) => (
-          <section key={titulo}>
+      <ol className="relative space-y-8 border-l border-outline-variant pl-6 md:pl-8">
+        {[...porClase.entries()].map(([titulo, items], idx) => (
+          <Reveal key={titulo} delay={Math.min(idx, 6) * 0.05}>
+          <li className="relative">
+            <span aria-hidden className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-accent shadow-glow ring-4 ring-surface md:-left-[39px]" />
             <h2 className="mb-3 text-lg font-semibold">{titulo}</h2>
             <ul className="space-y-2">
               {items.map((m) => (
@@ -55,9 +58,10 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
                 </li>
               ))}
             </ul>
-          </section>
+          </li>
+          </Reveal>
         ))}
-      </div>
+      </ol>
     </>
   )
 }

@@ -31,6 +31,34 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-montserrat)', 'system-ui', 'sans-serif'],
       },
+      // Tokens de forma y profundidad: todo componente nuevo los usa en vez de valores sueltos.
+      borderRadius: {
+        card: '0.75rem',
+        pill: '9999px',
+      },
+      boxShadow: {
+        card: '0 1px 0 0 rgba(230,236,255,0.04) inset, 0 8px 24px -12px rgba(3,13,37,0.8)',
+        'card-hover': '0 1px 0 0 rgba(230,236,255,0.06) inset, 0 16px 40px -16px rgba(249,115,22,0.35)',
+        glow: '0 0 0 1px rgba(249,115,22,0.35), 0 0 32px -4px rgba(249,115,22,0.35)',
+      },
+      keyframes: {
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
+      },
+      animation: {
+        'fade-up': 'fade-up 0.5s ease-out both',
+        shimmer: 'shimmer 1.6s infinite',
+        marquee: 'marquee 40s linear infinite',
+      },
     },
   },
   plugins: [],

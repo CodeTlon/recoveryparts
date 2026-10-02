@@ -1,6 +1,8 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { CheckCircle2, Inbox, XCircle } from 'lucide-react'
 import type { R } from '@/app/campus/admin/actions'
 
 export function PageHead({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
@@ -16,7 +18,14 @@ export function PageHead({ title, sub, action }: { title: string; sub?: string; 
 }
 
 export function Empty({ children }: { children: React.ReactNode }) {
-  return <div className="card p-8 text-center text-on-surface-variant">{children}</div>
+  return (
+    <div className="card flex flex-col items-center gap-3 p-10 text-center text-on-surface-variant">
+      <span aria-hidden className="grid h-12 w-12 place-items-center rounded-full bg-accent/10 text-accent">
+        <Inbox size={22} />
+      </span>
+      <div>{children}</div>
+    </div>
+  )
 }
 
 export function Badge({ tone = 'neutral', children }: { tone?: 'ok' | 'bad' | 'warn' | 'neutral'; children: React.ReactNode }) {
@@ -30,13 +39,33 @@ export function ActionForm({ action, children, submit = 'Guardar', className = '
 }) {
   const [s, run, pending] = useActionState<R, FormData>(action, {})
   const ref = useRef<HTMLFormElement>(null)
+  const [toast, setToast] = useState<'ok' | 'error' | null>(null)
   useEffect(() => { if (s.ok && reset) ref.current?.reset() }, [s, reset])
+  useEffect(() => {
+    if (!s.ok && !s.error) return
+    setToast(s.error ? 'error' : 'ok')
+    const t = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(t)
+  }, [s])
   return (
     <form ref={ref} action={run} className={`space-y-4 ${className}`}>
       {children}
       {s.error && <p role="alert" className="text-sm text-red-400">{s.error}</p>}
-      {s.ok && !s.error && <p role="status" className="text-sm text-green-400">Guardado.</p>}
       <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : submit}</button>
+      <AnimatePresence>
+        {toast === 'ok' && (
+          <motion.div role="status" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
+            className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-pill border border-green-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-green-300 shadow-card-hover">
+            <CheckCircle2 size={18} aria-hidden /> Guardado
+          </motion.div>
+        )}
+        {toast === 'error' && (
+          <motion.div aria-hidden initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
+            className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-pill border border-red-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-red-300 shadow-card-hover">
+            <XCircle size={18} aria-hidden /> No se pudo guardar
+          </motion.div>
+        )}
+      </AnimatePresence>
     </form>
   )
 }
@@ -67,7 +96,36 @@ export function Select({ name, label, defaultValue, options, empty }: { name: st
   )
 }
 
-// Botón de envío para forms simples (<form action={serverAction}>).
+// Botón de envío para acciones destructivas (<form action={serverAction}>).
+// Con mouse/touch hay que MANTENERLO apretado ~1 s (el relleno naranja indica el avance);
+// con teclado se mantiene el confirm() del navegador, así sigue siendo accesible.
 export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2', name, value }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string }) {
-  return <button name={name} value={value} className={className} onClick={(e) => { if (message && !confirm(message)) e.preventDefault() }}>{children}</button>
+  const ref = useRef<HTMLButtonElement>(null)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+  const [holding, setHolding] = useState(false)
+  const [hint, setHint] = useState(false)
+  const fired = useRef(false)
+  const hold = !!message
+  const cancel = () => { clearTimeout(timer.current); setHolding(false) }
+  useEffect(() => () => clearTimeout(timer.current), [])
+
+  if (!hold) return <button name={name} value={value} className={className}>{children}</button>
+  return (
+    <button ref={ref} name={name} value={value} title={message} className={`relative overflow-hidden ${className}`}
+      onPointerDown={(e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return
+        setHolding(true)
+        fired.current = false
+        timer.current = setTimeout(() => { fired.current = true; setHolding(false); ref.current?.form?.requestSubmit(ref.current) }, 1000)
+      }}
+      onPointerUp={cancel} onPointerLeave={cancel} onPointerCancel={cancel}
+      onClick={(e) => {
+        if (e.detail === 0) { if (!confirm(message)) e.preventDefault(); return } // teclado
+        if (fired.current) { e.preventDefault(); return } // ya se envió al completar la pulsación
+        if (e.isTrusted) { e.preventDefault(); setHint(true); setTimeout(() => setHint(false), 2200) } // click corto
+      }}>
+      <span aria-hidden className={`absolute inset-y-0 left-0 bg-red-500/40 ${holding ? 'w-full transition-[width] duration-1000 ease-linear' : 'w-0'}`} />
+      <span className="relative inline-flex items-center gap-1">{hint ? 'Mantené apretado' : children}</span>
+    </button>
+  )
 }

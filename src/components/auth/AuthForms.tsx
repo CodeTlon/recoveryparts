@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { Mail, Lock, ArrowRight } from 'lucide-react'
+import PasswordMeter from '@/components/ui/PasswordMeter'
 import { login, olvideContrasena, definirContrasena, type AuthState } from '@/app/auth/actions'
 
 const field = 'flex items-center gap-3 rounded border border-outline-variant bg-surface-container-low px-4 py-3 transition-colors focus-within:border-accent'
@@ -42,10 +43,12 @@ export function OlvideForm() {
 
 export function ActivarForm() {
   const [s, action, pending] = useActionState<AuthState, FormData>(definirContrasena, {})
+  const [pw, setPw] = useState('')
   return (
     <form action={action} className="space-y-3">
       <label className={field}><Lock size={16} className="text-on-surface-variant" aria-hidden />
-        <input name="password" type="password" required minLength={8} autoComplete="new-password" placeholder="Nueva contraseña (mín. 8)" aria-label="Nueva contraseña" className={inp} /></label>
+        <input name="password" type="password" required minLength={8} autoComplete="new-password" placeholder="Nueva contraseña (mín. 8)" aria-label="Nueva contraseña" className={inp} value={pw} onChange={(e) => setPw(e.target.value)} /></label>
+      <PasswordMeter value={pw} />
       <label className={field}><Lock size={16} className="text-on-surface-variant" aria-hidden />
         <input name="confirm" type="password" required minLength={8} autoComplete="new-password" placeholder="Repetí la contraseña" aria-label="Repetir contraseña" className={inp} /></label>
       <Err s={s} />

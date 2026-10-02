@@ -13,8 +13,8 @@ export default async function Cursos() {
     <>
       <PageHead title="Cursos y talleres" action={<Link href="/campus/admin/cursos/nuevo" className="btn-primary"><Plus size={16} /> Crear curso</Link>} />
       {!cursos?.length ? <Empty>Todavía no hay cursos. Creá el primero.</Empty> : (
-        <div className="card overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+        <div className="card max-h-[70vh] overflow-auto">
+          <table className="tabla w-full min-w-[720px] text-sm">
             <thead><tr className="text-left text-xs uppercase tracking-wider text-on-surface-variant"><th className="px-4 py-3">Curso</th><th className="px-4 py-3">Área</th><th className="px-4 py-3">Profesor</th><th className="px-4 py-3">Inscriptos</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3" /></tr></thead>
             <tbody>
               {cursos.map((c: any) => (

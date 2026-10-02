@@ -11,7 +11,7 @@ export default async function Consultas() {
       {!data?.length ? <Empty>No hay consultas.</Empty> : (
         <ul className="space-y-3">
           {data.map((c) => (
-            <li key={c.id} className="card p-5">
+            <li key={c.id} className={`card p-5 ${c.leido ? '' : 'border-l-4 border-l-accent'}`}>
               <div className="mb-2 flex flex-wrap items-center gap-3">
                 <p className="font-semibold">{c.nombre}</p>
                 <a href={`mailto:${c.email}`} className="text-sm text-secondary">{c.email}</a>
