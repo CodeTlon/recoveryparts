@@ -15,7 +15,7 @@ Con la CLI (`npm i -g supabase`):
 supabase link --project-ref <tu-ref>
 supabase db push
 ```
-O pegando en **SQL Editor**, en orden: `supabase/migrations/0001_schema.sql`, `0002_functions.sql`, `0003_rls.sql`, `0004_storage.sql`, `0005_bloquear_autoregistro.sql`, `0006_perfil_solo_por_invitacion.sql` (la 0006 reemplaza el trigger de la 0005) y por último `supabase/seed.sql`.
+O pegando en **SQL Editor**, en orden: `supabase/migrations/0001_schema.sql`, `0002_functions.sql`, `0003_rls.sql`, `0004_storage.sql`, `0005_bloquear_autoregistro.sql`, `0006_perfil_solo_por_invitacion.sql` (la 0006 reemplaza el trigger de la 0005), `0007_endurecimiento_auditoria.sql` y por último `supabase/seed.sql`.
 
 ## 3. Configurar Auth
 En **Authentication**:

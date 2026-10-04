@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { siteUrl } from '@/lib/supabase/env'
 import { enviarMail } from '@/lib/mail'
 import { DIAS } from '@/lib/types'
+import { urlOpcional, extensionImagen } from '@/lib/validar'
 
 export type R = { ok?: boolean; error?: string }
 const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
@@ -57,8 +58,12 @@ export async function setEstadoCuenta(fd: FormData) {
   const { sb, perfil: yo } = await requireRole('admin')
   const id = txt(fd, 'id'), estado = txt(fd, 'estado')
   if (id === yo.id || !['activa', 'inactiva'].includes(estado)) return // el admin no se deshabilita a sí mismo
-  await sb.from('profiles').update({ estado_cuenta: estado }).eq('id', id)
-  if (estado === 'inactiva') await createAdminClient().auth.admin.signOut(id, 'global').catch(() => {})
+  const { error } = await sb.from('profiles').update({ estado_cuenta: estado }).eq('id', id)
+  if (error) return
+  // signOut() de admin espera el JWT del usuario, no su id: se revoca con un ban (invalida el refresh token).
+  await createAdminClient().auth.admin
+    .updateUserById(id, { ban_duration: estado === 'inactiva' ? '876000h' : 'none' })
+    .catch(() => {})
   revalidatePath('/campus/admin/usuarios')
 }
 
@@ -76,10 +81,12 @@ export async function cambiarEmail(_: R, fd: FormData): Promise<R> {
 
 export async function actualizarPerfil(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
+  const foto = urlOpcional(txt(fd, 'foto_url'))
+  if (foto === undefined) return { error: 'La foto debe ser una URL http(s).' }
   const { error } = await sb.from('profiles').update({
     nombre: txt(fd, 'nombre'), apellido: txt(fd, 'apellido'), telefono: txt(fd, 'telefono') || null,
     experiencia: txt(fd, 'experiencia') || null, certificaciones: txt(fd, 'certificaciones') || null,
-    foto_url: txt(fd, 'foto_url') || null,
+    foto_url: foto,
   }).eq('id', txt(fd, 'id'))
   revalidatePath('/campus/admin/usuarios')
   return fail(error) ?? { ok: true }
@@ -96,11 +103,13 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
   if (!nombre) return { error: 'Falta el nombre.' }
   if (!cupo || cupo <= 0) return { error: 'El cupo debe ser mayor a 0.' }
   const precio = num(fd, 'precio')
+  const imagen = urlOpcional(txt(fd, 'imagen_url')), video = urlOpcional(txt(fd, 'video_url'))
+  if (imagen === undefined || video === undefined) return { error: 'La imagen y el video deben ser URLs http(s).' }
   const row = {
     nombre, slug: txt(fd, 'slug') || slugify(nombre),
     area: txt(fd, 'area'), tipo: txt(fd, 'tipo'), nivel: txt(fd, 'nivel') || null,
     descripcion: txt(fd, 'descripcion') || null, requisitos: txt(fd, 'requisitos') || null,
-    imagen_url: txt(fd, 'imagen_url') || null, video_url: txt(fd, 'video_url') || null,
+    imagen_url: imagen, video_url: video,
     duracion_semanas: num(fd, 'duracion_semanas'), cupo, precio,
     descuento_pct: num(fd, 'descuento_pct'), fecha_inicio: txt(fd, 'fecha_inicio') || null,
     aula_id: txt(fd, 'aula_id') || null, profesor_id: txt(fd, 'profesor_id') || null,
@@ -184,8 +193,14 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   if (aviso.length && fd.get('avisar') === 'on') {
     const { data: ins } = await sb.from('inscripciones').select('profiles!inscripciones_alumno_id_fkey(email)').eq('curso_id', curso_id).eq('estado', 'activo')
     const { data: c } = await sb.from('cursos').select('nombre').eq('id', curso_id).single()
-    const to = (ins ?? []).map((i: any) => i.profiles?.email).filter(Boolean)
-    if (to.length) await enviarMail(to, `Cambios en las clases de ${c?.nombre}`, aviso.map((a) => `Clase ${a.numero} (${a.fecha}): ${a.estado}`).join('\n') + '\n\nRecovery Parts')
+    const to: string[] = (ins ?? []).map((i: any) => i.profiles?.email).filter(Boolean)
+    // Un mail por alumno: en un único `to` cada uno vería el email de sus compañeros.
+    const texto = aviso.map((a) => `Clase ${a.numero} (${a.fecha}): ${a.estado}`).join('\n') + '\n\nRecovery Parts'
+    const envios = await Promise.all(to.map((t) => enviarMail(t, `Cambios en las clases de ${c?.nombre}`, texto)))
+    if (to.length && envios.some((e) => !e)) {
+      revalidatePath(`/campus/admin/cursos/${curso_id}`); revalidatePath(`/campus/profesor/curso/${curso_id}`)
+      return { error: 'El calendario se guardó, pero no se pudo enviar el aviso por mail a todos los alumnos.' }
+    }
   }
   revalidatePath(`/campus/admin/cursos/${curso_id}`); revalidatePath(`/campus/profesor/curso/${curso_id}`)
   return { ok: true }
@@ -303,6 +318,7 @@ export async function guardarSetting(_: R, fd: FormData): Promise<R> {
   for (const [k, v] of fd.entries()) {
     if (k === 'clave' || typeof v !== 'string') continue
     const path = k.split('.')
+    if (path.some((p) => ['__proto__', 'constructor', 'prototype'].includes(p))) continue
     let o = valor
     path.slice(0, -1).forEach((p) => (o = o[p] ??= {}))
     const val = v.trim()
@@ -321,11 +337,13 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   const tabla = TABLAS_CMS[tipo]
   if (!tabla) return { error: 'Tipo inválido.' }
   const orden = num(fd, 'orden') ?? 0
+  const foto = urlOpcional(txt(fd, 'foto_url')), imagen = urlOpcional(txt(fd, 'imagen_url'))
+  if (foto === undefined || imagen === undefined) return { error: 'Las imágenes deben ser URLs http(s).' }
   const rows: Record<string, unknown> = {
-    egresado: { nombre: txt(fd, 'nombre'), especialidad: txt(fd, 'especialidad'), foto_url: txt(fd, 'foto_url') || null, destacado: fd.get('destacado') === 'on', orden },
-    testimonio: { nombre: txt(fd, 'nombre'), curso: txt(fd, 'curso') || null, texto: txt(fd, 'texto'), puntaje: num(fd, 'puntaje') ?? 5, foto_url: txt(fd, 'foto_url') || null, curso_id: txt(fd, 'curso_id') || null, orden },
+    egresado: { nombre: txt(fd, 'nombre'), especialidad: txt(fd, 'especialidad'), foto_url: foto, destacado: fd.get('destacado') === 'on', orden },
+    testimonio: { nombre: txt(fd, 'nombre'), curso: txt(fd, 'curso') || null, texto: txt(fd, 'texto'), puntaje: num(fd, 'puntaje') ?? 5, foto_url: foto, curso_id: txt(fd, 'curso_id') || null, orden },
     faq: { pregunta: txt(fd, 'pregunta'), respuesta: txt(fd, 'respuesta'), orden },
-    foto: { categoria: txt(fd, 'categoria'), area: txt(fd, 'area') || null, imagen_url: txt(fd, 'imagen_url'), alt: txt(fd, 'alt'), descripcion: txt(fd, 'descripcion') || null, orden },
+    foto: { categoria: txt(fd, 'categoria'), area: txt(fd, 'area') || null, imagen_url: imagen ?? '', alt: txt(fd, 'alt'), descripcion: txt(fd, 'descripcion') || null, orden },
   }[tipo]
   const id = txt(fd, 'id')
   const { error } = id ? await sb.from(tabla).update(rows).eq('id', id) : await sb.from(tabla).insert(rows)
@@ -352,8 +370,11 @@ export async function subirImagen(_: { url?: string; error?: string }, fd: FormD
   const f = fd.get('archivo') as File | null
   if (!f || !f.size) return { error: 'Elegí una imagen.' }
   if (!['image/webp', 'image/jpeg', 'image/png', 'image/avif'].includes(f.type) || f.size > 8 * 1024 * 1024) return { error: 'Solo WebP/JPG/PNG/AVIF de hasta 8 MB.' }
-  const path = `${crypto.randomUUID()}.${f.type.split('/')[1].replace('jpeg', 'jpg')}`
-  const { error } = await sb.storage.from('sitio').upload(path, f, { contentType: f.type })
+  // El `type` lo manda el cliente: se confirma con la firma real del archivo.
+  const ext = extensionImagen(new Uint8Array(await f.slice(0, 12).arrayBuffer()))
+  if (!ext) return { error: 'El archivo no es una imagen válida.' }
+  const path = `${crypto.randomUUID()}.${ext}`
+  const { error } = await sb.storage.from('sitio').upload(path, f, { contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}` })
   if (error) return { error: 'No se pudo subir la imagen.' }
   return { url: sb.storage.from('sitio').getPublicUrl(path).data.publicUrl }
 }

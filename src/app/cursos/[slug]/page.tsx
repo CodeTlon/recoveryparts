@@ -9,6 +9,7 @@ import Accordion from '@/components/public/Accordion'
 import { Cupos, Precio, horarioTexto } from '@/components/public/CursoCard'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, TIPO_LABEL, formatPrecio } from '@/lib/types'
+import { hrefSeguro } from '@/lib/validar'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,7 +98,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
             {c.video_url && (
               <section>
                 <h2 className="mb-4 text-2xl font-semibold">Conocé las clases</h2>
-                <a href={c.video_url} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>
+                <a href={hrefSeguro(c.video_url)} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>
               </section>
             )}
 

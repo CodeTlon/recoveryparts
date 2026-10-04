@@ -19,4 +19,5 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 | 2026-10-01 | Área pública «**Reparación y Tecnología**» | La academia no presta servicio técnico; la etiqueta «Servicio Técnico» sugería que sí |
 | 2026-10-01 | Sin datos mockeados; backend real con Supabase | Pedido del cliente |
 | 2026-10-01 | Sin asistencia, pagos, inscripciones ni stock | Los maneja software externo (spec §C) |
+| 2026-10-04 | Auditoría de seguridad, fase 1: migración 0007 (URL http(s) y `storage_path` del propio curso en `materiales`, trigger de integridad, `audit_log` solo firmable por uno mismo, largos en formularios públicos, RPC sin `anon`); `src/lib/validar.ts` para validar URLs/imágenes; CSP + HSTS + Permissions-Policy; baja de cuenta con `ban_duration` | Un profesor/admin podía saltarse las validaciones de las server actions escribiendo por PostgREST (XSS con `javascript:`, lectura de PDFs de otro curso). `signOut(id)` no revocaba nada: espera un JWT |
 | 2026-10-01 | Un solo sistema de diseño (tokens en Tailwind, azul/naranja) | Convivían dos (tokens `demo-*` y paleta Stitch) |

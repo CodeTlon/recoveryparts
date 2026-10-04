@@ -25,7 +25,7 @@ Cualquier cambio a esos helpers o a una política necesita re-verificar el caso 
 - Mails de Auth: plantillas en `supabase/templates/`; mails de la app en `src/lib/mail.ts`.
 
 ## Reglas que viven en la base (no reimplementar en la app)
-Cupo, choques de aula/profesor, deserción como estado final, inscripción sin DELETE, N° de clase de deserción, perfil solo con `invited_at`. Son triggers/funciones en `supabase/migrations/0002` y `0006`.
+Cupo, choques de aula/profesor, deserción como estado final, inscripción sin DELETE, N° de clase de deserción, perfil solo con `invited_at`, integridad de `materiales` (URL http(s), archivo del propio curso). Son triggers/funciones en `supabase/migrations/0002`, `0006` y `0007`. Las URLs que se guardan y se renderizan en un `href` pasan por `src/lib/validar.ts`.
 
 ## Qué no existe a propósito
 Pagos, inscripciones, asistencia, stock, registro público, WhatsApp flotante/bot, videos alojados (solo links), modalidad virtual, carreras.

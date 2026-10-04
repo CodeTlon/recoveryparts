@@ -20,3 +20,4 @@ Tokens en `tailwind.config.ts` + clases `btn-*`, `card`, `input`, `badge` en `sr
 - Ramas `feature/*` (o `feat/`, `fix/`, `style/`, `docs/`) → `dev` → `test` por merge; `test` → `main` por PR (el único).
 - Commits convencionales (`feat:`, `fix:`, `style:`, `docs:`, `chore:`).
 - Cerrar un pendiente de la spec: 🟡 → 🟢/🔴, changelog de la spec y fila en `DECISIONS.md`.
+- URLs libres (video, imagen, foto, link de material): validar con `urlOpcional()`/`hrefSeguro()` de `src/lib/validar.ts`; los archivos subidos se verifican por su firma, no por el `type` del cliente.

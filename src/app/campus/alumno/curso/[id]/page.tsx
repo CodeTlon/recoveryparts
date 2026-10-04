@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, ExternalLink, ArrowLeft, CalendarDays } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
+import { hrefSeguro } from '@/lib/validar'
 import { PageHead, Empty } from '@/components/campus/ui'
 import Reveal from '@/components/ui/Reveal'
 
@@ -53,7 +54,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
                   {m.tipo === 'pdf' ? (
                     <Link href={`/campus/alumno/curso/${id}/ver/${m.id}`} className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><FileText size={20} className="text-primary" /> {m.titulo}<span className="ml-auto text-xs text-on-surface-variant">Ver PDF</span></Link>
                   ) : (
-                    <a href={m.url ?? '#'} target="_blank" rel="noopener noreferrer" className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><Link2 size={20} className="text-primary" /> {m.titulo}<ExternalLink size={14} className="ml-auto text-on-surface-variant" /></a>
+                    <a href={hrefSeguro(m.url)} target="_blank" rel="noopener noreferrer" className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><Link2 size={20} className="text-primary" /> {m.titulo}<ExternalLink size={14} className="ml-auto text-on-surface-variant" /></a>
                   )}
                 </li>
               ))}
