@@ -1,9 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Check } from './forms'
-import { useActionState, useEffect } from 'react'
-import { Field, Select } from './ui'
+import { ActionForm, Check } from './forms'
+import { Field, Select } from './forms'
 import { guardarCurso, type R } from '@/app/campus/admin/actions'
 
 type Curso = Record<string, any>
@@ -11,11 +10,11 @@ type Opt = [string, string][]
 
 export default function CursoForm({ curso, aulas, profesores }: { curso?: Curso; aulas: Opt; profesores: Opt }) {
   const router = useRouter()
-  const [s, run, pending] = useActionState<R & { id?: string }, FormData>(guardarCurso, {})
-  useEffect(() => { if (s.ok && s.id && !curso) router.replace(`/campus/admin/cursos/${s.id}`) }, [s, curso, router])
+  // Un curso nuevo pasa a su página de edición al guardarse.
+  const onSuccess = (s: R & { id?: string }) => { if (s.id && !curso) router.replace(`/campus/admin/cursos/${s.id}`) }
   const c = curso ?? {}
   return (
-    <form action={run} className="card space-y-4 p-6">
+    <ActionForm<R & { id?: string }> action={guardarCurso} submit={curso ? 'Guardar cambios' : 'Crear curso'} reset={false} onSuccess={onSuccess} className="card p-6">
       {curso && <input type="hidden" name="id" value={curso.id} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nombre" name="nombre" defaultValue={c.nombre} required />
@@ -37,9 +36,6 @@ export default function CursoForm({ curso, aulas, profesores }: { curso?: Curso;
       </div>
       <Field label="Descripción pública (qué se aprende y para quién)" name="descripcion" rows={5} defaultValue={c.descripcion} />
       <Field label="Requisitos previos" name="requisitos" rows={3} defaultValue={c.requisitos} />
-      {s.error && <p role="alert" className="text-sm text-red-400">{s.error}</p>}
-      {s.ok && <p role="status" className="text-sm text-green-400">Guardado.</p>}
-      <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : curso ? 'Guardar cambios' : 'Crear curso'}</button>
-    </form>
+    </ActionForm>
   )
 }

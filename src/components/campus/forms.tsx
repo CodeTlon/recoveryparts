@@ -7,10 +7,14 @@ import { CheckCircle2, XCircle } from 'lucide-react'
 import type { R } from '@/app/campus/admin/actions'
 
 // Formulario con server action: muestra error/ok y se resetea al guardar.
-export function ActionForm({ action, children, submit = 'Guardar', className = '', reset = true }: {
-  action: (s: R, fd: FormData) => Promise<R>; children: React.ReactNode; submit?: string; className?: string; reset?: boolean
+// `S` permite que la acción devuelva datos extra (ej. el id del curso creado) que recibe `onSuccess`.
+export function ActionForm<S extends R = R>({ action, children, submit = 'Guardar', className = '', reset = true, onSuccess }: {
+  action: (s: S, fd: FormData) => Promise<S>; children: React.ReactNode; submit?: string; className?: string; reset?: boolean; onSuccess?: (s: S) => void
 }) {
-  const [s, run, pending] = useActionState<R, FormData>(action, {})
+  const [s, run, pending] = useActionState<S, FormData>(action as unknown as (s: Awaited<S>, fd: FormData) => Promise<S>, {} as Awaited<S>)
+  const okRef = useRef(onSuccess)
+  okRef.current = onSuccess
+  useEffect(() => { if (s.ok) okRef.current?.(s) }, [s])
   const ref = useRef<HTMLFormElement>(null)
   const [toast, setToast] = useState<'ok' | 'error' | null>(null)
   useEffect(() => { if (s.ok && reset) ref.current?.reset() }, [s, reset])
