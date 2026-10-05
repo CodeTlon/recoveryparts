@@ -1,3 +1,4 @@
+import { duracionTexto } from '@/lib/fechas'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -152,7 +153,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <ul className="flex flex-col gap-3">
                   {h && <li className={row}><CalendarDays size={18} className="mt-0.5 shrink-0" /> {h}</li>}
                   {c.aula && <li className={row}><MapPin size={18} className="mt-0.5 shrink-0" /> {c.aula} · La Rioja 345</li>}
-                  {c.duracion_semanas && <li className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {c.duracion_semanas} semanas</li>}
+                  {c.duracion_semanas && <li className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {duracionTexto(c.duracion_semanas)}</li>}
                   <li className={row}><Users size={18} className="mt-0.5 shrink-0" /> <Cupos n={c.cupos_disponibles} /></li>
                 </ul>
                 {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-primary w-full !py-4">Consultar por WhatsApp</a>}
