@@ -26,7 +26,7 @@ const D = '@demo.example.com'
 // Cuentas de demo con datos fáciles de dictar (el script se niega a correr fuera de development/test).
 const PASSWORD_DEMO = 'demo1234'
 const USUARIOS = [
-  { key: 'admin', rol: 'admin', nombre: 'Maxi', apellido: 'Gómez' },
+  { key: 'admin', rol: 'admin', nombre: 'Maxi', apellido: 'Escaroni' },
   { key: 'profe1', rol: 'profesor', nombre: 'Pablo', apellido: 'Ledesma' },
   { key: 'profe2', rol: 'profesor', nombre: 'Paula', apellido: 'Sosa' },
   { key: 'alumno1', rol: 'alumno', nombre: 'Lucas', apellido: 'Fernández' },
@@ -64,12 +64,23 @@ const consecutivos = (inicio, n, tema) => Array.from({ length: n }, (_, i) => {
   const d = new Date(`${inicio}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + i)
   return [i + 1, d.toISOString().slice(0, 10), `${tema}: día ${i + 1}`, 'programada']
 })
+// Tienda socia (herramientas y repuestos): los kits enlazan a su sitio; la venta no pasa por este sistema.
+const MP = 'https://www.mundopartsrepuestos.com/'
+// Módulos adicionales de los cursos largos (el plan de estudios completo se carga desde el panel de admin).
+const MODULOS_EXTRA = {
+  'reparacion-de-celulares': [['Diagnóstico de fallas', ['Método de diagnóstico', 'Uso del multímetro']], ['Pantallas y baterías', ['Cambio de display', 'Cambio de batería']], ['Software', ['Flasheo y desbloqueo', 'Respaldo de datos']], ['Práctica final', ['Reparación de equipos reales']]],
+  'reparacion-de-notebooks': [['Software y sistema', ['Instalación de sistemas', 'Diagnóstico de arranque']], ['Mantenimiento', ['Limpieza profunda', 'Cambio de pasta térmica']], ['Práctica final', ['Reparación de equipos reales']]],
+  'armado-y-mantenimiento-de-pcs': [['Diagnóstico', ['Fallas de encendido', 'Pruebas de componentes']], ['Redes básicas', ['Conexión y configuración']], ['Práctica final', ['Armado completo de una PC']]],
+  'reparacion-de-televisores': [['Audio y video', ['Fallas de imagen', 'Fallas de sonido']], ['Práctica final', ['Reparación de equipos reales']]],
+  'reparacion-de-iphone-avanzada': [['Software', ['Restauración y DFU']], ['Práctica final', ['Casos reales de placa']]],
+  'impresion-3d-desde-cero': [['Proyecto', ['Diseño de una pieza propia', 'Impresión y terminación']]],
+}
 const CURSOS = [
   { slug: 'reparacion-de-celulares', imagen_url: '/images/curso-iphone.jpg', nombre: 'Reparación de Celulares', area: 'tecnico', tipo: 'curso', nivel: 'Inicial', cupo: 4, duracion_semanas: 12, precio: 90000, descuento_pct: 10, fecha_inicio: '2026-09-14', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, destacado: true, orden: 1,
     descripcion: 'Aprendé diagnóstico y reparación de celulares desde cero, con equipos reales. (Curso de prueba)', requisitos: 'No se necesitan conocimientos previos. Traer notebook.', precio_actualizado_en: '2026-09-30',
     horarios: [[1, '18:00', '20:00']],
     modulos: [['Fundamentos y diagnóstico', ['Herramientas del taller', 'Seguridad ESD', 'Apertura segura']], ['Reemplazo de módulos', ['Pantallas', 'Baterías', 'Cámaras']]],
-    kit: [['Soldador de punta fina', 'Para microsoldadura', 15000, 'https://example.com/soldador'], ['Estaño y flux', 'Pack de insumos', 6500, 'https://example.com/estano']],
+    kit: [['Soldador de punta fina', 'Para microsoldadura', 15000, MP], ['Estaño y flux', 'Pack de insumos', 6500, MP]],
     clases: [[1, '2026-09-14', 'Introducción y herramientas', 'programada'], [2, '2026-09-21', 'Diagnóstico visual', 'suspendida'], [3, '2026-09-28', 'Apertura y desarme', 'programada'], [4, '2026-10-05', 'Reemplazo de pantalla', 'programada'], [5, '2026-10-12', 'Baterías', 'programada'], [6, '2026-10-19', 'Cámaras y flexores', 'programada']] },
   { slug: 'carteles-neon-led', imagen_url: '/images/curso-neon.jpg', nombre: 'Carteles Neón LED', area: 'diseno', tipo: 'curso', nivel: 'Inicial', cupo: 2, duracion_semanas: 8, precio: 75000, fecha_inicio: '2026-10-07', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, destacado: true, orden: 2,
     descripcion: 'Diseño y armado de carteles de neón LED. (Curso de prueba, cupo completo a propósito)', requisitos: null, precio_actualizado_en: '2026-09-30',
@@ -80,7 +91,7 @@ const CURSOS = [
   { slug: 'reparacion-de-notebooks', imagen_url: '/images/curso-notebooks.jpg', nombre: 'Reparación de Notebooks', area: 'tecnico', tipo: 'curso', nivel: 'Intermedio', cupo: 8, duracion_semanas: 10, precio: 85000, fecha_inicio: '2026-08-04', aula_id: aulas['Aula 1'], profesor_id: ids.profe2, destacado: true, orden: 4,
     descripcion: 'Diagnóstico, limpieza, cambio de componentes y reparación de placas de notebooks. (Curso de prueba)', requisitos: 'Conocimientos básicos de electrónica.', precio_actualizado_en: '2026-09-30',
     horarios: [[2, '18:00', '20:00']], modulos: [['Hardware de notebooks', ['Desarme y limpieza', 'Cambio de pasta térmica', 'Pantallas y teclados']], ['Placa madre', ['Lectura de fallas', 'Microsoldadura básica']]],
-    kit: [['Kit de destornilladores de precisión', 'Para desarme', 9000, 'https://example.com/destornilladores']], clases: semanal('2026-08-04', 10, 'Notebooks') },
+    kit: [['Kit de destornilladores de precisión', 'Para desarme', 9000, MP]], clases: semanal('2026-08-04', 10, 'Notebooks') },
   { slug: 'armado-y-mantenimiento-de-pcs', imagen_url: '/images/curso-computadoras.jpg', nombre: 'Armado y Mantenimiento de PCs', area: 'tecnico', tipo: 'curso', nivel: 'Inicial', cupo: 10, duracion_semanas: 8, precio: 70000, descuento_pct: 15, fecha_inicio: '2026-09-17', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, destacado: true, orden: 5,
     descripcion: 'Armá tu propia computadora, instalá sistemas y aprendé a mantenerla. (Curso de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
     horarios: [[4, '18:00', '20:00']], modulos: [['Armado', ['Componentes', 'Ensamblado', 'Cableado']], ['Software', ['Instalación de sistemas', 'Drivers', 'Optimización']]],
@@ -96,11 +107,42 @@ const CURSOS = [
   { slug: 'taller-diagnostico-con-multimetro', imagen_url: '/images/about.jpg', nombre: 'Taller de Diagnóstico con Multímetro', area: 'tecnico', tipo: 'taller', nivel: 'Inicial', cupo: 10, duracion_semanas: 2, precio: 30000, fecha_inicio: '2026-10-17', aula_id: aulas['Aula 2'], profesor_id: ids.profe1, orden: 8,
     descripcion: 'Dos sábados para aprender a medir tensión, continuidad y corto en cualquier equipo. (Taller de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
     horarios: [[6, '14:00', '17:00']], modulos: [['Medición', ['Tensión y corriente', 'Continuidad y cortocircuitos']]],
-    kit: [['Multímetro digital', 'Se recomienda llevar el propio', 12000, 'https://example.com/multimetro']], clases: semanal('2026-10-17', 2, 'Multímetro') },
+    kit: [['Multímetro digital', 'Se recomienda llevar el propio', 12000, MP]], clases: semanal('2026-10-17', 2, 'Multímetro') },
   { slug: 'taller-express-sublimacion-de-tazas', imagen_url: '/images/curso-estampados.jpg', nombre: 'Taller Express de Sublimación de Tazas', area: 'diseno', tipo: 'taller', nivel: 'Inicial', cupo: 8, duracion_semanas: 1, precio: 18000, fecha_inicio: '2026-11-14', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, orden: 9,
     descripcion: 'En una sola jornada diseñás y sublimás tus propias tazas y te las llevás. (Taller de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
     horarios: [[6, '10:00', '14:00']], modulos: [['La jornada', ['Diseño en plantilla', 'Sublimación y terminación']]],
     kit: [], clases: [[1, '2026-11-14', 'Sublimación de tazas', 'programada']] },
+  { slug: 'impresion-3d-desde-cero', imagen_url: '/images/curso-computadoras.jpg', nombre: 'Impresión 3D desde Cero', area: 'diseno', tipo: 'curso', nivel: 'Inicial', cupo: 6, duracion_semanas: 8, precio: 80000, fecha_inicio: '2026-10-20', aula_id: aulas['Aula 3'], profesor_id: ids.profe1, destacado: true, orden: 10,
+    descripcion: 'Modelado básico, preparación de archivos y operación de impresoras 3D. Te llevás tus propias piezas. (Curso de prueba)', requisitos: 'Manejo básico de computadora.', precio_actualizado_en: '2026-09-30',
+    horarios: [[2, '18:00', '20:00']], modulos: [['Modelado', ['Piezas simples', 'Medidas y tolerancias']], ['Impresión', ['Laminado de archivos', 'Calibración y mantenimiento']]],
+    kit: [['Calibre digital', 'Para medir piezas', 8000, MP, false], ['Filamento PLA (1 kg)', 'Para las primeras impresiones', 14000, MP, true]], clases: semanal('2026-10-20', 8, 'Impresión 3D') },
+  { slug: 'senaletica-y-carteleria', imagen_url: '/images/curso-neon.jpg', nombre: 'Señalética y Cartelería', area: 'diseno', tipo: 'curso', nivel: 'Intermedio', cupo: 8, duracion_semanas: 6, precio: 65000, fecha_inicio: '2026-10-26', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, orden: 11,
+    descripcion: 'Diseño y armado de carteles, vinilos y señalética para comercios. (Curso de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
+    horarios: [[1, '14:00', '16:00']], modulos: [['Diseño', ['Tipografía y color', 'Plantillas']], ['Producción', ['Corte de vinilo', 'Montaje']]], kit: [], clases: semanal('2026-10-26', 6, 'Cartelería') },
+  { slug: 'reparacion-de-televisores', imagen_url: '/images/curso-notebooks.jpg', nombre: 'Reparación de Televisores', area: 'tecnico', tipo: 'curso', nivel: 'Avanzado', cupo: 6, duracion_semanas: 10, precio: 90000, fecha_inicio: '2026-11-02', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, orden: 12,
+    descripcion: 'Diagnóstico y reparación de televisores LED: fuentes, retroiluminación y placas. (Curso de prueba)', requisitos: 'Conocimientos de electrónica básica.', precio_actualizado_en: '2026-09-30',
+    horarios: [[1, '10:00', '12:00']], modulos: [['Fuentes', ['Lectura de esquemas', 'Fallas comunes']], ['Pantallas', ['Retroiluminación', 'Placas T-con']]], kit: [['Multímetro', 'Para medir tensión', 12000, MP, true], ['Pinzas de punta fina', 'Recomendadas para trabajar cómodo', 6000, MP, false]], clases: semanal('2026-11-02', 10, 'Televisores') },
+  { slug: 'taller-cambio-de-bateria', imagen_url: '/images/curso-iphone.jpg', nombre: 'Taller de Cambio de Batería', area: 'tecnico', tipo: 'taller', nivel: 'Inicial', cupo: 8, duracion_semanas: 1, precio: 25000, fecha_inicio: '2026-11-09', aula_id: aulas['Aula 3'], profesor_id: ids.profe2, orden: 13,
+    descripcion: 'En una tarde aprendés a cambiar baterías de celulares de forma segura. (Taller de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
+    horarios: [[1, '16:00', '18:00']], modulos: [['La tarde', ['Seguridad', 'Desarme y cambio', 'Prueba final']]], kit: [], clases: [[1, '2026-11-09', 'Cambio de batería', 'programada']] },
+  { slug: 'reparacion-de-iphone-avanzada', imagen_url: '/images/curso-iphone.jpg', nombre: 'Reparación de iPhone Avanzada', area: 'tecnico', tipo: 'curso', nivel: 'Avanzado', cupo: 6, duracion_semanas: 10, precio: 110000, fecha_inicio: '2026-11-04', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, destacado: true, orden: 14,
+    descripcion: 'Diagnóstico por placa, Face ID, audio y carga en iPhone. Para quienes ya reparan celulares. (Curso de prueba)', requisitos: 'Haber cursado Reparación de Celulares o equivalente.', precio_actualizado_en: '2026-09-30',
+    horarios: [[3, '18:00', '20:00']], modulos: [['Diagnóstico', ['Lectura de consumo', 'Fallas de carga']], ['Placa', ['Audio y micrófonos', 'Face ID y sensores']]], kit: [['Fuente de alimentación de laboratorio', 'Se usa la de la academia en clase; recomendada si querés practicar en casa', 60000, MP, false], ['Juego de destornilladores para iPhone', 'Necesario desde la primera clase', 9000, MP, true]], clases: semanal('2026-11-04', 10, 'iPhone') },
+  { slug: 'microsoldadura-de-placas', imagen_url: '/images/curso-notebooks.jpg', nombre: 'Microsoldadura de Placas', area: 'tecnico', tipo: 'curso', nivel: 'Avanzado', cupo: 5, duracion_semanas: 8, precio: 95000, fecha_inicio: '2026-11-05', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, orden: 15,
+    descripcion: 'Soldadura de componentes diminutos, reballing y reparación de pistas. (Curso de prueba)', requisitos: 'Soldadura básica con estaño.', precio_actualizado_en: '2026-09-30',
+    horarios: [[4, '14:00', '16:00']], modulos: [['Técnica', ['Microscopio y herramientas', 'Retrabajo de BGA']], ['Práctica', ['Pistas y vías', 'Placas reales']]], kit: [['Estación de aire caliente', 'Se usa la de la academia', null, null]], clases: semanal('2026-11-05', 8, 'Microsoldadura') },
+  { slug: 'electronica-basica', imagen_url: '/images/about.jpg', nombre: 'Electrónica Básica', area: 'tecnico', tipo: 'curso', nivel: 'Inicial', cupo: 12, duracion_semanas: 8, precio: 55000, fecha_inicio: '2026-11-06', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, orden: 16,
+    descripcion: 'La base de todo: corriente, tensión, componentes y lectura de circuitos. Ideal para empezar. (Curso de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
+    horarios: [[5, '10:00', '12:00']], modulos: [['Fundamentos', ['Tensión, corriente y resistencia', 'Uso del multímetro']], ['Componentes', ['Resistencias y capacitores', 'Diodos y transistores']]], kit: [['Multímetro digital', 'Imprescindible para las clases', 12000, MP, true], ['Protoboard', 'Recomendado para practicar en casa', 5000, MP, false]], clases: semanal('2026-11-06', 8, 'Electrónica') },
+  { slug: 'diseno-grafico-para-redes', imagen_url: '/images/curso-estampados.jpg', nombre: 'Diseño Gráfico para Redes', area: 'diseno', tipo: 'curso', nivel: 'Inicial', cupo: 10, duracion_semanas: 6, precio: 50000, fecha_inicio: '2026-11-05', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, orden: 17,
+    descripcion: 'Armá piezas para redes sociales de tu emprendimiento: color, tipografía y composición. (Curso de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
+    horarios: [[4, '18:00', '20:00']], modulos: [['Bases', ['Composición', 'Color y tipografía']], ['Práctica', ['Posteos y historias', 'Identidad de marca']]], kit: [], clases: semanal('2026-11-05', 6, 'Diseño') },
+  { slug: 'taller-fotografia-de-producto', imagen_url: '/images/curso-neon.jpg', nombre: 'Taller de Fotografía de Producto con Celular', area: 'diseno', tipo: 'taller', nivel: 'Inicial', cupo: 10, duracion_semanas: 2, precio: 28000, fecha_inicio: '2026-11-07', aula_id: aulas['Aula 3'], profesor_id: ids.profe2, orden: 18,
+    descripcion: 'Dos sábados para sacar fotos profesionales de tus productos usando solo el celular. (Taller de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
+    horarios: [[6, '14:00', '17:00']], modulos: [['Luz y fondo', ['Iluminación casera', 'Fondos y encuadre']], ['Edición', ['Retoque en el celular']]], kit: [['Trípode para celular', 'Recomendado', 9000, MP, false]], clases: semanal('2026-11-07', 2, 'Fotografía') },
+  { slug: 'taller-reparacion-de-consolas', imagen_url: '/images/curso-computadoras.jpg', nombre: 'Taller de Reparación de Consolas', area: 'tecnico', tipo: 'taller', nivel: 'Intermedio', cupo: 6, duracion_semanas: 2, precio: 40000, fecha_inicio: '2026-11-13', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, orden: 19,
+    descripcion: 'Dos viernes para diagnosticar y resolver las fallas más comunes de consolas. (Taller de prueba)', requisitos: 'Conocimientos básicos de electrónica.', precio_actualizado_en: '2026-09-30',
+    horarios: [[5, '14:00', '17:00']], modulos: [['Fallas comunes', ['Sobrecalentamiento', 'Lectores y puertos']]], kit: [], clases: semanal('2026-11-13', 2, 'Consolas') },
 ]
 
 const cid = {}
@@ -111,9 +153,9 @@ for (const c of CURSOS) {
   ok(await sb.from('horarios_curso').delete().eq('curso_id', data.id), 'del horarios')
   for (const [d, a, b] of horarios) ok(await sb.from('horarios_curso').insert({ curso_id: data.id, dia_semana: d, hora_inicio: a, hora_fin: b }), `horario ${c.slug}`)
   ok(await sb.from('modulos_curso').delete().eq('curso_id', data.id), 'del modulos')
-  for (const [i, [t, items]] of modulos.entries()) ok(await sb.from('modulos_curso').insert({ curso_id: data.id, orden: i, titulo: t, items }), 'modulo')
+  for (const [i, [t, items]] of [...modulos, ...(MODULOS_EXTRA[c.slug] ?? [])].entries()) ok(await sb.from('modulos_curso').insert({ curso_id: data.id, orden: i, titulo: t, items }), 'modulo')
   ok(await sb.from('kit_items').delete().eq('curso_id', data.id), 'del kit')
-  for (const [i, [n, d, p, l]] of kit.entries()) ok(await sb.from('kit_items').insert({ curso_id: data.id, orden: i, nombre: n, descripcion: d, precio: p, link_externo: l }), 'kit')
+  for (const [i, [n, d, p, l, req]] of kit.entries()) ok(await sb.from('kit_items').insert({ curso_id: data.id, orden: i, nombre: n, descripcion: d, precio: p, link_externo: l, requerido: req !== false }), 'kit')
   ok(await sb.from('clases').upsert(clases.map(([numero, fecha, titulo, estado]) => ({ curso_id: data.id, numero, fecha, titulo, estado })), { onConflict: 'curso_id,numero' }), `clases ${c.slug}`)
 }
 
@@ -147,6 +189,15 @@ await inscribir('alumno3', 'taller-diagnostico-con-multimetro')
 await inscribir('alumno6', 'taller-diagnostico-con-multimetro')
 await inscribir('alumno2', 'taller-diagnostico-con-multimetro')
 await inscribir('alumno5', 'taller-express-sublimacion-de-tazas')
+await inscribir('alumno2', 'impresion-3d-desde-cero')
+await inscribir('alumno6', 'impresion-3d-desde-cero')
+await inscribir('alumno3', 'senaletica-y-carteleria')
+await inscribir('alumno4', 'reparacion-de-televisores')
+await inscribir('alumno1', 'taller-cambio-de-bateria')
+await inscribir('alumno3', 'electronica-basica')
+await inscribir('alumno5', 'electronica-basica')
+await inscribir('alumno6', 'diseno-grafico-para-redes')
+await inscribir('alumno2', 'reparacion-de-iphone-avanzada')
 
 // ── 4. Material (PDF real mínimo + links) ──────────────────
 const pdf = (t) => { const s = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 144]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 56>>stream\nBT /F1 14 Tf 20 70 Td (${t}) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`; return Buffer.from(s) }
@@ -177,11 +228,53 @@ await set('hero', { titulo: 'Aprendé un oficio con equipos reales', subtitulo: 
 await set('areas', { diseno: { titulo: 'Creación y Diseño', texto: 'Estampado, impresión 3D, cartelería y más.', imagen_url: '/images/curso-neon.jpg' }, tecnico: { titulo: 'Reparación y Tecnología', texto: 'Celulares, impresoras, notebooks, PC y televisores.', imagen_url: '/images/curso-iphone.jpg' } })
 await set('nosotros', { titulo: 'Formación de taller, no de aula', texto: 'Grupos reducidos, herramientas profesionales y clases 100% prácticas. (texto de prueba)' })
 await set('stats', { aulas: 3, profesores: 10, egresados: 0 })
-await set('contacto', { direccion: 'La Rioja 345, X5022 Córdoba', telefono: '', email: '', whatsapp: '', instagram: '', horario: '' })
-if (!(await sb.from('cms_faq').select('id').limit(1)).data?.length) {
-  ok(await sb.from('cms_faq').insert([{ pregunta: '¿Necesito conocimientos previos?', respuesta: 'No, los cursos inicial arrancan desde cero. (prueba)', orden: 1 }, { pregunta: '¿Dónde se cursa?', respuesta: 'Presencial en La Rioja 345, Córdoba.', orden: 2 }]), 'faq')
-  ok(await sb.from('cms_testimonios').insert([{ nombre: 'Egresado de prueba', curso: 'Reparación de Celulares', texto: 'Excelente curso, 100% práctico. (testimonio de prueba)', puntaje: 5, orden: 1 }, { nombre: 'Otra egresada de prueba', curso: 'Reparación de Celulares', texto: 'Aprendí mucho. (prueba)', puntaje: 5, curso_id: cid['reparacion-de-celulares'], orden: 2 }]), 'testimonios')
-}
+await set('contacto', { direccion: 'La Rioja 345, X5022 Córdoba', telefono: '351 000 0000', email: 'contacto@recoveryparts.example.com', whatsapp: '5493510000000', instagram: '@recoverypartsacademy', horario: 'Lunes a viernes de 9 a 19 h · Sábados de 9 a 14 h' })
+
+// Contenido del sitio (testimonios, FAQ, egresados, galería): solo existe en dev/test, así que se rehace entero
+// en cada corrida para que el seed sea repetible sin duplicar.
+const limpiar = (t) => sb.from(t).delete().not('id', 'is', null).then((r) => ok(r, 'limpiar ' + t))
+for (const t of ['cms_faq', 'cms_testimonios', 'cms_egresados', 'cms_galeria']) await limpiar(t)
+
+ok(await sb.from('cms_faq').insert([
+  ['¿Necesito conocimientos previos?', 'No. Los cursos de nivel Inicial arrancan desde cero. En los de nivel Intermedio o Avanzado te contamos antes qué base se necesita.'],
+  ['¿Dónde se cursa?', 'Las clases son presenciales, en La Rioja 345, Córdoba. No ofrecemos cursos virtuales.'],
+  ['¿Qué diferencia hay entre un curso y un taller?', 'Los cursos duran varias semanas y siguen un plan de estudios. Los talleres son cortos: una jornada, tres días seguidos o una o dos semanas, para aprender algo puntual.'],
+  ['¿Cómo me inscribo?', 'Escribinos desde la página de contacto o por WhatsApp y te contamos los pasos y los cupos disponibles.'],
+  ['¿Qué incluye cada curso?', 'Clases prácticas con equipos reales, material de estudio en PDF dentro del campus virtual y, en algunos casos, un kit sugerido de herramientas.'],
+  ['¿Cómo accedo al material de las clases?', 'Cuando te sumás a un curso recibís una invitación por mail para crear tu contraseña. Desde el campus ves y descargás los PDFs que tu profesor va liberando.'],
+  ['¿Los grupos son reducidos?', 'Sí. Cada curso tiene un cupo máximo para que el profesor pueda acompañar a cada alumno.'],
+  ['¿Puedo consultar el precio?', 'Cada curso muestra un precio de referencia. Para consultar el valor vigente, escribinos.'],
+].map(([pregunta, respuesta], i) => ({ pregunta, respuesta: respuesta + ' (prueba)', orden: i + 1 }))), 'faq')
+
+const T = (nombre, curso, texto, puntaje, slug) => ({ nombre, curso, texto: texto + ' (testimonio de prueba)', puntaje, curso_id: slug ? cid[slug] : null })
+ok(await sb.from('cms_testimonios').insert([
+  T('Lucas F.', 'Reparación de Celulares', 'Salí del curso reparando mis primeros equipos. Todo es práctica con herramientas reales.', 5),
+  T('Mariana R.', 'Estampados Personalizados', 'Los grupos chicos hacen que el profe te corrija en el momento. Muy recomendable.', 5),
+  T('Tomás V.', 'Armado y Mantenimiento de PCs', 'Armé mi propia computadora en las clases. Explican todo con paciencia.', 4),
+  T('Sofía A.', 'Impresión 3D desde Cero', 'Nunca había tocado una impresora 3D y a la tercera clase ya imprimía mis piezas.', 5),
+  T('Martín Q.', 'Taller de Cambio de Glass', 'El taller corto es ideal si ya sabés lo básico y querés un oficio puntual.', 5),
+  T('Julieta M.', 'Señalética y Cartelería', 'Aprendí a armar carteles para el negocio de mi familia. Material claro en el campus.', 4),
+  T('Carlos P.', 'Reparación de Notebooks', 'El plan de estudios está muy bien armado y los PDFs me sirven para repasar.', 5, 'reparacion-de-notebooks'),
+  T('Ana G.', 'Reparación de Celulares', 'Clases ordenadas y siempre con equipos para practicar.', 5, 'reparacion-de-celulares'),
+  T('Diego S.', 'Armado y Mantenimiento de PCs', 'Cursé de noche y pude combinarlo con el trabajo.', 4, 'armado-y-mantenimiento-de-pcs'),
+].map((t, i) => ({ ...t, orden: i + 1 }))), 'testimonios')
+
+const ESP = ['Reparación de celulares', 'Reparación de notebooks', 'Estampados', 'Cartelería', 'Impresión 3D', 'Armado de PCs']
+const NOM = ['Lucas Fernández', 'Mariana Rossi', 'Tomás Villarreal', 'Sofía Argañaraz', 'Martín Quiroga', 'Julieta Montenegro', 'Carlos Paz', 'Ana Giménez']
+ok(await sb.from('cms_egresados').insert(NOM.map((nombre, i) => ({ nombre, especialidad: ESP[i % ESP.length], foto_url: `/images/egresado-${i + 1}.jpg`, destacado: i < 4, orden: i + 1 }))), 'egresados')
+await set('stats', { aulas: 3, profesores: 10, egresados: 750 })
+
+const G = [
+  ['aulas', 'tecnico', '/images/about.jpg', 'Aula de práctica con equipos reales'],
+  ['clases', 'tecnico', '/images/curso-iphone.jpg', 'Clase de reparación de celulares'],
+  ['clases', 'diseno', '/images/curso-estampados.jpg', 'Taller de estampados'],
+  ['trabajos', 'diseno', '/images/curso-neon.jpg', 'Cartel de neón LED terminado'],
+  ['trabajos', 'tecnico', '/images/curso-notebooks.jpg', 'Notebook reparada por un alumno'],
+  ['trabajos', 'tecnico', '/images/curso-computadoras.jpg', 'Computadora armada en el curso'],
+  ['egresados', 'tecnico', '/images/egresados.jpg', 'Egresados de la academia'],
+  ['eventos', 'tecnico', '/images/curso-glass.jpg', 'Taller de cambio de glass'],
+]
+ok(await sb.from('cms_galeria').insert(G.map(([categoria, area, imagen_url, alt], i) => ({ categoria, area, imagen_url, alt, descripcion: alt, orden: i + 1 }))), 'galeria')
 
 // ── Salida ─────────────────────────────────────────────────
 const tabla = USUARIOS.map((u) => `${u.rol.padEnd(9)} ${u.email.padEnd(32)} ${u.password}`).join('\n')

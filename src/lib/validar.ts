@@ -25,3 +25,12 @@ export function extensionImagen(b: Uint8Array): 'png' | 'jpg' | 'webp' | 'avif' 
   if (ascii(4, 8) === 'ftypavif') return 'avif'
   return null
 }
+
+/** Tienda socia de la academia (herramientas y repuestos). Solo se enlaza: la venta no se maneja en este sistema. */
+export const MUNDO_PARTS_URL = 'https://www.mundopartsrepuestos.com/'
+
+/** true si el link apunta a Mundo Parts (para rotular el botón «Comprar en Mundo Parts»). */
+export function esMundoParts(u: string | null | undefined): boolean {
+  if (!u) return false
+  try { return new URL(u).hostname.replace(/^www\./, '') === 'mundopartsrepuestos.com' } catch { return false }
+}

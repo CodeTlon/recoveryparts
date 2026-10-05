@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { siteUrl } from '@/lib/supabase/env'
 import { enviarMail } from '@/lib/mail'
 import { DIAS } from '@/lib/types'
-import { urlOpcional, extensionImagen } from '@/lib/validar'
+import { urlOpcional, extensionImagen, esUrlHttp } from '@/lib/validar'
 import { hoyAR } from '@/lib/fechas'
 
 export type R = { ok?: boolean; error?: string }
@@ -238,11 +238,12 @@ export async function guardarKit(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
   const curso_id = txt(fd, 'curso_id')
   const filas = txt(fd, 'kit').split('\n').map((l) => l.trim()).filter(Boolean).map((l, orden) => {
-    const [nombre, descripcion, precio, link] = l.split('|').map((x) => x.trim())
-    if (!nombre || (precio && isNaN(Number(precio))) || (link && !/^https?:\/\//.test(link))) return null
-    return { curso_id, orden, nombre, descripcion: descripcion || null, precio: precio ? Number(precio) : null, link_externo: link || null }
+    const [nombre, descripcion, precio, link, tipo] = l.split('|').map((x) => x.trim())
+    if (!nombre || (precio && (isNaN(Number(precio)) || Number(precio) < 0)) || (link && !esUrlHttp(link))) return null
+    // `tipo` es opcional (kits viejos de 4 columnas): sin tipo, el ítem se considera necesario.
+    return { curso_id, orden, nombre, descripcion: descripcion || null, precio: precio ? Number(precio) : null, link_externo: link || null, requerido: tipo !== 'recomendado' }
   })
-  if (filas.some((f) => !f)) return { error: 'Formato por línea: "Nombre | Descripción | Precio | https://link".' }
+  if (filas.some((f) => !f)) return { error: 'Revisá el kit: cada ítem necesita nombre, el precio no puede ser negativo y el link debe empezar con http(s)://.' }
   const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'kit_items', p_curso: curso_id, p_filas: filas })
   if (error) return { error: 'No se pudo guardar el kit.' }
   await sb.from('cursos').update({ precio_actualizado_en: hoyAR() }).eq('id', curso_id)
