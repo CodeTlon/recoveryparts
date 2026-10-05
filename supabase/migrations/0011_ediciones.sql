@@ -243,6 +243,30 @@ end $$;
 create trigger ediciones_biu before insert or update on ediciones
   for each row execute function ediciones_before_write();
 
+-- Reactivar un curso vuelve a poner en juego sus ediciones activas: se revalidan aula, capacidad y choques.
+create function cursos_before_reactivar() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare e record; a record;
+begin
+  if new.activo and not old.activo then
+    for e in select * from ediciones where curso_id = new.id and activo loop
+      if e.aula_id is not null then
+        select nombre, capacidad, activa into a from aulas where id = e.aula_id;
+        if not a.activa then
+          raise exception 'El aula % de la edición del % está dada de baja.', a.nombre, to_char(e.fecha_inicio, 'DD/MM/YYYY');
+        end if;
+        if a.capacidad is not null and e.cupo > a.capacidad then
+          raise exception 'El cupo (%) supera la capacidad del aula % (%).', e.cupo, a.nombre, a.capacidad;
+        end if;
+      end if;
+      perform validar_edicion(e.id, e.curso_id, e.fecha_inicio, e.aula_id, e.profesor_id, true);
+    end loop;
+  end if;
+  return new;
+end $$;
+create trigger cursos_reactivar before update of activo on cursos
+  for each row execute function cursos_before_reactivar();
+
 -- Horario nuevo/editado: sin choque de aula/profesor con otras ediciones activas que se superpongan en el tiempo.
 create or replace function validar_horario() returns trigger
 language plpgsql security definer set search_path = public as $$
