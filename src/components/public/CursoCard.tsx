@@ -37,7 +37,7 @@ export default function CursoCard({ c, horarios }: { c: CursoPublico; horarios: 
         {c.imagen_url
           ? <Image src={c.imagen_url} alt={c.nombre} fill sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           : <div className="grid-bg flex h-full items-center justify-center text-outline-variant"><Wrench size={48} aria-hidden /></div>}
-        {c.tipo === 'taller' && <span className="badge absolute left-3 top-3 bg-accent text-white">{TIPO_LABEL.taller}</span>}
+        {c.tipo === 'taller' && <span className="badge absolute left-3 top-3 bg-accent text-surface">{TIPO_LABEL.taller}</span>}
         <span aria-hidden className="absolute inset-0 flex items-center justify-center bg-surface/60 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100">
           <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white/80 text-white"><Search size={24} /></span>
         </span>
@@ -52,7 +52,7 @@ export default function CursoCard({ c, horarios }: { c: CursoPublico; horarios: 
         <div className="mt-auto border-t border-outline-variant pt-4">
           <div className="flex items-end justify-between gap-3">
             <Precio c={c} size="text-2xl" />
-            <span className="rounded border-2 border-accent px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-accent transition-colors group-hover:bg-accent group-hover:text-white">+ info</span>
+            <span className="rounded border-2 border-accent px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-accent transition-colors group-hover:bg-accent group-hover:text-surface">+ info</span>
           </div>
           <div className="mt-2"><Cupos n={c.cupos_disponibles} /></div>
         </div>

@@ -44,12 +44,12 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
-      <main className="mx-auto w-full max-w-[1280px] flex-grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
+      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] flex-grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
         <section className="mb-16 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
           <div className={`flex flex-col gap-6 ${c.imagen_url ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
             <div className="flex flex-wrap gap-2">
               <span className="badge border border-outline-variant bg-surface-container-high text-primary">{AREA_LABEL[c.area]}</span>
-              <span className="badge bg-accent text-white">{TIPO_LABEL[c.tipo]}</span>
+              <span className="badge bg-accent text-surface">{TIPO_LABEL[c.tipo]}</span>
               {c.nivel && <span className="badge border border-outline-variant text-on-surface-variant">{c.nivel}</span>}
             </div>
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{c.nombre}</h1>
@@ -130,7 +130,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <div className="grid gap-4 sm:grid-cols-2">
                   {testimonios.map((t) => (
                     <figure key={t.id} className="card p-5">
-                      <div className="mb-2 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}</div>
+                      <div role="img" className="mb-2 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}</div>
                       <blockquote className="text-sm text-on-surface-variant">{t.texto}</blockquote>
                       <figcaption className="mt-3 text-sm font-semibold">{t.nombre}</figcaption>
                     </figure>
@@ -146,7 +146,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <h2 className="text-2xl font-semibold">Inversión</h2>
                 <div>
                   <Precio c={c} size="text-4xl" />
-                  {c.descuento_pct ? <span className="badge ml-2 bg-accent text-white">-{c.descuento_pct}%</span> : null}
+                  {c.descuento_pct ? <span className="badge ml-2 bg-accent text-surface">-{c.descuento_pct}%</span> : null}
                 </div>
                 <div className="h-px bg-outline-variant" />
                 <ul className="flex flex-col gap-3">

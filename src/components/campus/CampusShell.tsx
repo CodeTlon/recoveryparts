@@ -98,7 +98,7 @@ export default function CampusShell({ rol, nombre, children }: { rol: string; no
         )}
       </AnimatePresence>
 
-      <main className="min-h-screen p-4 md:ml-64 md:p-10"><div className="mx-auto max-w-[1180px]">{children}</div></main>
+      <main id="contenido" tabIndex={-1} className="min-h-screen p-4 md:ml-64 md:p-10"><div className="mx-auto max-w-[1180px]">{children}</div></main>
     </div>
   )
 }

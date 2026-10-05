@@ -5,7 +5,7 @@ import AuroraBackground from '@/components/ui/AuroraBackground'
 
 export default function AuthShell({ eyebrow, title, subtitle, children }: { eyebrow: string; title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <main className="grid min-h-screen bg-surface text-on-surface lg:grid-cols-[1.1fr_1fr]">
+    <main id="contenido" tabIndex={-1} className="grid min-h-screen bg-surface text-on-surface lg:grid-cols-[1.1fr_1fr]">
       {/* Panel de marca: solo en pantallas grandes */}
       <aside className="relative hidden overflow-hidden border-r border-outline-variant lg:flex lg:flex-col lg:justify-between lg:p-12">
         <AuroraBackground />
@@ -13,7 +13,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }: { eyeb
           <Image src="/images/logo.png" alt="" width={36} height={36} /> Recovery Parts
         </Link>
         <div className="relative max-w-md">
-          <h2 className="text-4xl font-bold leading-tight tracking-tight">Aprendé un oficio con <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">equipos reales</span>.</h2>
+          <p className="text-4xl font-bold leading-tight tracking-tight">Aprendé un oficio con <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">equipos reales</span>.</p>
           <p className="mt-4 text-on-surface-variant">Tu campus: clases, material y seguimiento de tus cursos en un solo lugar.</p>
         </div>
       </aside>

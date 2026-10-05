@@ -26,6 +26,10 @@
     overflow-x: hidden;
   }
 
+  /* Controles nativos (calendario, scrollbars) con tema oscuro. */
+  html { color-scheme: dark; }
+  input[type='checkbox'], input[type='radio'] { accent-color: var(--rp-accent); }
+
   ::selection { background-color: var(--rp-accent); color: var(--rp-surface); }
 
   :focus-visible {
@@ -61,8 +65,8 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded px-6 py-3 text-sm font-semibold uppercase tracking-wide transition disabled:opacity-50 disabled:pointer-events-none;
   }
-  .btn-primary { @apply btn bg-accent text-white hover:bg-accent-hover; }
-  .btn-outline { @apply btn border-2 border-accent text-accent hover:bg-accent hover:text-white; }
+  .btn-primary { @apply btn bg-accent text-surface hover:bg-accent-hover; }
+  .btn-outline { @apply btn border-2 border-accent text-accent hover:bg-accent hover:text-surface; }
   .btn-ghost { @apply btn border border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary; }
   .card { @apply rounded-lg border border-outline-variant bg-surface-container-low; }
   .input {

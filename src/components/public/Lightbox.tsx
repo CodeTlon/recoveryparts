@@ -30,7 +30,7 @@ export default function Galeria({ fotos }: { fotos: Foto[] }) {
       <div className="mb-8 flex flex-wrap gap-2">
         {cats.map((c) => (
           <button key={c} type="button" onClick={() => setCat(c)} aria-pressed={cat === c}
-            className={`rounded border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${cat === c ? 'border-accent bg-accent text-white' : 'border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary'}`}>
+            className={`rounded border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${cat === c ? 'border-accent bg-accent text-surface' : 'border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary'}`}>
             {label[c] ?? c}
           </button>
         ))}

@@ -34,7 +34,7 @@ export async function crearUsuario(_: R, fd: FormData): Promise<R> {
   if (!nombre || !apellido || !/^\S+@\S+\.\S+$/.test(email)) return { error: 'Completá nombre, apellido y un email válido.' }
 
   const { data: existente } = await sb.from('profiles').select('id, rol').eq('email', email).maybeSingle()
-  if (existente) return { error: 'Ese email ya existe. Para un alumno, usá "Añadir alumno" desde el curso.' }
+  if (existente) return { error: 'Ese email ya existe. Para un alumno, usá "Agregar alumno" desde el curso.' }
 
   const { error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
     data: { rol, nombre, apellido, telefono: txt(fd, 'telefono') || null },

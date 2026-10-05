@@ -87,9 +87,9 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
         </div>
 
         <div className="card mb-6 max-w-3xl p-6">
-          <h3 className="mb-1 font-semibold">Añadir alumno</h3>
+          <h3 className="mb-1 font-semibold">Agregar alumno</h3>
           <p className="mb-4 text-sm text-on-surface-variant">Si el email ya existe se lo vincula y se le avisa por mail; si no, se crea el usuario y se le envía la invitación.</p>
-          <ActionForm action={añadirAlumno} submit="Añadir al curso">
+          <ActionForm action={añadirAlumno} submit="Agregar al curso">
             <input type="hidden" name="curso_id" value={id} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Email" name="email" type="email" required />

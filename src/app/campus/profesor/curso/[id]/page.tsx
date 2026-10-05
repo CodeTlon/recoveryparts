@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, FileText, Link2, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { ActionForm, Badge, Confirm, Empty, Field, PageHead, Select } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, Field, PageHead, Select, SubmitButton } from '@/components/campus/ui'
 import { guardarClases } from '../../../admin/actions'
 import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
 import { hoyAR } from '@/lib/fechas'
@@ -39,7 +39,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
                     <td className="px-4 py-3 font-medium">{a.profiles?.apellido}, {a.profiles?.nombre}</td>
                     <td className="px-4 py-3 text-on-surface-variant">{a.profiles?.email}</td>
                     <td className="px-4 py-3 text-on-surface-variant">{a.profiles?.telefono ?? '—'}</td>
-                    <td className="px-4 py-3"><Badge tone={a.estado === 'activo' ? 'ok' : a.estado === 'desertor' ? 'bad' : 'neutral'}>{a.estado}</Badge></td>
+                    <td className="px-4 py-3"><Badge tone={a.estado === 'activo' ? 'ok' : a.estado === 'desertor' ? 'bad' : 'neutral'}><span className="capitalize">{a.estado}</span></Badge></td>
                   </tr>
                 ))}
               </tbody>
@@ -62,7 +62,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
                   {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Ver</a>}
                   <form action={liberarMaterial}>
                     <input type="hidden" name="id" value={m.id} /><input type="hidden" name="curso_id" value={id} /><input type="hidden" name="liberar" value={m.liberado_manual ? '0' : '1'} />
-                    <button className="btn-ghost !px-3 !py-2">{m.liberado_manual ? <><EyeOff size={14} /> Ocultar</> : <><Eye size={14} /> Liberar ahora</>}</button>
+                    <SubmitButton>{m.liberado_manual ? <><EyeOff size={14} /> Ocultar</> : <><Eye size={14} /> Liberar ahora</>}</SubmitButton>
                   </form>
                   <form action={borrarMaterial}>
                     <input type="hidden" name="id" value={m.id} /><input type="hidden" name="curso_id" value={id} />
@@ -80,7 +80,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
             <ActionForm action={subirPdf} submit="Subir PDF">
               <input type="hidden" name="curso_id" value={id} />
               <Field label="Título" name="titulo" required />
-              <Field label="Archivo (PDF, máx. 25 MB)" name="archivo"><input id="f-archivo" name="archivo" type="file" accept="application/pdf" required className="input" /></Field>
+              <Field label="Archivo (PDF, máx. 25 MB)" name="archivo" required>{(p) => <input {...p} name="archivo" type="file" accept="application/pdf" required className="input" />}</Field>
               <Select name="clase_id" label="Clase (opcional)" empty="Material general" options={claseOpts} />
               <Field label="Liberar automáticamente el" name="liberar_en" type="date" hint="Vacío = queda oculto hasta que lo liberes a mano." />
             </ActionForm>

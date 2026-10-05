@@ -29,7 +29,7 @@ export default async function Encuesta({ params }: { params: Promise<{ id: strin
                   {[1, 2, 3, 4, 5].map((n) => (
                     <label key={n} className="cursor-pointer">
                       <input type="radio" name={`p_${i}`} value={n} className="peer sr-only" />
-                      <span className="flex h-11 w-11 items-center justify-center rounded border border-outline-variant text-sm font-semibold peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent">{n}</span>
+                      <span className="flex h-11 w-11 items-center justify-center rounded border border-outline-variant text-sm font-semibold peer-checked:border-accent peer-checked:bg-accent peer-checked:text-surface peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent">{n}</span>
                     </label>
                   ))}
                 </div>

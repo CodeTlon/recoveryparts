@@ -8,7 +8,7 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  `img-src 'self' data: blob: https:${isDev ? ' http://127.0.0.1:*' : ''}`,
   "font-src 'self' data:",
   `connect-src 'self' https://${supabaseHost}${isDev ? ' http://127.0.0.1:* ws://localhost:*' : ''}`,
   "frame-src 'self'",
