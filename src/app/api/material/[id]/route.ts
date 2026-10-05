@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   return new NextResponse(file, {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `${req.nextUrl.searchParams.has('download') ? 'attachment' : 'inline'}; filename="${encodeURIComponent(titulo)}.pdf"`,
+      'Content-Disposition': `${req.nextUrl.searchParams.has('download') ? 'attachment' : 'inline'}; filename="material.pdf"; filename*=UTF-8''${encodeURIComponent(titulo)}.pdf`,
       'Cache-Control': 'private, no-store',
       'X-Content-Type-Options': 'nosniff',
     },

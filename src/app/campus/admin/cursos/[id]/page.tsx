@@ -5,6 +5,7 @@ import { requireRole, fechaAR } from '@/lib/auth'
 import CursoForm from '@/components/campus/CursoForm'
 import { ActionForm, Badge, Confirm, Empty, Field, PageHead } from '@/components/campus/ui'
 import { añadirAlumno, corregirFechaDesercion, finalizarCurso, guardarClases, guardarHorarios, guardarKit, guardarModulos, marcarDesertor } from '../../actions'
+import { hoyAR } from '@/lib/fechas'
 
 export default async function CursoAdmin({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -23,7 +24,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
     sb.from('materiales').select('id, tipo, titulo').eq('curso_id', id),
   ])
   const totalClases = clases?.filter((c) => c.estado === 'programada').length ?? 0
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyAR()
   const activos = insc?.filter((i) => i.estado === 'activo').length ?? 0
 
   const hTxt = (hs ?? []).map((h) => `${h.dia_semana} ${h.hora_inicio.slice(0, 5)}-${h.hora_fin.slice(0, 5)}`).join('\n')

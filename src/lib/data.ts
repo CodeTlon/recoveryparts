@@ -18,18 +18,21 @@ export async function getSettings(): Promise<Settings> {
   if (!supabaseConfigured) return base
   try {
     const sb = await createClient()
-    const { data } = await sb.from('site_settings').select('clave, valor')
+    const { data, error } = await sb.from('site_settings').select('clave, valor')
+    if (error) console.error('data: site_settings', error.code)
     for (const r of data ?? []) (base as any)[r.clave] = r.valor
-  } catch {}
+  } catch (e) { console.error('data: site_settings', (e as Error).name) }
   return base
 }
 
-export async function query<T>(fn: (sb: Awaited<ReturnType<typeof createClient>>) => PromiseLike<{ data: T | null }>, fallback: T): Promise<T> {
+export async function query<T>(fn: (sb: Awaited<ReturnType<typeof createClient>>) => PromiseLike<{ data: T | null; error?: { code?: string } | null }>, fallback: T): Promise<T> {
   if (!supabaseConfigured) return fallback
   try {
-    const { data } = await fn(await createClient())
+    const { data, error } = await fn(await createClient())
+    if (error) console.error('data: consulta', error.code)
     return data ?? fallback
-  } catch {
+  } catch (e) {
+    console.error('data: consulta', (e as Error).name)
     return fallback
   }
 }

@@ -7,6 +7,7 @@ import { siteUrl } from '@/lib/supabase/env'
 import { enviarMail } from '@/lib/mail'
 import { DIAS } from '@/lib/types'
 import { urlOpcional, extensionImagen } from '@/lib/validar'
+import { hoyAR } from '@/lib/fechas'
 
 export type R = { ok?: boolean; error?: string }
 const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
@@ -106,7 +107,7 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
   const imagen = urlOpcional(txt(fd, 'imagen_url')), video = urlOpcional(txt(fd, 'video_url'))
   if (imagen === undefined || video === undefined) return { error: 'La imagen y el video deben ser URLs http(s).' }
   const row = {
-    nombre, slug: txt(fd, 'slug') || slugify(nombre),
+    nombre, slug: slugify(txt(fd, 'slug') || nombre),
     area: txt(fd, 'area'), tipo: txt(fd, 'tipo'), nivel: txt(fd, 'nivel') || null,
     descripcion: txt(fd, 'descripcion') || null, requisitos: txt(fd, 'requisitos') || null,
     imagen_url: imagen, video_url: video,
@@ -114,7 +115,7 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
     descuento_pct: num(fd, 'descuento_pct'), fecha_inicio: txt(fd, 'fecha_inicio') || null,
     aula_id: txt(fd, 'aula_id') || null, profesor_id: txt(fd, 'profesor_id') || null,
     destacado: fd.get('destacado') === 'on', orden: num(fd, 'orden') ?? 0,
-    precio_actualizado_en: precio != null ? new Date().toISOString().slice(0, 10) : null,
+    precio_actualizado_en: precio != null ? hoyAR() : null,
   }
   const q = id
     ? sb.from('cursos').update(row).eq('id', id).select('id').single()
@@ -140,15 +141,8 @@ export async function guardarHorarios(_: R, fd: FormData): Promise<R> {
     return m ? { curso_id, dia_semana: Number(m[1]), hora_inicio: m[2], hora_fin: m[3] } : null
   })
   if (filas.some((f) => !f)) return { error: `Formato: "día 18:00-20:00" (${DIAS.map((d, i) => `${i}=${d}`).join(', ')}).` }
-  const previos = await sb.from('horarios_curso').select('*').eq('curso_id', curso_id)
-  await sb.from('horarios_curso').delete().eq('curso_id', curso_id)
-  if (filas.length) {
-    const { error } = await sb.from('horarios_curso').insert(filas as any[])
-    if (error) {
-      if (previos.data?.length) await sb.from('horarios_curso').insert(previos.data) // restaura
-      return { error: traducir(error.message) }
-    }
-  }
+  const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'horarios_curso', p_curso: curso_id, p_filas: filas })
+  if (error) return { error: traducir(error.message) }
   revalidatePath(`/campus/admin/cursos/${curso_id}`)
   return { ok: true }
 }
@@ -162,11 +156,8 @@ export async function guardarModulos(_: R, fd: FormData): Promise<R> {
     if (l.startsWith('#')) mods.push({ curso_id, orden: mods.length, titulo: l.replace(/^#+\s*/, ''), items: [] })
     else mods.at(-1)?.items.push(l.replace(/^[-•]\s*/, ''))
   }
-  await sb.from('modulos_curso').delete().eq('curso_id', curso_id)
-  if (mods.length) {
-    const { error } = await sb.from('modulos_curso').insert(mods)
-    if (error) return { error: 'No se pudo guardar el temario.' }
-  }
+  const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'modulos_curso', p_curso: curso_id, p_filas: mods })
+  if (error) return { error: 'No se pudo guardar el temario.' }
   revalidatePath(`/campus/admin/cursos/${curso_id}`)
   return { ok: true }
 }
@@ -178,18 +169,33 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   const filas = txt(fd, 'clases').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
     const [n, fecha, titulo, estado] = l.split('|').map((x) => x.trim())
     if (!/^\d+$/.test(n) || !/^\d{4}-\d{2}-\d{2}$/.test(fecha ?? '') || !titulo) return null
-    return { curso_id, numero: Number(n), fecha, titulo, estado: ['suspendida', 'reprogramada'].includes(estado) ? estado : 'programada' }
+    if (estado && !['programada', 'suspendida', 'reprogramada'].includes(estado)) return null
+    return { curso_id, numero: Number(n), fecha, titulo, estado: estado || 'programada' }
   })
   if (filas.some((f) => !f)) return { error: 'Formato por línea: "1 | 2026-10-05 | Título de la clase | programada".' }
   const ok = filas as { numero: number; estado: string; fecha: string }[]
+  if (!ok.length) return { error: 'El calendario no puede quedar vacío.' }
+  if (new Set(ok.map((f) => f.numero)).size !== ok.length) return { error: 'Hay números de clase repetidos.' }
+  const nums = ok.map((f) => f.numero)
+
+  // Lo que ya estaba: sirve para avisar solo los cambios y para no borrar clases con material.
+  const { data: previas } = await sb.from('clases').select('id, numero, fecha, estado').eq('curso_id', curso_id)
+  const aBorrar = (previas ?? []).filter((c: any) => !nums.includes(c.numero))
+  if (aBorrar.length) {
+    const { data: conMaterial } = await sb.from('materiales').select('clase_id').in('clase_id', aBorrar.map((c: any) => c.id)).limit(1)
+    if (conMaterial?.length) return { error: 'Hay clases con material que no están en la lista. Dejalas en el calendario o pasá el material a "general".' }
+  }
+
   const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'curso_id,numero' })
   if (error) return { error: 'No se pudo guardar el calendario.' }
-  const nums = ok.map((f) => f.numero)
-  const del = sb.from('clases').delete().eq('curso_id', curso_id)
-  await (nums.length ? del.not('numero', 'in', `(${nums.join(',')})`) : del)
+  if (aBorrar.length) {
+    const { error: eDel } = await sb.from('clases').delete().in('id', aBorrar.map((c: any) => c.id))
+    if (eDel) return { error: 'Se guardó el calendario, pero no se pudieron quitar las clases que faltaban.' }
+  }
 
-  // RF-38 (por mail): avisar a los alumnos activos de clases suspendidas/reprogramadas.
-  const aviso = ok.filter((f) => f.estado !== 'programada')
+  // RF-38 (por mail): avisar a los alumnos activos de clases suspendidas/reprogramadas (solo lo que cambió).
+  const previa = new Map((previas ?? []).map((c: any) => [c.numero, c]))
+  const aviso = ok.filter((f) => f.estado !== 'programada' && (() => { const a: any = previa.get(f.numero); return !a || a.estado !== f.estado || a.fecha !== f.fecha })())
   if (aviso.length && fd.get('avisar') === 'on') {
     const { data: ins } = await sb.from('inscripciones').select('profiles!inscripciones_alumno_id_fkey(email)').eq('curso_id', curso_id).eq('estado', 'activo')
     const { data: c } = await sb.from('cursos').select('nombre').eq('id', curso_id).single()
@@ -216,12 +222,9 @@ export async function guardarKit(_: R, fd: FormData): Promise<R> {
     return { curso_id, orden, nombre, descripcion: descripcion || null, precio: precio ? Number(precio) : null, link_externo: link || null }
   })
   if (filas.some((f) => !f)) return { error: 'Formato por línea: "Nombre | Descripción | Precio | https://link".' }
-  await sb.from('kit_items').delete().eq('curso_id', curso_id)
-  if (filas.length) {
-    const { error } = await sb.from('kit_items').insert(filas as any[])
-    if (error) return { error: 'No se pudo guardar el kit.' }
-  }
-  await sb.from('cursos').update({ precio_actualizado_en: new Date().toISOString().slice(0, 10) }).eq('id', curso_id)
+  const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'kit_items', p_curso: curso_id, p_filas: filas })
+  if (error) return { error: 'No se pudo guardar el kit.' }
+  await sb.from('cursos').update({ precio_actualizado_en: hoyAR() }).eq('id', curso_id)
   revalidatePath(`/campus/admin/cursos/${curso_id}`)
   return { ok: true }
 }
@@ -232,8 +235,11 @@ export async function añadirAlumno(_: R, fd: FormData): Promise<R> {
   const { sb, perfil: yo } = await requireRole('admin')
   const curso_id = txt(fd, 'curso_id')
   const email = txt(fd, 'email').toLowerCase()
-  const { data: curso } = await sb.from('cursos').select('nombre').eq('id', curso_id).single()
-  if (!curso) return { error: 'Curso inexistente.' }
+  const { data: curso } = await sb.from('cursos').select('nombre, cupo, activo').eq('id', curso_id).single()
+  if (!curso || !curso.activo) return { error: 'Curso inexistente o dado de baja.' }
+  // Se valida antes de invitar: si no, el alumno recibe un mail de una cuenta que se borra enseguida.
+  const { count: ocupados } = await sb.from('inscripciones').select('id', { count: 'exact', head: true }).eq('curso_id', curso_id)
+  if ((ocupados ?? 0) >= curso.cupo) return { error: 'El curso no tiene cupos disponibles.' }
 
   let { data: alumno } = await sb.from('profiles').select('id, rol, nombre').eq('email', email).maybeSingle()
   let nuevo = false
@@ -265,12 +271,13 @@ export async function añadirAlumno(_: R, fd: FormData): Promise<R> {
 // RF-15/54/55: Desertor = estado final, con fecha y motivo obligatorio. Nunca se borra.
 export async function marcarDesertor(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
-  const motivo = txt(fd, 'motivo'), fecha = txt(fd, 'fecha') || new Date().toISOString().slice(0, 10)
+  const motivo = txt(fd, 'motivo'), fecha = txt(fd, 'fecha') || hoyAR()
   if (!motivo) return { error: 'El motivo es obligatorio.' }
-  const { error } = await sb.from('inscripciones')
+  const { data, error } = await sb.from('inscripciones')
     .update({ estado: 'desertor', fecha_desercion: fecha, motivo_desercion: motivo })
-    .eq('id', txt(fd, 'id')).neq('estado', 'desertor')
+    .eq('id', txt(fd, 'id')).neq('estado', 'desertor').select('id')
   if (error) return { error: traducir(error.message) }
+  if (!data?.length) return { error: 'No se encontró la inscripción o el alumno ya figura como desertor.' }
   revalidatePath(`/campus/admin/cursos/${txt(fd, 'curso_id')}`)
   return { ok: true }
 }
@@ -278,7 +285,9 @@ export async function marcarDesertor(_: R, fd: FormData): Promise<R> {
 // Corregir la fecha recalcula el N° de clase (lo hace el trigger de la base).
 export async function corregirFechaDesercion(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
-  const { error } = await sb.from('inscripciones').update({ fecha_desercion: txt(fd, 'fecha') }).eq('id', txt(fd, 'id')).eq('estado', 'desertor')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(txt(fd, 'fecha'))) return { error: 'Poné una fecha válida.' }
+  const { data, error } = await sb.from('inscripciones').update({ fecha_desercion: txt(fd, 'fecha') }).eq('id', txt(fd, 'id')).eq('estado', 'desertor').select('id')
+  if (!error && !data?.length) return { error: 'No se encontró un desertor con ese id.' }
   revalidatePath(`/campus/admin/cursos/${txt(fd, 'curso_id')}`)
   return fail(error) ?? { ok: true }
 }
@@ -302,8 +311,16 @@ export async function guardarEncuesta(_: R, fd: FormData): Promise<R> {
       : { tipo: 'puntaje', texto: l }
   })
   if (!txt(fd, 'titulo') || !preguntas.length) return { error: 'Poné un título y al menos una pregunta.' }
-  const row = { titulo: txt(fd, 'titulo'), curso_id: txt(fd, 'curso_id') || null, preguntas, activa: fd.get('activa') === 'on' }
+  if (!txt(fd, 'curso_id')) return { error: 'Elegí el curso: sin curso ningún alumno vería la encuesta.' }
+  const row = { titulo: txt(fd, 'titulo'), curso_id: txt(fd, 'curso_id'), preguntas, activa: fd.get('activa') === 'on' }
   const id = txt(fd, 'id')
+  if (id) {
+    // Las respuestas se guardan por N° de pregunta: cambiar las preguntas con respuestas las desalinearía.
+    const { data: previa } = await sb.from('encuestas').select('preguntas').eq('id', id).single()
+    const { count } = await sb.from('encuesta_respuestas').select('id', { count: 'exact', head: true }).eq('encuesta_id', id)
+    if ((count ?? 0) > 0 && JSON.stringify(previa?.preguntas) !== JSON.stringify(preguntas))
+      return { error: 'Esta encuesta ya tiene respuestas: no se pueden cambiar las preguntas. Creá una encuesta nueva.' }
+  }
   const { error } = id ? await sb.from('encuestas').update(row).eq('id', id) : await sb.from('encuestas').insert(row)
   revalidatePath('/campus/admin/encuestas')
   return fail(error) ?? { ok: true }
@@ -323,9 +340,15 @@ export async function guardarSetting(_: R, fd: FormData): Promise<R> {
     path.slice(0, -1).forEach((p) => (o = o[p] ??= {}))
     const val = v.trim()
     const last = path.at(-1)!
-    o[last] = ['aulas', 'profesores', 'egresados'].includes(last) && /^\d+$/.test(val) ? Number(val) : val
+    if (['aulas', 'profesores', 'egresados'].includes(last)) { o[last] = /^\d+$/.test(val) ? Number(val) : null; continue } // vacío = null (se oculta en la home)
+    o[last] = val
   }
-  const { error } = await sb.from('site_settings').upsert({ clave, valor })
+  // Se mezcla con lo guardado: el formulario puede no traer todas las claves y no hay que perderlas.
+  const { data: actual } = await sb.from('site_settings').select('valor').eq('clave', clave).maybeSingle()
+  const mezclar = (a: any, b: any): any => (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(b))
+    ? Object.fromEntries([...new Set([...Object.keys(a), ...Object.keys(b)])].map((k) => [k, k in b ? mezclar(a[k], b[k]) : a[k]]))
+    : b
+  const { error } = await sb.from('site_settings').upsert({ clave, valor: mezclar(actual?.valor ?? {}, valor) })
   revalidatePath('/', 'layout')
   return fail(error) ?? { ok: true }
 }

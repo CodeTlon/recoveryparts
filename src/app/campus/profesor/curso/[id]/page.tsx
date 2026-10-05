@@ -5,6 +5,7 @@ import { requireRole, fechaAR } from '@/lib/auth'
 import { ActionForm, Badge, Confirm, Empty, Field, PageHead, Select } from '@/components/campus/ui'
 import { guardarClases } from '../../../admin/actions'
 import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
+import { hoyAR } from '@/lib/fechas'
 
 export default async function CursoProfesor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,7 +18,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
     sb.from('materiales').select('id, tipo, titulo, url, liberado_manual, liberar_en, clase_id').eq('curso_id', id).order('creado_en'),
     sb.from('clases').select('id, numero, fecha, titulo, estado').eq('curso_id', id).order('numero'),
   ])
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyAR()
   const claseOpts: [string, string][] = (clases ?? []).map((c) => [c.id, `#${c.numero} · ${c.titulo}`])
   const calendario = (clases ?? []).map((c) => `${c.numero} | ${c.fecha} | ${c.titulo} | ${c.estado}`).join('\n')
 
