@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import type { R } from '@/app/campus/admin/actions'
+import { useModalClose } from './Modal'
 
 // Formulario con server action: muestra error/ok y se resetea al guardar.
 // `S` permite que la acción devuelva datos extra (ej. el id del curso creado) que recibe `onSuccess`.
@@ -12,8 +13,11 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
   action: (s: S, fd: FormData) => Promise<S>; children: React.ReactNode; submit?: string; className?: string; reset?: boolean; onSuccess?: (s: S) => void
 }) {
   const [s, run, pending] = useActionState<S, FormData>(action as unknown as (s: Awaited<S>, fd: FormData) => Promise<S>, {} as Awaited<S>)
+  const closeModal = useModalClose()
   const okRef = useRef(onSuccess)
   okRef.current = onSuccess
+  // Dentro de un modal: tras guardar se cierra (con una pausa para que se vea el aviso).
+  useEffect(() => { if (s.ok && closeModal) { const t = setTimeout(closeModal, 900); return () => clearTimeout(t) } }, [s, closeModal])
   useEffect(() => { if (s.ok) okRef.current?.(s) }, [s])
   const ref = useRef<HTMLFormElement>(null)
   const [toast, setToast] = useState<'ok' | 'error' | null>(null)
