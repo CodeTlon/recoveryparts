@@ -19,9 +19,9 @@ export default async function AdminHome() {
     count(sb.from('profiles').select('*', { count: 'exact', head: true }).eq('rol', 'alumno')),
     count(sb.from('profiles').select('*', { count: 'exact', head: true }).eq('rol', 'profesor')),
     count(sb.from('contactos').select('*', { count: 'exact', head: true }).eq('leido', false)),
-    sb.from('clases').select('id, fecha, titulo, estado, cursos(nombre)').gte('fecha', hoy).lte('fecha', en14).order('fecha').limit(6),
+    sb.from('clases').select('id, numero, fecha, estado, ediciones!inner(activo, curso_id, cursos(nombre))').eq('ediciones.activo', true).gte('fecha', hoy).lte('fecha', en14).order('fecha').limit(6),
     sb.from('contactos').select('id, nombre, mensaje, leido, creado_en').order('creado_en', { ascending: false }).limit(4),
-    sb.from('cursos').select('id, nombre, fecha_inicio, tipo').eq('activo', true).gte('fecha_inicio', hoy).order('fecha_inicio').limit(5),
+    sb.from('ediciones').select('id, curso_id, fecha_inicio, cursos!inner(nombre, tipo, activo)').eq('activo', true).eq('cursos.activo', true).gte('fecha_inicio', hoy).order('fecha_inicio').limit(5),
   ])
   const kpis = [
     { Icon: BookOpen, v: cursos, l: 'Cursos y talleres activos', href: '/campus/admin/cursos' },
@@ -29,8 +29,10 @@ export default async function AdminHome() {
     { Icon: GraduationCap, v: profes, l: 'Profesores', href: '/campus/admin/usuarios?rol=profesor' },
     { Icon: Inbox, v: consultas, l: 'Consultas sin leer', href: '/campus/admin/consultas', alert: consultas > 0 },
   ]
-  type Clase = { id: string; fecha: string; titulo: string; estado: string; cursos: { nombre: string } | { nombre: string }[] | null }
-  const nombreCurso = (c: Clase['cursos']) => (Array.isArray(c) ? c[0]?.nombre : c?.nombre) ?? ''
+  // Las relaciones muchos-a-uno llegan como objeto (el tipo inferido es una lista).
+  const uno = <T,>(x: T | T[] | null | undefined) => (Array.isArray(x) ? x[0] : x) ?? null
+  type Clase = { id: string; numero: number; fecha: string; estado: string; ediciones: { curso_id: string; cursos: { nombre: string } | null } | null }
+  type PorIniciar = { id: string; curso_id: string; fecha_inicio: string; cursos: { nombre: string; tipo: string } | null }
   const lista = 'divide-y divide-outline-variant text-sm'
   return (
     <>
@@ -56,8 +58,8 @@ export default async function AdminHome() {
             <ul className={lista}>
               {(clases as unknown as Clase[]).map((c) => (
                 <li key={c.id} className="py-2">
-                  <p className="font-medium">{c.titulo}</p>
-                  <p className="text-xs text-on-surface-variant">{fechaAR(c.fecha)} · {nombreCurso(c.cursos)}{c.estado !== 'programada' ? ` · ${c.estado}` : ''}</p>
+                  <p className="font-medium">{uno(uno(c.ediciones)?.cursos)?.nombre ?? 'Curso'}</p>
+                  <p className="text-xs text-on-surface-variant">{fechaAR(c.fecha)} · clase {c.numero}{c.estado !== 'programada' ? ` · ${c.estado}` : ''}</p>
                 </li>
               ))}
             </ul>
@@ -83,14 +85,14 @@ export default async function AdminHome() {
           <h2 className="mb-3 flex items-center gap-2 font-semibold"><BookOpen size={18} className="text-secondary" aria-hidden /> Por empezar</h2>
           {porIniciar?.length ? (
             <ul className={lista}>
-              {porIniciar.map((c) => (
+              {(porIniciar as unknown as PorIniciar[]).map((c) => (
                 <li key={c.id} className="flex items-start justify-between gap-3 py-2">
-                  <Link href={`/campus/admin/cursos/${c.id}`} className="font-medium hover:text-secondary">{c.nombre}</Link>
+                  <Link href={`/campus/admin/cursos/${c.curso_id}/ediciones/${c.id}`} className="font-medium hover:text-secondary">{uno(c.cursos)?.nombre ?? 'Curso'}</Link>
                   <span className="shrink-0 text-xs text-on-surface-variant">{fechaAR(c.fecha_inicio)}</span>
                 </li>
               ))}
             </ul>
-          ) : <p className="text-sm text-on-surface-variant">No hay cursos por empezar.</p>}
+          ) : <p className="text-sm text-on-surface-variant">No hay ediciones por empezar.</p>}
         </section>
       </div>
 
