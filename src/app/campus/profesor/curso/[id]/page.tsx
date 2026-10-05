@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, FileText, Link2, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { FileText, Link2, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { ActionForm, Badge, Confirm, Empty, Field, PageHead, Select } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, Field, PageHead, Select, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { guardarClases } from '../../../admin/actions'
 import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
+import { hoyAR } from '@/lib/fechas'
 
 export default async function CursoProfesor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,13 +18,13 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
     sb.from('materiales').select('id, tipo, titulo, url, liberado_manual, liberar_en, clase_id').eq('curso_id', id).order('creado_en'),
     sb.from('clases').select('id, numero, fecha, titulo, estado').eq('curso_id', id).order('numero'),
   ])
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyAR()
   const claseOpts: [string, string][] = (clases ?? []).map((c) => [c.id, `#${c.numero} · ${c.titulo}`])
   const calendario = (clases ?? []).map((c) => `${c.numero} | ${c.fecha} | ${c.titulo} | ${c.estado}`).join('\n')
 
   return (
     <>
-      <Link href="/campus/profesor" className="mb-4 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Mis cursos</Link>
+      <BackLink href="/campus/profesor">Mis cursos</BackLink>
       <PageHead title={curso.nombre} sub={(curso.aulas as any)?.nombre} />
 
       <section className="mb-12">
@@ -38,7 +39,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
                     <td className="px-4 py-3 font-medium">{a.profiles?.apellido}, {a.profiles?.nombre}</td>
                     <td className="px-4 py-3 text-on-surface-variant">{a.profiles?.email}</td>
                     <td className="px-4 py-3 text-on-surface-variant">{a.profiles?.telefono ?? '—'}</td>
-                    <td className="px-4 py-3"><Badge tone={a.estado === 'activo' ? 'ok' : a.estado === 'desertor' ? 'bad' : 'neutral'}>{a.estado}</Badge></td>
+                    <td className="px-4 py-3"><EstadoBadge estado={a.estado} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -61,7 +62,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
                   {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Ver</a>}
                   <form action={liberarMaterial}>
                     <input type="hidden" name="id" value={m.id} /><input type="hidden" name="curso_id" value={id} /><input type="hidden" name="liberar" value={m.liberado_manual ? '0' : '1'} />
-                    <button className="btn-ghost !px-3 !py-2">{m.liberado_manual ? <><EyeOff size={14} /> Ocultar</> : <><Eye size={14} /> Liberar ahora</>}</button>
+                    <SubmitButton>{m.liberado_manual ? <><EyeOff size={14} /> Ocultar</> : <><Eye size={14} /> Liberar ahora</>}</SubmitButton>
                   </form>
                   <form action={borrarMaterial}>
                     <input type="hidden" name="id" value={m.id} /><input type="hidden" name="curso_id" value={id} />
@@ -79,7 +80,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
             <ActionForm action={subirPdf} submit="Subir PDF">
               <input type="hidden" name="curso_id" value={id} />
               <Field label="Título" name="titulo" required />
-              <Field label="Archivo (PDF, máx. 25 MB)" name="archivo"><input id="f-archivo" name="archivo" type="file" accept="application/pdf" required className="input" /></Field>
+              <Field label="Archivo (PDF, máx. 25 MB)" name="archivo" required>{(p) => <input {...p} name="archivo" type="file" accept="application/pdf" required className="input" />}</Field>
               <Select name="clase_id" label="Clase (opcional)" empty="Material general" options={claseOpts} />
               <Field label="Liberar automáticamente el" name="liberar_en" type="date" hint="Vacío = queda oculto hasta que lo liberes a mano." />
             </ActionForm>
@@ -104,7 +105,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="curso_id" value={id} />
             <Field label="Clases" name="clases" rows={10} defaultValue={calendario} hint='Una por línea: "N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="avisar" /> Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</label>
+            <Check name="avisar">Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check>
           </ActionForm>
         </div>
       </section>

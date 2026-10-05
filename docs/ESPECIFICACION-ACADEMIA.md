@@ -544,7 +544,7 @@ sequenceDiagram
 | RF-32 | Liberación **automática por fecha** programada, más la opción del profesor de **liberar manualmente** antes de tiempo. | 🟢 | ⚙️ 👨‍🏫 |
 | RF-33 | El alumno visualiza **y puede descargar** el material liberado (vista previa + botón de descarga). *Cambiado en v0.6: antes era solo visualización.* | 🟢 | 🎓 |
 | RF-34 | El acceso depende de la vigencia, no del pago; vencido el período se retira solo. | 🟢 | ⚙️ |
-| RF-35 | Al finalizar el curso aparece en el campus un **botón de descarga** del ZIP con todos los PDFs. Solo para alumnos que terminaron (no desertores). Disponible **mínimo 1 mes**, o hasta que se borre el curso. | 🟢 | 🎓 |
+| RF-35 | Al finalizar el curso aparece en el campus un **botón de descarga** del ZIP con todos los PDFs **ya liberados** (los ocultos o programados no se incluyen). Solo para alumnos que terminaron (no desertores). Disponible **mínimo 1 mes**, o hasta que se borre el curso. | 🟢 | 🎓 |
 | RF-36 | Material: **PDF + links**. Los videos se suben a YouTube (no listado) o Drive y se cargan como link. No se alojan videos. | 🟢 | 👨‍🏫 |
 | RF-37 | El alumno ve el material liberado y **solo el título** del tema de la clase siguiente. Todo lo posterior queda oculto. | 🟢 | ⚙️ |
 
@@ -665,6 +665,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.7 | 2026-10-04 | Auditoría de seguridad, lógica y UI. **RF-35**: el ZIP trae solo el material liberado. Se confirma que el desertor sigue ocupando cupo. Fechas siempre en hora de Córdoba (RF-55). Ver `.ai/context/DECISIONS.md`. |
 | 0.6 | 2026-10-01 | **RF-33**: el alumno puede descargar el material liberado (antes solo visualizar). **RF-41** cancelado (sin botón flotante de WhatsApp). **RF-11** confirmado (entrada directa con un solo curso activo). **RF-38** confirmado por mail. Área 2 pasa a llamarse «Reparación y Tecnología» y se aclara que la academia no presta servicio técnico. Sin registro público (perfil solo por invitación, reforzado en la base). Sin WhatsApp ni bot por ahora. |
 | 0.1 | 2026-09-24 | Primera versión: web (A1–A4) + campus (docx v0.2), sin pagos ni inscripciones |
 | 0.5 | 2026-09-24 | Invitación 24 h (reset 10 min). ZIP disponible mínimo 1 mes o hasta que se borre el curso. Motivo de deserción obligatorio y visible para el alumno. |

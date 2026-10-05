@@ -1,5 +1,5 @@
 import { requireRole, fechaAR } from '@/lib/auth'
-import { Badge, Empty, PageHead } from '@/components/campus/ui'
+import { Badge, Empty, PageHead, SubmitButton } from '@/components/campus/ui'
 import { marcarContactoLeido } from '../actions'
 
 export default async function Consultas() {
@@ -22,7 +22,7 @@ export default async function Consultas() {
               <p className="whitespace-pre-line text-sm text-on-surface-variant">{c.mensaje}</p>
               <form action={marcarContactoLeido} className="mt-3">
                 <input type="hidden" name="id" value={c.id} /><input type="hidden" name="leido" value={c.leido ? '0' : '1'} />
-                <button className="btn-ghost !px-3 !py-2">{c.leido ? 'Marcar como no leída' : 'Marcar como leída'}</button>
+                <SubmitButton>{c.leido ? 'Marcar como no leída' : 'Marcar como leída'}</SubmitButton>
               </form>
             </li>
           ))}

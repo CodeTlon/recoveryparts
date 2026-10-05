@@ -3,6 +3,7 @@ import { DIAS } from '@/lib/types'
 import { Empty, PageHead } from '@/components/campus/ui'
 import AnimatedBar from '@/components/ui/AnimatedBar'
 import Reveal from '@/components/ui/Reveal'
+import { hoyAR } from '@/lib/fechas'
 
 type Insc = { alumno_id: string; curso_id: string; estado: string; n_clase_desercion: number | null; motivo_desercion: string | null; creado_en: string }
 type Curso = { id: string; nombre: string; cupo: number; creado_en: string; fecha_inicio: string | null; horarios_curso: { dia_semana: number }[] }
@@ -46,8 +47,8 @@ export default async function Reportes() {
     const ord = I.filter((i) => i.curso_id === c.id).map((i) => i.creado_en).sort()
     return ord.length >= c.cupo ? { nombre: c.nombre, dias: Math.max(0, Math.round((+new Date(ord[c.cupo - 1]) - +new Date(c.creado_en)) / 864e5)) } : null
   }).filter(Boolean).sort((a, b) => a!.dias - b!.dias) as { nombre: string; dias: number }[]
-  const hoy = new Date().toISOString().slice(0, 10)
-  const vacios = ocup.filter((o) => { const c = C.find((x) => x.nombre === o.nombre)!; return o.p < 50 && (!c.fecha_inicio || c.fecha_inicio <= hoy) })
+  const hoy = hoyAR()
+  const vacios = ocup.filter((o) => { const c = C.find((x) => x.nombre === o.nombre); return o.p < 50 && (!c?.fecha_inicio || c.fecha_inicio <= hoy) })
 
   // RF-51 · qué curso eligen al terminar uno
   const sig = new Map<string, number>()

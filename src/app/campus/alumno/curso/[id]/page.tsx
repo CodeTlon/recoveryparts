@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { FileText, Link2, ExternalLink, ArrowLeft, CalendarDays } from 'lucide-react'
+import { FileText, Link2, ExternalLink, CalendarDays } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { PageHead, Empty } from '@/components/campus/ui'
+import { hrefSeguro } from '@/lib/validar'
+import { PageHead, Empty, BackLink } from '@/components/campus/ui'
 import Reveal from '@/components/ui/Reveal'
 
 type Mat = { id: string; tipo: 'pdf' | 'link'; titulo: string; url: string | null; clase_numero: number | null; clase_titulo: string | null }
@@ -29,7 +30,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
 
   return (
     <>
-      <Link href="/campus/alumno" className="mb-4 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Mis cursos</Link>
+      <BackLink href="/campus/alumno">Mis cursos</BackLink>
       <PageHead title={curso.nombre} sub={curso.descripcion ?? undefined} />
 
       {siguiente && (
@@ -53,7 +54,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
                   {m.tipo === 'pdf' ? (
                     <Link href={`/campus/alumno/curso/${id}/ver/${m.id}`} className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><FileText size={20} className="text-primary" /> {m.titulo}<span className="ml-auto text-xs text-on-surface-variant">Ver PDF</span></Link>
                   ) : (
-                    <a href={m.url ?? '#'} target="_blank" rel="noopener noreferrer" className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><Link2 size={20} className="text-primary" /> {m.titulo}<ExternalLink size={14} className="ml-auto text-on-surface-variant" /></a>
+                    <a href={hrefSeguro(m.url)} target="_blank" rel="noopener noreferrer" className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><Link2 size={20} className="text-primary" /> {m.titulo}<ExternalLink size={14} className="ml-auto text-on-surface-variant" /></a>
                   )}
                 </li>
               ))}

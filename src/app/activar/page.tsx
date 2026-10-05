@@ -5,7 +5,7 @@ import { ActivarForm } from '@/components/auth/AuthForms'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseConfigured } from '@/lib/supabase/env'
 
-export const metadata: Metadata = { title: 'Creá tu contraseña' }
+export const metadata: Metadata = { title: 'Creá tu contraseña', robots: { index: false } }
 
 export default async function ActivarPage() {
   let user = null

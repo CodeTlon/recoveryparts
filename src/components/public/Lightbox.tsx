@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useModalFocus } from '@/lib/useModalFocus'
 
 export type Foto = { id: string; imagen_url: string; alt: string; descripcion: string | null; categoria: string; area: string | null }
 
@@ -13,6 +14,8 @@ export default function Galeria({ fotos }: { fotos: Foto[] }) {
   const label: Record<string, string> = { todas: 'Todas', aulas: 'Aulas', clases: 'Clases en acción', trabajos: 'Trabajos de alumnos', egresados: 'Egresados', eventos: 'Eventos' }
   const lista = cat === 'todas' ? fotos : fotos.filter((f) => f.categoria === cat)
 
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useModalFocus(dialogRef, idx !== null)
   const go = useCallback((d: number) => setIdx((i) => (i === null ? i : (i + d + lista.length) % lista.length)), [lista.length])
   useEffect(() => {
     if (idx === null) return
@@ -30,7 +33,7 @@ export default function Galeria({ fotos }: { fotos: Foto[] }) {
       <div className="mb-8 flex flex-wrap gap-2">
         {cats.map((c) => (
           <button key={c} type="button" onClick={() => setCat(c)} aria-pressed={cat === c}
-            className={`rounded border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${cat === c ? 'border-accent bg-accent text-white' : 'border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary'}`}>
+            className={`rounded border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${cat === c ? 'border-accent bg-accent text-surface' : 'border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary'}`}>
             {label[c] ?? c}
           </button>
         ))}
@@ -44,7 +47,7 @@ export default function Galeria({ fotos }: { fotos: Foto[] }) {
       </div>
 
       {actual && (
-        <div role="dialog" aria-modal="true" aria-label={actual.alt} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4" onClick={() => setIdx(null)}>
+        <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={actual.alt} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4" onClick={() => setIdx(null)}>
           <button type="button" aria-label="Cerrar" onClick={() => setIdx(null)} className="absolute right-4 top-4 rounded p-2 text-white hover:text-secondary"><X size={28} /></button>
           <button type="button" aria-label="Anterior" onClick={(e) => { e.stopPropagation(); go(-1) }} className="absolute left-2 rounded p-2 text-white hover:text-secondary md:left-6"><ChevronLeft size={36} /></button>
           <figure className="max-h-full max-w-5xl" onClick={(e) => e.stopPropagation()}>

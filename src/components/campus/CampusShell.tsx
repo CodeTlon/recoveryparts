@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useState, useRef } from 'react'
+import { useModalFocus } from '@/lib/useModalFocus'
 import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -63,6 +64,8 @@ function Inner({ rol, nombre, onNavigate }: { rol: string; nombre: string; onNav
 export default function CampusShell({ rol, nombre, children }: { rol: string; nombre: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const path = usePathname()
+  const drawerRef = useRef<HTMLDivElement>(null)
+  useModalFocus(drawerRef, open)
   useEffect(() => setOpen(false), [path])
   useEffect(() => {
     if (!open) return
@@ -73,8 +76,8 @@ export default function CampusShell({ rol, nombre, children }: { rol: string; no
   }, [open])
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4 md:flex">
+    <div className="min-h-dvh bg-surface text-on-surface">
+      <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-64 flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4 md:flex">
         <Link href="/" className="mb-6 flex items-center gap-2 text-sm font-bold uppercase tracking-tighter"><Image src="/images/logo.png" alt="" width={28} height={28} /> Recovery Parts</Link>
         <Inner rol={rol} nombre={nombre} />
       </aside>
@@ -87,9 +90,9 @@ export default function CampusShell({ rol, nombre, children }: { rol: string; no
       <AnimatePresence>
         {open && (
           <motion.div key="drawer" initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 1 }} transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
+            className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menú">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-            <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', stiffness: 380, damping: 38 }}
+            <motion.div ref={drawerRef} initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', stiffness: 380, damping: 38 }}
               className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4">
               <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú" className="-mr-1.5 mb-2 flex h-11 w-11 items-center justify-center self-end rounded hover:text-secondary"><X size={24} /></button>
               <Inner rol={rol} nombre={nombre} onNavigate={() => setOpen(false)} />
@@ -98,7 +101,7 @@ export default function CampusShell({ rol, nombre, children }: { rol: string; no
         )}
       </AnimatePresence>
 
-      <main className="min-h-screen p-4 md:ml-64 md:p-10"><div className="mx-auto max-w-[1180px]">{children}</div></main>
+      <main id="contenido" tabIndex={-1} className="min-h-screen p-4 md:ml-64 md:p-10"><div className="mx-auto max-w-[1180px]">{children}</div></main>
     </div>
   )
 }

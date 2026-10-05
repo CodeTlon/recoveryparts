@@ -15,4 +15,8 @@ export async function requireRole(...roles: Rol[]) {
   return { sb, perfil: perfil as Perfil }
 }
 
-export const fechaAR = (d: string | null) => (d ? new Date(d.length === 10 ? d + 'T00:00' : d).toLocaleDateString('es-AR') : '—')
+// Una fecha sola (AAAA-MM-DD) se muestra tal cual; un timestamp se pasa a hora de Córdoba (el servidor está en UTC).
+export const fechaAR = (d: string | null) =>
+  !d ? '—'
+  : d.length === 10 ? new Date(d + 'T12:00:00Z').toLocaleDateString('es-AR', { timeZone: 'UTC' })
+  : new Date(d).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Cordoba' })

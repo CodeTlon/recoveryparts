@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth'
 import ImageUploader from '@/components/campus/ImageUploader'
-import { ActionForm, Confirm, Field, PageHead, Select } from '@/components/campus/ui'
+import { ActionForm, Confirm, Field, PageHead, Select, Check } from '@/components/campus/ui'
 import { borrarItemCms, guardarItemCms, guardarSetting } from '../actions'
 
 type S = Record<string, any>
@@ -79,8 +79,8 @@ export default async function Sitio() {
       <h2 className={h2}>Egresados</h2>
       <p className="mb-4 text-sm text-on-surface-variant">Los «destacados» ocupan 2×2 en la grilla. Se necesita consentimiento de uso de imagen.</p>
       <div className="grid gap-4 md:grid-cols-2">
-        {egr?.map((r) => <Item key={r.id} tipo="egresado" row={r}><Field label="Nombre" name="nombre" defaultValue={r.nombre} required /><Field label="Especialidad" name="especialidad" defaultValue={r.especialidad} required /><Field label="Foto (URL)" name="foto_url" defaultValue={r.foto_url} /><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="destacado" defaultChecked={r.destacado} /> Destacado</label></Item>)}
-        <Item tipo="egresado"><p className="font-semibold">Nuevo egresado</p><Field label="Nombre" name="nombre" required /><Field label="Especialidad" name="especialidad" required /><Field label="Foto (URL)" name="foto_url" /><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="destacado" /> Destacado</label></Item>
+        {egr?.map((r) => <Item key={r.id} tipo="egresado" row={r}><Field label="Nombre" name="nombre" defaultValue={r.nombre} required /><Field label="Especialidad" name="especialidad" defaultValue={r.especialidad} required /><Field label="Foto (URL)" name="foto_url" defaultValue={r.foto_url} /><Check name="destacado" defaultChecked={r.destacado}>Destacado</Check></Item>)}
+        <Item tipo="egresado"><p className="font-semibold">Nuevo egresado</p><Field label="Nombre" name="nombre" required /><Field label="Especialidad" name="especialidad" required /><Field label="Foto (URL)" name="foto_url" /><Check name="destacado">Destacado</Check></Item>
       </div>
 
       <h2 className={h2}>Testimonios</h2>

@@ -1,10 +1,9 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import CursoForm from '@/components/campus/CursoForm'
-import { ActionForm, Badge, Confirm, Empty, Field, PageHead } from '@/components/campus/ui'
+import { ActionForm, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { añadirAlumno, corregirFechaDesercion, finalizarCurso, guardarClases, guardarHorarios, guardarKit, guardarModulos, marcarDesertor } from '../../actions'
+import { hoyAR } from '@/lib/fechas'
 
 export default async function CursoAdmin({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -23,7 +22,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
     sb.from('materiales').select('id, tipo, titulo').eq('curso_id', id),
   ])
   const totalClases = clases?.filter((c) => c.estado === 'programada').length ?? 0
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyAR()
   const activos = insc?.filter((i) => i.estado === 'activo').length ?? 0
 
   const hTxt = (hs ?? []).map((h) => `${h.dia_semana} ${h.hora_inicio.slice(0, 5)}-${h.hora_fin.slice(0, 5)}`).join('\n')
@@ -34,7 +33,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
   const sec = 'mb-12'
   return (
     <>
-      <Link href="/campus/admin/cursos" className="mb-4 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Cursos</Link>
+      <BackLink href="/campus/admin/cursos">Cursos</BackLink>
       <PageHead title={curso.nombre} sub={curso.activo ? undefined : 'Curso dado de baja: no se ve en el sitio.'} />
 
       <section className={sec}>
@@ -75,7 +74,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
         <div className="card max-w-3xl p-6"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
           <Field label="Clases" name="clases" rows={8} defaultValue={cTxt} hint='"N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="avisar" /> Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</label>
+          <Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>
         </ActionForm></div>
       </section>
 
@@ -86,9 +85,9 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
         </div>
 
         <div className="card mb-6 max-w-3xl p-6">
-          <h3 className="mb-1 font-semibold">Añadir alumno</h3>
+          <h3 className="mb-1 font-semibold">Agregar alumno</h3>
           <p className="mb-4 text-sm text-on-surface-variant">Si el email ya existe se lo vincula y se le avisa por mail; si no, se crea el usuario y se le envía la invitación.</p>
-          <ActionForm action={añadirAlumno} submit="Añadir al curso">
+          <ActionForm action={añadirAlumno} submit="Agregar al curso">
             <input type="hidden" name="curso_id" value={id} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Email" name="email" type="email" required />
@@ -108,7 +107,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
                     <p className="font-semibold">{i.profiles?.apellido}, {i.profiles?.nombre}</p>
                     <p className="truncate text-sm text-on-surface-variant">{i.profiles?.email}{i.profiles?.estado_cuenta === 'inactiva' ? ' · cuenta deshabilitada' : ''}</p>
                   </div>
-                  <Badge tone={i.estado === 'activo' ? 'ok' : i.estado === 'desertor' ? 'bad' : 'neutral'}>{i.estado === 'desertor' ? 'Desertor' : i.estado === 'finalizado' ? 'Finalizado' : 'Activo'}</Badge>
+                  <EstadoBadge estado={i.estado} />
                 </div>
 
                 {i.estado === 'desertor' && (

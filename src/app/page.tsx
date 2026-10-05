@@ -34,7 +34,7 @@ export default async function Home() {
   const cinta = testimonios.length > 3 // pocos: grilla; muchos: cinta que se desplaza
   const card = (t: Testimonio) => (
     <figure key={t.id} className={`card flex flex-col p-6 ${cinta ? 'w-[320px] shrink-0 sm:w-[380px]' : ''}`}>
-                  <div className="mb-3 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={18} fill="currentColor" />)}</div>
+                  <div role="img" className="mb-3 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={18} fill="currentColor" />)}</div>
                   <blockquote className="flex-1 text-on-surface-variant">{t.texto}</blockquote>
                   <figcaption className="mt-4 flex items-center gap-3">
                     <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-surface-container-high">{t.foto_url && <Image src={t.foto_url} alt="" fill sizes="40px" className="object-cover" />}</span>
@@ -46,7 +46,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-surface text-on-surface">
       <SiteNav />
-      <main>
+      <main id="contenido" tabIndex={-1}>
         {/* 1 · Hero */}
         <section className="relative flex min-h-[85vh] items-center overflow-hidden pt-20">
           {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}

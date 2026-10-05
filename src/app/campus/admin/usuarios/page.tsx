@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Reveal from '@/components/ui/Reveal'
 import { requireRole } from '@/lib/auth'
-import { ActionForm, Badge, Empty, Field, PageHead, Select } from '@/components/campus/ui'
+import { ActionForm, Badge, Empty, Field, PageHead, Select, SubmitButton } from '@/components/campus/ui'
 import { actualizarPerfil, cambiarEmail, crearUsuario, reenviarInvitacion, setEstadoCuenta } from '../actions'
 
 const ESTADO = { pendiente_activacion: ['warn', 'Pendiente'], activa: ['ok', 'Activa'], inactiva: ['bad', 'Inactiva'] } as const
@@ -15,7 +15,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
   const { data: users } = await query
 
   const tab = (v: string | undefined, l: string) => (
-    <Link href={v ? `?rol=${v}` : '?'} className={`rounded border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-white' : 'border-outline-variant text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
+    <Link href={v ? `?rol=${v}` : '?'} className={`rounded border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-surface' : 'border-outline-variant text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
   )
 
   return (
@@ -58,12 +58,12 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                   </div>
                   <Badge tone={tone as 'ok'}>{label}</Badge>
                   {u.estado_cuenta === 'pendiente_activacion' && (
-                    <form action={reenviarInvitacion}><input type="hidden" name="id" value={u.id} /><button className="btn-ghost !px-3 !py-2">Reenviar invitación</button></form>
+                    <form action={reenviarInvitacion}><input type="hidden" name="id" value={u.id} /><SubmitButton>Reenviar invitación</SubmitButton></form>
                   )}
                   {u.id !== perfil.id && u.estado_cuenta !== 'pendiente_activacion' && (
                     <form action={setEstadoCuenta}>
                       <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value={u.estado_cuenta === 'activa' ? 'inactiva' : 'activa'} />
-                      <button className="btn-ghost !px-3 !py-2">{u.estado_cuenta === 'activa' ? 'Deshabilitar cuenta' : 'Reactivar cuenta'}</button>
+                      <SubmitButton>{u.estado_cuenta === 'activa' ? 'Deshabilitar cuenta' : 'Reactivar cuenta'}</SubmitButton>
                     </form>
                   )}
                 </div>
