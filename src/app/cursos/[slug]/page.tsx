@@ -8,8 +8,8 @@ import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import Accordion from '@/components/public/Accordion'
 import { Cupos, Precio, horarioTexto } from '@/components/public/CursoCard'
-import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
-import { AREA_LABEL, TIPO_LABEL, formatPrecio } from '@/lib/types'
+import { getCursos, getEdiciones, getHorarios, getSettings, query, waLink } from '@/lib/data'
+import { AREA_LABEL, TIPO_LABEL, formatPrecio, fechaCorta } from '@/lib/types'
 import { hrefSeguro, esMundoParts, MUNDO_PARTS_URL } from '@/lib/validar'
 
 export const dynamic = 'force-dynamic'
@@ -29,17 +29,17 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
   const c = await load(slug)
   if (!c) notFound()
 
-  const [horarios, settings, modulos, kit, testimonios] = await Promise.all([
+  const [ediciones, horarios, settings, modulos, kit, testimonios] = await Promise.all([
+    getEdiciones().then((e) => e.filter((x) => x.curso_id === c.id)),
     getHorarios().then((h) => h.filter((x) => x.curso_id === c.id)),
     getSettings(),
     query<{ id: string; titulo: string; items: string[] }[]>((sb) => sb.from('modulos_publicos').select('id, titulo, items').eq('curso_id', c.id).order('orden'), []),
-    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo, requerido').eq('curso_id', c.id).order('orden'), []),
     query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>((sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
   ])
 
   const wa = waLink(settings.contacto.whatsapp, `Hola! Quiero info del curso ${c.nombre}`)
   const totalKit = kit.filter((k) => k.requerido !== false).reduce((s, k) => s + (k.precio ?? 0), 0)
-  const h = horarioTexto(horarios)
   const row = 'flex items-start gap-3 text-sm text-on-surface-variant'
 
   return (
@@ -155,12 +155,27 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                   {c.descuento_pct ? <span className="badge ml-2 bg-accent text-surface">-{c.descuento_pct}%</span> : null}
                 </div>
                 <div className="h-px bg-outline-variant" />
-                <ul className="flex flex-col gap-3">
-                  {h && <li className={row}><CalendarDays size={18} className="mt-0.5 shrink-0" /> {h}</li>}
-                  {c.aula && <li className={row}><MapPin size={18} className="mt-0.5 shrink-0" /> {c.aula} · La Rioja 345</li>}
-                  {c.duracion_semanas && <li className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {duracionTexto(c.duracion_semanas)}</li>}
-                  <li className={row}><Users size={18} className="mt-0.5 shrink-0" /> <Cupos n={c.cupos_disponibles} /></li>
-                </ul>
+                {c.duracion_semanas && <p className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {duracionTexto(c.duracion_semanas)} · La Rioja 345</p>}
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-secondary">Próximas fechas</h3>
+                  {!ediciones.length ? (
+                    <p className="rounded border border-dashed border-outline-variant p-4 text-sm text-on-surface-variant"><strong className="block text-on-surface">Próximamente nuevas fechas</strong> Consultanos y te avisamos cuando abra la próxima edición.</p>
+                  ) : (
+                    <ul className="flex flex-col gap-3">
+                      {ediciones.map((e) => {
+                        const h = horarioTexto(horarios.filter((x) => x.edicion_id === e.id))
+                        return (
+                          <li key={e.id} className="rounded border border-outline-variant p-4">
+                            <p className="flex items-center gap-2 font-semibold"><CalendarDays size={16} className="shrink-0 text-accent" /> Inicia el {fechaCorta(e.fecha_inicio)}</p>
+                            {h && <p className="mt-1 pl-6 text-sm text-on-surface-variant">{h}</p>}
+                            {e.aula && <p className="mt-1 flex items-center gap-2 pl-6 text-sm text-on-surface-variant"><MapPin size={14} className="shrink-0" /> {e.aula}</p>}
+                            <p className="mt-2 flex items-center gap-2 pl-6"><Users size={14} className="shrink-0 text-on-surface-variant" /> <Cupos n={e.cupos_disponibles} /></p>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </div>
                 {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-primary w-full !py-4">Consultar por WhatsApp</a>}
                 <p className="text-xs text-on-surface-variant">La inscripción y el pago se gestionan por el medio que te indiquemos al consultar.</p>
               </div>

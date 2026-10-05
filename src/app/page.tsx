@@ -97,7 +97,7 @@ export default async function Home() {
                 ))}
               </nav>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {destacados.map((c, i) => <Reveal key={c.id} delay={i * 0.06} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} /></Reveal>)}
+                {destacados.map((c, i) => <Reveal key={c.id} delay={i * 0.06} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} /></Reveal>)}
               </div>
             </div>
           </section>
