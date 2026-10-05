@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Check } from './forms'
 import { useActionState, useEffect } from 'react'
 import { Field, Select } from './ui'
 import { guardarCurso, type R } from '@/app/campus/admin/actions'
@@ -32,7 +33,7 @@ export default function CursoForm({ curso, aulas, profesores }: { curso?: Curso;
         <Field label="Imagen (URL)" name="imagen_url" defaultValue={c.imagen_url} hint="Subila en Sitio web › Imágenes y pegá la URL." />
         <Field label="Video (link YouTube/Drive)" name="video_url" defaultValue={c.video_url} />
         <Field label="Orden" name="orden" type="number" defaultValue={c.orden ?? 0} />
-        <label className="flex items-center gap-2 self-end pb-3 text-sm"><input type="checkbox" name="destacado" defaultChecked={c.destacado} /> Mostrar como destacado en el inicio</label>
+        <Check name="destacado" defaultChecked={c.destacado} className="self-end pb-3">Mostrar como destacado en el inicio</Check>
       </div>
       <Field label="Descripción pública (qué se aprende y para quién)" name="descripcion" rows={5} defaultValue={c.descripcion} />
       <Field label="Requisitos previos" name="requisitos" rows={3} defaultValue={c.requisitos} />

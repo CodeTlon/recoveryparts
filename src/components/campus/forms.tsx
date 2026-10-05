@@ -115,3 +115,11 @@ export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2'
     </button>
   )
 }
+
+export function Check({ name, defaultChecked, className = '', children }: { name: string; defaultChecked?: boolean; className?: string; children: React.ReactNode }) {
+  return (
+    <label className={`flex items-center gap-2 text-sm ${className}`}>
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} /> {children}
+    </label>
+  )
+}

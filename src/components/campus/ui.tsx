@@ -1,4 +1,5 @@
-import { Inbox } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, Inbox } from 'lucide-react'
 
 export function PageHead({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
   return (
@@ -28,5 +29,18 @@ export function Badge({ tone = 'neutral', children }: { tone?: 'ok' | 'bad' | 'w
   return <span className={`badge ${t}`}>{children}</span>
 }
 
+export function BackLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="mb-4 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary">
+      <ArrowLeft size={16} /> {children}
+    </Link>
+  )
+}
+
+// Estado de una inscripción → Badge (activo en verde, desertor en rojo, finalizado neutro).
+export function EstadoBadge({ estado }: { estado: string }) {
+  return <Badge tone={estado === 'activo' ? 'ok' : estado === 'desertor' ? 'bad' : 'neutral'}><span className="capitalize">{estado}</span></Badge>
+}
+
 // Lo interactivo vive en forms.tsx ('use client'); se re-exporta para no cambiar los imports.
-export { ActionForm, Field, Select, Confirm, SubmitButton } from './forms'
+export { ActionForm, Field, Select, Confirm, SubmitButton, Check } from './forms'

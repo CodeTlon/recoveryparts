@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AlertTriangle, CalendarDays, Download, ClipboardList, ArrowRight, FileText, GraduationCap } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { PageHead, Empty, Badge } from '@/components/campus/ui'
+import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import Reveal from '@/components/ui/Reveal'
 
@@ -55,7 +55,7 @@ export default async function AlumnoHome() {
               <span aria-hidden className="mb-4 grid h-11 w-11 place-items-center rounded-lg bg-accent/15 text-accent"><GraduationCap size={22} /></span>
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-semibold">{c?.nombre ?? 'Curso'}</h2>
-                <Badge tone={i.estado === 'activo' ? 'ok' : i.estado === 'desertor' ? 'bad' : 'neutral'}>{i.estado === 'finalizado' ? 'Finalizado' : i.estado === 'desertor' ? 'Desertor' : 'Activo'}</Badge>
+                <EstadoBadge estado={i.estado} />
               </div>
 
               {i.estado === 'desertor' && (

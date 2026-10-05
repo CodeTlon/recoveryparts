@@ -115,7 +115,13 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
     descuento_pct: num(fd, 'descuento_pct'), fecha_inicio: txt(fd, 'fecha_inicio') || null,
     aula_id: txt(fd, 'aula_id') || null, profesor_id: txt(fd, 'profesor_id') || null,
     destacado: fd.get('destacado') === 'on', orden: num(fd, 'orden') ?? 0,
-    precio_actualizado_en: precio != null ? hoyAR() : null,
+  } as Record<string, unknown>
+  // La fecha «precios actualizados al…» de la ficha solo se mueve si el precio cambió de verdad.
+  if (precio == null) row.precio_actualizado_en = null
+  else if (!id) row.precio_actualizado_en = hoyAR()
+  else {
+    const { data: previo } = await sb.from('cursos').select('precio').eq('id', id).single()
+    if (Number(previo?.precio) !== precio) row.precio_actualizado_en = hoyAR()
   }
   const q = id
     ? sb.from('cursos').update(row).eq('id', id).select('id').single()
@@ -129,6 +135,13 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
 export async function bajaCurso(fd: FormData) {
   const { sb } = await requireRole('admin')
   await sb.from('cursos').update({ activo: false }).eq('id', txt(fd, 'id'))
+  revalidatePath('/campus/admin/cursos'); revalidatePath('/cursos')
+}
+
+// Volver a publicar un curso dado de baja (la baja no toca las inscripciones, así que no hay nada más que revertir).
+export async function reactivarCurso(fd: FormData) {
+  const { sb } = await requireRole('admin')
+  await sb.from('cursos').update({ activo: true }).eq('id', txt(fd, 'id'))
   revalidatePath('/campus/admin/cursos'); revalidatePath('/cursos')
 }
 

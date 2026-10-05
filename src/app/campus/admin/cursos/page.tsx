@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { requireRole } from '@/lib/auth'
 import { AREA_LABEL, TIPO_LABEL } from '@/lib/types'
-import { Badge, Confirm, Empty, PageHead } from '@/components/campus/ui'
-import { bajaCurso } from '../actions'
+import { Badge, Confirm, Empty, PageHead, SubmitButton } from '@/components/campus/ui'
+import { bajaCurso, reactivarCurso } from '../actions'
 
 export default async function Cursos() {
   const { sb } = await requireRole('admin')
@@ -26,7 +26,9 @@ export default async function Cursos() {
                   <td className="px-4 py-3"><Badge tone={c.activo ? 'ok' : 'neutral'}>{c.activo ? 'Activo' : 'De baja'}</Badge></td>
                   <td className="px-4 py-3 text-right">
                     <Link href={`/campus/admin/cursos/${c.id}`} className="btn-ghost !px-3 !py-2">Gestionar</Link>
-                    {c.activo && <form action={bajaCurso} className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><Confirm message="¿Dar de baja este curso? Dejará de verse en el sitio.">Baja</Confirm></form>}
+                    {c.activo
+                      ? <form action={bajaCurso} className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><Confirm message="¿Dar de baja este curso? Dejará de verse en el sitio.">Baja</Confirm></form>
+                      : <form action={reactivarCurso} className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><SubmitButton>Reactivar</SubmitButton></form>}
                   </td>
                 </tr>
               ))}

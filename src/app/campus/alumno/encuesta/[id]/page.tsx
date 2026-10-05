@@ -1,8 +1,6 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import { requireRole } from '@/lib/auth'
-import { ActionForm, PageHead } from '@/components/campus/ui'
+import { ActionForm, PageHead, BackLink } from '@/components/campus/ui'
 import { responderEncuesta } from '../../actions'
 
 type Pregunta = { tipo: 'puntaje' | 'texto'; texto: string }
@@ -16,7 +14,7 @@ export default async function Encuesta({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <Link href="/campus/alumno" className="mb-4 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Mis cursos</Link>
+      <BackLink href="/campus/alumno">Mis cursos</BackLink>
       <PageHead title={e.titulo} sub="Tus respuestas son anónimas: la academia no ve quién respondió qué." />
       {hecha ? <p className="card p-6 text-on-surface-variant">Ya respondiste esta encuesta. ¡Gracias!</p> : (
         <ActionForm action={responderEncuesta} submit="Enviar respuestas" className="card max-w-2xl p-6">
