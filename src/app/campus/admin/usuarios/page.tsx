@@ -23,7 +23,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
     <>
       <PageHead title="Usuarios" sub="Solo vos podés crear usuarios. Cada uno recibe un mail para crear su propia contraseña (el link vence en 24 h)."
         action={
-          <ModalButton label={<><UserPlus size={16} aria-hidden /> Crear usuario</>} title="Crear usuario" className="btn-primary">
+          <ModalButton label={<><UserPlus size={16} aria-hidden /> Crear usuario</>} title="Crear usuario" className="btn-primary whitespace-nowrap">
             <ActionForm action={crearUsuario} submit="Crear y enviar invitación">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Nombre" name="nombre" placeholder="Ej: María" required />
@@ -85,7 +85,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                     {u.id !== perfil.id && u.estado_cuenta === 'activa' && (
                       <form action={setEstadoCuenta}>
                         <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="inactiva" />
-                        <Confirm message={`Mantené apretado para deshabilitar a ${u.nombre} ${u.apellido}. No podrá entrar al campus hasta que la reactives.`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
+                        <Confirm message={`¿Deshabilitar a ${u.nombre} ${u.apellido}? No podrá entrar al campus hasta que la reactives.`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
                       </form>
                     )}
                     {u.id !== perfil.id && u.estado_cuenta === 'inactiva' && (

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { ActionForm, Badge, Confirm, Empty, Field, PageHead, Select, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, Field, FileField, PageHead, Select, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { guardarClases } from '../../../admin/actions'
 import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
 import { hoyAR } from '@/lib/fechas'
@@ -81,7 +81,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
             <ActionForm action={subirPdf} submit="Subir PDF">
               <input type="hidden" name="curso_id" value={id} />
               <Field label="Título" name="titulo" placeholder="Ej: Apunte de la clase 1" required />
-              <Field label="Archivo (PDF, máx. 25 MB)" name="archivo" required>{(p) => <input {...p} name="archivo" type="file" accept="application/pdf" required className="input" />}</Field>
+              <FileField label="Archivo (PDF, máx. 25 MB)" name="archivo" accept="application/pdf" required />
               <Select name="clase_id" label="Clase (opcional)" empty="Material general" options={claseOpts} />
               <Field label="Liberar automáticamente el" name="liberar_en" type="date" hint="Vacío = queda oculto hasta que lo liberes a mano." />
             </ActionForm>

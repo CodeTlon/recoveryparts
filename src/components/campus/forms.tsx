@@ -76,6 +76,15 @@ export function SubmitButton({ children, className = 'btn-ghost !px-3 !py-2' }: 
   return <button disabled={pending} aria-busy={pending} className={className}>{children}</button>
 }
 
+// Campo de archivo. Vive acá (cliente) porque Field recibe una función como hijo y una página de servidor no puede pasarla.
+export function FileField({ label, name, accept, required, hint }: { label: string; name: string; accept: string; required?: boolean; hint?: string }) {
+  return (
+    <Field label={label} name={name} required={required} hint={hint}>
+      {(p) => <input {...p} name={name} type="file" accept={accept} required={required} className="input" />}
+    </Field>
+  )
+}
+
 export function Select({ name, label, defaultValue, options, empty }: { name: string; label: string; defaultValue?: string | null; options: [string, string][]; empty?: string }) {
   return (
     <Field label={label} name={name}>
