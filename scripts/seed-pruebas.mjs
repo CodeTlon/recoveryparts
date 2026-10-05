@@ -26,15 +26,15 @@ const D = '@demo.example.com'
 // Cuentas de demo con datos fáciles de dictar (el script se niega a correr fuera de development/test).
 const PASSWORD_DEMO = 'demo1234'
 const USUARIOS = [
-  { key: 'admin', rol: 'admin', nombre: 'Ana', apellido: 'Administradora' },
-  { key: 'profe1', rol: 'profesor', nombre: 'Pablo', apellido: 'Profesor-A' },
-  { key: 'profe2', rol: 'profesor', nombre: 'Paula', apellido: 'Profesora-B' },
-  { key: 'alumno1', rol: 'alumno', nombre: 'Lucas', apellido: 'Alumno-Uno' },
-  { key: 'alumno2', rol: 'alumno', nombre: 'Mariana', apellido: 'Alumna-Dos' },
-  { key: 'alumno3', rol: 'alumno', nombre: 'Tomás', apellido: 'Alumno-Tres' },
-  { key: 'alumno4', rol: 'alumno', nombre: 'Sofía', apellido: 'Alumna-Cuatro' },
-  { key: 'alumno5', rol: 'alumno', nombre: 'Martín', apellido: 'Alumno-Cinco' },
-  { key: 'alumno6', rol: 'alumno', nombre: 'Julieta', apellido: 'Alumna-Seis' },
+  { key: 'admin', rol: 'admin', nombre: 'Maxi', apellido: 'Gómez' },
+  { key: 'profe1', rol: 'profesor', nombre: 'Pablo', apellido: 'Ledesma' },
+  { key: 'profe2', rol: 'profesor', nombre: 'Paula', apellido: 'Sosa' },
+  { key: 'alumno1', rol: 'alumno', nombre: 'Lucas', apellido: 'Fernández' },
+  { key: 'alumno2', rol: 'alumno', nombre: 'Mariana', apellido: 'Rossi' },
+  { key: 'alumno3', rol: 'alumno', nombre: 'Tomás', apellido: 'Villarreal' },
+  { key: 'alumno4', rol: 'alumno', nombre: 'Sofía', apellido: 'Argañaraz' },
+  { key: 'alumno5', rol: 'alumno', nombre: 'Martín', apellido: 'Quiroga' },
+  { key: 'alumno6', rol: 'alumno', nombre: 'Julieta', apellido: 'Montenegro' },
 ].map((u) => ({ ...u, email: `${u.key}${D}`, password: PASSWORD_DEMO }))
 
 // ── 1. Usuarios (sin mail) ─────────────────────────────────
