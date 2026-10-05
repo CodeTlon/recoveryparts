@@ -4,6 +4,10 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-05 | Kit por ítem «necesario»/«recomendado» (`kit_items.requerido`, migración 0009) con link de compra a Mundo Parts | Algunos materiales hacen falta para cursar y otros son sugeridos; la tienda socia solo se enlaza (la venta no pasa por el sistema, RF-45/46) |
+| 2026-10-05 | Contacto y Preguntas frecuentes con página propia; la home queda como resumen | Pedido del cliente: ordenar el sitio. La home muestra 4 FAQ y una banda hacia `/contacto` |
+| 2026-10-05 | Encabezados de seguridad en el middleware y server actions con nombre ASCII | Vercel rechazaba el deploy («Builder returned invalid routes»): la `ñ` de `añadirAlumno` iba al encabezado `x-server-action-name` |
+| 2026-10-05 | El PDF de avance no lleva capturas ni precios: una sección por página, con credenciales | Pedido del cliente; es un informe de demo, no una propuesta |
 | 2026-10-05 | `dev` manda sobre `feat/unificacion`; la base de homologación se recreó desde las migraciones de `dev` | `feat/unificacion` es un linaje viejo con otro esquema; unificar era reescribir, no mergear. La base de test es de pruebas, así que se vació y se re-aplicó |
 | 2026-10-05 | Cuentas de demo fijas: `@demo.example.com` / `demo1234` (solo seeds, que se niegan a correr fuera de development/test) | Fáciles de dictar al cliente; admin = Maxi Gómez |
 | 2026-10-05 | Talleres de formato corto (1 jornada, 3 días seguidos, 1–2 semanas) además de cursos | Pedido del cliente; el tipo `taller` ya existía, no hay límite de clases en la base |
