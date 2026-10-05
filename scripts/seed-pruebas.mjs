@@ -5,7 +5,7 @@
 // No envía ningún mail. Las contraseñas se generan al azar y se imprimen al final.
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 
 const ENV_FILE = process.env.ENV_FILE ?? '.env.development'
 if (!process.argv.includes('--confirmo-no-produccion')) {
@@ -22,15 +22,17 @@ console.log(`Entorno: ${env.APP_ENV} → ${env.NEXT_PUBLIC_SUPABASE_URL}`)
 const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
 const ok = (r, ctx) => { if (r.error) throw new Error(`${ctx}: ${r.error.message}`); return r.data }
 
-const D = '@homologacion.example.com'
+const D = '@demo.example.com'
+// Cuentas de demo con datos fáciles de dictar (el script se niega a correr fuera de development/test).
+const PASSWORD_DEMO = 'demo1234'
 const USUARIOS = [
   { key: 'admin', rol: 'admin', nombre: 'Ana', apellido: 'Administradora' },
-  { key: 'profe_a', rol: 'profesor', nombre: 'Pablo', apellido: 'Profesor-A' },
-  { key: 'profe_b', rol: 'profesor', nombre: 'Paula', apellido: 'Profesora-B' },
+  { key: 'profe1', rol: 'profesor', nombre: 'Pablo', apellido: 'Profesor-A' },
+  { key: 'profe2', rol: 'profesor', nombre: 'Paula', apellido: 'Profesora-B' },
   { key: 'alumno1', rol: 'alumno', nombre: 'Lucas', apellido: 'Alumno-Uno' },
   { key: 'alumno2', rol: 'alumno', nombre: 'Mariana', apellido: 'Alumna-Dos' },
   { key: 'alumno3', rol: 'alumno', nombre: 'Tomás', apellido: 'Alumno-Tres' },
-].map((u) => ({ ...u, email: `${u.key.replace('_', '.')}${D}`, password: randomBytes(9).toString('base64url') + '!a1' }))
+].map((u) => ({ ...u, email: `${u.key}${D}`, password: PASSWORD_DEMO }))
 
 // ── 1. Usuarios (sin mail) ─────────────────────────────────
 const ids = {}
@@ -45,21 +47,21 @@ for (const u of USUARIOS) {
   ok(await sb.from('profiles').update({ rol: u.rol, estado_cuenta: 'activa', nombre: u.nombre, apellido: u.apellido, telefono: u.rol === 'alumno' ? '3510000000' : null }).eq('id', p.id), `perfil ${u.email}`)
   ids[u.key] = p.id
 }
-ok(await sb.from('profiles').update({ experiencia: 'Técnico con 10 años de experiencia en microelectrónica. (dato de prueba)', certificaciones: 'Curso de microsoldadura (prueba)' }).eq('id', ids.profe_a), 'mini-cv')
+ok(await sb.from('profiles').update({ experiencia: 'Técnico con 10 años de experiencia en microelectrónica. (dato de prueba)', certificaciones: 'Curso de microsoldadura (prueba)' }).eq('id', ids.profe1), 'mini-cv')
 
 // ── 2. Cursos ──────────────────────────────────────────────
 const aulas = Object.fromEntries(ok(await sb.from('aulas').select('id, nombre'), 'aulas').map((a) => [a.nombre, a.id]))
 const CURSOS = [
-  { slug: 'reparacion-de-celulares', nombre: 'Reparación de Celulares', area: 'tecnico', tipo: 'curso', nivel: 'Inicial', cupo: 4, duracion_semanas: 12, precio: 90000, descuento_pct: 10, fecha_inicio: '2026-09-14', aula_id: aulas['Aula 1'], profesor_id: ids.profe_a, destacado: true, orden: 1,
+  { slug: 'reparacion-de-celulares', nombre: 'Reparación de Celulares', area: 'tecnico', tipo: 'curso', nivel: 'Inicial', cupo: 4, duracion_semanas: 12, precio: 90000, descuento_pct: 10, fecha_inicio: '2026-09-14', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, destacado: true, orden: 1,
     descripcion: 'Aprendé diagnóstico y reparación de celulares desde cero, con equipos reales. (Curso de prueba)', requisitos: 'No se necesitan conocimientos previos. Traer notebook.', precio_actualizado_en: '2026-09-30',
     horarios: [[1, '18:00', '20:00']],
     modulos: [['Fundamentos y diagnóstico', ['Herramientas del taller', 'Seguridad ESD', 'Apertura segura']], ['Reemplazo de módulos', ['Pantallas', 'Baterías', 'Cámaras']]],
     kit: [['Soldador de punta fina', 'Para microsoldadura', 15000, 'https://example.com/soldador'], ['Estaño y flux', 'Pack de insumos', 6500, 'https://example.com/estano']],
     clases: [[1, '2026-09-14', 'Introducción y herramientas', 'programada'], [2, '2026-09-21', 'Diagnóstico visual', 'suspendida'], [3, '2026-09-28', 'Apertura y desarme', 'programada'], [4, '2026-10-05', 'Reemplazo de pantalla', 'programada'], [5, '2026-10-12', 'Baterías', 'programada'], [6, '2026-10-19', 'Cámaras y flexores', 'programada']] },
-  { slug: 'carteles-neon-led', nombre: 'Carteles Neón LED', area: 'diseno', tipo: 'curso', nivel: 'Inicial', cupo: 2, duracion_semanas: 8, precio: 75000, fecha_inicio: '2026-10-07', aula_id: aulas['Aula 2'], profesor_id: ids.profe_b, destacado: true, orden: 2,
+  { slug: 'carteles-neon-led', nombre: 'Carteles Neón LED', area: 'diseno', tipo: 'curso', nivel: 'Inicial', cupo: 2, duracion_semanas: 8, precio: 75000, fecha_inicio: '2026-10-07', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, destacado: true, orden: 2,
     descripcion: 'Diseño y armado de carteles de neón LED. (Curso de prueba, cupo completo a propósito)', requisitos: null, precio_actualizado_en: '2026-09-30',
     horarios: [[3, '18:00', '20:00']], modulos: [['Diseño del cartel', ['Bocetos', 'Materiales']]], kit: [], clases: [[1, '2026-10-07', 'Introducción al neón LED', 'programada'], [2, '2026-10-14', 'Armado', 'programada']] },
-  { slug: 'taller-cambio-de-glass', nombre: 'Taller de Cambio de Glass', area: 'tecnico', tipo: 'taller', nivel: 'Intermedio', cupo: 6, duracion_semanas: 2, precio: 40000, fecha_inicio: '2026-09-05', aula_id: aulas['Aula 3'], profesor_id: ids.profe_a, destacado: false, orden: 3,
+  { slug: 'taller-cambio-de-glass', nombre: 'Taller de Cambio de Glass', area: 'tecnico', tipo: 'taller', nivel: 'Intermedio', cupo: 6, duracion_semanas: 2, precio: 40000, fecha_inicio: '2026-09-05', aula_id: aulas['Aula 3'], profesor_id: ids.profe1, destacado: false, orden: 3,
     descripcion: 'Taller intensivo de cambio de vidrio en pantallas. (Taller de prueba, ya finalizado)', requisitos: null, precio_actualizado_en: '2026-09-30',
     horarios: [[6, '10:00', '12:00']], modulos: [], kit: [], clases: [[1, '2026-09-05', 'Separación de glass', 'programada'], [2, '2026-09-12', 'Pegado y curado', 'programada']] },
 ]
@@ -97,7 +99,7 @@ const pdf = (t) => { const s = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>en
 const claseId = async (slug, n) => ok(await sb.from('clases').select('id').eq('curso_id', cid[slug]).eq('numero', n).single(), 'clase').id
 async function material(slug, titulo, extra, archivo) {
   if ((await sb.from('materiales').select('id').eq('curso_id', cid[slug]).eq('titulo', titulo).maybeSingle()).data) return
-  const row = { curso_id: cid[slug], titulo, subido_por: ids.profe_a, ...extra }
+  const row = { curso_id: cid[slug], titulo, subido_por: ids.profe1, ...extra }
   if (archivo) {
     const path = `${cid[slug]}/${randomUUID()}.pdf`
     ok(await sb.storage.from('materiales').upload(path, archivo, { contentType: 'application/pdf' }), `subir ${titulo}`)
