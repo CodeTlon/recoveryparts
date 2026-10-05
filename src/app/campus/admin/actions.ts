@@ -14,6 +14,9 @@ const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
 const num = (fd: FormData, k: string) => (txt(fd, k) === '' ? null : Number(txt(fd, k)))
 
 function traducir(m: string) {
+  // Reglas de aulas (0010): los mensajes de la base ya son legibles y nombran los cursos afectados.
+  if (/^(Cargá la capacidad|La capacidad del aula|No se puede dar de baja el aula|El aula .+ está dada de baja|El cupo \(\d+\) supera|Las aulas no se borran)/.test(m)) return m
+  if (/aulas_nombre/.test(m)) return 'Ya existe un aula con ese nombre.'
   if (/cupos disponibles/.test(m)) return 'El curso no tiene cupos disponibles.'
   if (/cupo no puede ser menor/.test(m)) return 'El cupo no puede ser menor que los alumnos ya asignados.'
   if (/Superposición/.test(m)) return 'Hay superposición de aula o profesor en ese día y horario.'
@@ -151,6 +154,34 @@ export async function reactivarCurso(fd: FormData) {
   const { sb } = await requireRole('admin')
   await sb.from('cursos').update({ activo: true }).eq('id', txt(fd, 'id'))
   revalidatePath('/campus/admin/cursos'); revalidatePath('/cursos')
+}
+
+// ── Aulas (RF-03) ────────────────────────────────────────
+// Catálogo propio: la capacidad es el techo físico y el cupo de cada curso nunca la supera.
+// Las reglas (capacidad obligatoria al crear, cupo ≤ capacidad, sin baja con cursos activos, sin borrado) las valida la base.
+export async function guardarAula(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin')
+  const id = txt(fd, 'id')
+  const nombre = txt(fd, 'nombre').replace(/\s+/g, ' ')
+  const capacidad = num(fd, 'capacidad')
+  if (!nombre || nombre.length > 60) return { error: 'Poné un nombre de hasta 60 caracteres.' }
+  // Vacía solo al editar un aula que todavía no la tenía cargada (la base impide vaciar una cargada).
+  if (capacidad === null ? !id : !(Number.isInteger(capacidad) && capacidad >= 1 && capacidad <= 500))
+    return { error: 'La capacidad debe ser un número entero entre 1 y 500.' }
+  const row = { nombre, capacidad }
+  const { error } = id ? await sb.from('aulas').update(row).eq('id', id) : await sb.from('aulas').insert(row)
+  if (error) return { error: traducir(error.message) }
+  // El nombre del aula se muestra en el campus y en la ficha pública de los cursos.
+  revalidatePath('/campus/admin', 'layout'); revalidatePath('/cursos', 'layout')
+  return { ok: true }
+}
+
+export async function setEstadoAula(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin')
+  const { error } = await sb.from('aulas').update({ activa: txt(fd, 'activa') === '1' }).eq('id', txt(fd, 'id'))
+  if (error) return { error: traducir(error.message) }
+  revalidatePath('/campus/admin', 'layout')
+  return { ok: true }
 }
 
 // Horarios, uno por línea: "día hora-inicio-hora-fin", ej. "1 18:00-20:00". Valida choques (RF-17).
