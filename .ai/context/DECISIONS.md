@@ -4,6 +4,10 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-05 | RF-03 🟢: aulas como catálogo propio (Campus › Aulas); cupo y precio siguen en el curso; insumos = solo kit informativo | Lo propio de cada curso se edita en el curso y lo compartido tiene su módulo, igual que profesores en Usuarios |
+| 2026-10-05 | El cupo del curso nunca supera la capacidad del aula, controlado en la base (no solo aviso) | La capacidad es física (bancos/puestos); el cupo es el límite elegido por curso (equipamiento, atención del profesor, tipo de actividad) |
+| 2026-10-05 | Capacidad obligatoria en aulas nuevas; las existentes sin capacidad no se validan hasta cargarla. Una sola capacidad por aula | Homologación/producción tienen aulas sin capacidad: no invalidar cursos existentes. Si una actividad admite menos personas, lo refleja el cupo del curso |
+| 2026-10-05 | Aulas con baja lógica y sin borrado (también para aulas nunca usadas) | Conservar el dato histórico de los cursos; más simple y sin riesgo |
 | 2026-10-05 | Reportes se fusiona con el Resumen del admin; el sitio web se edita por pestañas | El resumen era solo 4 tarjetas y la edición del sitio era una página larga sin contexto de qué se editaba |
 | 2026-10-05 | Kit por ítem «necesario»/«recomendado» (`kit_items.requerido`, migración 0009) con link de compra a Mundo Parts | Algunos materiales hacen falta para cursar y otros son sugeridos; la tienda socia solo se enlaza (la venta no pasa por el sistema, RF-45/46) |
 | 2026-10-05 | Contacto y Preguntas frecuentes con página propia; la home queda como resumen | Pedido del cliente: ordenar el sitio. La home muestra 4 FAQ y una banda hacia `/contacto` |

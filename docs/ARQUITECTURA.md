@@ -28,7 +28,7 @@ El cliente `service_role` (`lib/supabase/admin.ts`) se usa solo en el servidor, 
 | CMS / ajustes | CRUD | lectura | lectura | lectura |
 
 ## Modelo de datos (resumen)
-`profiles` (rol, estado de cuenta, mini-CV del profesor) · `aulas` · `cursos` (+ `horarios_curso`, `modulos_curso`, `clases`, `kit_items`) · `inscripciones` (alumno↔curso, estado activo/desertor/finalizado) · `materiales` (PDF o link) · `encuestas` + `encuesta_completadas` + `encuesta_respuestas` · `contactos` · `demanda_cursos` · `site_settings` + `cms_*` · `audit_log`.
+`profiles` (rol, estado de cuenta, mini-CV del profesor) · `aulas` (capacidad, activa) · `cursos` (+ `horarios_curso`, `modulos_curso`, `clases`, `kit_items`) · `inscripciones` (alumno↔curso, estado activo/desertor/finalizado) · `materiales` (PDF o link) · `encuestas` + `encuesta_completadas` + `encuesta_respuestas` · `contactos` · `demanda_cursos` · `site_settings` + `cms_*` · `audit_log`.
 Vistas públicas con solo columnas seguras: `cursos_publicos` (incluye `cupos_disponibles` en tiempo real), `horarios_publicos`, `modulos_publicos`, `kit_publico`.
 
 ## Flujos clave
@@ -36,7 +36,8 @@ Vistas públicas con solo columnas seguras: `cursos_publicos` (incluye `cupos_di
 - **Alumno ya existente**: se vincula al curso y se le avisa por mail (sin token).
 - **Material visible**: `material_visible(curso)` devuelve lo liberado (manual o por fecha) solo si el alumno no es desertor. Para un PDF, `/api/material/[id]` revalida y sirve el archivo (`?download=1` para descarga). El alumno ve solo el *título* de la próxima clase (`proxima_clase_titulo`); no puede leer `clases`.
 - **Deserción**: el admin marca Desertor con fecha y motivo. El trigger calcula `n_clase_desercion` (clases programadas con fecha ≤ la de deserción; las suspendidas no cuentan), impide volver a activo y la inscripción no se puede borrar.
-- **Cupo y choques**: triggers rechazan superar el cupo, bajar el cupo por debajo de los inscriptos y superponer aula o profesor en un mismo día y horario.
+- **Cupo y choques**: triggers rechazan superar el cupo, bajar el cupo por debajo de los inscriptos, superponer aula o profesor en un mismo día y horario, y que el cupo supere la capacidad del aula (al guardar el curso, cambiarle el aula o bajar la capacidad).
+- **Aulas** (RF-03): catálogo en Campus › Aulas. Capacidad obligatoria en aulas nuevas, baja lógica (`activa`), sin DELETE y sin baja con cursos activos; un aula dada de baja no se puede asignar.
 - **Encuesta anónima**: `responder_encuesta()` guarda que el alumno respondió (para no repetir) y la respuesta en otra tabla sin su id.
 - **ZIP**: `/api/curso/[id]/zip` solo para inscripciones `finalizado` y cursos no dados de baja.
 - **Contacto**: el formulario guarda en `contactos` (bandeja del admin). El mail de aviso requiere un webhook/SMTP (ver SETUP).
