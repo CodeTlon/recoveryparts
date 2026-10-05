@@ -11,7 +11,8 @@ const LINKS = [
   { href: '/', label: 'Inicio' },
   { href: '/cursos', label: 'Cursos' },
   { href: '/galeria', label: 'Galería' },
-  { href: '/#contacto', label: 'Contacto' },
+  { href: '/preguntas-frecuentes', label: 'Preguntas' },
+  { href: '/contacto', label: 'Contacto' },
 ]
 
 export default function SiteNav() {
