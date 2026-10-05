@@ -91,9 +91,10 @@ export function Select({ name, label, defaultValue, options, empty }: { name: st
 
 // Botón de envío para acciones destructivas (<form action={serverAction}>).
 // Con mouse/touch hay que MANTENERLO apretado ~1 s (el relleno naranja indica el avance);
-// con teclado se mantiene el confirm() del navegador, así sigue siendo accesible.
+// con teclado se abre un modal de confirmación propio, así sigue siendo accesible.
 export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2', name, value }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string }) {
   const ref = useRef<HTMLButtonElement>(null)
+  const dlg = useRef<HTMLDialogElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>()
   const hintTimer = useRef<ReturnType<typeof setTimeout>>()
   const [holding, setHolding] = useState(false)
@@ -105,6 +106,7 @@ export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2'
 
   if (!hold) return <button name={name} value={value} className={className}>{children}</button>
   return (
+    <>
     <button ref={ref} name={name} value={value} title={message} className={`relative select-none overflow-hidden [-webkit-touch-callout:none] ${className}`} onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => {
         if (e.pointerType === 'mouse' && e.button !== 0) return
@@ -114,13 +116,25 @@ export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2'
       }}
       onPointerUp={cancel} onPointerLeave={cancel} onPointerCancel={cancel}
       onClick={(e) => {
-        if (e.detail === 0) { if (!confirm(message)) e.preventDefault(); return } // teclado
+        if (e.detail === 0) { e.preventDefault(); dlg.current?.showModal(); return } // teclado: modal propio, sin confirm() del navegador
         if (fired.current) { e.preventDefault(); return } // ya se envió al completar la pulsación
         if (e.isTrusted) { e.preventDefault(); setHint(true); clearTimeout(hintTimer.current); hintTimer.current = setTimeout(() => setHint(false), 2200) } // click corto
       }}>
       <span aria-hidden className={`absolute inset-y-0 left-0 bg-red-500/40 ${holding ? 'w-full transition-[width] duration-1000 ease-linear' : 'w-0'}`} />
       <span className="relative inline-flex items-center gap-1">{hint ? 'Mantené apretado' : children}</span>
     </button>
+    <dialog ref={dlg} aria-label="Confirmar acción" onClick={(e) => { if (e.target === dlg.current) dlg.current?.close() }}
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-card border border-outline-variant bg-surface-container p-0 text-on-surface shadow-card-hover backdrop:bg-black/60 backdrop:backdrop-blur-sm">
+      <div className="p-6">
+        <h2 className="text-lg font-semibold text-primary">¿Confirmás?</h2>
+        <p className="mt-2 text-sm text-on-surface-variant">{message}</p>
+        <div className="mt-6 flex justify-end gap-2">
+          <button type="button" autoFocus className="btn-ghost !px-4 !py-2" onClick={() => dlg.current?.close()}>Cancelar</button>
+          <button type="button" className="btn-primary !px-4 !py-2" onClick={() => { dlg.current?.close(); ref.current?.form?.requestSubmit(ref.current) }}>Confirmar</button>
+        </div>
+      </div>
+    </dialog>
+    </>
   )
 }
 

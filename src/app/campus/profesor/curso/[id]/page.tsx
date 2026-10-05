@@ -1,3 +1,4 @@
+import { ClasesEditor } from '@/components/campus/ListEditors'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, Eye, EyeOff, Trash2 } from 'lucide-react'
@@ -20,7 +21,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
   ])
   const hoy = hoyAR()
   const claseOpts: [string, string][] = (clases ?? []).map((c) => [c.id, `#${c.numero} · ${c.titulo}`])
-  const calendario = (clases ?? []).map((c) => `${c.numero} | ${c.fecha} | ${c.titulo} | ${c.estado}`).join('\n')
+  const cIni = (clases ?? []).map((c) => ({ fecha: c.fecha as string, titulo: c.titulo as string, estado: c.estado as string }))
 
   return (
     <>
@@ -104,8 +105,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
         <div className="card max-w-3xl p-6">
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="curso_id" value={id} />
-            <Field label="Clases" name="clases" placeholder="1 | 2026-10-15 | Introducción | programada" rows={10} defaultValue={calendario} hint='Una por línea: "N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
-            <Check name="avisar">Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check>
+            <ClasesEditor name="clases" inicial={cIni} avisar={<Check name="avisar">Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check>} />
           </ActionForm>
         </div>
       </section>

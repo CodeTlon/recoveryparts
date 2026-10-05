@@ -38,10 +38,12 @@
     border-radius: 2px;
   }
 
-  html { scrollbar-width: thin; scrollbar-color: var(--rp-outline-variant) var(--rp-surface); }
+  /* Scrollbar de marca en la página y en cada contenedor con scroll (modales, tablas, textareas). */
+  * { scrollbar-width: thin; scrollbar-color: var(--rp-outline-variant) transparent; }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: var(--rp-surface); }
-  ::-webkit-scrollbar-thumb { background: var(--rp-outline-variant); border: 2px solid var(--rp-surface); border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  html::-webkit-scrollbar-track { background: var(--rp-surface); }
+  ::-webkit-scrollbar-thumb { background: var(--rp-outline-variant); border: 2px solid transparent; background-clip: padding-box; border-radius: 6px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--rp-accent); }
 
   /* Respeta la preferencia del sistema: sin movimiento no hay animación ni scroll suave. */

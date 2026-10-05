@@ -1,5 +1,6 @@
 'use client'
 
+import { ImageField } from './ImageField'
 import { useRouter } from 'next/navigation'
 import { ActionForm, Check } from './forms'
 import { Field, Select } from './forms'
@@ -29,7 +30,7 @@ export default function CursoForm({ curso, aulas, profesores }: { curso?: Curso;
         <Select name="profesor_id" label="Profesor (uno solo)" defaultValue={c.profesor_id} empty="Sin asignar" options={profesores} />
         <Field label="Precio (ARS) — solo se muestra" name="precio" placeholder="Ej: 90000" type="number" defaultValue={c.precio} />
         <Field label="Descuento (%)" name="descuento_pct" placeholder="Ej: 10" type="number" defaultValue={c.descuento_pct} />
-        <Field label="Imagen (URL)" name="imagen_url" placeholder="https://…/imagen.jpg" defaultValue={c.imagen_url} hint="Subila en Sitio web › Imágenes y pegá la URL." />
+        <ImageField label="Imagen del curso" name="imagen_url" defaultValue={c.imagen_url} />
         <Field label="Video (link YouTube/Drive)" name="video_url" placeholder="https://www.youtube.com/watch?v=…" defaultValue={c.video_url} />
         <Field label="Orden" name="orden" placeholder="Ej: 1" type="number" defaultValue={c.orden ?? 0} />
         <Check name="destacado" defaultChecked={c.destacado} className="self-end pb-3">Mostrar como destacado en el inicio</Check>
