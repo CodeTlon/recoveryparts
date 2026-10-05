@@ -5,7 +5,7 @@ Qué es verdad ahora (2026-10-05). Esto envejece rápido: si pasó más de un me
 ## Ramas
 - `feat/ojito-password-seed-demo` (local, **sin mergear**): ojito en las contraseñas, placeholders, modales (usuarios, confirmaciones), editores por filas del curso (horarios/plan/kit/calendario) con pestañas, imagen de curso subida desde el form, reportes con gráficos, favicon, scrollbar, validaciones de rango y seed de demo (5 cursos, 4 talleres cortos, 6 alumnos, cuentas `@demo.example.com`/`demo1234`). **Sin migraciones nuevas.**
 - La auditoría (`fix/auditoria-seguridad`, migraciones `0007`/`0008`) ya está en `dev`. Las constraints de `materiales` y `encuestas` quedaron `NOT VALID`: si hay datos viejos incorrectos, corregirlos y correr `VALIDATE CONSTRAINT`.
-- `test` y `main` están en el linaje viejo de `feat/unificacion` (otro esquema: `matriculas`, `sitio_config`, `faq`; migraciones `0001_auth_profiles…0011`). **No son ancestros de `dev`**: llevar `dev` a `test` requiere dejar `test` igual a `dev` (reescribe la rama remota) o resolver ~32 conflictos. Decisión pendiente (ver `OPEN_QUESTIONS.md`).
+- `test` y `main` están en `c0876ac`, **ancestro de `dev`**: `dev → test` es un merge simple. La rama remota `feat/unificacion` es otro linaje (esquema `matriculas`/`sitio_config`/`faq`, migraciones `0001_auth_profiles…0011`) y quedó **descartada**: `dev` ya tiene todo lo equivalente.
 - La base de homologación se recreó desde las migraciones de `dev` (0001–0008) y se cargó con `npm run seed:test`.
 
 ## Pendientes de la spec (🟡, preguntar antes de implementar)
