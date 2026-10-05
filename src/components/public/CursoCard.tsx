@@ -2,7 +2,7 @@ import { duracionTexto } from '@/lib/fechas'
 import Link from 'next/link'
 import Image from 'next/image'
 import SpotlightCard from '@/components/ui/SpotlightCard'
-import { Clock, Flame, CalendarDays, Wrench, Search } from 'lucide-react'
+import { Clock, Flame, CalendarDays, Wrench, Search, BookOpen } from 'lucide-react'
 import { AREA_LABEL, DIAS, TIPO_LABEL, formatPrecio, precioFinal, type CursoPublico, type Horario } from '@/lib/types'
 
 export function horarioTexto(hs: Horario[]) {
@@ -29,7 +29,8 @@ export function Precio({ c, size = 'text-sm' }: { c: CursoPublico; size?: string
   )
 }
 
-export default function CursoCard({ c, horarios }: { c: CursoPublico; horarios: Horario[] }) {
+// `modulos`: títulos del plan de estudios (opcional). Se muestran los primeros y un «+N más».
+export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPublico; horarios: Horario[]; modulos?: string[] }) {
   const h = horarioTexto(horarios)
   return (
     <SpotlightCard className="h-full">
@@ -50,6 +51,15 @@ export default function CursoCard({ c, horarios }: { c: CursoPublico; horarios: 
           <Clock size={15} /> {c.duracion_semanas ? duracionTexto(c.duracion_semanas) : 'Duración a confirmar'}
         </div>
         {h && <div className="mb-3 flex items-center gap-2 text-sm text-on-surface-variant"><CalendarDays size={15} /> {h}</div>}
+        {modulos.length > 0 && (
+          <div className="mb-4">
+            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-on-surface-variant"><BookOpen size={13} aria-hidden /> {modulos.length} módulo{modulos.length === 1 ? '' : 's'}</p>
+            <ul className="flex flex-wrap gap-1.5">
+              {modulos.slice(0, 3).map((m) => <li key={m} className="rounded-full border border-outline-variant px-2.5 py-0.5 text-xs text-on-surface-variant">{m}</li>)}
+              {modulos.length > 3 && <li className="rounded-full border border-outline-variant px-2.5 py-0.5 text-xs font-semibold text-secondary">+{modulos.length - 3} más</li>}
+            </ul>
+          </div>
+        )}
         <div className="mt-auto border-t border-outline-variant pt-4">
           <div className="flex items-end justify-between gap-3">
             <Precio c={c} size="text-2xl" />

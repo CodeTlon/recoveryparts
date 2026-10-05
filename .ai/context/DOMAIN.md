@@ -27,3 +27,5 @@ Resumen del dominio. El esquema real está en `supabase/migrations/0001_schema.s
 
 ## Lenguaje de producto
 Área pública: «Reparación y Tecnología». Hay *cursos de* reparación; no se ofrece servicio técnico.
+
+- `kit_items.requerido` (boolean, default true; migración 0009): ítem necesario para cursar (true) o recomendado (false). El link suele ir a Mundo Parts (tienda socia): solo se enlaza, la venta no pasa por el sistema (RF-45/46).

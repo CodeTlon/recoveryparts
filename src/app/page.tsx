@@ -4,7 +4,6 @@ import { ArrowRight, Star, ChevronDown, Search } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import CursoCard from '@/components/public/CursoCard'
-import ContactForm from '@/components/public/ContactForm'
 import AuroraBackground from '@/components/ui/AuroraBackground'
 import BlurText from '@/components/ui/BlurText'
 import Marquee from '@/components/ui/Marquee'
@@ -157,23 +156,24 @@ export default async function Home() {
             <div className="mx-auto max-w-3xl px-4 py-20">
               <SectionTitle eyebrow="Ayuda" align="center">Preguntas <em>frecuentes</em></SectionTitle>
               <div className="space-y-3">
-                {faq.map((f) => (
+                {faq.slice(0, 4).map((f) => (
                   <details key={f.id} className="card group p-5">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{f.pregunta}<ChevronDown size={20} className="shrink-0 transition-transform group-open:rotate-180" /></summary>
                     <p className="mt-3 whitespace-pre-line text-on-surface-variant">{f.respuesta}</p>
                   </details>
                 ))}
               </div>
+              {faq.length > 4 && <p className="mt-6 text-center"><Link href="/preguntas-frecuentes" className="text-secondary underline-offset-4 hover:underline">Ver todas las preguntas →</Link></p>}
             </div>
           </section>
         )}
 
-        {/* 8 · Contacto */}
-        <section id="contacto" className="scroll-mt-20 border-t border-outline-variant">
-          <div className="mx-auto max-w-2xl px-4 py-20">
-            <SectionTitle eyebrow="Escribinos" align="center" className="!mb-6"><em>Contacto</em></SectionTitle>
-            <p className="mb-8 text-center text-on-surface-variant">Escribinos y te respondemos a la brevedad.</p>
-            <ContactForm />
+        {/* 8 · Contacto: la consulta vive en /contacto */}
+        <section className="border-t border-outline-variant">
+          <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+            <SectionTitle eyebrow="¿Tenés dudas?" align="center" className="!mb-6"><em>Escribinos</em></SectionTitle>
+            <p className="mb-8 text-on-surface-variant">Consultanos por cursos, horarios o talleres. Te respondemos por mail.</p>
+            <Link href="/contacto" className="btn-primary inline-flex">Ir a contacto</Link>
           </div>
         </section>
       </main>

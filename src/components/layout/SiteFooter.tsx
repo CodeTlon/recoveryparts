@@ -30,7 +30,8 @@ export default async function SiteFooter() {
           <span className="mb-1 text-xs uppercase tracking-widest text-on-surface-variant">Navegación</span>
           <Link href="/cursos" className={lnk}>Cursos y talleres</Link>
           <Link href="/galeria" className={lnk}>Galería</Link>
-          <Link href="/#contacto" className={lnk}>Contacto</Link>
+          <Link href="/preguntas-frecuentes" className={lnk}>Preguntas frecuentes</Link>
+          <Link href="/contacto" className={lnk}>Contacto</Link>
           <Link href="/login" className={lnk}>Campus</Link>
         </div>
 

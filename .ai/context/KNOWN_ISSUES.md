@@ -36,4 +36,7 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 - **Fotos de ejemplo**: las imágenes de cursos/talleres del seed son flyers viejos de `public/images` (mencionan «4 cuotas», precios y «mes de junio»). Chocan con la regla «sin pagos/cuotas» y no corresponden a cada curso: reemplazar por fotos finales (con consentimiento).
 - **Sin probar en navegador**: pestaña Material del curso (admin) y la ficha pública de cada taller en tablet más allá de lo medido.
 - **Cuentas viejas en homologación**: se borraron a mano con SQL (los triggers impiden borrar inscripciones). Si reaparecen cuentas `@homologacion.example.com`, repetir.
+- **Deploy de Vercel**: los deploys automáticos de Git fallaron con «Builder returned invalid routes». La causa hallada fue la `ñ` en `añadirAlumno` (arreglada), pero **no se confirmó** que el deploy de la nube ya pase; revisar el próximo build.
+- **Homologación**: tiene el esquema 0001–0008; hay que aplicar la 0009 y volver a correr `seed:test` para ver el kit nuevo y el admin «Maxi Escaroni».
+- **Acción «Migraciones a Supabase»** falla en GitHub por falta del secreto `SUPABASE_DB_URL`.
 
