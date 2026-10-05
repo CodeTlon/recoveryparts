@@ -21,7 +21,7 @@ export default function CursoForm({ curso, aulas, profesores }: { curso?: Curso;
         <Field label="Nombre" name="nombre" placeholder="Ej: Reparación de celulares" defaultValue={c.nombre} required />
         <Field label="Slug (URL)" name="slug" placeholder="ej-reparacion-de-celulares" defaultValue={c.slug} hint="Vacío = se genera del nombre." />
         <Select name="area" label="Área" defaultValue={c.area ?? 'tecnico'} options={[['diseno', 'Creación y Diseño'], ['tecnico', 'Reparación y Tecnología']]} />
-        <Select name="tipo" label="Tipo" defaultValue={c.tipo ?? 'curso'} options={[['curso', 'Curso'], ['taller', 'Taller (1–2 clases)']]} />
+        <Select name="tipo" label="Tipo" defaultValue={c.tipo ?? 'curso'} options={[['curso', 'Curso'], ['taller', 'Taller (formato corto: 1 jornada, días seguidos o 1–2 semanas)']]} />
         <Select name="nivel" label="Nivel" defaultValue={c.nivel ?? ''} empty="Sin nivel" options={[['Inicial', 'Inicial'], ['Intermedio', 'Intermedio'], ['Avanzado', 'Avanzado']]} />
         <Field label="Duración (semanas)" name="duracion_semanas" placeholder="Ej: 12" type="number" defaultValue={c.duracion_semanas} />
         <Field label="Cupo máximo" name="cupo" placeholder="Ej: 12" type="number" defaultValue={c.cupo} required hint="No puede ser menor que los alumnos ya asignados." />

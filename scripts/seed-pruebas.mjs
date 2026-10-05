@@ -59,6 +59,11 @@ const semanal = (inicio, n, tema) => Array.from({ length: n }, (_, i) => {
   const d = new Date(`${inicio}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 7 * i)
   return [i + 1, d.toISOString().slice(0, 10), `${tema}: clase ${i + 1}`, 'programada']
 })
+// Días consecutivos (talleres intensivos): n clases, una por día desde `inicio`.
+const consecutivos = (inicio, n, tema) => Array.from({ length: n }, (_, i) => {
+  const d = new Date(`${inicio}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + i)
+  return [i + 1, d.toISOString().slice(0, 10), `${tema}: día ${i + 1}`, 'programada']
+})
 const CURSOS = [
   { slug: 'reparacion-de-celulares', imagen_url: '/images/curso-iphone.jpg', nombre: 'Reparación de Celulares', area: 'tecnico', tipo: 'curso', nivel: 'Inicial', cupo: 4, duracion_semanas: 12, precio: 90000, descuento_pct: 10, fecha_inicio: '2026-09-14', aula_id: aulas['Aula 1'], profesor_id: ids.profe1, destacado: true, orden: 1,
     descripcion: 'Aprendé diagnóstico y reparación de celulares desde cero, con equipos reales. (Curso de prueba)', requisitos: 'No se necesitan conocimientos previos. Traer notebook.', precio_actualizado_en: '2026-09-30',
@@ -83,6 +88,19 @@ const CURSOS = [
   { slug: 'estampados-personalizados', imagen_url: '/images/curso-estampados.jpg', nombre: 'Estampados Personalizados', area: 'diseno', tipo: 'curso', nivel: 'Inicial', cupo: 6, duracion_semanas: 6, precio: 60000, fecha_inicio: '2026-11-06', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, orden: 6,
     descripcion: 'Diseño y estampado en remeras, tazas y gorras con técnicas de sublimación. (Curso de prueba, próximo a iniciar)', requisitos: null, precio_actualizado_en: '2026-09-30',
     horarios: [[5, '18:00', '20:00']], modulos: [['Diseño', ['Bocetos', 'Color y composición']], ['Producción', ['Sublimación', 'Terminaciones']]], kit: [], clases: semanal('2026-11-06', 6, 'Estampados') },
+  // Talleres: formatos cortos (3 días seguidos, 2 sábados, una sola jornada).
+  { slug: 'taller-intensivo-soldadura-smd', imagen_url: '/images/curso-computadoras.jpg', nombre: 'Taller Intensivo de Soldadura SMD', area: 'tecnico', tipo: 'taller', nivel: 'Intermedio', cupo: 6, duracion_semanas: 1, precio: 45000, fecha_inicio: '2026-10-13', aula_id: aulas['Aula 3'], profesor_id: ids.profe2, destacado: true, orden: 7,
+    descripcion: 'Tres días seguidos de práctica intensiva: soldadura de componentes de montaje superficial con estación de aire caliente. (Taller de prueba)', requisitos: 'Haber hecho soldadura básica con estaño.', precio_actualizado_en: '2026-09-30',
+    horarios: [[2, '09:00', '13:00'], [3, '09:00', '13:00'], [4, '09:00', '13:00']], modulos: [['Día a día', ['Día 1: herramientas y técnica', 'Día 2: componentes pasivos y QFN', 'Día 3: retrabajo de placas reales']]],
+    kit: [['Estación de aire caliente', 'La provee la academia', null, null]], clases: consecutivos('2026-10-13', 3, 'Soldadura SMD') },
+  { slug: 'taller-diagnostico-con-multimetro', imagen_url: '/images/about.jpg', nombre: 'Taller de Diagnóstico con Multímetro', area: 'tecnico', tipo: 'taller', nivel: 'Inicial', cupo: 10, duracion_semanas: 2, precio: 30000, fecha_inicio: '2026-10-17', aula_id: aulas['Aula 2'], profesor_id: ids.profe1, orden: 8,
+    descripcion: 'Dos sábados para aprender a medir tensión, continuidad y corto en cualquier equipo. (Taller de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
+    horarios: [[6, '14:00', '17:00']], modulos: [['Medición', ['Tensión y corriente', 'Continuidad y cortocircuitos']]],
+    kit: [['Multímetro digital', 'Se recomienda llevar el propio', 12000, 'https://example.com/multimetro']], clases: semanal('2026-10-17', 2, 'Multímetro') },
+  { slug: 'taller-express-sublimacion-de-tazas', imagen_url: '/images/curso-estampados.jpg', nombre: 'Taller Express de Sublimación de Tazas', area: 'diseno', tipo: 'taller', nivel: 'Inicial', cupo: 8, duracion_semanas: 1, precio: 18000, fecha_inicio: '2026-11-14', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, orden: 9,
+    descripcion: 'En una sola jornada diseñás y sublimás tus propias tazas y te las llevás. (Taller de prueba)', requisitos: null, precio_actualizado_en: '2026-09-30',
+    horarios: [[6, '10:00', '14:00']], modulos: [['La jornada', ['Diseño en plantilla', 'Sublimación y terminación']]],
+    kit: [], clases: [[1, '2026-11-14', 'Sublimación de tazas', 'programada']] },
 ]
 
 const cid = {}
@@ -123,6 +141,12 @@ await inscribir('alumno2', 'armado-y-mantenimiento-de-pcs')
 await inscribir('alumno4', 'armado-y-mantenimiento-de-pcs')
 await inscribir('alumno6', 'armado-y-mantenimiento-de-pcs')
 await inscribir('alumno5', 'estampados-personalizados')
+await inscribir('alumno1', 'taller-intensivo-soldadura-smd')
+await inscribir('alumno4', 'taller-intensivo-soldadura-smd')
+await inscribir('alumno3', 'taller-diagnostico-con-multimetro')
+await inscribir('alumno6', 'taller-diagnostico-con-multimetro')
+await inscribir('alumno2', 'taller-diagnostico-con-multimetro')
+await inscribir('alumno5', 'taller-express-sublimacion-de-tazas')
 
 // ── 4. Material (PDF real mínimo + links) ──────────────────
 const pdf = (t) => { const s = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 144]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 56>>stream\nBT /F1 14 Tf 20 70 Td (${t}) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`; return Buffer.from(s) }
