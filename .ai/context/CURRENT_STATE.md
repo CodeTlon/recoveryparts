@@ -3,6 +3,7 @@
 Qué es verdad ahora (2026-10-05). Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
 
 ## Ramas
+- `feat/ediciones-cursos` (local, **sin mergear, en revisión del equipo**): ediciones de curso (migración **`0011_ediciones.sql`**, admin/profesor/alumno/sitio por edición). Propuesta para el colega en `docs/propuestas/ediciones-de-curso.md`. Si se aprueba: merge a `dev`; al pasar a `test`, la 0011 transforma los datos existentes (cada curso → una edición con el mismo id).
 - `feat/gestion-aulas` (local, **sin mergear**): RF-03 (Campus › Aulas, cupo ≤ capacidad). Migración **`0010_gestion_aulas.sql`**: al pasar a homologación/producción hay que aplicarla (`db:push:*`) y cargar la capacidad real de cada aula desde el campus (mientras falte, no se valida contra esa aula).
 - `feat/ojito-password-seed-demo` (local, **sin mergear**): ojito en las contraseñas, placeholders, modales (usuarios, confirmaciones), editores por filas del curso (horarios/plan/kit/calendario) con pestañas, imagen de curso subida desde el form, reportes con gráficos, favicon, scrollbar, validaciones de rango y seed de demo (5 cursos, 4 talleres cortos, 6 alumnos, cuentas `@demo.example.com`/`demo1234`). **Sin migraciones nuevas.**
 - La auditoría (`fix/auditoria-seguridad`, migraciones `0007`/`0008`) ya está en `dev`. Las constraints de `materiales` y `encuestas` quedaron `NOT VALID`: si hay datos viejos incorrectos, corregirlos y correr `VALIDATE CONSTRAINT`.
