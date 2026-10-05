@@ -32,3 +32,5 @@ Pagos, inscripciones, asistencia, stock, registro público, WhatsApp flotante/bo
 
 - Rutas públicas nuevas: `/contacto` (formulario `enviarContacto` + datos de `site_settings.contacto`) y `/preguntas-frecuentes` (`cms_faq`). El catálogo `/cursos` lee `modulos_publicos` para mostrar los módulos en cada tarjeta.
 - Los encabezados de seguridad viven en `src/lib/security-headers.ts` (los aplica el middleware): Vercel rechazaba los declarados en `next.config.js`. Los nombres de server actions deben ser ASCII (Next los pone en un encabezado de ruta; la `ñ` rompía el deploy).
+
+- Panel del admin: `/campus/admin` (Resumen) renderiza `components/campus/ReportesPanel.tsx`; `/campus/admin/reportes` solo redirige. `/campus/admin/sitio?tab=…` usa pestañas por query string (mismo patrón que el curso).

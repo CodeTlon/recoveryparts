@@ -20,7 +20,6 @@ export const NAV: Record<string, Item[]> = {
     { href: '/campus/admin/usuarios', label: 'Usuarios', icon: 'usuarios' },
     { href: '/campus/admin/cursos', label: 'Cursos y talleres', icon: 'cursos' },
     { href: '/campus/admin/encuestas', label: 'Encuestas', icon: 'encuestas' },
-    { href: '/campus/admin/reportes', label: 'Reportes', icon: 'reportes' },
     { href: '/campus/admin/sitio', label: 'Sitio web', icon: 'sitio' },
     { href: '/campus/admin/consultas', label: 'Consultas', icon: 'consultas' },
   ],

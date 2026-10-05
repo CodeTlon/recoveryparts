@@ -4,6 +4,7 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-05 | Reportes se fusiona con el Resumen del admin; el sitio web se edita por pestañas | El resumen era solo 4 tarjetas y la edición del sitio era una página larga sin contexto de qué se editaba |
 | 2026-10-05 | Kit por ítem «necesario»/«recomendado» (`kit_items.requerido`, migración 0009) con link de compra a Mundo Parts | Algunos materiales hacen falta para cursar y otros son sugeridos; la tienda socia solo se enlaza (la venta no pasa por el sistema, RF-45/46) |
 | 2026-10-05 | Contacto y Preguntas frecuentes con página propia; la home queda como resumen | Pedido del cliente: ordenar el sitio. La home muestra 4 FAQ y una banda hacia `/contacto` |
 | 2026-10-05 | Encabezados de seguridad en el middleware y server actions con nombre ASCII | Vercel rechazaba el deploy («Builder returned invalid routes»): la `ñ` de `añadirAlumno` iba al encabezado `x-server-action-name` |
