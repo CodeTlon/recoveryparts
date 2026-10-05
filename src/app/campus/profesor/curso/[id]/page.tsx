@@ -79,7 +79,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
             <h3 className="mb-4 font-semibold">Subir PDF</h3>
             <ActionForm action={subirPdf} submit="Subir PDF">
               <input type="hidden" name="curso_id" value={id} />
-              <Field label="Título" name="titulo" required />
+              <Field label="Título" name="titulo" placeholder="Ej: Apunte de la clase 1" required />
               <Field label="Archivo (PDF, máx. 25 MB)" name="archivo" required>{(p) => <input {...p} name="archivo" type="file" accept="application/pdf" required className="input" />}</Field>
               <Select name="clase_id" label="Clase (opcional)" empty="Material general" options={claseOpts} />
               <Field label="Liberar automáticamente el" name="liberar_en" type="date" hint="Vacío = queda oculto hasta que lo liberes a mano." />
@@ -89,7 +89,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
             <h3 className="mb-4 font-semibold">Agregar link (video, Drive…)</h3>
             <ActionForm action={agregarLink} submit="Agregar link">
               <input type="hidden" name="curso_id" value={id} />
-              <Field label="Título" name="titulo" required />
+              <Field label="Título" name="titulo" placeholder="Ej: Apunte de la clase 1" required />
               <Field label="Link" name="url" type="url" required placeholder="https://" hint="Subí los videos a YouTube (no listado) o Drive. No se alojan videos." />
               <Select name="clase_id" label="Clase (opcional)" empty="Material general" options={claseOpts} />
               <Field label="Liberar automáticamente el" name="liberar_en" type="date" />
@@ -104,7 +104,7 @@ export default async function CursoProfesor({ params }: { params: Promise<{ id: 
         <div className="card max-w-3xl p-6">
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="curso_id" value={id} />
-            <Field label="Clases" name="clases" rows={10} defaultValue={calendario} hint='Una por línea: "N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
+            <Field label="Clases" name="clases" placeholder="1 | 2026-10-15 | Introducción | programada" rows={10} defaultValue={calendario} hint='Una por línea: "N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
             <Check name="avisar">Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check>
           </ActionForm>
         </div>

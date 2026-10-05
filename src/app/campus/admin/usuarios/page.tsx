@@ -27,10 +27,10 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
         <div className="mt-4 max-w-2xl">
           <ActionForm action={crearUsuario} submit="Crear y enviar invitación">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nombre" name="nombre" required />
-              <Field label="Apellido" name="apellido" required />
-              <Field label="Email" name="email" type="email" required />
-              <Field label="Teléfono" name="telefono" type="tel" />
+              <Field label="Nombre" name="nombre" placeholder="Ej: María" required />
+              <Field label="Apellido" name="apellido" placeholder="Ej: González" required />
+              <Field label="Email" name="email" placeholder="nombre@ejemplo.com" type="email" required />
+              <Field label="Teléfono" name="telefono" placeholder="Ej: 351 123 4567" type="tel" />
             </div>
             <Select name="rol" label="Rol" defaultValue="alumno" options={[['alumno', 'Alumno'], ['profesor', 'Profesor']]} />
             <p className="text-xs text-on-surface-variant">Solo se piden nombre, apellido, email y teléfono. Los alumnos también se pueden crear desde el curso, ya vinculados.</p>
@@ -73,18 +73,18 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                     <ActionForm action={actualizarPerfil} reset={false} submit="Guardar datos">
                       <input type="hidden" name="id" value={u.id} />
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="Nombre" name="nombre" defaultValue={u.nombre} required /><Field label="Apellido" name="apellido" defaultValue={u.apellido} required />
+                        <Field label="Nombre" name="nombre" placeholder="Ej: María" defaultValue={u.nombre} required /><Field label="Apellido" name="apellido" placeholder="Ej: González" defaultValue={u.apellido} required />
                       </div>
-                      <Field label="Teléfono" name="telefono" defaultValue={u.telefono} />
+                      <Field label="Teléfono" name="telefono" placeholder="Ej: 351 123 4567" defaultValue={u.telefono} />
                       {u.rol === 'profesor' && <>
-                        <Field label="Foto (URL)" name="foto_url" defaultValue={u.foto_url} hint="Subí la imagen en Sitio web › Imágenes y pegá la URL." />
-                        <Field label="Experiencia" name="experiencia" rows={3} defaultValue={u.experiencia} />
-                        <Field label="Certificaciones" name="certificaciones" rows={2} defaultValue={u.certificaciones} />
+                        <Field label="Foto (URL)" name="foto_url" placeholder="https://…/foto.jpg" defaultValue={u.foto_url} hint="Subí la imagen en Sitio web › Imágenes y pegá la URL." />
+                        <Field label="Experiencia" name="experiencia" placeholder="Contá brevemente su trayectoria" rows={3} defaultValue={u.experiencia} />
+                        <Field label="Certificaciones" name="certificaciones" placeholder="Una por línea" rows={2} defaultValue={u.certificaciones} />
                       </>}
                     </ActionForm>
                     <ActionForm action={cambiarEmail} reset={false} submit="Cambiar email">
                       <input type="hidden" name="id" value={u.id} />
-                      <Field label="Email nuevo" name="email" type="email" defaultValue={u.email} required hint="Se reenvía la verificación al email nuevo." />
+                      <Field label="Email nuevo" name="email" placeholder="nombre@ejemplo.com" type="email" defaultValue={u.email} required hint="Se reenvía la verificación al email nuevo." />
                     </ActionForm>
                   </div>
                 </details>

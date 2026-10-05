@@ -46,7 +46,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
         <p className="mb-4 text-sm text-on-surface-variant">Se valida que el aula y el profesor no se superpongan con otro curso.</p>
         <div className="card max-w-xl p-6"><ActionForm action={guardarHorarios} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Días y horarios" name="horarios" rows={4} defaultValue={hTxt} hint='Uno por línea: "día 18:00-20:00" (0=Domingo … 6=Sábado).' />
+          <Field label="Días y horarios" name="horarios" placeholder={'martes 18:00-20:00\njueves 18:00-20:00'} rows={4} defaultValue={hTxt} hint='Uno por línea: "día 18:00-20:00" (0=Domingo … 6=Sábado).' />
         </ActionForm></div>
       </section>
 
@@ -55,7 +55,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
         <p className="mb-4 text-sm text-on-surface-variant">Solo el temario de alto nivel; nunca se expone el material del campus.</p>
         <div className="card max-w-3xl p-6"><ActionForm action={guardarModulos} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Módulos" name="modulos" rows={10} defaultValue={mTxt} hint='"# Título del módulo" y debajo un tema por línea.' />
+          <Field label="Módulos" name="modulos" placeholder={'# Módulo 1\nTema uno\nTema dos'} rows={10} defaultValue={mTxt} hint='"# Título del módulo" y debajo un tema por línea.' />
         </ActionForm></div>
       </section>
 
@@ -64,7 +64,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
         <p className="mb-4 text-sm text-on-surface-variant">Se muestra en la ficha pública solo si hay ítems. Los links abren el software externo en una pestaña nueva.</p>
         <div className="card max-w-3xl p-6"><ActionForm action={guardarKit} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Ítems" name="kit" rows={6} defaultValue={kTxt} hint='Uno por línea: "Nombre | Descripción | Precio | https://link".' />
+          <Field label="Ítems" name="kit" placeholder="Multímetro | Para medir tensión | 15000 | https://…" rows={6} defaultValue={kTxt} hint='Uno por línea: "Nombre | Descripción | Precio | https://link".' />
         </ActionForm></div>
       </section>
 
@@ -73,7 +73,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
         <p className="mb-4 text-sm text-on-surface-variant">Define el N° de clase en que se calcula una deserción. Las suspendidas/reprogramadas no cuentan.</p>
         <div className="card max-w-3xl p-6"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Clases" name="clases" rows={8} defaultValue={cTxt} hint='"N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
+          <Field label="Clases" name="clases" placeholder="1 | 2026-10-15 | Introducción | programada" rows={8} defaultValue={cTxt} hint='"N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
           <Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>
         </ActionForm></div>
       </section>
@@ -90,10 +90,10 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
           <ActionForm action={añadirAlumno} submit="Agregar al curso">
             <input type="hidden" name="curso_id" value={id} />
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Email" name="email" type="email" required />
-              <Field label="Teléfono (si es nuevo)" name="telefono" type="tel" />
-              <Field label="Nombre (si es nuevo)" name="nombre" />
-              <Field label="Apellido (si es nuevo)" name="apellido" />
+              <Field label="Email" name="email" placeholder="nombre@ejemplo.com" type="email" required />
+              <Field label="Teléfono (si es nuevo)" name="telefono" placeholder="Ej: 351 123 4567" type="tel" />
+              <Field label="Nombre (si es nuevo)" name="nombre" placeholder="Ej: María" />
+              <Field label="Apellido (si es nuevo)" name="apellido" placeholder="Ej: González" />
             </div>
           </ActionForm>
         </div>
@@ -131,7 +131,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
                       <ActionForm action={marcarDesertor} submit="Confirmar deserción">
                         <input type="hidden" name="id" value={i.id} /><input type="hidden" name="curso_id" value={id} />
                         <Field label="Fecha de deserción" name="fecha" type="date" defaultValue={hoy} required />
-                        <Field label="Motivo (obligatorio)" name="motivo" rows={3} required />
+                        <Field label="Motivo (obligatorio)" name="motivo" placeholder="Ej: Cambió de horario laboral" rows={3} required />
                       </ActionForm>
                     </div>
                   </details>
