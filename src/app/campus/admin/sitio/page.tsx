@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth'
 import ImageUploader from '@/components/campus/ImageUploader'
-import { ActionForm, Confirm, Field, PageHead, Select } from '@/components/campus/ui'
+import { ActionForm, Confirm, Field, PageHead, Select, Check } from '@/components/campus/ui'
 import { borrarItemCms, guardarItemCms, guardarSetting } from '../actions'
 
 type S = Record<string, any>
@@ -19,7 +19,7 @@ function Item({ tipo, row, children }: { tipo: string; row?: S; children: React.
       <ActionForm action={guardarItemCms} reset={!row} submit={row ? 'Guardar' : 'Agregar'}>
         <input type="hidden" name="tipo" value={tipo} />{row && <input type="hidden" name="id" value={row.id} />}
         {children}
-        <Field label="Orden" name="orden" type="number" defaultValue={row?.orden ?? 0} />
+        <Field label="Orden" name="orden" placeholder="Ej: 1" type="number" defaultValue={row?.orden ?? 0} />
       </ActionForm>
       {row && <form action={borrarItemCms} className="mt-2"><input type="hidden" name="tipo" value={tipo} /><input type="hidden" name="id" value={row.id} /><Confirm message="¿Eliminar?">Eliminar</Confirm></form>}
     </div>
@@ -48,22 +48,22 @@ export default async function Sitio() {
       <PageHead title="Sitio web" sub="Todo el contenido público sale de acá. Solo el administrador puede modificarlo." />
       <div className="space-y-3">
         <Setting clave="hero" title="Portada (hero)">
-          <Field label="Título" name="titulo" defaultValue={h.titulo} /><Field label="Subtítulo" name="subtitulo" rows={2} defaultValue={h.subtitulo} />
-          <Field label="Imagen de fondo (URL)" name="imagen_url" defaultValue={h.imagen_url} />
-          <div className="grid gap-4 sm:grid-cols-2"><Field label="Texto botón cursos" name="cta_cursos" defaultValue={h.cta_cursos} /><Field label="Texto botón WhatsApp" name="cta_whatsapp" defaultValue={h.cta_whatsapp} /></div>
+          <Field label="Título" name="titulo" placeholder="Ej: Aprendé un oficio con salida laboral" defaultValue={h.titulo} /><Field label="Subtítulo" name="subtitulo" placeholder="Ej: Aprendé un oficio con salida laboral" rows={2} defaultValue={h.subtitulo} />
+          <Field label="Imagen de fondo (URL)" name="imagen_url" placeholder="https://…/imagen.jpg" defaultValue={h.imagen_url} />
+          <div className="grid gap-4 sm:grid-cols-2"><Field label="Texto botón cursos" name="cta_cursos" placeholder="Ej: Ver cursos" defaultValue={h.cta_cursos} /><Field label="Texto botón WhatsApp" name="cta_whatsapp" placeholder="Ej: Consultar por WhatsApp" defaultValue={h.cta_whatsapp} /></div>
         </Setting>
         <Setting clave="areas" title="Las dos áreas">
           {AREAS.map(([k, l]) => <div key={k} className="space-y-3 border-b border-outline-variant pb-4"><p className="font-semibold">{l}</p>
             <Field label="Título" name={`${k}.titulo`} defaultValue={a[k]?.titulo} /><Field label="Texto" name={`${k}.texto`} rows={2} defaultValue={a[k]?.texto} /><Field label="Imagen (URL)" name={`${k}.imagen_url`} defaultValue={a[k]?.imagen_url} /></div>)}
         </Setting>
-        <Setting clave="nosotros" title="Nosotros"><Field label="Título" name="titulo" defaultValue={n.titulo} /><Field label="Texto" name="texto" rows={5} defaultValue={n.texto} /></Setting>
+        <Setting clave="nosotros" title="Nosotros"><Field label="Título" name="titulo" placeholder="Ej: Aprendé un oficio con salida laboral" defaultValue={n.titulo} /><Field label="Texto" name="texto" placeholder="Escribí el texto acá…" rows={5} defaultValue={n.texto} /></Setting>
         <Setting clave="stats" title="Números (stats)">
-          <div className="grid gap-4 sm:grid-cols-3"><Field label="Aulas" name="aulas" type="number" defaultValue={s.aulas} /><Field label="Profesores" name="profesores" type="number" defaultValue={s.profesores} /><Field label="Egresados" name="egresados" type="number" defaultValue={s.egresados} /></div>
+          <div className="grid gap-4 sm:grid-cols-3"><Field label="Aulas" name="aulas" placeholder="Ej: 3" type="number" defaultValue={s.aulas} /><Field label="Profesores" name="profesores" placeholder="Ej: 8" type="number" defaultValue={s.profesores} /><Field label="Egresados" name="egresados" placeholder="Ej: 250" type="number" defaultValue={s.egresados} /></div>
         </Setting>
         <Setting clave="contacto" title="Datos de contacto y redes">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Dirección" name="direccion" defaultValue={c.direccion} /><Field label="Horario de atención" name="horario" defaultValue={c.horario} />
-            <Field label="Teléfono" name="telefono" defaultValue={c.telefono} /><Field label="Email" name="email" type="email" defaultValue={c.email} />
+            <Field label="Dirección" name="direccion" placeholder="Calle y número, ciudad" defaultValue={c.direccion} /><Field label="Horario de atención" name="horario" placeholder="Ej: Lunes a viernes de 9 a 18 h" defaultValue={c.horario} />
+            <Field label="Teléfono" name="telefono" placeholder="Ej: 351 123 4567" defaultValue={c.telefono} /><Field label="Email" name="email" placeholder="nombre@ejemplo.com" type="email" defaultValue={c.email} />
             <Field label="WhatsApp (solo números, con código de país)" name="whatsapp" defaultValue={c.whatsapp} placeholder="549351…" /><Field label="Instagram" name="instagram" defaultValue={c.instagram} placeholder="@usuario" />
           </div>
         </Setting>
@@ -79,8 +79,8 @@ export default async function Sitio() {
       <h2 className={h2}>Egresados</h2>
       <p className="mb-4 text-sm text-on-surface-variant">Los «destacados» ocupan 2×2 en la grilla. Se necesita consentimiento de uso de imagen.</p>
       <div className="grid gap-4 md:grid-cols-2">
-        {egr?.map((r) => <Item key={r.id} tipo="egresado" row={r}><Field label="Nombre" name="nombre" defaultValue={r.nombre} required /><Field label="Especialidad" name="especialidad" defaultValue={r.especialidad} required /><Field label="Foto (URL)" name="foto_url" defaultValue={r.foto_url} /><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="destacado" defaultChecked={r.destacado} /> Destacado</label></Item>)}
-        <Item tipo="egresado"><p className="font-semibold">Nuevo egresado</p><Field label="Nombre" name="nombre" required /><Field label="Especialidad" name="especialidad" required /><Field label="Foto (URL)" name="foto_url" /><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="destacado" /> Destacado</label></Item>
+        {egr?.map((r) => <Item key={r.id} tipo="egresado" row={r}><Field label="Nombre" name="nombre" placeholder="Ej: María" defaultValue={r.nombre} required /><Field label="Especialidad" name="especialidad" placeholder="Ej: Reparación de celulares" defaultValue={r.especialidad} required /><Field label="Foto (URL)" name="foto_url" placeholder="https://…/foto.jpg" defaultValue={r.foto_url} /><Check name="destacado" defaultChecked={r.destacado}>Destacado</Check></Item>)}
+        <Item tipo="egresado"><p className="font-semibold">Nuevo egresado</p><Field label="Nombre" name="nombre" placeholder="Ej: María" required /><Field label="Especialidad" name="especialidad" placeholder="Ej: Reparación de celulares" required /><Field label="Foto (URL)" name="foto_url" placeholder="https://…/foto.jpg" /><Check name="destacado">Destacado</Check></Item>
       </div>
 
       <h2 className={h2}>Testimonios</h2>
@@ -89,9 +89,9 @@ export default async function Sitio() {
         {[...(tes ?? []), null].map((r) => (
           <Item key={r?.id ?? 'nuevo'} tipo="testimonio" row={r ?? undefined}>
             {!r && <p className="font-semibold">Nuevo testimonio</p>}
-            <Field label="Nombre" name="nombre" defaultValue={r?.nombre} required /><Field label="Curso (texto)" name="curso" defaultValue={r?.curso} />
-            <Field label="Texto" name="texto" rows={3} defaultValue={r?.texto} required /><Field label="Puntaje (1–5)" name="puntaje" type="number" defaultValue={r?.puntaje ?? 5} />
-            <Field label="Foto (URL)" name="foto_url" defaultValue={r?.foto_url} />
+            <Field label="Nombre" name="nombre" placeholder="Ej: María" defaultValue={r?.nombre} required /><Field label="Curso (texto)" name="curso" placeholder="Ej: Reparación de celulares" defaultValue={r?.curso} />
+            <Field label="Texto" name="texto" placeholder="Escribí el texto acá…" rows={3} defaultValue={r?.texto} required /><Field label="Puntaje (1–5)" name="puntaje" placeholder="1 a 5" type="number" defaultValue={r?.puntaje ?? 5} />
+            <Field label="Foto (URL)" name="foto_url" placeholder="https://…/foto.jpg" defaultValue={r?.foto_url} />
             <Select name="curso_id" label="Mostrar en la ficha de" defaultValue={r?.curso_id} empty="Solo en el inicio" options={(cursos ?? []).map((x) => [x.id, x.nombre])} />
           </Item>
         ))}
@@ -99,7 +99,7 @@ export default async function Sitio() {
 
       <h2 className={h2}>Preguntas frecuentes</h2>
       <div className="grid gap-4 md:grid-cols-2">
-        {[...(faq ?? []), null].map((r) => <Item key={r?.id ?? 'nuevo'} tipo="faq" row={r ?? undefined}>{!r && <p className="font-semibold">Nueva pregunta</p>}<Field label="Pregunta" name="pregunta" defaultValue={r?.pregunta} required /><Field label="Respuesta" name="respuesta" rows={3} defaultValue={r?.respuesta} required /></Item>)}
+        {[...(faq ?? []), null].map((r) => <Item key={r?.id ?? 'nuevo'} tipo="faq" row={r ?? undefined}>{!r && <p className="font-semibold">Nueva pregunta</p>}<Field label="Pregunta" name="pregunta" placeholder="Ej: ¿Cómo me inscribo?" defaultValue={r?.pregunta} required /><Field label="Respuesta" name="respuesta" placeholder="Escribí la respuesta…" rows={3} defaultValue={r?.respuesta} required /></Item>)}
       </div>
 
       <h2 className={h2}>Galería de fotos</h2>
@@ -107,8 +107,8 @@ export default async function Sitio() {
         {[...(gal ?? []), null].map((r) => (
           <Item key={r?.id ?? 'nuevo'} tipo="foto" row={r ?? undefined}>
             {!r && <p className="font-semibold">Nueva foto</p>}
-            <Field label="Imagen (URL)" name="imagen_url" defaultValue={r?.imagen_url} required /><Field label="Texto alternativo (accesibilidad)" name="alt" defaultValue={r?.alt} required />
-            <Field label="Descripción corta" name="descripcion" defaultValue={r?.descripcion} />
+            <Field label="Imagen (URL)" name="imagen_url" placeholder="https://…/imagen.jpg" defaultValue={r?.imagen_url} required /><Field label="Texto alternativo (accesibilidad)" name="alt" placeholder="Ej: Alumnos trabajando en el taller" defaultValue={r?.alt} required />
+            <Field label="Descripción corta" name="descripcion" placeholder="Contá qué se aprende y para quién…" defaultValue={r?.descripcion} />
             <div className="grid gap-4 sm:grid-cols-2"><Select name="categoria" label="Categoría" defaultValue={r?.categoria ?? 'aulas'} options={CATS} /><Select name="area" label="Área" defaultValue={r?.area} empty="—" options={AREAS} /></div>
           </Item>
         ))}

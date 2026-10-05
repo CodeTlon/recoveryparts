@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import AuthShell from '@/components/auth/AuthShell'
 import { OlvideForm } from '@/components/auth/AuthForms'
 
-export const metadata: Metadata = { title: 'Recuperar contraseña' }
+export const metadata: Metadata = { title: 'Recuperar contraseña', robots: { index: false } }
 
 export default function Page() {
   return (

@@ -1,6 +1,10 @@
 import { requireRole } from '@/lib/auth'
 import { DIAS } from '@/lib/types'
 import { Empty, PageHead } from '@/components/campus/ui'
+import AnimatedBar from '@/components/ui/AnimatedBar'
+import { Columns, Donut, Stat } from '@/components/campus/charts'
+import Reveal from '@/components/ui/Reveal'
+import { hoyAR } from '@/lib/fechas'
 
 type Insc = { alumno_id: string; curso_id: string; estado: string; n_clase_desercion: number | null; motivo_desercion: string | null; creado_en: string }
 type Curso = { id: string; nombre: string; cupo: number; creado_en: string; fecha_inicio: string | null; horarios_curso: { dia_semana: number }[] }
@@ -8,11 +12,11 @@ type Curso = { id: string; nombre: string; cupo: number; creado_en: string; fech
 const pct = (a: number, b: number) => (b ? Math.round((1000 * a) / b) / 10 : 0)
 
 function Bar({ v, max }: { v: number; max: number }) {
-  return <div className="h-2 w-full rounded-full bg-surface-container-highest"><div className="h-2 rounded-full bg-accent" style={{ width: `${max ? (100 * v) / max : 0}%` }} /></div>
+  return <AnimatedBar value={v} max={max} />
 }
 
 function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
-  return <section className="card p-6"><h2 className="text-lg font-semibold">{title}</h2>{note && <p className="mb-4 text-xs text-on-surface-variant">{note}</p>}<div className={note ? '' : 'mt-4'}>{children}</div></section>
+  return <Reveal className="h-full"><section className="card h-full p-6"><h2 className="text-lg font-semibold">{title}</h2>{note && <p className="mb-4 text-xs text-on-surface-variant">{note}</p>}<div className={note ? '' : 'mt-4'}>{children}</div></section></Reveal>
 }
 
 export default async function Reportes() {
@@ -27,6 +31,8 @@ export default async function Reportes() {
 
   // RF-48 · ocupación = inscriptos / cupo
   const ocup = C.map((c) => { const n = I.filter((i) => i.curso_id === c.id).length; return { nombre: c.nombre, n, cupo: c.cupo, p: pct(n, c.cupo) } }).sort((a, b) => b.p - a.p)
+
+  const estados = { activo: I.filter((i) => i.estado === 'activo').length, finalizado: I.filter((i) => i.estado === 'finalizado').length, desertor: I.filter((i) => i.estado === 'desertor').length }
 
   // RF-48 · días con mayor deserción (día del curso donde hubo desertores)
   const diasDes = new Array(7).fill(0)
@@ -44,8 +50,8 @@ export default async function Reportes() {
     const ord = I.filter((i) => i.curso_id === c.id).map((i) => i.creado_en).sort()
     return ord.length >= c.cupo ? { nombre: c.nombre, dias: Math.max(0, Math.round((+new Date(ord[c.cupo - 1]) - +new Date(c.creado_en)) / 864e5)) } : null
   }).filter(Boolean).sort((a, b) => a!.dias - b!.dias) as { nombre: string; dias: number }[]
-  const hoy = new Date().toISOString().slice(0, 10)
-  const vacios = ocup.filter((o) => { const c = C.find((x) => x.nombre === o.nombre)!; return o.p < 50 && (!c.fecha_inicio || c.fecha_inicio <= hoy) })
+  const hoy = hoyAR()
+  const vacios = ocup.filter((o) => { const c = C.find((x) => x.nombre === o.nombre); return o.p < 50 && (!c?.fecha_inicio || c.fecha_inicio <= hoy) })
 
   // RF-51 · qué curso eligen al terminar uno
   const sig = new Map<string, number>()
@@ -61,12 +67,23 @@ export default async function Reportes() {
     <>
       <PageHead title="Reportes" sub="Ocupación = alumnos inscriptos / cupo (los pagos no se manejan en este sistema)." />
       {!C.length ? <Empty>Todavía no hay datos para reportar.</Empty> : (
+        <>
+        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Stat label="Cursos activos" value={C.length} />
+          <Stat label="Alumnos activos" value={estados.activo} note={`${I.length} inscripciones en total`} />
+          <Stat label="Ocupación promedio" value={`${ocup.length ? Math.round(ocup.reduce((a, o) => a + o.p, 0) / ocup.length) : 0}%`} note="inscriptos / cupo" />
+          <Stat label="Deserción global" value={`${pct(estados.desertor, I.length)}%`} note={`${estados.desertor} de ${I.length}`} />
+        </div>
         <div className="grid gap-6 lg:grid-cols-2">
+          <Card title="Estado de las inscripciones">
+            <Donut caption="Estado de las inscripciones" center={<div><p className="text-2xl font-bold tabular-nums">{I.length}</p><p className="text-[11px] text-on-surface-variant">inscripciones</p></div>}
+              data={[{ label: 'Activos', value: estados.activo, color: 'text-green-400' }, { label: 'Finalizados', value: estados.finalizado, color: 'text-sky-400' }, { label: 'Desertores', value: estados.desertor, color: 'text-red-400' }]} />
+          </Card>
           <Card title="Ocupación por curso">
             <ul className="space-y-3">{ocup.map((o) => <li key={o.nombre}><div className="mb-1 flex justify-between text-sm"><span>{o.nombre}</span><span className="text-on-surface-variant">{o.n}/{o.cupo} · {o.p}%</span></div><Bar v={o.p} max={100} /></li>)}</ul>
           </Card>
-          <Card title="Días con mayor deserción">
-            <ul className="space-y-3">{DIAS.map((d, i) => <li key={d}><div className="mb-1 flex justify-between text-sm"><span>{d}</span><span className="text-on-surface-variant">{diasDes[i]}</span></div><Bar v={diasDes[i]} max={Math.max(...diasDes)} /></li>)}</ul>
+          <Card title="Días con mayor deserción" note="Desertores según el día de cursada.">
+            <Columns data={DIAS.map((d, i) => ({ label: d.slice(0, 3), value: diasDes[i] }))} color="bg-red-400" />
           </Card>
           <Card title="Deserción por curso" note="Cantidad, % sobre el total y en qué N° de clase desertan." >
             {!des.length ? <p className="text-sm text-on-surface-variant">Sin inscripciones.</p> : <ul className="space-y-5">{des.map((x) => (
@@ -88,6 +105,7 @@ export default async function Reportes() {
             {demanda_.length ? <ul className="space-y-1 text-sm">{demanda_.map(([k, n]) => <li key={k} className="flex justify-between"><span className="capitalize">{k}</span><span className="text-on-surface-variant">{n}</span></li>)}</ul> : <p className="text-sm text-on-surface-variant">Todavía no hay pedidos.</p>}
           </Card>
         </div>
+        </>
       )}
     </>
   )

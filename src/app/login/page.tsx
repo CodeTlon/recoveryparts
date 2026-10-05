@@ -3,7 +3,7 @@ import AuthShell from '@/components/auth/AuthShell'
 import { LoginForm } from '@/components/auth/AuthForms'
 import { supabaseConfigured } from '@/lib/supabase/env'
 
-export const metadata: Metadata = { title: 'Campus' }
+export const metadata: Metadata = { title: 'Campus', robots: { index: false } }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams
