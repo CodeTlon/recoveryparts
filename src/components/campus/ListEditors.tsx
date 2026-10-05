@@ -7,7 +7,7 @@ import { MUNDO_PARTS_URL } from '@/lib/validar'
 
 // Editores por filas para lo que antes era un textarea con formato "a | b | c".
 // Cada uno serializa al MISMO texto que ya entienden las server actions (guardarHorarios,
-// guardarModulos, guardarKit, guardarClases), en un <textarea hidden> con el `name` del campo.
+// guardarModulos, guardarKit, guardarPlanClases, guardarClases), en un <textarea hidden> con el `name` del campo.
 
 const limpiar = (s: string) => s.replace(/[|\n\r]/g, ' ').trim()
 
@@ -133,66 +133,95 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
   )
 }
 
-// ── Calendario de clases ─────────────────────────────────────────────────────────────────────
-type C = { fecha: string; titulo: string; estado: string }
+// ── Plan de clases del curso: N° y título (los mismos en todas las ediciones) ─────────────────
+type P = { titulo: string }
+
+export function PlanEditor({ name, inicial }: { name: string; inicial: P[] }) {
+  const [rows, setRows] = useState<P[]>(inicial)
+  const upd = (i: number, p: Partial<P>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  const errP = rows.some((r) => !limpiar(r.titulo)) ? 'Completá el título de cada clase o quitá la que sobra.'
+    : rows.some((r) => limpiar(r.titulo).length > 200) ? 'Cada título puede tener hasta 200 caracteres.'
+    : rows.length > 500 ? 'El plan admite hasta 500 clases.' : ''
+  return (
+    <div className="space-y-3">
+      <Serial name={name} value={rows.map((r, i) => `${i + 1} | ${limpiar(r.titulo)}`).join('\n')} />
+      <Guard error={errP} />
+      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay clases en el plan.</p>}
+      {rows.map((r, i) => (
+        <div key={i} className="flex items-end gap-2">
+          <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{i + 1}</span>
+          <div className="flex-1"><label className="sr-only">Título clase {i + 1}</label>
+            <input className="input" maxLength={200} placeholder="Ej: Diagnóstico visual" value={r.titulo} onChange={(e) => upd(i, { titulo: e.target.value })} /></div>
+          <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label={`Quitar clase ${i + 1}`} />
+        </div>
+      ))}
+      {errP && <p role="alert" className="text-sm text-red-400">{errP}</p>}
+      <AddButton onClick={() => setRows([...rows, { titulo: '' }])}>Agregar clase</AddButton>
+    </div>
+  )
+}
+
+// ── Calendario de una edición: fecha y estado de cada clase del plan ────────────────────────────
+type C = { numero: number; titulo: string; fecha: string; estado: string }
 
 // Fechas desde `inicio` que caen en los días de la semana dados (0=Domingo … 6=Sábado).
 function generarFechas(inicio: string, dias: number[], cantidad: number): string[] {
   if (!inicio || !dias.length) return []
   const d = new Date(`${inicio}T12:00:00Z`) // mediodía UTC: sin corrimientos de huso
   const out: string[] = []
-  for (let n = 0; out.length < cantidad && n < 800; n++, d.setUTCDate(d.getUTCDate() + 1)) {
+  for (let n = 0; out.length < cantidad && n < 3700; n++, d.setUTCDate(d.getUTCDate() + 1)) {
     if (dias.includes(d.getUTCDay())) out.push(d.toISOString().slice(0, 10))
   }
   return out
 }
 
-export function ClasesEditor({ name, inicial, inicio, dias, avisar }: { name: string; inicial: C[]; inicio?: string | null; dias?: number[]; avisar?: React.ReactNode }) {
-  const [rows, setRows] = useState<C[]>(inicial)
-  const [cant, setCant] = useState(String(Math.max(inicial.length, 12)))
-  const id = useId()
+// Las filas son las clases del plan del curso (los títulos no se editan acá). Al crear o duplicar una edición
+// las fechas empiezan vacías: «Proponer fechas» las arma desde la fecha de inicio y los días de cursada (R8).
+export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
+  name: string; plan: { numero: number; titulo: string }[]; inicial: { numero: number; fecha: string; estado: string }[]
+  inicio?: string | null; dias?: number[]; avisar?: React.ReactNode
+}) {
+  const previo = new Map(inicial.map((c) => [c.numero, c]))
+  const [rows, setRows] = useState<C[]>(plan.map((p) => ({ ...p, fecha: previo.get(p.numero)?.fecha ?? '', estado: previo.get(p.numero)?.estado ?? 'programada' })))
   const upd = (i: number, p: Partial<C>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
-  const txt = rows.filter((r) => r.fecha && limpiar(r.titulo)).map((r, i) => `${i + 1} | ${r.fecha} | ${limpiar(r.titulo)} | ${r.estado}`).join('\n')
-  const fechas = rows.map((r) => r.fecha)
-  const errC = rows.some((r) => !r.fecha || !limpiar(r.titulo)) ? 'Cada clase necesita fecha y título.'
+  const conFecha = rows.filter((r) => r.fecha)
+  const fechas = conFecha.map((r) => r.fecha)
+  const errC = !conFecha.length ? 'Asigná la fecha de al menos una clase.'
     : new Set(fechas).size < fechas.length ? 'Hay dos clases en la misma fecha.'
-    : fechas.some((f, i) => i > 0 && f < fechas[i - 1]) ? 'Las clases tienen que estar en orden cronológico.' : ''
-  const antesDeInicio = !!inicio && !!fechas[0] && fechas[0] < inicio
+    : fechas.some((f, i) => i > 0 && f < fechas[i - 1]) ? 'Las fechas tienen que seguir el orden de las clases.'
+    : inicio && fechas[0] < inicio ? `Ninguna clase puede ser anterior al inicio de la edición (${inicio.split('-').reverse().join('/')}).` : ''
   const puedeGenerar = !!inicio && !!dias?.length
   const generar = () => {
-    const f = generarFechas(inicio!, dias!, Math.min(Math.max(parseInt(cant) || 0, 1), 60))
-    setRows(f.map((fecha, i) => ({ fecha, titulo: rows[i]?.titulo || `Clase ${i + 1}`, estado: rows[i]?.estado ?? 'programada' })))
+    const f = generarFechas(inicio!, dias!, rows.length)
+    setRows(rows.map((r, i) => ({ ...r, fecha: f[i] ?? '' })))
   }
+  const sinFecha = rows.length - conFecha.length
+  if (!plan.length) return <p className="text-sm text-on-surface-variant">El curso todavía no tiene plan de clases. Cargalo en la pestaña «Plan de clases» del curso.</p>
   return (
     <div className="space-y-4">
-      <Serial name={name} value={txt} />
+      <Serial name={name} value={conFecha.map((r) => `${r.numero} | ${r.fecha} | ${r.estado}`).join('\n')} />
       <Guard error={errC} />
-      <div className="flex flex-wrap items-end gap-2 rounded border border-dashed border-outline-variant p-3">
-        <div><label htmlFor={id} className="label">Cantidad de clases</label>
-          <input id={id} type="number" min={1} max={60} className="input !w-28" value={cant} onChange={(e) => setCant(e.target.value)} /></div>
-        <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost !px-3 !py-2 disabled:opacity-50"><Wand2 size={14} aria-hidden /> Generar fechas</button>
+      <div className="flex flex-wrap items-center gap-2 rounded border border-dashed border-outline-variant p-3">
+        <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost !px-3 !py-2 disabled:opacity-50"><Wand2 size={14} aria-hidden /> Proponer fechas</button>
         <p className="min-w-[12rem] flex-1 text-xs text-on-surface-variant">
-          {puedeGenerar ? 'Arma el calendario desde la fecha de inicio, usando los días de cursada. Conserva los títulos ya cargados.' : 'Para generar fechas, cargá antes la fecha de inicio (Datos) y los horarios.'}
+          {puedeGenerar ? 'Asigna una fecha a cada clase desde el inicio de la edición, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas, cargá antes la fecha de inicio (Datos) y los horarios de la edición.'}
         </p>
       </div>
-      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay clases.</p>}
       <div className="space-y-2">
         {rows.map((r, i) => (
-          <div key={i} className="flex flex-wrap items-end gap-2">
-            <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-label={`Clase ${i + 1}`}>{i + 1}</span>
-            <div><label className="sr-only">Fecha clase {i + 1}</label><input type="date" required className="input" value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} /></div>
-            <div className="min-w-[10rem] flex-1"><label className="sr-only">Título clase {i + 1}</label><input className="input" placeholder="Título de la clase" required value={r.titulo} onChange={(e) => upd(i, { titulo: e.target.value })} /></div>
-            <div><label className="sr-only">Estado clase {i + 1}</label>
+          <div key={r.numero} className="flex flex-wrap items-end gap-2">
+            <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{r.numero}</span>
+            <p className="min-w-[10rem] flex-1 pb-2 text-sm">{r.titulo}</p>
+            <div><label className="sr-only">Fecha clase {r.numero}</label><input type="date" className="input" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} /></div>
+            <div><label className="sr-only">Estado clase {r.numero}</label>
               <select className="input" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
                 <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option>
               </select></div>
-            <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar clase" />
           </div>
         ))}
       </div>
+      {sinFecha > 0 && !errC && <p className="text-sm text-secondary">{sinFecha} clase{sinFecha === 1 ? '' : 's'} sin fecha: no se mostrarán en el calendario de esta edición.</p>}
       {errC && <p role="alert" className="text-sm text-red-400">{errC}</p>}
-      {antesDeInicio && <p className="text-sm text-secondary">Ojo: la primera clase es anterior a la fecha de inicio del curso.</p>}
-      <AddButton onClick={() => setRows([...rows, { fecha: '', titulo: `Clase ${rows.length + 1}`, estado: 'programada' }])}>Agregar clase</AddButton>
       {avisar}
     </div>
   )
