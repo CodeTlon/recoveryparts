@@ -10,6 +10,6 @@ Detalle y flujo de ramas: `docs/ENTORNOS.md`. Acá, lo mínimo para no equivocar
 
 - Migraciones: `npm run db:push:test` / `db:push:production` piden confirmación; el workflow `deploy-db.yml` las aplica al mergear a `test`/`main`.
 - Seed: `npm run seed:dev` / `seed-pruebas.mjs` con `ENV_FILE`; se niega a correr si `APP_ENV` no es `development`/`test`. **Nunca contra producción.**
-- Cuentas de prueba de homologación: `docs/CUENTAS-HOMOLOGACION.md` (gitignored, dominio `@homologacion.example.com`).
+- Cuentas de prueba de homologación: `docs/CUENTAS-HOMOLOGACION.md` (gitignored, dominio `@demo.example.com`, contraseña `demo1234` en los seeds de desarrollo y homologación).
 - Setup de Supabase remoto, SMTP y plantillas de Auth: `docs/SETUP-SUPABASE.md`.
 - La CI (`.github/workflows/ci.yml`) corre `type-check`, `build`, migraciones desde cero, y verifica que todas las tablas tengan RLS y que un signUp público no genere perfil.

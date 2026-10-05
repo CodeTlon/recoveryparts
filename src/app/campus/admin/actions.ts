@@ -18,6 +18,8 @@ function traducir(m: string) {
   if (/cupo no puede ser menor/.test(m)) return 'El cupo no puede ser menor que los alumnos ya asignados.'
   if (/Superposición/.test(m)) return 'Hay superposición de aula o profesor en ese día y horario.'
   if (/duplicate key|unique/.test(m)) return 'Ya existe un registro con esos datos.'
+  if (/hora_fin|horarios_curso_check/.test(m)) return 'La hora de fin tiene que ser posterior a la de inicio.'
+  if (/check constraint/.test(m)) return 'Algún valor está fuera de rango. Revisá los números ingresados.'
   if (/estado final/.test(m)) return 'Desertor es un estado final.'
   return 'No se pudo completar la operación.'
 }
@@ -104,6 +106,12 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
   if (!nombre) return { error: 'Falta el nombre.' }
   if (!cupo || cupo <= 0) return { error: 'El cupo debe ser mayor a 0.' }
   const precio = num(fd, 'precio')
+  const dur = num(fd, 'duracion_semanas'), desc = num(fd, 'descuento_pct')
+  if (!Number.isInteger(cupo) || cupo < 1 || cupo > 500) return { error: 'El cupo debe ser un número entero entre 1 y 500.' }
+  if (precio !== null && (!Number.isFinite(precio) || precio < 0)) return { error: 'El precio no puede ser negativo.' }
+  if (desc !== null && !(desc >= 0 && desc <= 100)) return { error: 'El descuento debe estar entre 0 y 100%.' }
+  if (dur !== null && !(Number.isInteger(dur) && dur >= 1 && dur <= 104)) return { error: 'La duración debe ser de 1 a 104 semanas.' }
+  if (!['diseno', 'tecnico'].includes(txt(fd, 'area')) || !['curso', 'taller'].includes(txt(fd, 'tipo'))) return { error: 'Área o tipo inválidos.' }
   const imagen = urlOpcional(txt(fd, 'imagen_url')), video = urlOpcional(txt(fd, 'video_url'))
   if (imagen === undefined || video === undefined) return { error: 'La imagen y el video deben ser URLs http(s).' }
   const row = {
@@ -111,8 +119,8 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
     area: txt(fd, 'area'), tipo: txt(fd, 'tipo'), nivel: txt(fd, 'nivel') || null,
     descripcion: txt(fd, 'descripcion') || null, requisitos: txt(fd, 'requisitos') || null,
     imagen_url: imagen, video_url: video,
-    duracion_semanas: num(fd, 'duracion_semanas'), cupo, precio,
-    descuento_pct: num(fd, 'descuento_pct'), fecha_inicio: txt(fd, 'fecha_inicio') || null,
+    duracion_semanas: dur, cupo, precio,
+    descuento_pct: desc, fecha_inicio: txt(fd, 'fecha_inicio') || null,
     aula_id: txt(fd, 'aula_id') || null, profesor_id: txt(fd, 'profesor_id') || null,
     destacado: fd.get('destacado') === 'on', orden: num(fd, 'orden') ?? 0,
   } as Record<string, unknown>

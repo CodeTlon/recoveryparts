@@ -31,7 +31,7 @@ export default async function Encuesta({ params }: { params: Promise<{ id: strin
                     </label>
                   ))}
                 </div>
-              ) : <textarea name={`p_${i}`} rows={3} maxLength={2000} className="input mt-2" aria-label={p.texto} />}
+              ) : <textarea name={`p_${i}`} rows={3} maxLength={2000} placeholder="Escribí tu respuesta…" className="input mt-2" aria-label={p.texto} />}
             </fieldset>
           ))}
         </ActionForm>

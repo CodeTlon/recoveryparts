@@ -1,3 +1,4 @@
+import { duracionTexto } from '@/lib/fechas'
 import Link from 'next/link'
 import Image from 'next/image'
 import SpotlightCard from '@/components/ui/SpotlightCard'
@@ -46,7 +47,7 @@ export default function CursoCard({ c, horarios }: { c: CursoPublico; horarios: 
         <span className="mb-1 text-xs font-bold uppercase tracking-widest text-accent">{AREA_LABEL[c.area]}</span>
         <h3 className="mb-3 text-lg font-semibold text-on-surface">{c.nombre}</h3>
         <div className="mb-1 flex items-center gap-2 text-sm text-on-surface-variant">
-          <Clock size={15} /> {c.duracion_semanas ? `${c.duracion_semanas} semanas` : 'Duración a confirmar'}
+          <Clock size={15} /> {c.duracion_semanas ? duracionTexto(c.duracion_semanas) : 'Duración a confirmar'}
         </div>
         {h && <div className="mb-3 flex items-center gap-2 text-sm text-on-surface-variant"><CalendarDays size={15} /> {h}</div>}
         <div className="mt-auto border-t border-outline-variant pt-4">

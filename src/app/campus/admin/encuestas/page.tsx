@@ -20,9 +20,9 @@ export default async function Encuestas() {
 
       <details className="card mb-8 p-6"><summary className="cursor-pointer font-semibold">Crear encuesta</summary>
         <div className="mt-4 max-w-2xl"><ActionForm action={guardarEncuesta} submit="Crear encuesta">
-          <Field label="Título" name="titulo" required />
+          <Field label="Título" name="titulo" placeholder="Ej: Encuesta de fin de curso" required />
           <Select name="curso_id" label="Curso" empty="Seleccioná un curso" options={opts} />
-          <Field label="Preguntas" name="preguntas" rows={6} required hint='Una por línea: "puntaje | ¿Cómo calificás al profesor?" (1 a 5) o "texto | ¿Qué mejorarías?".' />
+          <Field label="Preguntas" name="preguntas" placeholder={'puntaje | ¿Cómo calificás al profesor?\ntexto | ¿Qué mejorarías?'} rows={6} required hint='Una por línea: "puntaje | ¿Cómo calificás al profesor?" (1 a 5) o "texto | ¿Qué mejorarías?".' />
           <Check name="activa" defaultChecked>Activa (visible para los alumnos del curso)</Check>
         </ActionForm></div>
       </details>
@@ -54,9 +54,9 @@ export default async function Encuestas() {
                 <details className="mt-4"><summary className="cursor-pointer text-sm text-secondary">Editar</summary>
                   <div className="mt-3 max-w-2xl"><ActionForm action={guardarEncuesta} reset={false}>
                     <input type="hidden" name="id" value={e.id} />
-                    <Field label="Título" name="titulo" defaultValue={e.titulo} required />
+                    <Field label="Título" name="titulo" placeholder="Ej: Encuesta de fin de curso" defaultValue={e.titulo} required />
                     <Select name="curso_id" label="Curso" defaultValue={e.curso_id} empty="Seleccioná un curso" options={opts} />
-                    <Field label="Preguntas" name="preguntas" rows={5} defaultValue={(e.preguntas as Pregunta[]).map((p) => `${p.tipo} | ${p.texto}`).join('\n')} />
+                    <Field label="Preguntas" name="preguntas" placeholder={'puntaje | ¿Cómo calificás al profesor?\ntexto | ¿Qué mejorarías?'} rows={5} defaultValue={(e.preguntas as Pregunta[]).map((p) => `${p.tipo} | ${p.texto}`).join('\n')} />
                     <Check name="activa" defaultChecked={e.activa}>Activa</Check>
                   </ActionForm></div>
                 </details>

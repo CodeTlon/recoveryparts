@@ -1,12 +1,18 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireRole, fechaAR } from '@/lib/auth'
 import CursoForm from '@/components/campus/CursoForm'
 import { ActionForm, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { añadirAlumno, corregirFechaDesercion, finalizarCurso, guardarClases, guardarHorarios, guardarKit, guardarModulos, marcarDesertor } from '../../actions'
 import { hoyAR } from '@/lib/fechas'
+import { ClasesEditor, HorariosEditor, KitEditor, ModulosEditor } from '@/components/campus/ListEditors'
 
-export default async function CursoAdmin({ params }: { params: Promise<{ id: string }> }) {
+const TABS = [['datos', 'Datos'], ['horarios', 'Horarios'], ['plan', 'Plan de estudios'], ['kit', 'Kit'], ['calendario', 'Calendario'], ['alumnos', 'Alumnos'], ['material', 'Material']] as const
+
+export default async function CursoAdmin({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { id } = await params
+  const { tab: t } = await searchParams
+  const tab = TABS.some(([k]) => k === t) ? t! : 'datos'
   const { sb } = await requireRole('admin')
   const { data: curso } = await sb.from('cursos').select('*').eq('id', id).maybeSingle()
   if (!curso) notFound()
@@ -25,60 +31,67 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
   const hoy = hoyAR()
   const activos = insc?.filter((i) => i.estado === 'activo').length ?? 0
 
-  const hTxt = (hs ?? []).map((h) => `${h.dia_semana} ${h.hora_inicio.slice(0, 5)}-${h.hora_fin.slice(0, 5)}`).join('\n')
-  const mTxt = (mods ?? []).map((m) => `# ${m.titulo}\n${m.items.join('\n')}`).join('\n')
-  const kTxt = (kit ?? []).map((k) => [k.nombre, k.descripcion ?? '', k.precio ?? '', k.link_externo ?? ''].join(' | ')).join('\n')
-  const cTxt = (clases ?? []).map((c) => `${c.numero} | ${c.fecha} | ${c.titulo} | ${c.estado}`).join('\n')
+  const hIni = (hs ?? []).map((h) => ({ dia: h.dia_semana as number, ini: h.hora_inicio.slice(0, 5) as string, fin: h.hora_fin.slice(0, 5) as string }))
+  const mIni = (mods ?? []).map((m) => ({ titulo: m.titulo as string, temas: (m.items as string[]).join('\n') }))
+  const kIni = (kit ?? []).map((k) => ({ nombre: k.nombre as string, descripcion: (k.descripcion ?? '') as string, precio: k.precio == null ? '' : String(k.precio), link: (k.link_externo ?? '') as string }))
+  const cIni = (clases ?? []).map((c) => ({ fecha: c.fecha as string, titulo: c.titulo as string, estado: c.estado as string }))
 
   const sec = 'mb-12'
+  const href = (k: string) => `/campus/admin/cursos/${id}?tab=${k}`
   return (
     <>
       <BackLink href="/campus/admin/cursos">Cursos</BackLink>
       <PageHead title={curso.nombre} sub={curso.activo ? undefined : 'Curso dado de baja: no se ve en el sitio.'} />
 
-      <section className={sec}>
+      <nav aria-label="Secciones del curso" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
+        {TABS.map(([k, l]) => (
+          <Link key={k} href={href(k)} scroll={false} aria-current={tab === k ? 'page' : undefined}
+            className={`rounded px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
+        ))}
+      </nav>
+
+      {tab === 'datos' && <section className={sec}>
         <h2 className="mb-4 text-xl font-semibold">Datos del curso</h2>
         <CursoForm curso={curso} aulas={(aulas ?? []).map((a) => [a.id, a.nombre])} profesores={(profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])} />
-      </section>
+      </section>}
 
-      <section className={sec}>
+      {tab === 'horarios' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Horarios</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Se valida que el aula y el profesor no se superpongan con otro curso.</p>
         <div className="card max-w-xl p-6"><ActionForm action={guardarHorarios} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Días y horarios" name="horarios" rows={4} defaultValue={hTxt} hint='Uno por línea: "día 18:00-20:00" (0=Domingo … 6=Sábado).' />
+          <HorariosEditor name="horarios" inicial={hIni} />
         </ActionForm></div>
-      </section>
+      </section>}
 
-      <section className={sec}>
+      {tab === 'plan' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Plan de estudios público</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Solo el temario de alto nivel; nunca se expone el material del campus.</p>
         <div className="card max-w-3xl p-6"><ActionForm action={guardarModulos} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Módulos" name="modulos" rows={10} defaultValue={mTxt} hint='"# Título del módulo" y debajo un tema por línea.' />
+          <ModulosEditor name="modulos" inicial={mIni} />
         </ActionForm></div>
-      </section>
+      </section>}
 
-      <section className={sec}>
+      {tab === 'kit' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Kit necesario (informativo)</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Se muestra en la ficha pública solo si hay ítems. Los links abren el software externo en una pestaña nueva.</p>
         <div className="card max-w-3xl p-6"><ActionForm action={guardarKit} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Ítems" name="kit" rows={6} defaultValue={kTxt} hint='Uno por línea: "Nombre | Descripción | Precio | https://link".' />
+          <KitEditor name="kit" inicial={kIni} />
         </ActionForm></div>
-      </section>
+      </section>}
 
-      <section className={sec}>
+      {tab === 'calendario' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Calendario de clases</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Define el N° de clase en que se calcula una deserción. Las suspendidas/reprogramadas no cuentan.</p>
-        <div className="card max-w-3xl p-6"><ActionForm action={guardarClases} reset={false}>
+        <div className="card max-w-4xl p-6"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <Field label="Clases" name="clases" rows={8} defaultValue={cTxt} hint='"N | AAAA-MM-DD | Título | programada|suspendida|reprogramada".' />
-          <Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>
+          <ClasesEditor name="clases" inicial={cIni} inicio={curso.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]} avisar={<Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>} />
         </ActionForm></div>
-      </section>
+      </section>}
 
-      <section className={sec}>
+      {tab === 'alumnos' && <section className={sec}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">Alumnos <span className="text-base font-normal text-on-surface-variant">({insc?.length ?? 0}/{curso.cupo})</span></h2>
           {activos > 0 && <form action={finalizarCurso}><input type="hidden" name="id" value={id} /><Confirm message="Los alumnos activos pasarán a «Finalizado» y podrán descargar el ZIP de PDFs. ¿Continuar?">Finalizar curso</Confirm></form>}
@@ -90,10 +103,10 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
           <ActionForm action={añadirAlumno} submit="Agregar al curso">
             <input type="hidden" name="curso_id" value={id} />
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Email" name="email" type="email" required />
-              <Field label="Teléfono (si es nuevo)" name="telefono" type="tel" />
-              <Field label="Nombre (si es nuevo)" name="nombre" />
-              <Field label="Apellido (si es nuevo)" name="apellido" />
+              <Field label="Email" name="email" placeholder="nombre@ejemplo.com" type="email" required />
+              <Field label="Teléfono (si es nuevo)" name="telefono" placeholder="Ej: 351 123 4567" type="tel" />
+              <Field label="Nombre (si es nuevo)" name="nombre" placeholder="Ej: María" />
+              <Field label="Apellido (si es nuevo)" name="apellido" placeholder="Ej: González" />
             </div>
           </ActionForm>
         </div>
@@ -131,7 +144,7 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
                       <ActionForm action={marcarDesertor} submit="Confirmar deserción">
                         <input type="hidden" name="id" value={i.id} /><input type="hidden" name="curso_id" value={id} />
                         <Field label="Fecha de deserción" name="fecha" type="date" defaultValue={hoy} required />
-                        <Field label="Motivo (obligatorio)" name="motivo" rows={3} required />
+                        <Field label="Motivo (obligatorio)" name="motivo" placeholder="Ej: Cambió de horario laboral" rows={3} required />
                       </ActionForm>
                     </div>
                   </details>
@@ -140,14 +153,14 @@ export default async function CursoAdmin({ params }: { params: Promise<{ id: str
             ))}
           </ul>
         )}
-      </section>
+      </section>}
 
-      <section>
+      {tab === 'material' && <section>
         <h2 className="mb-4 text-xl font-semibold">Material cargado</h2>
         {!mats?.length ? <Empty>El profesor todavía no cargó material.</Empty> : (
           <ul className="card divide-y divide-outline-variant">{mats.map((m) => <li key={m.id} className="p-4 text-sm">{m.titulo} <span className="ml-2 text-xs uppercase text-on-surface-variant">{m.tipo}</span></li>)}</ul>
         )}
-      </section>
+      </section>}
     </>
   )
 }

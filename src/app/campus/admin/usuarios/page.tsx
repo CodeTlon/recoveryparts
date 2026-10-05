@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Reveal from '@/components/ui/Reveal'
 import { requireRole } from '@/lib/auth'
-import { ActionForm, Badge, Empty, Field, PageHead, Select, SubmitButton } from '@/components/campus/ui'
+import { Mail, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
+import { ActionForm, Badge, Confirm, Empty, Field, ModalButton, PageHead, Select, SubmitButton } from '@/components/campus/ui'
 import { actualizarPerfil, cambiarEmail, crearUsuario, reenviarInvitacion, setEstadoCuenta } from '../actions'
 
 const ESTADO = { pendiente_activacion: ['warn', 'Pendiente'], activa: ['ok', 'Activa'], inactiva: ['bad', 'Inactiva'] } as const
@@ -20,23 +21,23 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <PageHead title="Usuarios" sub="Solo vos podés crear usuarios. Cada uno recibe un mail para crear su propia contraseña (el link vence en 24 h)." />
+      <PageHead title="Usuarios" sub="Solo vos podés crear usuarios. Cada uno recibe un mail para crear su propia contraseña (el link vence en 24 h)."
+        action={
+          <ModalButton label={<><UserPlus size={16} aria-hidden /> Crear usuario</>} title="Crear usuario" className="btn-primary whitespace-nowrap">
+            <ActionForm action={crearUsuario} submit="Crear y enviar invitación">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Nombre" name="nombre" placeholder="Ej: María" required />
+                <Field label="Apellido" name="apellido" placeholder="Ej: González" required />
+                <Field label="Email" name="email" placeholder="nombre@ejemplo.com" type="email" required />
+                <Field label="Teléfono" name="telefono" placeholder="Ej: 351 123 4567" type="tel" />
+              </div>
+              <Select name="rol" label="Rol" defaultValue="alumno" options={[['alumno', 'Alumno'], ['profesor', 'Profesor']]} />
+              <p className="text-xs text-on-surface-variant">Solo se piden nombre, apellido, email y teléfono. Los alumnos también se pueden crear desde el curso, ya vinculados.</p>
+            </ActionForm>
+          </ModalButton>
+        } />
 
-      <details className="card mb-8 p-6" open={!users?.length}>
-        <summary className="cursor-pointer font-semibold">Crear usuario</summary>
-        <div className="mt-4 max-w-2xl">
-          <ActionForm action={crearUsuario} submit="Crear y enviar invitación">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nombre" name="nombre" required />
-              <Field label="Apellido" name="apellido" required />
-              <Field label="Email" name="email" type="email" required />
-              <Field label="Teléfono" name="telefono" type="tel" />
-            </div>
-            <Select name="rol" label="Rol" defaultValue="alumno" options={[['alumno', 'Alumno'], ['profesor', 'Profesor']]} />
-            <p className="text-xs text-on-surface-variant">Solo se piden nombre, apellido, email y teléfono. Los alumnos también se pueden crear desde el curso, ya vinculados.</p>
-          </ActionForm>
-        </div>
-      </details>
+
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {tab(undefined, 'Todos')}{tab('alumno', 'Alumnos')}{tab('profesor', 'Profesores')}{tab('admin', 'Admins')}
@@ -57,37 +58,44 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                     <p className="truncate text-sm text-on-surface-variant">{u.email}{u.telefono ? ` · ${u.telefono}` : ''}</p>
                   </div>
                   <Badge tone={tone as 'ok'}>{label}</Badge>
-                  {u.estado_cuenta === 'pendiente_activacion' && (
-                    <form action={reenviarInvitacion}><input type="hidden" name="id" value={u.id} /><SubmitButton>Reenviar invitación</SubmitButton></form>
-                  )}
-                  {u.id !== perfil.id && u.estado_cuenta !== 'pendiente_activacion' && (
-                    <form action={setEstadoCuenta}>
-                      <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value={u.estado_cuenta === 'activa' ? 'inactiva' : 'activa'} />
-                      <SubmitButton>{u.estado_cuenta === 'activa' ? 'Deshabilitar cuenta' : 'Reactivar cuenta'}</SubmitButton>
-                    </form>
-                  )}
-                </div>
-                <details className="mt-3">
-                  <summary className="cursor-pointer text-sm text-secondary">Editar</summary>
-                  <div className="mt-4 grid gap-6 lg:grid-cols-2">
-                    <ActionForm action={actualizarPerfil} reset={false} submit="Guardar datos">
-                      <input type="hidden" name="id" value={u.id} />
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="Nombre" name="nombre" defaultValue={u.nombre} required /><Field label="Apellido" name="apellido" defaultValue={u.apellido} required />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ModalButton label={<><Pencil size={14} aria-hidden /> Editar</>} title={`Editar a ${u.nombre} ${u.apellido}`} wide>
+                      <div className="grid gap-6 lg:grid-cols-2">
+                        <ActionForm action={actualizarPerfil} reset={false} submit="Guardar datos">
+                          <input type="hidden" name="id" value={u.id} />
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="Nombre" name="nombre" placeholder="Ej: María" defaultValue={u.nombre} required /><Field label="Apellido" name="apellido" placeholder="Ej: González" defaultValue={u.apellido} required />
+                          </div>
+                          <Field label="Teléfono" name="telefono" placeholder="Ej: 351 123 4567" defaultValue={u.telefono} />
+                          {u.rol === 'profesor' && <>
+                            <Field label="Foto (URL)" name="foto_url" placeholder="https://…/foto.jpg" defaultValue={u.foto_url} hint="Subí la imagen en Sitio web › Imágenes y pegá la URL." />
+                            <Field label="Experiencia" name="experiencia" placeholder="Contá brevemente su trayectoria" rows={3} defaultValue={u.experiencia} />
+                            <Field label="Certificaciones" name="certificaciones" placeholder="Una por línea" rows={2} defaultValue={u.certificaciones} />
+                          </>}
+                        </ActionForm>
+                        <ActionForm action={cambiarEmail} reset={false} submit="Cambiar email">
+                          <input type="hidden" name="id" value={u.id} />
+                          <Field label="Email nuevo" name="email" placeholder="nombre@ejemplo.com" type="email" defaultValue={u.email} required hint="Se reenvía la verificación al email nuevo." />
+                        </ActionForm>
                       </div>
-                      <Field label="Teléfono" name="telefono" defaultValue={u.telefono} />
-                      {u.rol === 'profesor' && <>
-                        <Field label="Foto (URL)" name="foto_url" defaultValue={u.foto_url} hint="Subí la imagen en Sitio web › Imágenes y pegá la URL." />
-                        <Field label="Experiencia" name="experiencia" rows={3} defaultValue={u.experiencia} />
-                        <Field label="Certificaciones" name="certificaciones" rows={2} defaultValue={u.certificaciones} />
-                      </>}
-                    </ActionForm>
-                    <ActionForm action={cambiarEmail} reset={false} submit="Cambiar email">
-                      <input type="hidden" name="id" value={u.id} />
-                      <Field label="Email nuevo" name="email" type="email" defaultValue={u.email} required hint="Se reenvía la verificación al email nuevo." />
-                    </ActionForm>
+                    </ModalButton>
+                    {u.estado_cuenta === 'pendiente_activacion' && (
+                      <form action={reenviarInvitacion}><input type="hidden" name="id" value={u.id} /><SubmitButton><Mail size={14} aria-hidden /> Reenviar invitación</SubmitButton></form>
+                    )}
+                    {u.id !== perfil.id && u.estado_cuenta === 'activa' && (
+                      <form action={setEstadoCuenta}>
+                        <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="inactiva" />
+                        <Confirm message={`¿Deshabilitar a ${u.nombre} ${u.apellido}? No podrá entrar al campus hasta que la reactives.`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
+                      </form>
+                    )}
+                    {u.id !== perfil.id && u.estado_cuenta === 'inactiva' && (
+                      <form action={setEstadoCuenta}>
+                        <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="activa" />
+                        <SubmitButton className="btn-ghost !px-3 !py-2 hover:!border-green-400 hover:!text-green-300"><UserCheck size={14} aria-hidden /> Reactivar</SubmitButton>
+                      </form>
+                    )}
                   </div>
-                </details>
+                </div>
               </li>
               </Reveal>
             )
