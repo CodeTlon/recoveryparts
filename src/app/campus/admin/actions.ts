@@ -150,10 +150,14 @@ export async function bajaCurso(fd: FormData) {
 }
 
 // Volver a publicar un curso dado de baja (la baja no toca las inscripciones, así que no hay nada más que revertir).
-export async function reactivarCurso(fd: FormData) {
+// La base puede rechazarlo si mientras tanto cambió algo: choque de aula/profesor (RF-17), aula dada de baja o
+// cupo mayor que la capacidad del aula (RF-03). Se devuelve el motivo para que el admin sepa qué corregir.
+export async function reactivarCurso(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
-  await sb.from('cursos').update({ activo: true }).eq('id', txt(fd, 'id'))
+  const { error } = await sb.from('cursos').update({ activo: true }).eq('id', txt(fd, 'id'))
+  if (error) return { error: traducir(error.message) }
   revalidatePath('/campus/admin/cursos'); revalidatePath('/cursos')
+  return { ok: true }
 }
 
 // ── Aulas (RF-03) ────────────────────────────────────────
