@@ -1,3 +1,4 @@
+import { duracionTexto } from '@/lib/fechas'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -9,6 +10,7 @@ import Accordion from '@/components/public/Accordion'
 import { Cupos, Precio, horarioTexto } from '@/components/public/CursoCard'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, TIPO_LABEL, formatPrecio } from '@/lib/types'
+import { hrefSeguro } from '@/lib/validar'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,12 +45,12 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
-      <main className="mx-auto w-full max-w-[1280px] flex-grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
+      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] flex-grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
         <section className="mb-16 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
           <div className={`flex flex-col gap-6 ${c.imagen_url ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
             <div className="flex flex-wrap gap-2">
               <span className="badge border border-outline-variant bg-surface-container-high text-primary">{AREA_LABEL[c.area]}</span>
-              <span className="badge bg-accent text-white">{TIPO_LABEL[c.tipo]}</span>
+              <span className="badge bg-accent text-surface">{TIPO_LABEL[c.tipo]}</span>
               {c.nivel && <span className="badge border border-outline-variant text-on-surface-variant">{c.nivel}</span>}
             </div>
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{c.nombre}</h1>
@@ -97,7 +99,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
             {c.video_url && (
               <section>
                 <h2 className="mb-4 text-2xl font-semibold">Conocé las clases</h2>
-                <a href={c.video_url} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>
+                <a href={hrefSeguro(c.video_url)} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>
               </section>
             )}
 
@@ -129,7 +131,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <div className="grid gap-4 sm:grid-cols-2">
                   {testimonios.map((t) => (
                     <figure key={t.id} className="card p-5">
-                      <div className="mb-2 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}</div>
+                      <div role="img" className="mb-2 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}</div>
                       <blockquote className="text-sm text-on-surface-variant">{t.texto}</blockquote>
                       <figcaption className="mt-3 text-sm font-semibold">{t.nombre}</figcaption>
                     </figure>
@@ -145,13 +147,13 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <h2 className="text-2xl font-semibold">Inversión</h2>
                 <div>
                   <Precio c={c} size="text-4xl" />
-                  {c.descuento_pct ? <span className="badge ml-2 bg-accent text-white">-{c.descuento_pct}%</span> : null}
+                  {c.descuento_pct ? <span className="badge ml-2 bg-accent text-surface">-{c.descuento_pct}%</span> : null}
                 </div>
                 <div className="h-px bg-outline-variant" />
                 <ul className="flex flex-col gap-3">
                   {h && <li className={row}><CalendarDays size={18} className="mt-0.5 shrink-0" /> {h}</li>}
                   {c.aula && <li className={row}><MapPin size={18} className="mt-0.5 shrink-0" /> {c.aula} · La Rioja 345</li>}
-                  {c.duracion_semanas && <li className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {c.duracion_semanas} semanas</li>}
+                  {c.duracion_semanas && <li className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {duracionTexto(c.duracion_semanas)}</li>}
                   <li className={row}><Users size={18} className="mt-0.5 shrink-0" /> <Cupos n={c.cupos_disponibles} /></li>
                 </ul>
                 {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-primary w-full !py-4">Consultar por WhatsApp</a>}

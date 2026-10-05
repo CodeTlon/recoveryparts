@@ -17,6 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { data: m } = await sb.from('materiales').select('curso_id, tipo, storage_path, titulo').eq('id', id).maybeSingle()
   let storagePath = m?.tipo === 'pdf' ? m.storage_path : null
   let titulo = 'material'
+  let alumnoCurso: string | null = null
   if (!m) {
     const { data: ins } = await sb.from('inscripciones').select('curso_id').eq('alumno_id', user.id).neq('estado', 'desertor')
     for (const i of ins ?? []) {
@@ -24,6 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       if ((vis as { id: string }[] | null)?.some((v) => v.id === id)) {
         const { data } = await createAdminClient().from('materiales').select('storage_path, tipo, titulo').eq('id', id).single()
         if (data?.tipo === 'pdf') {
+          alumnoCurso = i.curso_id
           storagePath = data.storage_path
           titulo = data.titulo
         }
@@ -33,13 +35,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
   if (m?.titulo) titulo = m.titulo
   if (!storagePath) return new NextResponse('No encontrado', { status: 404 })
+  // El archivo se descarga con service_role: tiene que ser del curso del material (storage_path es editable por el profesor).
+  const cursoId = m?.curso_id ?? alumnoCurso
+  if (!cursoId || !storagePath.startsWith(`${cursoId}/`)) return new NextResponse('No encontrado', { status: 404 })
 
   const { data: file, error } = await createAdminClient().storage.from('materiales').download(storagePath)
   if (error || !file) return new NextResponse('No encontrado', { status: 404 })
   return new NextResponse(file, {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `${req.nextUrl.searchParams.has('download') ? 'attachment' : 'inline'}; filename="${encodeURIComponent(titulo)}.pdf"`,
+      'Content-Disposition': `${req.nextUrl.searchParams.has('download') ? 'attachment' : 'inline'}; filename="material.pdf"; filename*=UTF-8''${encodeURIComponent(titulo)}.pdf`,
       'Cache-Control': 'private, no-store',
       'X-Content-Type-Options': 'nosniff',
     },

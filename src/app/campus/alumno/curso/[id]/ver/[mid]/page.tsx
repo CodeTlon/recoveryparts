@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Download } from 'lucide-react'
+import { BackLink } from '@/components/campus/ui'
+import { Download } from 'lucide-react'
 import { requireRole } from '@/lib/auth'
 
 // Vista previa + descarga. El PDF se sirve por /api/material/[id] (acceso validado, no-store).
@@ -13,7 +13,7 @@ export default async function Ver({ params }: { params: Promise<{ id: string; mi
 
   return (
     <>
-      <Link href={`/campus/alumno/curso/${id}`} className="mb-4 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Volver al curso</Link>
+      <BackLink href={`/campus/alumno/curso/${id}`}>Volver al curso</BackLink>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-primary">{m.titulo}</h1>
         <a href={`/api/material/${mid}?download=1`} className="btn-primary"><Download size={16} /> Descargar PDF</a>

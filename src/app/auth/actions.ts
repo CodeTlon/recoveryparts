@@ -4,27 +4,32 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { siteUrl, supabaseConfigured } from '@/lib/supabase/env'
-import { limited } from '@/lib/rate-limit'
+import { limited, bloqueado, registrar } from '@/lib/rate-limit'
 import { validarPassword } from '@/lib/password'
 
 export type AuthState = { error?: string; ok?: boolean }
 
 async function ip() {
   const h = await headers()
-  return h.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
+  // x-real-ip lo fija el proxy de la plataforma; x-forwarded-for puede traer valores del cliente.
+  return h.get('x-real-ip') ?? h.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
 }
 
 export async function login(_: AuthState, fd: FormData): Promise<AuthState> {
   if (!supabaseConfigured) return { error: 'El campus todavía no está configurado.' }
   const email = String(fd.get('email') ?? '').trim().toLowerCase()
   const password = String(fd.get('password') ?? '')
-  // Bloqueo temporal tras intentos fallidos (por IP y por email).
-  if (limited(`login:ip:${await ip()}`, 20, 15 * 60_000) || limited(`login:em:${email}`, 8, 15 * 60_000))
+  // Bloqueo temporal tras intentos FALLIDOS (por IP y por email): los logins correctos no cuentan.
+  const kIp = `login:ip:${await ip()}`, kEm = `login:em:${email.slice(0, 254)}`
+  if (bloqueado(kIp, 20) || bloqueado(kEm, 8))
     return { error: 'Demasiados intentos. Esperá unos minutos e intentá de nuevo.' }
 
   const sb = await createClient()
   const { error } = await sb.auth.signInWithPassword({ email, password })
-  if (error) return { error: 'Email o contraseña incorrectos.' } // mensaje genérico
+  if (error) {
+    registrar(kIp, 15 * 60_000); registrar(kEm, 15 * 60_000)
+    return { error: 'Email o contraseña incorrectos.' } // mensaje genérico
+  }
   // Directo al panel de su rol (el middleware vuelve a validar rol y cuenta activa).
   const { data: { user } } = await sb.auth.getUser()
   const { data: perfil } = user ? await sb.from('profiles').select('rol').eq('id', user.id).maybeSingle() : { data: null }
