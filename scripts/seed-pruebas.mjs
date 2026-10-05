@@ -53,7 +53,10 @@ for (const u of USUARIOS) {
 ok(await sb.from('profiles').update({ experiencia: 'Técnico con 10 años de experiencia en microelectrónica. (dato de prueba)', certificaciones: 'Curso de microsoldadura (prueba)' }).eq('id', ids.profe1), 'mini-cv')
 
 // ── 2. Cursos ──────────────────────────────────────────────
-const aulas = Object.fromEntries(ok(await sb.from('aulas').select('id, nombre'), 'aulas').map((a) => [a.nombre, a.id]))
+// RF-03: el cupo de cada curso no puede superar la capacidad de su aula (los cupos de abajo caben).
+for (const [nombre, capacidad] of [['Aula 1', 12], ['Aula 2', 10], ['Aula 3', 10]])
+  ok(await sb.from('aulas').update({ capacidad }).eq('nombre', nombre), `capacidad ${nombre}`)
+const aulas =Object.fromEntries(ok(await sb.from('aulas').select('id, nombre'), 'aulas').map((a) => [a.nombre, a.id]))
 // Calendario semanal: n clases desde `inicio`, una por semana.
 const semanal = (inicio, n, tema) => Array.from({ length: n }, (_, i) => {
   const d = new Date(`${inicio}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 7 * i)

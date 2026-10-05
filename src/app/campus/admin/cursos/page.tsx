@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { requireRole } from '@/lib/auth'
 import { AREA_LABEL, TIPO_LABEL } from '@/lib/types'
-import { Badge, Confirm, Empty, PageHead, SubmitButton } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, ModalButton, PageHead } from '@/components/campus/ui'
 import { bajaCurso, reactivarCurso } from '../actions'
 
 export default async function Cursos() {
@@ -28,7 +28,14 @@ export default async function Cursos() {
                     <Link href={`/campus/admin/cursos/${c.id}`} className="btn-ghost !px-3 !py-2">Gestionar</Link>
                     {c.activo
                       ? <form action={bajaCurso} className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><Confirm message="¿Dar de baja este curso? Dejará de verse en el sitio.">Baja</Confirm></form>
-                      : <form action={reactivarCurso} className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><SubmitButton>Reactivar</SubmitButton></form>}
+                      : <span className="ml-2 inline-block">
+                          <ModalButton label="Reactivar" title={`Reactivar ${c.nombre}`}>
+                            <ActionForm action={reactivarCurso} submit="Reactivar" className="text-left">
+                              <input type="hidden" name="id" value={c.id} />
+                              <p className="text-sm text-on-surface-variant">Vuelve a verse en el sitio y en el panel del profesor. Se valida que su aula siga activa, que el cupo no supere la capacidad del aula y que no choque con otro curso en el mismo horario.</p>
+                            </ActionForm>
+                          </ModalButton>
+                        </span>}
                   </td>
                 </tr>
               ))}

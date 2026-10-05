@@ -6,11 +6,11 @@ import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Users, BarChart3, Globe, Inbox, ClipboardList, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Users, BarChart3, Globe, Inbox, ClipboardList, DoorOpen, LogOut, Menu, X } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 
 type Item = { href: string; label: string; icon: keyof typeof ICONS }
-const ICONS = { home: LayoutDashboard, cursos: BookOpen, usuarios: Users, reportes: BarChart3, sitio: Globe, consultas: Inbox, encuestas: ClipboardList }
+const ICONS = { home: LayoutDashboard, cursos: BookOpen, usuarios: Users, reportes: BarChart3, sitio: Globe, consultas: Inbox, encuestas: ClipboardList, aulas: DoorOpen }
 
 export const NAV: Record<string, Item[]> = {
   alumno: [{ href: '/campus/alumno', label: 'Mis cursos', icon: 'cursos' }],
@@ -19,6 +19,7 @@ export const NAV: Record<string, Item[]> = {
     { href: '/campus/admin', label: 'Resumen', icon: 'home' },
     { href: '/campus/admin/usuarios', label: 'Usuarios', icon: 'usuarios' },
     { href: '/campus/admin/cursos', label: 'Cursos y talleres', icon: 'cursos' },
+    { href: '/campus/admin/aulas', label: 'Aulas', icon: 'aulas' },
     { href: '/campus/admin/encuestas', label: 'Encuestas', icon: 'encuestas' },
     { href: '/campus/admin/sitio', label: 'Sitio web', icon: 'sitio' },
     { href: '/campus/admin/consultas', label: 'Consultas', icon: 'consultas' },

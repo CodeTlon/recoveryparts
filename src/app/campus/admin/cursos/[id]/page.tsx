@@ -18,7 +18,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
   if (!curso) notFound()
 
   const [{ data: aulas }, { data: profes }, { data: hs }, { data: mods }, { data: kit }, { data: clases }, { data: insc }, { data: mats }] = await Promise.all([
-    sb.from('aulas').select('id, nombre').order('nombre'),
+    sb.from('aulas').select('id, nombre, capacidad, activa').order('nombre'),
     sb.from('profiles').select('id, nombre, apellido').eq('rol', 'profesor').neq('estado_cuenta', 'inactiva').order('apellido'),
     sb.from('horarios_curso').select('*').eq('curso_id', id).order('dia_semana'),
     sb.from('modulos_curso').select('*').eq('curso_id', id).order('orden'),
@@ -52,7 +52,8 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
 
       {tab === 'datos' && <section className={sec}>
         <h2 className="mb-4 text-xl font-semibold">Datos del curso</h2>
-        <CursoForm curso={curso} aulas={(aulas ?? []).map((a) => [a.id, a.nombre])} profesores={(profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])} />
+        {/* RF-03: aulas activas, más la que ya tiene el curso aunque esté dada de baja */}
+        <CursoForm curso={curso} aulas={(aulas ?? []).filter((a) => a.activa || a.id === curso.aula_id)} profesores={(profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])} />
       </section>}
 
       {tab === 'horarios' && <section className={sec}>
