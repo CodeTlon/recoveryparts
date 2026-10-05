@@ -5,7 +5,7 @@
 ### Sitio web + Campus Virtual para Academia de Cursos Técnicos
 
 ![Estado](https://img.shields.io/badge/estado-borrador-orange?style=for-the-badge)
-![Versión](https://img.shields.io/badge/versión-0.10-blue?style=for-the-badge)
+![Versión](https://img.shields.io/badge/versión-0.11-blue?style=for-the-badge)
 ![Cliente](https://img.shields.io/badge/cliente-Recovery_Parts-1e3a8a?style=for-the-badge)
 ![Tipo](https://img.shields.io/badge/proyecto-real-success?style=for-the-badge)
 
@@ -511,9 +511,9 @@ sequenceDiagram
 
 | ID | Descripción | Estado | Rol |
 |---|---|:-:|:-:|
-| RF-16 | Al crear un curso se definen día(s), horario, aula, duración (semanas) y cupo máximo. | 🟢 | 🛡️ |
-| RF-17 | Se valida la superposición de horario y aula antes de crear. | 🟢 | ⚙️ |
-| RF-18 | Cada curso o taller tiene **un único** profesor. | 🟢 | — |
+| RF-16 | Al crear un curso se definen día(s), horario, aula, duración (semanas) y cupo máximo. **Desde v0.11:** el curso (contenido, precio, plan de clases, material) se carga una vez; día(s), horario, aula, cupo y fecha de inicio son de cada **edición** (cada vez que se dicta). | 🟢 | 🛡️ |
+| RF-17 | Se valida la superposición de horario y aula antes de crear. Entre ediciones, solo si sus períodos se superponen. | 🟢 | ⚙️ |
+| RF-18 | Cada curso o taller tiene **un único** profesor **por edición**. | 🟢 | — |
 | RF-19 | Modalidad presencial. | 🟢 | — |
 | RF-20 | Virtual en vivo. | 🔴 | — |
 | RF-21 | Virtual grabado. | 🔴 | — |
@@ -665,6 +665,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.11 | 2026-10-05 | **Ediciones de curso** (cursos recurrentes): el curso es el catálogo (contenido, precio, kit, plan de clases, material por N° de clase) y cada dictado es una edición (fecha, horarios, aula, profesor, cupo, calendario, alumnos, encuesta). Una edición activa por vez por curso; duplicar edición copia horarios/aula/profesor/cupo y obliga a asignar fechas de nuevo; material liberado por edición; un alumno puede cursar otra edición del mismo curso; en el sitio, un curso con sus «Próximas fechas» o «Próximamente nuevas fechas». *(Propuesta en revisión del equipo.)* |
 | 0.10 | 2026-10-05 | **RF-03** 🟢: aulas como catálogo propio (capacidad obligatoria en aulas nuevas, una sola capacidad por aula, baja lógica sin borrado, sin baja con cursos activos); el cupo del curso no supera la capacidad de su aula (validado en la base). |
 | 0.9 | 2026-10-05 | **RF-45/46**: cada ítem del kit es «necesario» o «recomendado»; el link de compra puede ser a Mundo Parts (solo enlace). Páginas propias de Contacto y Preguntas frecuentes; módulos visibles en el catálogo. |
 | 0.8 | 2026-10-05 | Preparación de la demo: talleres de formato corto (1 jornada, días seguidos o 1–2 semanas), edición del curso por filas con calendario generable, imagen de curso subida desde el formulario, reportes con gráficos, modales propios y validaciones de rango. Sin cambios de reglas de producto ni de base. |

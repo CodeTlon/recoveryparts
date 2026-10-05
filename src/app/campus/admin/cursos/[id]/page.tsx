@@ -1,47 +1,60 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { CalendarPlus, Copy, ArchiveX, ArchiveRestore, ArrowRight } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import CursoForm from '@/components/campus/CursoForm'
-import { ActionForm, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
-import { agregarAlumno, corregirFechaDesercion, finalizarCurso, guardarClases, guardarHorarios, guardarKit, guardarModulos, marcarDesertor } from '../../actions'
-import { hoyAR } from '@/lib/fechas'
-import { ClasesEditor, HorariosEditor, KitEditor, ModulosEditor } from '@/components/campus/ListEditors'
+import EdicionForm from '@/components/campus/EdicionForm'
+import DuplicarEdicion from '@/components/campus/DuplicarEdicion'
+import { ActionForm, Badge, Empty, ModalButton, PageHead, BackLink } from '@/components/campus/ui'
+import { guardarKit, guardarModulos, guardarPlanClases, setEstadoEdicion } from '../../actions'
+import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
+import { KitEditor, ModulosEditor, PlanEditor } from '@/components/campus/ListEditors'
 
-const TABS = [['datos', 'Datos'], ['horarios', 'Horarios'], ['plan', 'Plan de estudios'], ['kit', 'Kit'], ['calendario', 'Calendario'], ['alumnos', 'Alumnos'], ['material', 'Material']] as const
+// El curso es el catálogo (se carga una vez); cada vez que se dicta es una edición.
+const TABS = [['ediciones', 'Ediciones'], ['datos', 'Datos'], ['plan', 'Plan de estudios'], ['kit', 'Kit'], ['clases', 'Plan de clases'], ['material', 'Material']] as const
+
+type Ed = { id: string; fecha_inicio: string | null; cupo: number; activo: boolean; aula_id: string | null; profesor_id: string | null; aulas: { nombre: string } | null; profiles: { nombre: string; apellido: string } | null; inscripciones: { id: string }[]; clases: { fecha: string }[] }
+
+// Estado temporal de una edición según sus fechas (en curso / próxima / terminada).
+function momento(e: Ed, hoy: string) {
+  const fin = e.clases.reduce((m, c) => (c.fecha > m ? c.fecha : m), e.fecha_inicio ?? '')
+  if (!e.activo) return { fin, label: 'De baja', tone: 'neutral' as const }
+  if (e.fecha_inicio && e.fecha_inicio > hoy) return { fin, label: 'Próxima', tone: 'warn' as const }
+  if (fin && fin < hoy) return { fin, label: 'Terminada', tone: 'neutral' as const }
+  return { fin, label: 'En curso', tone: 'ok' as const }
+}
 
 export default async function CursoAdmin({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { id } = await params
   const { tab: t } = await searchParams
-  const tab = TABS.some(([k]) => k === t) ? t! : 'datos'
+  const tab = TABS.some(([k]) => k === t) ? t! : 'ediciones'
   const { sb } = await requireRole('admin')
   const { data: curso } = await sb.from('cursos').select('*').eq('id', id).maybeSingle()
   if (!curso) notFound()
 
-  const [{ data: aulas }, { data: profes }, { data: hs }, { data: mods }, { data: kit }, { data: clases }, { data: insc }, { data: mats }] = await Promise.all([
-    sb.from('aulas').select('id, nombre, capacidad, activa').order('nombre'),
+  const [{ data: eds }, { data: aulas }, { data: profes }, { data: mods }, { data: kit }, { data: plan }, { data: mats }] = await Promise.all([
+    sb.from('ediciones').select('id, fecha_inicio, cupo, activo, aula_id, profesor_id, aulas(nombre), profiles(nombre, apellido), inscripciones(id), clases(fecha)').eq('curso_id', id).order('fecha_inicio', { ascending: false }),
+    sb.from('aulas').select('id, nombre, capacidad, activa').eq('activa', true).order('nombre'),
     sb.from('profiles').select('id, nombre, apellido').eq('rol', 'profesor').neq('estado_cuenta', 'inactiva').order('apellido'),
-    sb.from('horarios_curso').select('*').eq('curso_id', id).order('dia_semana'),
     sb.from('modulos_curso').select('*').eq('curso_id', id).order('orden'),
     sb.from('kit_items').select('*').eq('curso_id', id).order('orden'),
-    sb.from('clases').select('*').eq('curso_id', id).order('numero'),
-    sb.from('inscripciones').select('id, estado, fecha_desercion, n_clase_desercion, motivo_desercion, profiles!inscripciones_alumno_id_fkey(nombre, apellido, email, estado_cuenta)').eq('curso_id', id),
-    sb.from('materiales').select('id, tipo, titulo').eq('curso_id', id),
+    sb.from('plan_clases').select('numero, titulo').eq('curso_id', id).order('numero'),
+    sb.from('materiales').select('id, tipo, titulo, clase_numero').eq('curso_id', id).order('clase_numero', { nullsFirst: true }),
   ])
-  const totalClases = clases?.filter((c) => c.estado === 'programada').length ?? 0
+  const ediciones = (eds ?? []) as unknown as Ed[]
   const hoy = hoyAR()
-  const activos = insc?.filter((i) => i.estado === 'activo').length ?? 0
-
-  const hIni = (hs ?? []).map((h) => ({ dia: h.dia_semana as number, ini: h.hora_inicio.slice(0, 5) as string, fin: h.hora_fin.slice(0, 5) as string }))
+  const profOpts: [string, string][] = (profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])
   const mIni = (mods ?? []).map((m) => ({ titulo: m.titulo as string, temas: (m.items as string[]).join('\n') }))
   const kIni = (kit ?? []).map((k) => ({ nombre: k.nombre as string, descripcion: (k.descripcion ?? '') as string, precio: k.precio == null ? '' : String(k.precio), link: (k.link_externo ?? '') as string, requerido: (k.requerido ?? true) as boolean }))
-  const cIni = (clases ?? []).map((c) => ({ fecha: c.fecha as string, titulo: c.titulo as string, estado: c.estado as string }))
+  const pIni = (plan ?? []).map((p) => ({ titulo: p.titulo as string }))
+  const tituloClase = (n: number | null) => (n == null ? 'Material general' : `Clase ${n} · ${plan?.find((p) => p.numero === n)?.titulo ?? '(fuera del plan)'}`)
 
   const sec = 'mb-12'
   const href = (k: string) => `/campus/admin/cursos/${id}?tab=${k}`
   return (
     <>
       <BackLink href="/campus/admin/cursos">Cursos</BackLink>
-      <PageHead title={curso.nombre} sub={curso.activo ? undefined : 'Curso dado de baja: no se ve en el sitio.'} />
+      <PageHead title={curso.nombre} sub={curso.activo ? 'El contenido se carga una vez; cada vez que se dicta es una edición.' : 'Curso dado de baja: no se ve en el sitio (con todas sus ediciones).'} />
 
       <nav aria-label="Secciones del curso" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
         {TABS.map(([k, l]) => (
@@ -50,19 +63,64 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         ))}
       </nav>
 
-      {tab === 'datos' && <section className={sec}>
-        <h2 className="mb-4 text-xl font-semibold">Datos del curso</h2>
-        {/* RF-03: aulas activas, más la que ya tiene el curso aunque esté dada de baja */}
-        <CursoForm curso={curso} aulas={(aulas ?? []).filter((a) => a.activa || a.id === curso.aula_id)} profesores={(profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])} />
+      {tab === 'ediciones' && <section className={sec}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold">Ediciones</h2>
+            <p className="text-sm text-on-surface-variant">Cada vez que se dicta el curso: fecha, aula, profesor, cupo, calendario y alumnos. Una edición activa por vez.</p>
+          </div>
+          <ModalButton label={<><CalendarPlus size={16} aria-hidden /> Nueva edición</>} title={`Nueva edición de ${curso.nombre}`} className="btn-primary whitespace-nowrap" wide>
+            {!plan?.length && <p className="mb-4 rounded border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">El curso todavía no tiene plan de clases: cargalo antes para poder armar el calendario de la edición.</p>}
+            <EdicionForm cursoId={id} aulas={aulas ?? []} profesores={profOpts} />
+          </ModalButton>
+        </div>
+        {!ediciones.length ? <Empty>Este curso todavía no tiene ediciones. Creá la primera con «Nueva edición».</Empty> : (
+          <ul className="space-y-3">
+            {ediciones.map((e) => {
+              const m = momento(e, hoy)
+              return (
+                <li key={e.id} className={`card p-4 ${e.activo ? '' : 'opacity-70'}`}>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold capitalize">{etiquetaEdicion(e.fecha_inicio)}</p>
+                      <p className="text-sm text-on-surface-variant">
+                        {fechaAR(e.fecha_inicio)}{m.fin && m.fin !== e.fecha_inicio ? ` → ${fechaAR(m.fin)}` : ''} · {e.aulas?.nombre ?? 'Sin aula'} · {e.profiles ? `${e.profiles.nombre} ${e.profiles.apellido}` : 'Sin profesor'}
+                      </p>
+                    </div>
+                    <Badge>{e.inscripciones.length}/{e.cupo} alumnos</Badge>
+                    <Badge tone={m.tone}>{m.label}</Badge>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link href={`/campus/admin/cursos/${id}/ediciones/${e.id}`} className="btn-ghost !px-3 !py-2">Gestionar <ArrowRight size={14} aria-hidden /></Link>
+                      <ModalButton label={<><Copy size={14} aria-hidden /> Duplicar</>} title={`Duplicar la edición de ${etiquetaEdicion(e.fecha_inicio)}`}>
+                        <DuplicarEdicion cursoId={id} edicionId={e.id} />
+                      </ModalButton>
+                      {e.activo ? (
+                        <ModalButton label={<><ArchiveX size={14} aria-hidden /> Baja</>} title={`Dar de baja la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300">
+                          <ActionForm action={setEstadoEdicion} submit="Dar de baja">
+                            <input type="hidden" name="id" value={e.id} /><input type="hidden" name="activo" value="0" />
+                            <p className="text-sm text-on-surface-variant">Deja de verse en el sitio y en el panel del profesor. No afecta al curso ni a las otras ediciones; los alumnos y su historial se conservan.</p>
+                          </ActionForm>
+                        </ModalButton>
+                      ) : (
+                        <ModalButton label={<><ArchiveRestore size={14} aria-hidden /> Reactivar</>} title={`Reactivar la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost !px-3 !py-2 hover:!border-green-400 hover:!text-green-300">
+                          <ActionForm action={setEstadoEdicion} submit="Reactivar">
+                            <input type="hidden" name="id" value={e.id} /><input type="hidden" name="activo" value="1" />
+                            <p className="text-sm text-on-surface-variant">Se valida que no se superponga con otra edición activa, que su aula siga activa y con capacidad para el cupo, y que no choque con otros cursos.</p>
+                          </ActionForm>
+                        </ModalButton>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </section>}
 
-      {tab === 'horarios' && <section className={sec}>
-        <h2 className="mb-1 text-xl font-semibold">Horarios</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Se valida que el aula y el profesor no se superpongan con otro curso.</p>
-        <div className="card max-w-xl p-6"><ActionForm action={guardarHorarios} reset={false}>
-          <input type="hidden" name="curso_id" value={id} />
-          <HorariosEditor name="horarios" inicial={hIni} />
-        </ActionForm></div>
+      {tab === 'datos' && <section className={sec}>
+        <h2 className="mb-4 text-xl font-semibold">Datos del curso</h2>
+        <CursoForm curso={curso} />
       </section>}
 
       {tab === 'plan' && <section className={sec}>
@@ -83,83 +141,20 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         </ActionForm></div>
       </section>}
 
-      {tab === 'calendario' && <section className={sec}>
-        <h2 className="mb-1 text-xl font-semibold">Calendario de clases</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Define el N° de clase en que se calcula una deserción. Las suspendidas/reprogramadas no cuentan.</p>
-        <div className="card max-w-4xl p-6"><ActionForm action={guardarClases} reset={false}>
+      {tab === 'clases' && <section className={sec}>
+        <h2 className="mb-1 text-xl font-semibold">Plan de clases</h2>
+        <p className="mb-4 text-sm text-on-surface-variant">El título de cada clase, igual en todas las ediciones. Cada edición le asigna sus fechas en su Calendario. El material se asocia a estos números de clase.</p>
+        <div className="card max-w-3xl p-6"><ActionForm action={guardarPlanClases} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <ClasesEditor name="clases" inicial={cIni} inicio={curso.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]} avisar={<Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>} />
+          <PlanEditor name="plan" inicial={pIni} />
         </ActionForm></div>
       </section>}
 
-      {tab === 'alumnos' && <section className={sec}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold">Alumnos <span className="text-base font-normal text-on-surface-variant">({insc?.length ?? 0}/{curso.cupo})</span></h2>
-          {activos > 0 && <form action={finalizarCurso}><input type="hidden" name="id" value={id} /><Confirm message="Los alumnos activos pasarán a «Finalizado» y podrán descargar el ZIP de PDFs. ¿Continuar?">Finalizar curso</Confirm></form>}
-        </div>
-
-        <div className="card mb-6 max-w-3xl p-6">
-          <h3 className="mb-1 font-semibold">Agregar alumno</h3>
-          <p className="mb-4 text-sm text-on-surface-variant">Si el email ya existe se lo vincula y se le avisa por mail; si no, se crea el usuario y se le envía la invitación.</p>
-          <ActionForm action={agregarAlumno} submit="Agregar al curso">
-            <input type="hidden" name="curso_id" value={id} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Email" name="email" placeholder="nombre@ejemplo.com" type="email" required />
-              <Field label="Teléfono (si es nuevo)" name="telefono" placeholder="Ej: 351 123 4567" type="tel" />
-              <Field label="Nombre (si es nuevo)" name="nombre" placeholder="Ej: María" />
-              <Field label="Apellido (si es nuevo)" name="apellido" placeholder="Ej: González" />
-            </div>
-          </ActionForm>
-        </div>
-
-        {!insc?.length ? <Empty>No hay alumnos en este curso.</Empty> : (
-          <ul className="space-y-3">
-            {insc.map((i: any) => (
-              <li key={i.id} className="card p-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold">{i.profiles?.apellido}, {i.profiles?.nombre}</p>
-                    <p className="truncate text-sm text-on-surface-variant">{i.profiles?.email}{i.profiles?.estado_cuenta === 'inactiva' ? ' · cuenta deshabilitada' : ''}</p>
-                  </div>
-                  <EstadoBadge estado={i.estado} />
-                </div>
-
-                {i.estado === 'desertor' && (
-                  <div className="mt-3 rounded border border-red-500/30 bg-red-500/10 p-3 text-sm">
-                    <p className="font-semibold text-red-200">Desertó en la clase {i.n_clase_desercion} de {totalClases} · {fechaAR(i.fecha_desercion)}</p>
-                    <p className="mt-1 text-on-surface-variant">Motivo: {i.motivo_desercion}</p>
-                    <details className="mt-2"><summary className="cursor-pointer text-secondary">Corregir fecha</summary>
-                      <div className="mt-2 max-w-xs"><ActionForm action={corregirFechaDesercion} reset={false} submit="Recalcular">
-                        <input type="hidden" name="id" value={i.id} /><input type="hidden" name="curso_id" value={id} />
-                        <Field label="Fecha de deserción" name="fecha" type="date" defaultValue={i.fecha_desercion} required />
-                      </ActionForm></div>
-                    </details>
-                  </div>
-                )}
-
-                {i.estado === 'activo' && (
-                  <details className="mt-3">
-                    <summary className="cursor-pointer text-sm text-secondary">Marcar como Desertor</summary>
-                    <div className="mt-3 max-w-lg">
-                      <p className="mb-3 text-xs text-on-surface-variant">Estado final: no vuelve a Activo y pierde el acceso al material de este curso. No se lo elimina del curso. El alumno verá el motivo como aviso en el campus.</p>
-                      <ActionForm action={marcarDesertor} submit="Confirmar deserción">
-                        <input type="hidden" name="id" value={i.id} /><input type="hidden" name="curso_id" value={id} />
-                        <Field label="Fecha de deserción" name="fecha" type="date" defaultValue={hoy} required />
-                        <Field label="Motivo (obligatorio)" name="motivo" placeholder="Ej: Cambió de horario laboral" rows={3} required />
-                      </ActionForm>
-                    </div>
-                  </details>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>}
-
       {tab === 'material' && <section>
-        <h2 className="mb-4 text-xl font-semibold">Material cargado</h2>
-        {!mats?.length ? <Empty>El profesor todavía no cargó material.</Empty> : (
-          <ul className="card divide-y divide-outline-variant">{mats.map((m) => <li key={m.id} className="p-4 text-sm">{m.titulo} <span className="ml-2 text-xs uppercase text-on-surface-variant">{m.tipo}</span></li>)}</ul>
+        <h2 className="mb-1 text-xl font-semibold">Material del curso</h2>
+        <p className="mb-4 text-sm text-on-surface-variant">Lo suben los profesores que dictan el curso. Cada edición lo libera sola cuando llega la fecha de esa clase en su calendario, o el profesor lo libera antes en su edición.</p>
+        {!mats?.length ? <Empty>Todavía no hay material cargado.</Empty> : (
+          <ul className="card divide-y divide-outline-variant">{mats.map((m) => <li key={m.id} className="flex flex-wrap justify-between gap-2 p-4 text-sm"><span>{m.titulo} <span className="ml-2 text-xs uppercase text-on-surface-variant">{m.tipo}</span></span><span className="text-on-surface-variant">{tituloClase(m.clase_numero)}</span></li>)}</ul>
         )}
       </section>}
     </>

@@ -1,4 +1,5 @@
 import { requireRole } from '@/lib/auth'
+import { etiquetaEdicion } from '@/lib/fechas'
 import { ActionForm, Badge, Empty, Field, PageHead, Select, Check } from '@/components/campus/ui'
 import { guardarEncuesta } from '../actions'
 
@@ -8,11 +9,15 @@ export default async function Encuestas() {
   const { sb } = await requireRole('admin')
   const [{ data: encs }, { data: cursos }, { data: resp }, { data: comp }] = await Promise.all([
     sb.from('encuestas').select('*').order('creado_en', { ascending: false }),
-    sb.from('cursos').select('id, nombre').eq('activo', true).order('nombre'),
+    sb.from('ediciones').select('id, fecha_inicio, activo, cursos(nombre, activo)').order('fecha_inicio', { ascending: false }),
     sb.from('encuesta_respuestas').select('encuesta_id, respuestas'),
     sb.from('encuesta_completadas').select('encuesta_id'),
   ])
-  const opts: [string, string][] = (cursos ?? []).map((c) => [c.id, c.nombre])
+  // La encuesta es por edición (D5): cada grupo responde la suya. Se ofrecen las ediciones activas de cursos activos.
+  type Ed = { id: string; fecha_inicio: string | null; activo: boolean; cursos: { nombre: string; activo: boolean } | null }
+  const eds = (cursos ?? []) as unknown as Ed[]
+  const etiqueta = (e?: Ed) => (e ? `${e.cursos?.nombre ?? 'Curso'} · ${etiquetaEdicion(e.fecha_inicio)}` : 'Edición dada de baja')
+  const opts: [string, string][] = eds.filter((e) => e.activo && e.cursos?.activo).sort((a, b) => etiqueta(a).localeCompare(etiqueta(b))).map((e) => [e.id, etiqueta(e)])
 
   return (
     <>
@@ -21,9 +26,9 @@ export default async function Encuestas() {
       <details className="card mb-8 p-6"><summary className="cursor-pointer font-semibold">Crear encuesta</summary>
         <div className="mt-4 max-w-2xl"><ActionForm action={guardarEncuesta} submit="Crear encuesta">
           <Field label="Título" name="titulo" placeholder="Ej: Encuesta de fin de curso" required />
-          <Select name="curso_id" label="Curso" empty="Seleccioná un curso" options={opts} />
+          <Select name="edicion_id" label="Edición" empty="Seleccioná una edición" options={opts} />
           <Field label="Preguntas" name="preguntas" placeholder={'puntaje | ¿Cómo calificás al profesor?\ntexto | ¿Qué mejorarías?'} rows={6} required hint='Una por línea: "puntaje | ¿Cómo calificás al profesor?" (1 a 5) o "texto | ¿Qué mejorarías?".' />
-          <Check name="activa" defaultChecked>Activa (visible para los alumnos del curso)</Check>
+          <Check name="activa" defaultChecked>Activa (visible para los alumnos de la edición)</Check>
         </ActionForm></div>
       </details>
 
@@ -36,6 +41,7 @@ export default async function Encuestas() {
               <article key={e.id} className="card p-6">
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                   <h2 className="text-lg font-semibold">{e.titulo}</h2>
+                  <span className="text-sm text-on-surface-variant">{etiqueta(eds.find((x) => x.id === e.edicion_id))}</span>
                   <Badge tone={e.activa ? 'ok' : 'neutral'}>{e.activa ? 'Activa' : 'Inactiva'}</Badge>
                   <span className="ml-auto text-sm text-on-surface-variant">{hechas} respuesta{hechas === 1 ? '' : 's'}</span>
                 </div>
@@ -55,7 +61,7 @@ export default async function Encuestas() {
                   <div className="mt-3 max-w-2xl"><ActionForm action={guardarEncuesta} reset={false}>
                     <input type="hidden" name="id" value={e.id} />
                     <Field label="Título" name="titulo" placeholder="Ej: Encuesta de fin de curso" defaultValue={e.titulo} required />
-                    <Select name="curso_id" label="Curso" defaultValue={e.curso_id} empty="Seleccioná un curso" options={opts} />
+                    <Select name="edicion_id" label="Edición" defaultValue={e.edicion_id} empty="Seleccioná una edición" options={opts} />
                     <Field label="Preguntas" name="preguntas" placeholder={'puntaje | ¿Cómo calificás al profesor?\ntexto | ¿Qué mejorarías?'} rows={5} defaultValue={(e.preguntas as Pregunta[]).map((p) => `${p.tipo} | ${p.texto}`).join('\n')} />
                     <Check name="activa" defaultChecked={e.activa}>Activa</Check>
                   </ActionForm></div>

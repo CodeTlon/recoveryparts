@@ -1,4 +1,5 @@
 import { duracionTexto } from '@/lib/fechas'
+import { fechaCorta } from '@/lib/types'
 import Link from 'next/link'
 import Image from 'next/image'
 import SpotlightCard from '@/components/ui/SpotlightCard'
@@ -30,8 +31,10 @@ export function Precio({ c, size = 'text-sm' }: { c: CursoPublico; size?: string
 }
 
 // `modulos`: títulos del plan de estudios (opcional). Se muestran los primeros y un «+N más».
+// `horarios`: los de la próxima edición del curso. Sin próxima edición: «Próximamente nuevas fechas».
 export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPublico; horarios: Horario[]; modulos?: string[] }) {
   const h = horarioTexto(horarios)
+  const otras = c.ediciones_abiertas - 1
   return (
     <SpotlightCard className="h-full">
     <Link href={`/cursos/${c.slug}`} className="group flex h-full flex-col">
@@ -50,7 +53,11 @@ export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPubli
         <div className="mb-1 flex items-center gap-2 text-sm text-on-surface-variant">
           <Clock size={15} /> {c.duracion_semanas ? duracionTexto(c.duracion_semanas) : 'Duración a confirmar'}
         </div>
-        {h && <div className="mb-3 flex items-center gap-2 text-sm text-on-surface-variant"><CalendarDays size={15} /> {h}</div>}
+        {c.fecha_inicio
+          ? <div className="mb-1 flex items-center gap-2 text-sm text-on-surface-variant"><CalendarDays size={15} /> Inicia el {fechaCorta(c.fecha_inicio)}{otras > 0 ? <span className="text-secondary"> · +{otras} fecha{otras === 1 ? '' : 's'} más</span> : null}</div>
+          : <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-secondary"><CalendarDays size={15} /> Próximamente nuevas fechas</div>}
+        {h && <div className="mb-3 pl-[23px] text-sm text-on-surface-variant">{h}</div>}
+        {!h && <div className="mb-3" />}
         {modulos.length > 0 && (
           <div className="mb-4">
             <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-on-surface-variant"><BookOpen size={13} aria-hidden /> {modulos.length} módulo{modulos.length === 1 ? '' : 's'}</p>
@@ -65,7 +72,7 @@ export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPubli
             <Precio c={c} size="text-2xl" />
             <span className="rounded border-2 border-accent px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-accent transition-colors group-hover:bg-accent group-hover:text-surface">+ info</span>
           </div>
-          <div className="mt-2"><Cupos n={c.cupos_disponibles} /></div>
+          {c.cupos_disponibles != null && <div className="mt-2"><Cupos n={c.cupos_disponibles} /></div>}
         </div>
       </div>
     </Link>
