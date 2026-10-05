@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { requireRole, fechaAR } from '@/lib/auth'
 import CursoForm from '@/components/campus/CursoForm'
 import { ActionForm, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
-import { añadirAlumno, corregirFechaDesercion, finalizarCurso, guardarClases, guardarHorarios, guardarKit, guardarModulos, marcarDesertor } from '../../actions'
+import { agregarAlumno, corregirFechaDesercion, finalizarCurso, guardarClases, guardarHorarios, guardarKit, guardarModulos, marcarDesertor } from '../../actions'
 import { hoyAR } from '@/lib/fechas'
 import { ClasesEditor, HorariosEditor, KitEditor, ModulosEditor } from '@/components/campus/ListEditors'
 
@@ -100,7 +100,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         <div className="card mb-6 max-w-3xl p-6">
           <h3 className="mb-1 font-semibold">Agregar alumno</h3>
           <p className="mb-4 text-sm text-on-surface-variant">Si el email ya existe se lo vincula y se le avisa por mail; si no, se crea el usuario y se le envía la invitación.</p>
-          <ActionForm action={añadirAlumno} submit="Agregar al curso">
+          <ActionForm action={agregarAlumno} submit="Agregar al curso">
             <input type="hidden" name="curso_id" value={id} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Email" name="email" placeholder="nombre@ejemplo.com" type="email" required />
