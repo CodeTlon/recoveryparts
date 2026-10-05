@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Plus, Trash2, Wand2 } from 'lucide-react'
 import { DIAS } from '@/lib/types'
 
@@ -12,6 +12,14 @@ const limpiar = (s: string) => s.replace(/[|\n\r]/g, ' ').trim()
 
 function Serial({ name, value }: { name: string; value: string }) {
   return <textarea name={name} value={value} readOnly hidden aria-hidden tabIndex={-1} />
+}
+
+// Bloquea el envío del <form> mientras haya un error (validación nativa con el mensaje del editor):
+// así nunca se guarda una lista a medias ni se vacía una tabla por un campo mal cargado.
+function Guard({ error }: { error: string }) {
+  const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => { ref.current?.setCustomValidity(error) }, [error])
+  return <input ref={ref} value="" onChange={() => {}} className="sr-only" tabIndex={-1} aria-hidden />
 }
 
 function AddButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
@@ -34,9 +42,12 @@ export function HorariosEditor({ name, inicial, onChange }: { name: string; inic
   const [rows, setRows] = useState<H[]>(inicial)
   const set = (next: H[]) => { setRows(next); onChange?.([...new Set(next.map((r) => r.dia))]) }
   const upd = (i: number, p: Partial<H>) => set(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  const errH = rows.some((r) => r.ini && r.fin && r.fin <= r.ini) ? 'La hora de fin tiene que ser posterior a la de inicio.'
+    : new Set(rows.map((r) => `${r.dia} ${r.ini}`)).size < rows.length ? 'Hay dos horarios iguales el mismo día.' : ''
   return (
     <div className="space-y-3">
       <Serial name={name} value={rows.map((r) => `${r.dia} ${r.ini}-${r.fin}`).join('\n')} />
+      <Guard error={errH} />
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay días cargados.</p>}
       {rows.map((r, i) => (
         <div key={i} className="flex flex-wrap items-end gap-2">
@@ -47,6 +58,7 @@ export function HorariosEditor({ name, inicial, onChange }: { name: string; inic
           <RemoveButton onClick={() => set(rows.filter((_, j) => j !== i))} label="Quitar horario" />
         </div>
       ))}
+      {errH && <p role="alert" className="text-sm text-red-400">{errH}</p>}
       <AddButton onClick={() => set([...rows, { dia: 1, ini: '18:00', fin: '20:00' }])}>Agregar día</AddButton>
     </div>
   )
@@ -58,10 +70,13 @@ type M = { titulo: string; temas: string }
 export function ModulosEditor({ name, inicial }: { name: string; inicial: M[] }) {
   const [rows, setRows] = useState<M[]>(inicial)
   const upd = (i: number, p: Partial<M>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  const errM = rows.some((r) => !limpiar(r.titulo)) ? 'Completá el título de cada módulo o quitá el que sobra.' : ''
   const txt = rows.filter((r) => limpiar(r.titulo)).map((r) => `# ${limpiar(r.titulo)}\n${r.temas.split('\n').map(limpiar).filter(Boolean).join('\n')}`).join('\n')
   return (
     <div className="space-y-4">
       <Serial name={name} value={txt} />
+      <Guard error={errM} />
+      {errM && <p role="alert" className="text-sm text-red-400">{errM}</p>}
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay módulos.</p>}
       {rows.map((r, i) => (
         <div key={i} className="rounded border border-outline-variant p-4">
@@ -85,10 +100,13 @@ type K = { nombre: string; descripcion: string; precio: string; link: string }
 export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
   const [rows, setRows] = useState<K[]>(inicial)
   const upd = (i: number, p: Partial<K>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  const errK = rows.some((r) => !limpiar(r.nombre)) ? 'Completá el nombre de cada ítem o quitá el que sobra.' : rows.some((r) => r.precio !== '' && Number(r.precio) < 0) ? 'El precio no puede ser negativo.' : ''
   const txt = rows.filter((r) => limpiar(r.nombre)).map((r) => [r.nombre, r.descripcion, r.precio, r.link].map(limpiar).join(' | ')).join('\n')
   return (
     <div className="space-y-4">
       <Serial name={name} value={txt} />
+      <Guard error={errK} />
+      {errK && <p role="alert" className="text-sm text-red-400">{errK}</p>}
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay ítems.</p>}
       {rows.map((r, i) => (
         <div key={i} className="rounded border border-outline-variant p-4">
@@ -126,6 +144,11 @@ export function ClasesEditor({ name, inicial, inicio, dias, avisar }: { name: st
   const id = useId()
   const upd = (i: number, p: Partial<C>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
   const txt = rows.filter((r) => r.fecha && limpiar(r.titulo)).map((r, i) => `${i + 1} | ${r.fecha} | ${limpiar(r.titulo)} | ${r.estado}`).join('\n')
+  const fechas = rows.map((r) => r.fecha)
+  const errC = rows.some((r) => !r.fecha || !limpiar(r.titulo)) ? 'Cada clase necesita fecha y título.'
+    : new Set(fechas).size < fechas.length ? 'Hay dos clases en la misma fecha.'
+    : fechas.some((f, i) => i > 0 && f < fechas[i - 1]) ? 'Las clases tienen que estar en orden cronológico.' : ''
+  const antesDeInicio = !!inicio && !!fechas[0] && fechas[0] < inicio
   const puedeGenerar = !!inicio && !!dias?.length
   const generar = () => {
     const f = generarFechas(inicio!, dias!, Math.min(Math.max(parseInt(cant) || 0, 1), 60))
@@ -134,6 +157,7 @@ export function ClasesEditor({ name, inicial, inicio, dias, avisar }: { name: st
   return (
     <div className="space-y-4">
       <Serial name={name} value={txt} />
+      <Guard error={errC} />
       <div className="flex flex-wrap items-end gap-2 rounded border border-dashed border-outline-variant p-3">
         <div><label htmlFor={id} className="label">Cantidad de clases</label>
           <input id={id} type="number" min={1} max={60} className="input !w-28" value={cant} onChange={(e) => setCant(e.target.value)} /></div>
@@ -157,6 +181,8 @@ export function ClasesEditor({ name, inicial, inicio, dias, avisar }: { name: st
           </div>
         ))}
       </div>
+      {errC && <p role="alert" className="text-sm text-red-400">{errC}</p>}
+      {antesDeInicio && <p className="text-sm text-secondary">Ojo: la primera clase es anterior a la fecha de inicio del curso.</p>}
       <AddButton onClick={() => setRows([...rows, { fecha: '', titulo: `Clase ${rows.length + 1}`, estado: 'programada' }])}>Agregar clase</AddButton>
       {avisar}
     </div>

@@ -53,8 +53,8 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
 
 // El id sale de useId(): varias pantallas repiten el mismo `name` en muchos formularios y, con un id
 // derivado del name, cada etiqueta enfocaba el input del primer formulario.
-export function Field({ label, name, type = 'text', defaultValue, required, placeholder, hint, rows, children }: {
-  label: string; name: string; type?: string; defaultValue?: string | number | null; required?: boolean; placeholder?: string; hint?: string; rows?: number
+export function Field({ label, name, type = 'text', defaultValue, required, placeholder, hint, rows, min, max, step, children }: {
+  label: string; name: string; type?: string; defaultValue?: string | number | null; required?: boolean; placeholder?: string; hint?: string; rows?: number; min?: number; max?: number; step?: number
   children?: React.ReactNode | ((p: { id: string; 'aria-describedby'?: string }) => React.ReactNode)
 }) {
   const id = useId()
@@ -64,7 +64,7 @@ export function Field({ label, name, type = 'text', defaultValue, required, plac
       <label htmlFor={id} className="label">{label}{required && <span aria-hidden className="text-accent"> *</span>}</label>
       {typeof children === 'function' ? children({ id, 'aria-describedby': hintId }) : children ?? (rows
         ? <textarea id={id} name={name} rows={rows} required={required} defaultValue={defaultValue ?? ''} placeholder={placeholder} aria-describedby={hintId} className="input font-mono text-xs" />
-        : <input id={id} name={name} type={type} required={required} defaultValue={defaultValue ?? ''} placeholder={placeholder} aria-describedby={hintId} className="input" />)}
+        : <input id={id} name={name} type={type} required={required} min={min} max={max} step={step} defaultValue={defaultValue ?? ''} placeholder={placeholder} aria-describedby={hintId} className="input" />)}
       {hint && <p id={hintId} className="mt-1 text-xs text-on-surface-variant">{hint}</p>}
     </div>
   )
