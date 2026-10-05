@@ -1,9 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { withSecurityHeaders } from '@/lib/security-headers'
 
 const ROLE_HOME = { admin: '/campus/admin', profesor: '/campus/profesor', alumno: '/campus/alumno' } as const
 
 export async function middleware(request: NextRequest) {
+  return withSecurityHeaders(await autenticar(request))
+}
+
+async function autenticar(request: NextRequest): Promise<NextResponse> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const path = request.nextUrl.pathname
@@ -40,7 +45,6 @@ export async function middleware(request: NextRequest) {
     if (path === '/campus' || !path.startsWith(home)) return NextResponse.redirect(new URL(home, request.url))
   }
 
-  response.headers.set('Referrer-Policy', 'no-referrer')
   return response
 }
 
