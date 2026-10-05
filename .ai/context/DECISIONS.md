@@ -4,6 +4,11 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-05 | `dev` manda sobre `feat/unificacion`; la base de homologación se recreó desde las migraciones de `dev` | `feat/unificacion` es un linaje viejo con otro esquema; unificar era reescribir, no mergear. La base de test es de pruebas, así que se vació y se re-aplicó |
+| 2026-10-05 | Cuentas de demo fijas: `@demo.example.com` / `demo1234` (solo seeds, que se niegan a correr fuera de development/test) | Fáciles de dictar al cliente; admin = Maxi Gómez |
+| 2026-10-05 | Talleres de formato corto (1 jornada, 3 días seguidos, 1–2 semanas) además de cursos | Pedido del cliente; el tipo `taller` ya existía, no hay límite de clases en la base |
+| 2026-10-05 | Formularios del curso por filas (no textarea con `\|`) y gráficos SVG propios | Más intuitivo; las server actions siguen recibiendo el mismo texto. Sin librerías de gráficos |
+| 2026-10-05 | Sin `alert`/`confirm` del navegador: `ModalButton` y `Confirm` con modal propio | Pedido del cliente; consistencia visual y accesibilidad |
 | 2026-10-01 | Tres entornos: desarrollo (Supabase local) → homologación (`test`, Supabase remoto actual) → producción (`main`); ramas `feature/* → dev → test` por merge y `test → main` por PR | Pedido del cliente; homologación es espejo de producción |
 | 2026-10-01 | Hosting en GitHub + Vercel; CI en GitHub Actions; migraciones automáticas al mergear a `test`/`main` | Despliegue directo con Next.js y un entorno por rama |
 | 2026-10-01 | Registro público desactivado también en `supabase/config.toml` (local) y por migración en la base | Defensa en profundidad; en los proyectos remotos se desactiva en el panel de Auth |

@@ -665,6 +665,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.8 | 2026-10-05 | Preparación de la demo: talleres de formato corto (1 jornada, días seguidos o 1–2 semanas), edición del curso por filas con calendario generable, imagen de curso subida desde el formulario, reportes con gráficos, modales propios y validaciones de rango. Sin cambios de reglas de producto ni de base. |
 | 0.7 | 2026-10-04 | Auditoría de seguridad, lógica y UI. **RF-35**: el ZIP trae solo el material liberado. Se confirma que el desertor sigue ocupando cupo. Fechas siempre en hora de Córdoba (RF-55). Ver `.ai/context/DECISIONS.md`. |
 | 0.6 | 2026-10-01 | **RF-33**: el alumno puede descargar el material liberado (antes solo visualizar). **RF-41** cancelado (sin botón flotante de WhatsApp). **RF-11** confirmado (entrada directa con un solo curso activo). **RF-38** confirmado por mail. Área 2 pasa a llamarse «Reparación y Tecnología» y se aclara que la academia no presta servicio técnico. Sin registro público (perfil solo por invitación, reforzado en la base). Sin WhatsApp ni bot por ahora. |
 | 0.1 | 2026-09-24 | Primera versión: web (A1–A4) + campus (docx v0.2), sin pagos ni inscripciones |
