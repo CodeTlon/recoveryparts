@@ -252,7 +252,7 @@ export async function guardarKit(_: R, fd: FormData): Promise<R> {
 
 // ── Alumnos en el curso ──────────────────────────────────
 // Si el alumno ya existe se vincula y se avisa por mail (sin token); si no, se invita.
-export async function añadirAlumno(_: R, fd: FormData): Promise<R> {
+export async function agregarAlumno(_: R, fd: FormData): Promise<R> {
   const { sb, perfil: yo } = await requireRole('admin')
   const curso_id = txt(fd, 'curso_id')
   const email = txt(fd, 'email').toLowerCase()
