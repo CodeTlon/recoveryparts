@@ -23,3 +23,6 @@ docs/CUENTAS-HOMOLOGACION.md
 # Caché de la CLI de Supabase
 supabase/.temp/
 supabase/.branches/
+
+.vercel
+.env*
