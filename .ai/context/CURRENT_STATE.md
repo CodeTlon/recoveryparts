@@ -15,6 +15,8 @@ RF-03 (aulas/cupos/insumos/precios), RF-12 y RF-13 (alta de alumno con curso / v
 SMTP propio y plantillas de Auth apuntando a `/auth/confirm` · desactivar el registro público en el Auth remoto · rotar las claves y la contraseña de base que se compartieron por chat · crear el proyecto Supabase de producción · proteger ramas y crear environments en GitHub · imágenes finales sin flyers viejos y con consentimiento · dominio.
 
 ## Hecho
+Sesión 2026-10-05 (3): el Resumen del admin se fusionó con Reportes (novedades + indicadores y gráficos; `/campus/admin/reportes` redirige) y «Sitio web» se edita por pestañas (inicio, contacto, egresados, testimonios, preguntas, galería, imágenes, campus), cada una con leyenda y link para verla en el sitio.
+
 Sesión 2026-10-05 (2): sitio con `/contacto` y `/preguntas-frecuentes` propias (la home muestra 4 FAQ y una banda a contacto), módulos visibles en las tarjetas de `/cursos`, kit por ítem «necesario»/«recomendado» con compra en Mundo Parts (migración `0009_kit_requerido.sql`: `kit_items.requerido` y `kit_publico`), seed con 19 cursos/talleres, 9 testimonios, 8 FAQ, egresados, galería e Instagram real. Admin del seed: Maxi Escaroni. **Homologación necesita `db:push:test` (0009) y `seed:test`.**
 
 Sesión 2026-10-05: demo para el cliente. Modales propios (sin `alert`/`confirm`), editores por filas, tabs en el curso, gráficos SVG en reportes, favicon con el logo, validaciones de rango en cliente y servidor, bug del profesor (`FileField`: una página de servidor no puede pasar una función como hijo de un componente cliente). Probado con Chrome (Playwright) a 375/768/1280 px: sin desbordes; subida de imagen y PDF, avisos de éxito/error y modal de confirmación verificados.
