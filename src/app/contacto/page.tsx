@@ -40,7 +40,7 @@ export default async function ContactoPage() {
             )}
             <p className="text-sm text-on-surface-variant">¿Dudas comunes? Mirá las <Link href="/preguntas-frecuentes" className="text-secondary underline-offset-4 hover:underline">preguntas frecuentes</Link>.</p>
           </aside>
-          <div className="card p-6 md:p-8">
+          <div>
             <h2 className="mb-5 text-2xl font-semibold">Escribinos</h2>
             <ContactForm />
           </div>

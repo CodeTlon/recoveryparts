@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Plus, Trash2, Wand2 } from 'lucide-react'
 import { DIAS } from '@/lib/types'
+import { MUNDO_PARTS_URL } from '@/lib/validar'
 
 // Editores por filas para lo que antes era un textarea con formato "a | b | c".
 // Cada uno serializa al MISMO texto que ya entienden las server actions (guardarHorarios,
@@ -95,13 +96,15 @@ export function ModulosEditor({ name, inicial }: { name: string; inicial: M[] })
 }
 
 // ── Kit: herramientas / materiales ───────────────────────────────────────────────────────────
-type K = { nombre: string; descripcion: string; precio: string; link: string }
+// Cada ítem es «necesario» (hace falta para cursar) o «recomendado» (sugerido). El link suele ser a Mundo Parts,
+// la tienda socia: la academia solo lo enlaza, la venta no pasa por este sistema.
+type K = { nombre: string; descripcion: string; precio: string; link: string; requerido: boolean }
 
 export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
   const [rows, setRows] = useState<K[]>(inicial)
   const upd = (i: number, p: Partial<K>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
   const errK = rows.some((r) => !limpiar(r.nombre)) ? 'Completá el nombre de cada ítem o quitá el que sobra.' : rows.some((r) => r.precio !== '' && Number(r.precio) < 0) ? 'El precio no puede ser negativo.' : ''
-  const txt = rows.filter((r) => limpiar(r.nombre)).map((r) => [r.nombre, r.descripcion, r.precio, r.link].map(limpiar).join(' | ')).join('\n')
+  const txt = rows.filter((r) => limpiar(r.nombre)).map((r) => [r.nombre, r.descripcion, r.precio, r.link, r.requerido ? 'necesario' : 'recomendado'].map(limpiar).join(' | ')).join('\n')
   return (
     <div className="space-y-4">
       <Serial name={name} value={txt} />
@@ -112,14 +115,20 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
         <div key={i} className="rounded border border-outline-variant p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label className="label">Ítem</label><input className="input" placeholder="Ej: Multímetro" value={r.nombre} onChange={(e) => upd(i, { nombre: e.target.value })} /></div>
-            <div><label className="label">Precio de referencia (ARS)</label><input type="number" min={0} className="input" placeholder="Ej: 15000" value={r.precio} onChange={(e) => upd(i, { precio: e.target.value })} /></div>
+            <div><label className="label">Tipo</label>
+              <select className="input" value={r.requerido ? 'necesario' : 'recomendado'} onChange={(e) => upd(i, { requerido: e.target.value === 'necesario' })}>
+                <option value="necesario">Necesario para cursar</option><option value="recomendado">Recomendado (opcional)</option>
+              </select></div>
             <div><label className="label">Descripción</label><input className="input" placeholder="Ej: Para medir tensión y continuidad" value={r.descripcion} onChange={(e) => upd(i, { descripcion: e.target.value })} /></div>
-            <div><label className="label">Link (opcional)</label><input type="url" className="input" placeholder="https://…" value={r.link} onChange={(e) => upd(i, { link: e.target.value })} /></div>
+            <div><label className="label">Precio de referencia (ARS)</label><input type="number" min={0} className="input" placeholder="Ej: 15000" value={r.precio} onChange={(e) => upd(i, { precio: e.target.value })} /></div>
+            <div className="sm:col-span-2"><label className="label">Link de compra (opcional)</label>
+              <input type="url" className="input" placeholder="https://www.mundopartsrepuestos.com/…" value={r.link} onChange={(e) => upd(i, { link: e.target.value })} />
+              <button type="button" onClick={() => upd(i, { link: MUNDO_PARTS_URL })} className="mt-1 text-xs text-secondary hover:underline">Usar la tienda de Mundo Parts</button></div>
           </div>
           <div className="mt-3 flex justify-end"><RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar ítem" /></div>
         </div>
       ))}
-      <AddButton onClick={() => setRows([...rows, { nombre: '', descripcion: '', precio: '', link: '' }])}>Agregar ítem</AddButton>
+      <AddButton onClick={() => setRows([...rows, { nombre: '', descripcion: '', precio: '', link: '', requerido: true }])}>Agregar ítem</AddButton>
     </div>
   )
 }

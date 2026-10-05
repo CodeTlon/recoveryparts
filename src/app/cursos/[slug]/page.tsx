@@ -10,7 +10,7 @@ import Accordion from '@/components/public/Accordion'
 import { Cupos, Precio, horarioTexto } from '@/components/public/CursoCard'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, TIPO_LABEL, formatPrecio } from '@/lib/types'
-import { hrefSeguro } from '@/lib/validar'
+import { hrefSeguro, esMundoParts, MUNDO_PARTS_URL } from '@/lib/validar'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,12 +33,12 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
     getHorarios().then((h) => h.filter((x) => x.curso_id === c.id)),
     getSettings(),
     query<{ id: string; titulo: string; items: string[] }[]>((sb) => sb.from('modulos_publicos').select('id, titulo, items').eq('curso_id', c.id).order('orden'), []),
-    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo').eq('curso_id', c.id).order('orden'), []),
     query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>((sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
   ])
 
   const wa = waLink(settings.contacto.whatsapp, `Hola! Quiero info del curso ${c.nombre}`)
-  const totalKit = kit.reduce((s, k) => s + (k.precio ?? 0), 0)
+  const totalKit = kit.filter((k) => k.requerido !== false).reduce((s, k) => s + (k.precio ?? 0), 0)
   const h = horarioTexto(horarios)
   const row = 'flex items-start gap-3 text-sm text-on-surface-variant'
 
@@ -105,23 +105,28 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
 
             {kit.length > 0 && (
               <section>
-                <h2 className="mb-1 text-2xl font-semibold">Kit necesario</h2>
-                <p className="mb-5 text-sm text-on-surface-variant">Precios de referencia{c.precio_actualizado_en ? `, actualizados al ${new Date(c.precio_actualizado_en + 'T00:00').toLocaleDateString('es-AR')}` : ''}. La compra se realiza en el sitio de nuestro socio.</p>
-                <ul className="card divide-y divide-outline-variant">
-                  {kit.map((k) => (
-                    <li key={k.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                      <div>
-                        <p className="font-semibold">{k.nombre}</p>
-                        {k.descripcion && <p className="text-sm text-on-surface-variant">{k.descripcion}</p>}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="font-bold">{formatPrecio(k.precio)}</span>
-                        {k.link_externo && <a href={k.link_externo} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Comprar <ExternalLink size={14} /></a>}
-                      </div>
-                    </li>
-                  ))}
-                  <li className="flex justify-between p-4 font-bold"><span>Total del kit</span><span>{formatPrecio(totalKit)}</span></li>
-                </ul>
+                <h2 className="mb-1 text-2xl font-semibold">Kit del curso</h2>
+                <p className="mb-5 text-sm text-on-surface-variant">Precios de referencia{c.precio_actualizado_en ? `, actualizados al ${new Date(c.precio_actualizado_en + 'T00:00').toLocaleDateString('es-AR')}` : ''}. La compra se hace en el sitio de nuestro socio <a href={MUNDO_PARTS_URL} target="_blank" rel="noopener noreferrer" className="text-secondary underline-offset-4 hover:underline">Mundo Parts</a>.</p>
+                {[['Necesario para cursar', kit.filter((k) => k.requerido !== false)], ['Recomendado (opcional)', kit.filter((k) => k.requerido === false)]].map(([titulo, items]) => (items as typeof kit).length > 0 && (
+                  <div key={titulo as string} className="mb-5">
+                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-secondary">{titulo as string}</h3>
+                    <ul className="card divide-y divide-outline-variant">
+                      {(items as typeof kit).map((k) => (
+                        <li key={k.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                          <div>
+                            <p className="font-semibold">{k.nombre}</p>
+                            {k.descripcion && <p className="text-sm text-on-surface-variant">{k.descripcion}</p>}
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-bold">{formatPrecio(k.precio)}</span>
+                            {k.link_externo && <a href={k.link_externo} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">{esMundoParts(k.link_externo) ? 'Comprar en Mundo Parts' : 'Comprar'} <ExternalLink size={14} aria-hidden /></a>}
+                          </div>
+                        </li>
+                      ))}
+                      {titulo === 'Necesario para cursar' && <li className="flex justify-between p-4 font-bold"><span>Total de lo necesario</span><span>{formatPrecio(totalKit)}</span></li>}
+                    </ul>
+                  </div>
+                ))}
               </section>
             )}
 
