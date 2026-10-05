@@ -57,7 +57,7 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {lista.map((c, i) => <Reveal key={c.id} delay={Math.min(i, 8) * 0.05} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.curso_id === c.id)} modulos={mods.filter((m) => m.curso_id === c.id).map((m) => m.titulo)} /></Reveal>)}
+              {lista.map((c, i) => <Reveal key={c.id} delay={Math.min(i, 8) * 0.05} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} modulos={mods.filter((m) => m.curso_id === c.id).map((m) => m.titulo)} /></Reveal>)}
             </div>
           )}
         </section>

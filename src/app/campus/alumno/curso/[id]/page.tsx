@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, ExternalLink, CalendarDays } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
+import { etiquetaEdicion } from '@/lib/fechas'
 import { hrefSeguro } from '@/lib/validar'
 import { PageHead, Empty, BackLink } from '@/components/campus/ui'
 import Reveal from '@/components/ui/Reveal'
@@ -12,14 +13,15 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
   const { id } = await params
   const { sb, perfil } = await requireRole('alumno')
 
-  // RLS: solo ve el curso si su inscripción no es desertor.
-  const { data: curso } = await sb.from('cursos').select('id, nombre, descripcion').eq('id', id).maybeSingle()
-  const { data: insc } = await sb.from('inscripciones').select('estado').eq('curso_id', id).eq('alumno_id', perfil.id).maybeSingle()
+  // El id es el de la edición. RLS: solo ve su edición y el curso si su inscripción no es desertora.
+  const { data: insc } = await sb.from('inscripciones').select('estado, ediciones(fecha_inicio, cursos(id, nombre, descripcion))').eq('edicion_id', id).eq('alumno_id', perfil.id).maybeSingle()
+  const ed = insc?.ediciones as unknown as { fecha_inicio: string | null; cursos: { id: string; nombre: string; descripcion: string | null } | null } | null
+  const curso = ed?.cursos
   if (!curso || !insc || insc.estado === 'desertor') notFound()
 
   // RF-32/37: solo material liberado + el título de la clase siguiente (nada posterior).
-  const { data: mats } = await sb.rpc('material_visible', { p_curso: id })
-  const { data: prox } = await sb.rpc('proxima_clase_titulo', { p_curso: id })
+  const { data: mats } = await sb.rpc('material_visible', { p_edicion: id })
+  const { data: prox } = await sb.rpc('proxima_clase_titulo', { p_edicion: id })
   const siguiente = (prox as { numero: number; fecha: string; titulo: string }[] | null)?.[0]
 
   const porClase = new Map<string, Mat[]>()
@@ -31,7 +33,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
   return (
     <>
       <BackLink href="/campus/alumno">Mis cursos</BackLink>
-      <PageHead title={curso.nombre} sub={curso.descripcion ?? undefined} />
+      <PageHead title={`${curso.nombre} · ${etiquetaEdicion(ed?.fecha_inicio)}`} sub={curso.descripcion ?? undefined} />
 
       {siguiente && (
         <div className="card mb-8 flex items-center gap-3 p-4 text-sm">
