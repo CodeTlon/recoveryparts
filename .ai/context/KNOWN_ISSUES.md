@@ -33,7 +33,6 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 `ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP se arma en memoria.
 
 ## Abiertos tras la sesión 2026-10-05 (aulas)
-- **Los cursos del seed no se pueden guardar desde «Datos»**: su `imagen_url` es una ruta relativa (`/images/…`) y `guardarCurso` solo acepta URLs http(s) (`urlOpcional`). Afecta también a la demo en homologación.
 - **Acciones de `<form action>` simples descartan el error**: `bajaCurso`, `setEstadoCuenta`. Si la base las rechaza, la página se recarga sin mostrar el motivo. Usar `ActionForm` en un modal, como ya hacen «Reactivar» curso y la baja de aulas.
 - **`npm run seed:dev` no anda en Windows**: el script usa `ENV_FILE=…` (sintaxis de shell POSIX), `.env.development` tiene finales CRLF (`APP_ENV` queda con un retorno de carro al final y no pasa el chequeo) y al final escribe en `/dev/null`. Rodeo: correr `node scripts/seed-pruebas.mjs` desde Git Bash con una copia LF del `.env` y `CREDS_OUT` a un archivo temporal.
 
