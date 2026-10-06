@@ -3,13 +3,13 @@
 Qué es verdad ahora (2026-10-06). Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
 
 ## Ramas
-- `feat/estructura-curso` (2026-10-06, mergeada en `dev`; falta `test`/`main`): estructura del curso módulos → clases → material (RF-58), orden flexible por edición y liberación siempre manual (RF-32). Migraciones **0012–0014**.
+- `dev`, `test` y `main` al día con la **estructura del curso** (PR #11 `test → main`, mergeado el 2026-10-06): estructura del curso módulos → clases → material (RF-58), orden flexible por edición y liberación siempre manual (RF-32). Migraciones **0012–0014**.
 - `dev`, `test` y `main` están al día con **gestión de aulas (RF-03)** y **ediciones de curso** (PR #7 `test → main`, mergeado el 2026-10-06). Las ramas de trabajo de esas mejoras ya se mergearon.
 - La rama remota `feat/unificacion` es otro linaje (esquema `matriculas`/`sitio_config`/`faq`, migraciones `0001_auth_profiles…0011`) y quedó **descartada**: `dev` ya tiene todo lo equivalente.
 - Las constraints de `materiales` y `encuestas` de la auditoría (0007/0008) quedaron `NOT VALID`: si hay datos viejos incorrectos, corregirlos y correr `VALIDATE CONSTRAINT`.
 
 ## Entornos y base de datos
-- **Homologación = base de la demo del cliente.** El proyecto Supabase «RecoveryParts HOMOLOGACIÓN» (ref `kdgjcgtuknexzimnpksz`) es el que usa el sitio `recoveryparts-biud.vercel.app`, que despliega `main`. Tiene aplicadas **0001–0011** (**0012–0014 pendientes**: cambian columnas que usa el código desplegado, así que se aplican junto con el deploy de `feat/estructura-curso` y después se recargan los cursos a mano con la estructura nueva): la 0009, la 0010 y la 0011 se aplicaron **a mano en el SQL Editor** el 2026-10-06 (la 0011 justo después del deploy del PR #7) y están registradas en `supabase_migrations.schema_migrations`.
+- **Homologación = base de la demo del cliente.** El proyecto Supabase «RecoveryParts HOMOLOGACIÓN» (ref `kdgjcgtuknexzimnpksz`) es el que usa el sitio `recoveryparts-biud.vercel.app`, que despliega `main`. Tiene aplicadas **0001–0014**: 0012–0014 (estructura del curso) se aplicaron a mano el 2026-10-06 junto con el deploy del PR #11. **Falta recargar los cursos de la demo** en «Estructura» (las clases quedaron en «Sin módulo») y liberar a mano el material. Antes: la 0009, la 0010 y la 0011 se aplicaron **a mano en el SQL Editor** el 2026-10-06 (la 0011 justo después del deploy del PR #7) y están registradas en `supabase_migrations.schema_migrations`.
 - Hay un segundo proyecto Supabase, «Recovery Parts» (us-west-2). **Sin verificar** si es o será producción.
 - El workflow «Migraciones a Supabase» falla en `test` y `main` porque falta el secreto `SUPABASE_DB_URL` en los environments de GitHub (ver `KNOWN_ISSUES.md`).
 - Las aulas de la demo tienen capacidad cargada desde el 2026-10-06 (Aula 1 = 12, Aula 2 = 10, Aula 3 = 10; provisorias, ajustar a las reales en Campus › Aulas). El cupo de cada edición ya se valida contra su aula.
