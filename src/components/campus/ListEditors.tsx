@@ -214,15 +214,15 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
     return (
       <div key={c.key} className="flex flex-wrap items-end gap-2">
         <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{n}</span>
-        <div className="min-w-[12rem] flex-1"><label className="sr-only">Título de la clase {n}</label>
-          <input className="input" maxLength={200} placeholder="Ej: Introducción" value={c.titulo} onChange={(e) => updC(i, ci, { titulo: e.target.value })} /></div>
-        <div><label className="sr-only">Tipo de la clase {n}</label>
-          <select className="input" value={c.tipo} onChange={(e) => updC(i, ci, { tipo: e.target.value as TipoClase })}>
+        <div className="min-w-[12rem] flex-1">
+          <input aria-label={`Título de la clase ${n}`} className="input" maxLength={200} placeholder="Ej: Introducción" value={c.titulo} onChange={(e) => updC(i, ci, { titulo: e.target.value })} /></div>
+        <div>
+          <select aria-label={`Tipo de la clase ${n}`} className="input" value={c.tipo} onChange={(e) => updC(i, ci, { tipo: e.target.value as TipoClase })}>
             <option value="teorica">Teórica</option><option value="practica">Práctica</option>
           </select></div>
         {!taller && mods.length > 1 && (
-          <div><label className="sr-only">Mover la clase {n} a otro módulo</label>
-            <select className="input" value={i} onChange={(e) => aModulo(i, ci, Number(e.target.value))}>
+          <div>
+            <select aria-label={`Mover la clase ${n} a otro módulo`} className="input" value={i} onChange={(e) => aModulo(i, ci, Number(e.target.value))}>
               {mods.map((x, j) => <option key={x.key} value={j}>{j === i ? 'Mover a…' : `→ ${limpiar(x.titulo) || `Módulo ${j + 1}`}`}</option>)}
             </select></div>
         )}
