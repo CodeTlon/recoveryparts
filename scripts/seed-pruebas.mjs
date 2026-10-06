@@ -162,7 +162,7 @@ async function edicion(curso_id, clave, { fecha_inicio, cupo, aula_id, profesor_
   eid[clave] = e.id
   ok(await sb.from('horarios_curso').delete().eq('edicion_id', e.id), 'del horarios')
   for (const [d, a, b] of horarios) ok(await sb.from('horarios_curso').insert({ edicion_id: e.id, dia_semana: d, hora_inicio: a, hora_fin: b }), `horario ${clave}`)
-  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, estado]) => ({ edicion_id: e.id, numero, fecha, estado })), { onConflict: 'edicion_id,numero' }), `clases ${clave}`)
+  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, estado]) => ({ edicion_id: e.id, numero, fecha, estado })), { onConflict: 'edicion_id,plan_clase_id' }), `clases ${clave}`)
 }
 for (const c of CURSOS) {
   const { horarios, modulos, kit, clases, cupo, fecha_inicio, aula_id, profesor_id, ...row } = c
@@ -172,7 +172,10 @@ for (const c of CURSOS) {
   for (const [i, [t, items]] of [...modulos, ...(MODULOS_EXTRA[c.slug] ?? [])].entries()) ok(await sb.from('modulos_curso').insert({ curso_id: data.id, orden: i, titulo: t, items }), 'modulo')
   ok(await sb.from('kit_items').delete().eq('curso_id', data.id), 'del kit')
   for (const [i, [n, d, p, l, req]] of kit.entries()) ok(await sb.from('kit_items').insert({ curso_id: data.id, orden: i, nombre: n, descripcion: d, precio: p, link_externo: l, requerido: req !== false }), 'kit')
-  ok(await sb.from('plan_clases').upsert(clases.map(([numero, , titulo]) => ({ curso_id: data.id, numero, titulo })), { onConflict: 'curso_id,numero' }), `plan ${c.slug}`)
+  for (const [numero, , titulo] of clases) {
+    const upd = ok(await sb.from('plan_clases').update({ titulo }).eq('curso_id', data.id).eq('numero', numero).select('id'), `plan ${c.slug}`)
+    if (!upd.length) ok(await sb.from('plan_clases').insert({ curso_id: data.id, numero, titulo }), `plan ${c.slug}`)
+  }
   await edicion(data.id, c.slug, { fecha_inicio, cupo, aula_id, profesor_id }, horarios, clases.map(([n, f, , e]) => [n, f, e]))
 }
 for (const x of EDICIONES_EXTRA) {

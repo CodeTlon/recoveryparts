@@ -347,7 +347,7 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   const nums = ok.map((f) => f.numero)
 
   const { data: previas } = await sb.from('clases').select('id, numero, fecha, estado').eq('edicion_id', edicion_id)
-  const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'edicion_id,numero' })
+  const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'edicion_id,plan_clase_id' })
   if (error) return { error: traducir(error.message) }
   const aBorrar = (previas ?? []).filter((c: any) => !nums.includes(c.numero))
   if (aBorrar.length) {
