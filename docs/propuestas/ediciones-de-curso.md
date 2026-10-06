@@ -1,6 +1,6 @@
 # Propuesta: ediciones de curso (cursos recurrentes)
 
-> Rama `feat/ediciones-cursos` · **no está mergeada a `dev`**. Este documento explica qué cambia y cómo probarlo para decidir si se incorpora.
+> **Incorporada:** mergeada a `main` el 2026-10-06 (PR #7) y migración 0011 aplicada en homologación/demo. Este documento queda como explicación del modelo y de cómo probarlo.
 
 ## El problema
 
@@ -62,7 +62,7 @@ Separar **lo que es del curso** (se carga una vez) de **cada vez que se dicta** 
 ## Cómo probarlo
 
 ```bash
-git checkout feat/ediciones-cursos
+git checkout dev
 npm install
 npm run db:start
 npm run db:reset          # aplica 0001–0011
