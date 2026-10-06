@@ -65,36 +65,6 @@ export function HorariosEditor({ name, inicial, onChange }: { name: string; inic
   )
 }
 
-// ── Plan de estudios: módulos con sus temas ──────────────────────────────────────────────────
-type M = { titulo: string; temas: string }
-
-export function ModulosEditor({ name, inicial }: { name: string; inicial: M[] }) {
-  const [rows, setRows] = useState<M[]>(inicial)
-  const upd = (i: number, p: Partial<M>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
-  const errM = rows.some((r) => !limpiar(r.titulo)) ? 'Completá el título de cada módulo o quitá el que sobra.' : ''
-  const txt = rows.filter((r) => limpiar(r.titulo)).map((r) => `# ${limpiar(r.titulo)}\n${r.temas.split('\n').map(limpiar).filter(Boolean).join('\n')}`).join('\n')
-  return (
-    <div className="space-y-4">
-      <Serial name={name} value={txt} />
-      <Guard error={errM} />
-      {errM && <p role="alert" className="text-sm text-red-400">{errM}</p>}
-      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay módulos.</p>}
-      {rows.map((r, i) => (
-        <div key={i} className="rounded border border-outline-variant p-4">
-          <div className="flex items-end gap-2">
-            <div className="flex-1"><label className="label">Módulo {i + 1}</label>
-              <input className="input" placeholder="Ej: Diagnóstico de fallas" value={r.titulo} onChange={(e) => upd(i, { titulo: e.target.value })} /></div>
-            <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar módulo" />
-          </div>
-          <label className="label mt-3">Temas (uno por línea)</label>
-          <textarea rows={4} className="input" placeholder={'Uso del multímetro\nLectura de esquemas'} value={r.temas} onChange={(e) => upd(i, { temas: e.target.value })} />
-        </div>
-      ))}
-      <AddButton onClick={() => setRows([...rows, { titulo: '', temas: '' }])}>Agregar módulo</AddButton>
-    </div>
-  )
-}
-
 // ── Kit: herramientas / materiales ───────────────────────────────────────────────────────────
 // Cada ítem es «necesario» (hace falta para cursar) o «recomendado» (sugerido). El link suele ser a Mundo Parts,
 // la tienda socia: la academia solo lo enlaza, la venta no pasa por este sistema.
@@ -129,34 +99,6 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
         </div>
       ))}
       <AddButton onClick={() => setRows([...rows, { nombre: '', descripcion: '', precio: '', link: '', requerido: true }])}>Agregar ítem</AddButton>
-    </div>
-  )
-}
-
-// ── Plan de clases del curso: N° y título (los mismos en todas las ediciones) ─────────────────
-type P = { titulo: string }
-
-export function PlanEditor({ name, inicial }: { name: string; inicial: P[] }) {
-  const [rows, setRows] = useState<P[]>(inicial)
-  const upd = (i: number, p: Partial<P>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
-  const errP = rows.some((r) => !limpiar(r.titulo)) ? 'Completá el título de cada clase o quitá la que sobra.'
-    : rows.some((r) => limpiar(r.titulo).length > 200) ? 'Cada título puede tener hasta 200 caracteres.'
-    : rows.length > 500 ? 'El plan admite hasta 500 clases.' : ''
-  return (
-    <div className="space-y-3">
-      <Serial name={name} value={rows.map((r, i) => `${i + 1} | ${limpiar(r.titulo)}`).join('\n')} />
-      <Guard error={errP} />
-      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay clases en el plan.</p>}
-      {rows.map((r, i) => (
-        <div key={i} className="flex items-end gap-2">
-          <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{i + 1}</span>
-          <div className="flex-1"><label className="sr-only">Título clase {i + 1}</label>
-            <input className="input" maxLength={200} placeholder="Ej: Diagnóstico visual" value={r.titulo} onChange={(e) => upd(i, { titulo: e.target.value })} /></div>
-          <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label={`Quitar clase ${i + 1}`} />
-        </div>
-      ))}
-      {errP && <p role="alert" className="text-sm text-red-400">{errP}</p>}
-      <AddButton onClick={() => setRows([...rows, { titulo: '' }])}>Agregar clase</AddButton>
     </div>
   )
 }

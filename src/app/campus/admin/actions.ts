@@ -169,47 +169,6 @@ export async function reactivarCurso(_: R, fd: FormData): Promise<R> {
   return { ok: true }
 }
 
-// Temario público: "# Título del módulo" seguido de un ítem por línea.
-export async function guardarModulos(_: R, fd: FormData): Promise<R> {
-  const { sb } = await requireRole('admin')
-  const curso_id = txt(fd, 'curso_id')
-  const mods: { curso_id: string; orden: number; titulo: string; items: string[] }[] = []
-  for (const l of txt(fd, 'modulos').split('\n').map((x) => x.trim()).filter(Boolean)) {
-    if (l.startsWith('#')) mods.push({ curso_id, orden: mods.length, titulo: l.replace(/^#+\s*/, ''), items: [] })
-    else mods.at(-1)?.items.push(l.replace(/^[-•]\s*/, ''))
-  }
-  const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'modulos_curso', p_id: curso_id, p_filas: mods })
-  if (error) return { error: 'No se pudo guardar el temario.' }
-  revalidarCursos()
-  return { ok: true }
-}
-
-// Plan de clases del curso (RF-31): "N | Título" por línea. Los títulos son los mismos en todas las ediciones;
-// cada edición pone sus fechas. Lo edita el admin o un profesor que dicte una edición activa del curso (RLS).
-export async function guardarPlanClases(_: R, fd: FormData): Promise<R> {
-  const { sb } = await requireRole('admin', 'profesor')
-  const curso_id = txt(fd, 'curso_id')
-  const filas = txt(fd, 'plan').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
-    const [n, ...resto] = l.split('|'); const titulo = resto.join('|').trim()
-    return /^\d+$/.test(n.trim()) && titulo && titulo.length <= 200 ? { curso_id, numero: Number(n), titulo } : null
-  })
-  if (filas.some((f) => !f)) return { error: 'Cada clase necesita un título de hasta 200 caracteres.' }
-  const ok = filas as { numero: number }[]
-  if (ok.length > 500) return { error: 'El plan admite hasta 500 clases.' }
-  if (new Set(ok.map((f) => f.numero)).size !== ok.length) return { error: 'Hay números de clase repetidos.' }
-  // No dejar fuera del plan clases que ya están en el calendario de alguna edición o que tienen material.
-  const max = Math.max(0, ...ok.map((f) => f.numero))
-  const { data: eds } = await sb.from('ediciones').select('id').eq('curso_id', curso_id)
-  const { data: enUso } = eds?.length ? await sb.from('clases').select('numero').in('edicion_id', eds.map((e) => e.id)).gt('numero', max).limit(1) : { data: [] }
-  if (enUso?.length) return { error: `La clase ${enUso[0].numero} está en el calendario de una edición. Sacala del calendario antes de quitarla del plan.` }
-  const { data: conMat } = await sb.from('materiales').select('clase_numero').eq('curso_id', curso_id).gt('clase_numero', max).limit(1)
-  if (conMat?.length) return { error: `La clase ${conMat[0].clase_numero} tiene material. Pasá ese material a otra clase o a «general» antes de quitarla.` }
-  const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'plan_clases', p_id: curso_id, p_filas: ok })
-  if (error) return { error: traducir(error.message) }
-  revalidarCursos()
-  return { ok: true }
-}
-
 // Estructura del curso (RF-26, RF-31): módulos con sus clases (teóricas o prácticas); en talleres, solo clases.
 // Llega como JSON del EstructuraEditor. La base guarda todo de una vez y valida la regla de estructura
 // (sin clases sueltas ni módulos vacíos en cursos; sin módulos en talleres). Admin o profesor de una edición activa.

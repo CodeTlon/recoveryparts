@@ -1,9 +1,9 @@
-import { ClasesEditor, PlanEditor } from '@/components/campus/ListEditors'
+import { ClasesEditor, EstructuraEditor, type TipoClase } from '@/components/campus/ListEditors'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { ActionForm, Badge, Confirm, Empty, Field, FileField, PageHead, Select, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
-import { guardarClases, guardarPlanClases } from '../../../admin/actions'
+import { guardarClases, guardarEstructura } from '../../../admin/actions'
 import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
 import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
 
@@ -11,17 +11,18 @@ import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
 export default async function EdicionProfesor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { sb, perfil } = await requireRole('profesor')
-  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, cursos(nombre), aulas(nombre)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
+  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, cursos(nombre, tipo), aulas(nombre)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
   if (!ed) notFound() // un profesor nunca ve ediciones ajenas
-  const curso = ed.cursos as unknown as { nombre: string }
+  const curso = ed.cursos as unknown as { nombre: string; tipo: string }
 
-  const [{ data: alumnos }, { data: mats }, { data: libs }, { data: clases }, { data: plan }, { data: hs }] = await Promise.all([
+  const [{ data: alumnos }, { data: mats }, { data: libs }, { data: clases }, { data: plan }, { data: hs }, { data: mods }] = await Promise.all([
     sb.from('inscripciones').select('id, estado, profiles!inscripciones_alumno_id_fkey(nombre, apellido, email, telefono)').eq('edicion_id', id),
-    sb.from('materiales').select('id, tipo, titulo, url, clase_numero').eq('curso_id', ed.curso_id).order('clase_numero', { nullsFirst: true }).order('creado_en'),
+    sb.from('materiales').select('id, tipo, titulo, url, clase_numero, plan_clase_id').eq('curso_id', ed.curso_id).order('clase_numero', { nullsFirst: true }).order('creado_en'),
     sb.from('materiales_liberados').select('material_id').eq('edicion_id', id),
     sb.from('clases').select('numero, fecha, estado').eq('edicion_id', id).order('numero'),
-    sb.from('plan_clases').select('numero, titulo').eq('curso_id', ed.curso_id).order('numero'),
+    sb.from('plan_clases').select('id, numero, titulo, tipo, modulo_id').eq('curso_id', ed.curso_id).order('numero'),
     sb.from('horarios_curso').select('dia_semana').eq('edicion_id', id),
+    sb.from('modulos_curso').select('id, titulo').eq('curso_id', ed.curso_id).order('orden'),
   ])
   const hoy = hoyAR()
   const liberados = new Set((libs ?? []).map((l) => l.material_id))
@@ -128,12 +129,15 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
       </section>
 
       <section>
-        <h2 className="mb-1 text-xl font-semibold">Plan de clases del curso</h2>
-        <p className="mb-4 text-sm text-secondary">Ojo: el plan es del curso y lo comparten todas sus ediciones. Cambiar un título lo cambia en todas.</p>
+        <h2 className="mb-1 text-xl font-semibold">Estructura del curso</h2>
+        <p className="mb-4 text-sm text-secondary">Ojo: la estructura (módulos y clases) es del curso y la comparten todas sus ediciones. Cambiar un título lo cambia en todas.</p>
         <div className="card max-w-3xl p-6">
-          <ActionForm action={guardarPlanClases} reset={false}>
+          <ActionForm action={guardarEstructura} reset={false}>
             <input type="hidden" name="curso_id" value={ed.curso_id} />
-            <PlanEditor name="plan" inicial={(plan ?? []).map((p) => ({ titulo: p.titulo }))} />
+            {/* key: tras guardar se vuelve a montar con los ids nuevos */}
+            <EstructuraEditor key={[...(mods ?? []), ...(plan ?? [])].map((x) => x.id).join()} name="estructura" taller={curso.tipo === 'taller'}
+              inicial={{ modulos: mods ?? [], clases: (plan ?? []).map((p) => ({ ...p, tipo: p.tipo as TipoClase })) }}
+              conMaterial={Object.fromEntries((plan ?? []).map((p) => [p.id, (mats ?? []).filter((m) => m.plan_clase_id === p.id).length]))} />
           </ActionForm>
         </div>
       </section>
