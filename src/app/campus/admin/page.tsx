@@ -19,7 +19,7 @@ export default async function AdminHome() {
     count(sb.from('profiles').select('*', { count: 'exact', head: true }).eq('rol', 'alumno')),
     count(sb.from('profiles').select('*', { count: 'exact', head: true }).eq('rol', 'profesor')),
     count(sb.from('contactos').select('*', { count: 'exact', head: true }).eq('leido', false)),
-    sb.from('clases').select('id, numero, fecha, estado, ediciones!inner(activo, curso_id, cursos(nombre))').eq('ediciones.activo', true).gte('fecha', hoy).lte('fecha', en14).order('fecha').limit(6),
+    sb.from('clases').select('id, fecha, estado, plan_clases(titulo), ediciones!inner(activo, curso_id, cursos(nombre))').eq('ediciones.activo', true).gte('fecha', hoy).lte('fecha', en14).order('fecha').limit(6),
     sb.from('contactos').select('id, nombre, mensaje, leido, creado_en').order('creado_en', { ascending: false }).limit(4),
     sb.from('ediciones').select('id, curso_id, fecha_inicio, cursos!inner(nombre, tipo, activo)').eq('activo', true).eq('cursos.activo', true).gte('fecha_inicio', hoy).order('fecha_inicio').limit(5),
   ])
@@ -31,7 +31,7 @@ export default async function AdminHome() {
   ]
   // Las relaciones muchos-a-uno llegan como objeto (el tipo inferido es una lista).
   const uno = <T,>(x: T | T[] | null | undefined) => (Array.isArray(x) ? x[0] : x) ?? null
-  type Clase = { id: string; numero: number; fecha: string; estado: string; ediciones: { curso_id: string; cursos: { nombre: string } | null } | null }
+  type Clase = { id: string; fecha: string; estado: string; plan_clases: { titulo: string } | null; ediciones: { curso_id: string; cursos: { nombre: string } | null } | null }
   type PorIniciar = { id: string; curso_id: string; fecha_inicio: string; cursos: { nombre: string; tipo: string } | null }
   const lista = 'divide-y divide-outline-variant text-sm'
   return (
@@ -59,7 +59,7 @@ export default async function AdminHome() {
               {(clases as unknown as Clase[]).map((c) => (
                 <li key={c.id} className="py-2">
                   <p className="font-medium">{uno(uno(c.ediciones)?.cursos)?.nombre ?? 'Curso'}</p>
-                  <p className="text-xs text-on-surface-variant">{fechaAR(c.fecha)} · clase {c.numero}{c.estado !== 'programada' ? ` · ${c.estado}` : ''}</p>
+                  <p className="text-xs text-on-surface-variant">{fechaAR(c.fecha)} · {uno(c.plan_clases)?.titulo ?? 'Clase'}{c.estado !== 'programada' ? ` · ${c.estado}` : ''}</p>
                 </li>
               ))}
             </ul>

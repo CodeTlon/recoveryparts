@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AlertTriangle, CalendarDays, Download, ClipboardList, ArrowRight, FileText, GraduationCap } from 'lucide-react'
+import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { etiquetaEdicion } from '@/lib/fechas'
 import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
@@ -27,7 +28,7 @@ export default async function AlumnoHome() {
 
   const proximas = await Promise.all(lista.filter((i) => i.estado === 'activo').map(async (i) => {
     const { data } = await sb.rpc('proxima_clase_titulo', { p_edicion: i.edicion_id })
-    return { edicion_id: i.edicion_id, clase: (data as { numero: number; fecha: string; titulo: string }[] | null)?.[0] }
+    return { edicion_id: i.edicion_id, clase: (data as { numero: number; fecha: string; titulo: string; tipo: 'teorica' | 'practica' }[] | null)?.[0] }
   }))
 
   // Material ya liberado por edición (RLS + material_visible: nunca cuenta lo no liberado).
@@ -72,7 +73,7 @@ export default async function AlumnoHome() {
               )}
 
               {i.estado === 'activo' && prox && (
-                <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-on-surface-variant"><CalendarDays size={16} /> <span className="whitespace-nowrap">Próxima clase:</span> <span className="font-semibold text-on-surface">#{prox.numero} · {prox.titulo}</span> ({fechaAR(prox.fecha)})</p>
+                <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-on-surface-variant"><CalendarDays size={16} /> <span className="whitespace-nowrap">Próxima clase:</span> <span className="font-semibold text-on-surface">{prox.titulo}</span> · {TIPO_CLASE[prox.tipo]} ({fechaAR(prox.fecha)})</p>
               )}
 
               {i.estado === 'activo' && (
