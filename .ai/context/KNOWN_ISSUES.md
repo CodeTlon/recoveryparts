@@ -34,7 +34,8 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 
 ## Abiertos tras la sesión 2026-10-05 (aulas)
 - **Acciones de `<form action>` simples descartan el error**: `bajaCurso`, `setEstadoCuenta`. Si la base las rechaza, la página se recarga sin mostrar el motivo. Usar `ActionForm` en un modal, como ya hacen «Reactivar» curso y la baja de aulas.
-- **`npm run seed:dev` no anda en Windows**: el script usa `ENV_FILE=…` (sintaxis de shell POSIX), `.env.development` tiene finales CRLF (`APP_ENV` queda con un retorno de carro al final y no pasa el chequeo) y al final escribe en `/dev/null`. Rodeo: correr `node scripts/seed-pruebas.mjs` desde Git Bash con una copia LF del `.env` y `CREDS_OUT` a un archivo temporal.
+- **`npm run seed:dev` no anda desde cmd/PowerShell**: el script npm usa `ENV_FILE=…` (sintaxis POSIX). Desde el 2026-10-06 el seed tolera `.env` con CRLF y ya no escribe en `/dev/null` (solo guarda credenciales si hay `CREDS_OUT`). Rodeo: desde Git Bash, `ENV_FILE=.env.development node scripts/seed-pruebas.mjs --confirmo-no-produccion`.
+- **No correr `npm run build` con `npm run dev` prendido**: los dos escriben en `.next` y el servidor de desarrollo empieza a fallar (módulos que no encuentra, server actions con «Invalid URL»). Apagar el dev, `rm -rf .next` y volver a levantarlo.
 
 ## Abiertos tras la sesión 2026-10-05
 - **Fotos de ejemplo**: las imágenes de cursos/talleres del seed son flyers viejos de `public/images` (mencionan «4 cuotas», precios y «mes de junio»). Chocan con la regla «sin pagos/cuotas» y no corresponden a cada curso: reemplazar por fotos finales (con consentimiento).

@@ -3,12 +3,13 @@
 Qué es verdad ahora (2026-10-06). Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
 
 ## Ramas
+- `feat/estructura-curso` (2026-10-06, sin mergear): estructura del curso módulos → clases → material (RF-58), orden flexible por edición y liberación siempre manual (RF-32). Migraciones **0012–0014**.
 - `dev`, `test` y `main` están al día con **gestión de aulas (RF-03)** y **ediciones de curso** (PR #7 `test → main`, mergeado el 2026-10-06). Las ramas de trabajo de esas mejoras ya se mergearon.
 - La rama remota `feat/unificacion` es otro linaje (esquema `matriculas`/`sitio_config`/`faq`, migraciones `0001_auth_profiles…0011`) y quedó **descartada**: `dev` ya tiene todo lo equivalente.
 - Las constraints de `materiales` y `encuestas` de la auditoría (0007/0008) quedaron `NOT VALID`: si hay datos viejos incorrectos, corregirlos y correr `VALIDATE CONSTRAINT`.
 
 ## Entornos y base de datos
-- **Homologación = base de la demo del cliente.** El proyecto Supabase «RecoveryParts HOMOLOGACIÓN» (ref `kdgjcgtuknexzimnpksz`) es el que usa el sitio `recoveryparts-biud.vercel.app`, que despliega `main`. Tiene aplicadas **0001–0011**: la 0009, la 0010 y la 0011 se aplicaron **a mano en el SQL Editor** el 2026-10-06 (la 0011 justo después del deploy del PR #7) y están registradas en `supabase_migrations.schema_migrations`.
+- **Homologación = base de la demo del cliente.** El proyecto Supabase «RecoveryParts HOMOLOGACIÓN» (ref `kdgjcgtuknexzimnpksz`) es el que usa el sitio `recoveryparts-biud.vercel.app`, que despliega `main`. Tiene aplicadas **0001–0011** (**0012–0014 pendientes**: cambian columnas que usa el código desplegado, así que se aplican junto con el deploy de `feat/estructura-curso` y después se recargan los cursos a mano con la estructura nueva): la 0009, la 0010 y la 0011 se aplicaron **a mano en el SQL Editor** el 2026-10-06 (la 0011 justo después del deploy del PR #7) y están registradas en `supabase_migrations.schema_migrations`.
 - Hay un segundo proyecto Supabase, «Recovery Parts» (us-west-2). **Sin verificar** si es o será producción.
 - El workflow «Migraciones a Supabase» falla en `test` y `main` porque falta el secreto `SUPABASE_DB_URL` en los environments de GitHub (ver `KNOWN_ISSUES.md`).
 - Las aulas de la demo tienen capacidad cargada desde el 2026-10-06 (Aula 1 = 12, Aula 2 = 10, Aula 3 = 10; provisorias, ajustar a las reales en Campus › Aulas). El cupo de cada edición ya se valida contra su aula.
@@ -21,6 +22,8 @@ RF-12 y RF-13 (alta de alumno con curso / vincular a curso nuevo), RF-14 (al fin
 Cargar en GitHub el secreto `SUPABASE_DB_URL` en los environments `test` y `production` (lo tiene que hacer un admin del repo) · separar la base de homologación de la de la demo del cliente · SMTP propio y plantillas de Auth apuntando a `/auth/confirm` · desactivar el registro público en el Auth remoto · rotar las claves y la contraseña de base que se compartieron por chat · crear el proyecto Supabase de producción · proteger ramas y crear environments en GitHub · imágenes finales sin flyers viejos y con consentimiento · dominio.
 
 ## Hecho
+Sesión 2026-10-06 (2): **estructura del curso** (RF-58): módulos → clases (teóricas/prácticas) → material, regla en la base, pestaña «Estructura» para admin y profesor, temario del alumno por módulo, ficha pública solo con títulos de módulos, adelantar/saltear clases por edición y liberación siempre manual. Seed con un curso de 4 módulos, una clase salteada y otra adelantada.
+
 Sesión 2026-10-06: las imágenes (curso, foto del profesor, egresados, testimonios, galería) aceptan rutas del propio sitio (`/images/…`) además de URLs http(s) (`imagenOpcional` en `src/lib/validar.ts`); los cursos y el contenido del seed ya se pueden guardar desde el campus.
 
 Sesión 2026-10-05/06 (5): **ediciones de curso** (cursos recurrentes; migración 0011): el curso es el catálogo y cada dictado una edición; duplicar edición, una por vez, material liberado por edición, sitio con «Próximas fechas». Mergeado a `dev`, `test` y `main` (PR #7). Migraciones 0009–0011 aplicadas a mano en homologación/demo, coordinadas con el deploy. Propuesta para el equipo en `docs/propuestas/ediciones-de-curso.md`.

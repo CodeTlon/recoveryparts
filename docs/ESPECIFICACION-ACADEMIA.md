@@ -5,7 +5,7 @@
 ### Sitio web + Campus Virtual para Academia de Cursos Técnicos
 
 ![Estado](https://img.shields.io/badge/estado-borrador-orange?style=for-the-badge)
-![Versión](https://img.shields.io/badge/versión-0.11-blue?style=for-the-badge)
+![Versión](https://img.shields.io/badge/versión-0.12-blue?style=for-the-badge)
 ![Cliente](https://img.shields.io/badge/cliente-Recovery_Parts-1e3a8a?style=for-the-badge)
 ![Tipo](https://img.shields.io/badge/proyecto-real-success?style=for-the-badge)
 
@@ -269,7 +269,7 @@ stateDiagram-v2
 |---|---|:-:|
 | **Hero** | Nombre, área, tipo, imagen técnica con overlays | — |
 | **Descripción** | Qué se aprende y para quién es | 🟢 RF-25 |
-| **Plan de Estudios** | Acordeón **de alto nivel**, por módulos, sin el detalle completo | 🟢 RF-26 |
+| **Plan de Estudios** | **Solo los títulos de los módulos** del curso, en orden (sin clases ni material). Los talleres no muestran temario. *Cambiado en v0.12.* | 🟢 RF-26 · RF-58 |
 | **Profesor** | Mini-CV: foto, experiencia, certificaciones | 🟢 RF-25 |
 | **Requisitos previos** | Conocimientos o herramientas necesarias | 🟢 RF-25 |
 | **Media** | Imágenes y video del aula y de las clases | 🟢 RF-25 |
@@ -283,7 +283,7 @@ stateDiagram-v2
 
 **Criterios de aceptación**
 - [ ] Toda la ficha es editable por el Admin.
-- [ ] El temario público nunca expone el material del campus.
+- [ ] El temario público nunca expone el material del campus ni los títulos de las clases.
 - [ ] El bloque del kit aparece solo si el curso tiene kit cargado.
 - [ ] Los links de compra abren el software externo en una pestaña nueva.
 
@@ -488,7 +488,7 @@ sequenceDiagram
 <details>
 <summary>⚙️ Regla de cálculo de RF-55</summary>
 
-- `n_clase` = cantidad de clases programadas del curso con fecha **≤ fecha de deserción**. Solo cuentan las clases dictadas: las suspendidas o reprogramadas (RF-38) no suman.
+- `n_clase` = cantidad de clases programadas del curso con fecha **≤ fecha de deserción**. Solo cuentan las clases dictadas: las suspendidas, reprogramadas (RF-38) o salteadas (RF-58) no suman.
 - Si la fecha cae **antes de la primera clase** → `n_clase = 0` ("no llegó a empezar").
 - Si cae **después de la última** → `n_clase = total` del curso.
 - Se guardan `fecha_desercion` (dato de origen) y `n_clase` (calculado). Si se corrige la fecha, se recalcula.
@@ -517,11 +517,11 @@ sequenceDiagram
 | RF-19 | Modalidad presencial. | 🟢 | — |
 | RF-20 | Virtual en vivo. | 🔴 | — |
 | RF-21 | Virtual grabado. | 🔴 | — |
-| RF-22 | Talleres como producto separado. **En el campus funcionan igual que un curso corto** (profesor, aula, cupo, material), con `tipo = taller`. | 🟢 | — |
+| RF-22 | Talleres como producto separado. **En el campus funcionan igual que un curso corto** (profesor, aula, cupo, material), con `tipo = taller`. **No llevan módulos**: solo una lista de clases (v0.12). | 🟢 | — |
 | RF-23 | Carreras con grupo en vivo. | 🔴 | — |
 | RF-24 | Carreras por suscripción con contenido grabado. | 🔴 | — |
 | RF-25 | Página del curso con descripción, profesor, requisitos, media y testimonios. | 🟢 | 🛡️ |
-| RF-26 | Temario público de alto nivel. | 🟢 | 🛡️ |
+| RF-26 | Temario público de alto nivel: **solo los títulos de los módulos** (v0.12). | 🟢 | 🛡️ |
 
 ---
 
@@ -540,13 +540,14 @@ sequenceDiagram
 
 | ID | Descripción | Estado | Rol |
 |---|---|:-:|:-:|
-| RF-31 | Cargar de antemano todo el temario y calendario. | 🟢 | 👨‍🏫 🛡️ |
-| RF-32 | Liberación **automática por fecha** programada, más la opción del profesor de **liberar manualmente** antes de tiempo. | 🟢 | ⚙️ 👨‍🏫 |
+| RF-31 | Cargar de antemano todo el temario y calendario. El temario es la **estructura del curso** (RF-58) y lo editan el admin y el profesor. | 🟢 | 👨‍🏫 🛡️ |
+| RF-32 | Liberación **siempre manual**: el profesor libera cada material en su edición; la fecha de la clase no libera nada. *Cambiado en v0.12: antes era automática por fecha + manual.* | 🟢 | 👨‍🏫 |
 | RF-33 | El alumno visualiza **y puede descargar** el material liberado (vista previa + botón de descarga). *Cambiado en v0.6: antes era solo visualización.* | 🟢 | 🎓 |
 | RF-34 | El acceso depende de la vigencia, no del pago; vencido el período se retira solo. | 🟢 | ⚙️ |
 | RF-35 | Al finalizar el curso aparece en el campus un **botón de descarga** del ZIP con todos los PDFs **ya liberados** (los ocultos o programados no se incluyen). Solo para alumnos que terminaron (no desertores). Disponible **mínimo 1 mes**, o hasta que se borre el curso. | 🟢 | 🎓 |
 | RF-36 | Material: **PDF + links**. Los videos se suben a YouTube (no listado) o Drive y se cargan como link. No se alojan videos. | 🟢 | 👨‍🏫 |
-| RF-37 | El alumno ve el material liberado y **solo el título** del tema de la clase siguiente. Todo lo posterior queda oculto. | 🟢 | ⚙️ |
+| RF-37 | El alumno ve el material liberado y **solo el título** del tema de la clase siguiente. Todo lo posterior queda oculto. Ve los títulos de **todos los módulos**, pero no las clases de los módulos que no empezaron; de la próxima clase ve título y tipo, nunca su material (v0.12). | 🟢 | ⚙️ |
+| RF-58 | **Estructura del curso: módulos → clases → material.** El curso se arma con módulos que contienen clases en orden (título libre, **teórica o práctica**), y cada clase tiene su material (o ninguno). No hay clases sin módulo ni módulos sin clases; las clases de un módulo van juntas. Los talleres no llevan módulos. El material sigue a su clase aunque cambie de lugar; si se borra la clase, el material queda «general». En cada edición el profesor puede **adelantar** una clase (fecha antes que otras) o **saltearla** (no se dicta; no avisa por mail). La comparten todas las ediciones. | 🟢 | 🛡️ 👨‍🏫 |
 
 <details>
 <summary>❓ Preguntas pendientes</summary>
@@ -665,6 +666,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.12 | 2026-10-06 | **Estructura del curso (RF-58)**: módulos → clases (teóricas o prácticas) → material, con la regla en la base; talleres sin módulos; el material sigue a su clase. Orden flexible por edición: adelantar o saltear clases (sin mail). **RF-32**: liberación siempre manual. **RF-26**: el sitio muestra solo los títulos de los módulos. **RF-37**: el alumno ve todos los módulos y solo las clases dictadas y la próxima. RF-55: la clase salteada no cuenta. |
 | 0.11 | 2026-10-05 | **Ediciones de curso** (cursos recurrentes): el curso es el catálogo (contenido, precio, kit, plan de clases, material por N° de clase) y cada dictado es una edición (fecha, horarios, aula, profesor, cupo, calendario, alumnos, encuesta). Una edición activa por vez por curso; duplicar edición copia horarios/aula/profesor/cupo y obliga a asignar fechas de nuevo; material liberado por edición; un alumno puede cursar otra edición del mismo curso; en el sitio, un curso con sus «Próximas fechas» o «Próximamente nuevas fechas». |
 | 0.10 | 2026-10-05 | **RF-03** 🟢: aulas como catálogo propio (capacidad obligatoria en aulas nuevas, una sola capacidad por aula, baja lógica sin borrado, sin baja con cursos activos); el cupo del curso no supera la capacidad de su aula (validado en la base). |
 | 0.9 | 2026-10-05 | **RF-45/46**: cada ítem del kit es «necesario» o «recomendado»; el link de compra puede ser a Mundo Parts (solo enlace). Páginas propias de Contacto y Preguntas frecuentes; módulos visibles en el catálogo. |

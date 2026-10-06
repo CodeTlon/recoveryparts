@@ -13,7 +13,7 @@ if (!process.argv.includes('--confirmo-no-produccion')) {
   process.exit(1)
 }
 
-const env = Object.fromEntries(readFileSync(ENV_FILE, 'utf8').split('\n').filter((l) => l.includes('=') && !l.startsWith('#')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]))
+const env = Object.fromEntries(readFileSync(ENV_FILE, 'utf8').split(/\r?\n/).filter((l) => l.includes('=') && !l.startsWith('#')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]))
 if (env.APP_ENV === 'production' || !['development', 'test'].includes(env.APP_ENV ?? '')) {
   console.error(`Abortado: ${ENV_FILE} no declara APP_ENV=development|test (APP_ENV=${env.APP_ENV ?? 'sin definir'}).`)
   process.exit(1)
@@ -69,7 +69,7 @@ const consecutivos = (inicio, n, tema) => Array.from({ length: n }, (_, i) => {
 })
 // Tienda socia (herramientas y repuestos): los kits enlazan a su sitio; la venta no pasa por este sistema.
 const MP = 'https://www.mundopartsrepuestos.com/'
-// Módulos adicionales de los cursos largos (el plan de estudios completo se carga desde el panel de admin).
+// Módulos adicionales de los cursos largos (solo cuenta el título: las clases se reparten entre los módulos).
 const MODULOS_EXTRA = {
   'reparacion-de-celulares': [['Diagnóstico de fallas', ['Método de diagnóstico', 'Uso del multímetro']], ['Pantallas y baterías', ['Cambio de display', 'Cambio de batería']], ['Software', ['Flasheo y desbloqueo', 'Respaldo de datos']], ['Práctica final', ['Reparación de equipos reales']]],
   'reparacion-de-notebooks': [['Software y sistema', ['Instalación de sistemas', 'Diagnóstico de arranque']], ['Mantenimiento', ['Limpieza profunda', 'Cambio de pasta térmica']], ['Práctica final', ['Reparación de equipos reales']]],
@@ -84,7 +84,7 @@ const CURSOS = [
     horarios: [[1, '18:00', '20:00']],
     modulos: [['Fundamentos y diagnóstico', ['Herramientas del taller', 'Seguridad ESD', 'Apertura segura']], ['Reemplazo de módulos', ['Pantallas', 'Baterías', 'Cámaras']]],
     kit: [['Soldador de punta fina', 'Para microsoldadura', 15000, MP], ['Estaño y flux', 'Pack de insumos', 6500, MP]],
-    clases: [[1, '2026-09-14', 'Introducción y herramientas', 'programada'], [2, '2026-09-21', 'Diagnóstico visual', 'suspendida'], [3, '2026-09-28', 'Apertura y desarme', 'programada'], [4, '2026-10-05', 'Reemplazo de pantalla', 'programada'], [5, '2026-10-12', 'Baterías', 'programada'], [6, '2026-10-19', 'Cámaras y flexores', 'programada']] },
+    clases: [[1, '2026-09-14', 'Introducción y herramientas', 'programada'], [2, '2026-09-21', 'Diagnóstico visual', 'suspendida'], [3, '2026-09-28', 'Apertura y desarme', 'programada'], [4, '2026-10-05', 'Reemplazo de pantalla', 'salteada'], [5, '2026-10-19', 'Baterías', 'programada'], [6, '2026-10-12', 'Cámaras y flexores', 'programada']] },
   { slug: 'carteles-neon-led', imagen_url: '/images/curso-neon.jpg', nombre: 'Carteles Neón LED', area: 'diseno', tipo: 'curso', nivel: 'Inicial', cupo: 2, duracion_semanas: 8, precio: 75000, fecha_inicio: '2026-10-07', aula_id: aulas['Aula 2'], profesor_id: ids.profe2, destacado: true, orden: 2,
     descripcion: 'Diseño y armado de carteles de neón LED. (Curso de prueba, cupo completo a propósito)', requisitos: null, precio_actualizado_en: '2026-09-30',
     horarios: [[3, '18:00', '20:00']], modulos: [['Diseño del cartel', ['Bocetos', 'Materiales']]], kit: [], clases: [[1, '2026-10-07', 'Introducción al neón LED', 'programada'], [2, '2026-10-14', 'Armado', 'programada']] },
@@ -155,29 +155,54 @@ const EDICIONES_EXTRA = [
   { slug: 'reparacion-de-celulares', clave: 'reparacion-de-celulares#2', fecha_inicio: '2026-11-02', cupo: 8, aula: 'Aula 1', profesor: 'profe1', horarios: [[1, '18:00', '20:00']], semanas: 6 },
 ]
 const cid = {}, eid = {}
-async function edicion(curso_id, clave, { fecha_inicio, cupo, aula_id, profesor_id }, horarios, clases) {
+async function edicion(curso_id, clave, { fecha_inicio, cupo, aula_id, profesor_id }, horarios, clases, pm) {
   let e = (await sb.from('ediciones').select('id').eq('curso_id', curso_id).eq('fecha_inicio', fecha_inicio).maybeSingle()).data
   if (!e) e = ok(await sb.from('ediciones').insert({ curso_id, fecha_inicio, cupo, aula_id, profesor_id }).select('id').single(), `edición ${clave}`)
   else ok(await sb.from('ediciones').update({ cupo, aula_id, profesor_id }).eq('id', e.id), `edición ${clave}`)
   eid[clave] = e.id
   ok(await sb.from('horarios_curso').delete().eq('edicion_id', e.id), 'del horarios')
   for (const [d, a, b] of horarios) ok(await sb.from('horarios_curso').insert({ edicion_id: e.id, dia_semana: d, hora_inicio: a, hora_fin: b }), `horario ${clave}`)
-  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, estado]) => ({ edicion_id: e.id, numero, fecha, estado })), { onConflict: 'edicion_id,numero' }), `clases ${clave}`)
+  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, estado]) => ({ edicion_id: e.id, plan_clase_id: pm[numero], fecha, estado })), { onConflict: 'edicion_id,plan_clase_id' }), `clases ${clave}`)
+}
+// Estructura (RF-26, RF-31): en cursos, módulos con sus clases en orden; los talleres no llevan módulos.
+// Por defecto las clases se reparten en bloques consecutivos entre los módulos y una de cada tres es práctica.
+// Celulares tiene 4 módulos y clases prácticas sin material, para probar el árbol y el temario del alumno.
+const ESTRUCTURA = {
+  'reparacion-de-celulares': [['Fundamentos y diagnóstico', [1, 2]], ['Apertura del equipo', [3]], ['Reemplazo de módulos', [4, 5]], ['Cámaras', [6]]],
+}
+const PRACTICAS = { 'reparacion-de-celulares': [2, 3, 4, 5] }
+const plan = {} // slug → { N° de clase → id de la clase }
+async function estructura(slug, curso_id, tipo, modulos, clases) {
+  const [{ data: mods }, { data: pcs }] = await Promise.all([
+    sb.from('modulos_curso').select('id, orden').eq('curso_id', curso_id),
+    sb.from('plan_clases').select('id, numero').eq('curso_id', curso_id),
+  ])
+  const titulos = tipo === 'taller' ? [] : ESTRUCTURA[slug]?.map(([t]) => t) ?? [...modulos, ...(MODULOS_EXTRA[slug] ?? [])].map(([t]) => t)
+  const modulo = (n) => tipo === 'taller' ? null
+    : ESTRUCTURA[slug] ? ESTRUCTURA[slug].findIndex(([, ns]) => ns.includes(n))
+    : Math.floor((n - 1) * titulos.length / clases.length)
+  const practica = (n) => (PRACTICAS[slug] ? PRACTICAS[slug].includes(n) : n % 3 === 0)
+  // Upsert por id (se conservan entre corridas): guardar_estructura valida la regla en la base.
+  ok(await sb.rpc('guardar_estructura', {
+    p_curso: curso_id,
+    p_modulos: titulos.map((titulo, i) => ({ id: mods?.find((m) => m.orden === i)?.id ?? null, titulo })),
+    p_clases: clases.map(([n, , titulo]) => ({ id: pcs?.find((p) => p.numero === n)?.id ?? null, titulo, tipo: practica(n) ? 'practica' : 'teorica', modulo: modulo(n) })),
+  }), `estructura ${slug}`)
+  const { data } = await sb.from('plan_clases').select('id, numero').eq('curso_id', curso_id)
+  plan[slug] = Object.fromEntries((data ?? []).map((x) => [x.numero, x.id]))
 }
 for (const c of CURSOS) {
   const { horarios, modulos, kit, clases, cupo, fecha_inicio, aula_id, profesor_id, ...row } = c
   const data = ok(await sb.from('cursos').upsert(row, { onConflict: 'slug' }).select('id').single(), `curso ${c.slug}`)
   cid[c.slug] = data.id
-  ok(await sb.from('modulos_curso').delete().eq('curso_id', data.id), 'del modulos')
-  for (const [i, [t, items]] of [...modulos, ...(MODULOS_EXTRA[c.slug] ?? [])].entries()) ok(await sb.from('modulos_curso').insert({ curso_id: data.id, orden: i, titulo: t, items }), 'modulo')
   ok(await sb.from('kit_items').delete().eq('curso_id', data.id), 'del kit')
   for (const [i, [n, d, p, l, req]] of kit.entries()) ok(await sb.from('kit_items').insert({ curso_id: data.id, orden: i, nombre: n, descripcion: d, precio: p, link_externo: l, requerido: req !== false }), 'kit')
-  ok(await sb.from('plan_clases').upsert(clases.map(([numero, , titulo]) => ({ curso_id: data.id, numero, titulo })), { onConflict: 'curso_id,numero' }), `plan ${c.slug}`)
-  await edicion(data.id, c.slug, { fecha_inicio, cupo, aula_id, profesor_id }, horarios, clases.map(([n, f, , e]) => [n, f, e]))
+  await estructura(c.slug, data.id, c.tipo, modulos, clases)
+  await edicion(data.id, c.slug, { fecha_inicio, cupo, aula_id, profesor_id }, horarios, clases.map(([n, f, , e]) => [n, f, e]), plan[c.slug])
 }
 for (const x of EDICIONES_EXTRA) {
   const fechas = semanal(x.fecha_inicio, x.semanas, '').map(([n, f]) => [n, f, 'programada'])
-  await edicion(cid[x.slug], x.clave, { fecha_inicio: x.fecha_inicio, cupo: x.cupo, aula_id: aulas[x.aula], profesor_id: ids[x.profesor] }, x.horarios, fechas)
+  await edicion(cid[x.slug], x.clave, { fecha_inicio: x.fecha_inicio, cupo: x.cupo, aula_id: aulas[x.aula], profesor_id: ids[x.profesor] }, x.horarios, fechas, plan[x.slug])
 }
 
 // ── 3. Inscripciones por edición (no se borran; se saltea lo que ya existe) ─
@@ -223,13 +248,15 @@ await inscribir('alumno2', 'reparacion-de-iphone-avanzada')
 await inscribir('alumno2', 'reparacion-de-celulares#2')
 await inscribir('alumno5', 'reparacion-de-celulares#2')
 
-// ── 4. Material del curso por N° de clase (PDF real mínimo + links); liberación por edición ─
+// ── 4. Material del curso por clase (PDF real mínimo + links); se libera a mano en cada edición (RF-32) ─
 const pdf = (t) => { const s = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 144]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 56>>stream\nBT /F1 14 Tf 20 70 Td (${t}) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`; return Buffer.from(s) }
-// `liberarEn`: ediciones donde se libera a mano (el material de una clase también se libera solo al llegar su fecha).
+// `clase`: N° de la clase en el curso (sin clase = material general). `liberarEn`: ediciones donde el profesor ya
+// lo liberó; lo demás queda oculto aunque haya llegado la fecha de su clase.
 async function material(slug, titulo, extra, archivo, liberarEn = []) {
   let m = (await sb.from('materiales').select('id').eq('curso_id', cid[slug]).eq('titulo', titulo).maybeSingle()).data
   if (!m) {
-    const row = { curso_id: cid[slug], titulo, subido_por: ids.profe1, ...extra }
+    const { clase, ...resto } = extra
+    const row = { curso_id: cid[slug], titulo, subido_por: ids.profe1, plan_clase_id: clase ? plan[slug][clase] : null, ...resto }
     if (archivo) {
       const path = `${cid[slug]}/${randomUUID()}.pdf`
       ok(await sb.storage.from('materiales').upload(path, archivo, { contentType: 'application/pdf' }), `subir ${titulo}`)
@@ -239,10 +266,11 @@ async function material(slug, titulo, extra, archivo, liberarEn = []) {
   }
   for (const clave of liberarEn) ok(await sb.from('materiales_liberados').upsert({ edicion_id: eid[clave], material_id: m.id }, { onConflict: 'edicion_id,material_id' }), `liberar ${titulo}`)
 }
-await material('reparacion-de-celulares', 'Apunte Clase 1', { clase_numero: 1 }, pdf('Apunte clase 1 - prueba'))
-await material('reparacion-de-celulares', 'Apunte Clase 6', { clase_numero: 6 }, pdf('Apunte clase 6 - prueba'))
+await material('reparacion-de-celulares', 'Apunte Clase 1', { clase: 1 }, pdf('Apunte clase 1 - prueba'), ['reparacion-de-celulares'])
+// Clase 6 adelantada al 12/10 en la primera edición: su material sigue oculto hasta que el profesor lo libere.
+await material('reparacion-de-celulares', 'Apunte Clase 6', { clase: 6 }, pdf('Apunte clase 6 - prueba'))
 await material('reparacion-de-celulares', 'Video introductorio (link)', { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }, null, ['reparacion-de-celulares'])
-await material('reparacion-de-notebooks', 'Guía de desarme de notebooks', { clase_numero: 1 }, pdf('Guia notebooks - prueba'))
+await material('reparacion-de-notebooks', 'Guía de desarme de notebooks', { clase: 1 }, pdf('Guia notebooks - prueba'), ['reparacion-de-notebooks'])
 await material('armado-y-mantenimiento-de-pcs', 'Checklist de armado', {}, pdf('Checklist armado PC - prueba'), ['armado-y-mantenimiento-de-pcs'])
 await material('taller-cambio-de-glass', 'Guía de cambio de glass', {}, pdf('Guia glass - prueba'), ['taller-cambio-de-glass'])
 
@@ -306,4 +334,4 @@ ok(await sb.from('cms_galeria').insert(G.map(([categoria, area, imagen_url, alt]
 // ── Salida ─────────────────────────────────────────────────
 const tabla = USUARIOS.map((u) => `${u.rol.padEnd(9)} ${u.email.padEnd(32)} ${u.password}`).join('\n')
 console.log(`\nCUENTAS DE PRUEBA (${env.APP_ENV})\n` + tabla)
-writeFileSync(process.env.CREDS_OUT ?? '/dev/null', JSON.stringify({ usuarios: USUARIOS, ids, cursos: cid, ediciones: eid }, null, 2), { mode: 0o600 })
+if (process.env.CREDS_OUT) writeFileSync(process.env.CREDS_OUT, JSON.stringify({ usuarios: USUARIOS, ids, cursos: cid, ediciones: eid }, null, 2), { mode: 0o600 })

@@ -22,8 +22,10 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   if (!ed?.activo || !curso?.activo) return new NextResponse('El curso ya no está disponible', { status: 410 })
   // La regla de liberación la aplica la base con la sesión del alumno; el service role solo descarga los archivos.
   const { data: vis } = await sb.rpc('material_visible', { p_edicion: id })
+  // material_visible ya viene en el orden del curso (módulo, clase, carga); el ZIP lo respeta.
   const ids = ((vis ?? []) as { id: string; tipo: string }[]).filter((v) => v.tipo === 'pdf').map((v) => v.id)
-  const { data: mats } = ids.length ? await adm.from('materiales').select('titulo, storage_path').in('id', ids).order('clase_numero', { nullsFirst: true }).order('creado_en') : { data: [] }
+  const { data: filas } = ids.length ? await adm.from('materiales').select('id, titulo, storage_path').in('id', ids) : { data: [] }
+  const mats = ids.map((i) => (filas ?? []).find((m) => m.id === i)).filter((m) => !!m)
 
   const zip = new JSZip()
   let i = 1

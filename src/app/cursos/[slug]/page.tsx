@@ -6,7 +6,6 @@ import type { Metadata } from 'next'
 import { CheckCircle2, Star, ExternalLink, MapPin, Clock, CalendarDays, Users } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
-import Accordion from '@/components/public/Accordion'
 import { Cupos, Precio, horarioTexto } from '@/components/public/CursoCard'
 import { getCursos, getEdiciones, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, TIPO_LABEL, formatPrecio, fechaCorta } from '@/lib/types'
@@ -33,7 +32,8 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
     getEdiciones().then((e) => e.filter((x) => x.curso_id === c.id)),
     getHorarios().then((h) => h.filter((x) => x.curso_id === c.id)),
     getSettings(),
-    query<{ id: string; titulo: string; items: string[] }[]>((sb) => sb.from('modulos_publicos').select('id, titulo, items').eq('curso_id', c.id).order('orden'), []),
+    // RF-26: solo los títulos de los módulos (nunca clases ni material). Los talleres no tienen módulos.
+    query<{ id: string; titulo: string }[]>((sb) => sb.from('modulos_publicos').select('id, titulo').eq('curso_id', c.id).order('orden'), []),
     query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo, requerido').eq('curso_id', c.id).order('orden'), []),
     query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>((sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
   ])
@@ -69,7 +69,14 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
               <section>
                 <h2 className="mb-1 text-2xl font-semibold">Plan de estudios</h2>
                 <p className="mb-5 text-sm text-on-surface-variant">{modulos.length} módulo{modulos.length === 1 ? '' : 's'}</p>
-                <Accordion items={modulos.map((m, i) => ({ id: m.id, n: String(i + 1).padStart(2, '0'), title: m.titulo, items: m.items }))} />
+                <ol className="flex flex-col gap-3">
+                  {modulos.map((m, i) => (
+                    <li key={m.id} className="card flex items-center gap-4 px-5 py-4">
+                      <span className="font-mono text-xl font-bold text-accent">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="text-lg font-semibold">{m.titulo}</span>
+                    </li>
+                  ))}
+                </ol>
               </section>
             )}
 
