@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { Plus, Trash2, Wand2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Trash2, Wand2 } from 'lucide-react'
 import { DIAS } from '@/lib/types'
 import { MUNDO_PARTS_URL } from '@/lib/validar'
 
 // Editores por filas para lo que antes era un textarea con formato "a | b | c".
 // Cada uno serializa al MISMO texto que ya entienden las server actions (guardarHorarios,
-// guardarModulos, guardarKit, guardarPlanClases, guardarClases), en un <textarea hidden> con el `name` del campo.
+// guardarKit, guardarEstructura, guardarClases), en un <textarea hidden> con el `name` del campo.
 
 const limpiar = (s: string) => s.replace(/[|\n\r]/g, ' ').trim()
 
@@ -27,10 +27,10 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
   return <button type="button" onClick={onClick} className="btn-ghost !px-3 !py-2"><Plus size={14} aria-hidden /> {children}</button>
 }
 
-function RemoveButton({ onClick, label }: { onClick: () => void; label: string }) {
+function RemoveButton({ onClick, label, disabled }: { onClick: () => void; label: string; disabled?: string }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} title={label}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded border border-outline-variant text-on-surface-variant hover:border-red-400 hover:text-red-300">
+    <button type="button" onClick={onClick} aria-label={label} title={disabled || label} disabled={!!disabled}
+      className="grid h-9 w-9 shrink-0 place-items-center rounded border border-outline-variant text-on-surface-variant hover:border-red-400 hover:text-red-300 disabled:pointer-events-none disabled:opacity-30">
       <Trash2 size={15} aria-hidden />
     </button>
   )
@@ -61,36 +61,6 @@ export function HorariosEditor({ name, inicial, onChange }: { name: string; inic
       ))}
       {errH && <p role="alert" className="text-sm text-red-400">{errH}</p>}
       <AddButton onClick={() => set([...rows, { dia: 1, ini: '18:00', fin: '20:00' }])}>Agregar día</AddButton>
-    </div>
-  )
-}
-
-// ── Plan de estudios: módulos con sus temas ──────────────────────────────────────────────────
-type M = { titulo: string; temas: string }
-
-export function ModulosEditor({ name, inicial }: { name: string; inicial: M[] }) {
-  const [rows, setRows] = useState<M[]>(inicial)
-  const upd = (i: number, p: Partial<M>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
-  const errM = rows.some((r) => !limpiar(r.titulo)) ? 'Completá el título de cada módulo o quitá el que sobra.' : ''
-  const txt = rows.filter((r) => limpiar(r.titulo)).map((r) => `# ${limpiar(r.titulo)}\n${r.temas.split('\n').map(limpiar).filter(Boolean).join('\n')}`).join('\n')
-  return (
-    <div className="space-y-4">
-      <Serial name={name} value={txt} />
-      <Guard error={errM} />
-      {errM && <p role="alert" className="text-sm text-red-400">{errM}</p>}
-      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay módulos.</p>}
-      {rows.map((r, i) => (
-        <div key={i} className="rounded border border-outline-variant p-4">
-          <div className="flex items-end gap-2">
-            <div className="flex-1"><label className="label">Módulo {i + 1}</label>
-              <input className="input" placeholder="Ej: Diagnóstico de fallas" value={r.titulo} onChange={(e) => upd(i, { titulo: e.target.value })} /></div>
-            <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar módulo" />
-          </div>
-          <label className="label mt-3">Temas (uno por línea)</label>
-          <textarea rows={4} className="input" placeholder={'Uso del multímetro\nLectura de esquemas'} value={r.temas} onChange={(e) => upd(i, { temas: e.target.value })} />
-        </div>
-      ))}
-      <AddButton onClick={() => setRows([...rows, { titulo: '', temas: '' }])}>Agregar módulo</AddButton>
     </div>
   )
 }
@@ -133,36 +103,134 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
   )
 }
 
-// ── Plan de clases del curso: N° y título (los mismos en todas las ediciones) ─────────────────
-type P = { titulo: string }
+// ── Estructura del curso: módulos → clases (RF-26, RF-31) ─────────────────────────────────────
+// Curso: módulos con sus clases (sin clases sueltas ni módulos vacíos). Taller: solo clases, sin módulos.
+// Serializa JSON {modulos:[{id?,titulo}], clases:[{id?,titulo,tipo,modulo}]} que entiende guardarEstructura.
+// Las clases conservan su id: si cambian de lugar o de módulo, su material y sus fechas las siguen.
+export type TipoClase = 'teorica' | 'practica'
+type EC = { key: string; id?: string; titulo: string; tipo: TipoClase }
+type EM = { key: string; id?: string; titulo: string; clases: EC[] }
+let nKey = 0
+const k = () => `n${++nKey}`
 
-export function PlanEditor({ name, inicial }: { name: string; inicial: P[] }) {
-  const [rows, setRows] = useState<P[]>(inicial)
-  const upd = (i: number, p: Partial<P>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
-  const errP = rows.some((r) => !limpiar(r.titulo)) ? 'Completá el título de cada clase o quitá la que sobra.'
-    : rows.some((r) => limpiar(r.titulo).length > 200) ? 'Cada título puede tener hasta 200 caracteres.'
-    : rows.length > 500 ? 'El plan admite hasta 500 clases.' : ''
+export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
+  name: string; taller: boolean
+  inicial: { modulos: { id: string; titulo: string }[]; clases: { id: string; titulo: string; tipo: TipoClase; modulo_id: string | null }[] }
+  conMaterial: Record<string, number> // id de clase → cantidad de materiales
+}) {
+  const [mods, setMods] = useState<EM[]>(() => {
+    const cl = (c: (typeof inicial.clases)[number]): EC => ({ key: c.id, id: c.id, titulo: c.titulo, tipo: c.tipo })
+    if (taller) return [{ key: 'taller', titulo: '', clases: inicial.clases.map(cl) }]
+    const out: EM[] = inicial.modulos.map((m) => ({ key: m.id, id: m.id, titulo: m.titulo, clases: inicial.clases.filter((c) => c.modulo_id === m.id).map(cl) }))
+    const sueltas = inicial.clases.filter((c) => !c.modulo_id || !inicial.modulos.some((m) => m.id === c.modulo_id))
+    if (sueltas.length) out.push({ key: k(), titulo: 'Sin módulo', clases: sueltas.map(cl) }) // datos previos a la estructura
+    return out
+  })
+  const updM = (i: number, p: Partial<EM>) => setMods(mods.map((m, j) => (j === i ? { ...m, ...p } : m)))
+  const updC = (i: number, c: number, p: Partial<EC>) => updM(i, { clases: mods[i].clases.map((x, j) => (j === c ? { ...x, ...p } : x)) })
+  const mover = <T,>(arr: T[], i: number, d: number) => { const a = [...arr]; const [x] = a.splice(i, 1); a.splice(i + d, 0, x); return a }
+  const aModulo = (i: number, c: number, dest: number) => {
+    const x = mods[i].clases[c]
+    setMods(mods.map((m, j) => j === i ? { ...m, clases: m.clases.filter((_, h) => h !== c) } : j === dest ? { ...m, clases: [...m.clases, x] } : m))
+  }
+
+  const clases = mods.flatMap((m) => m.clases)
+  const errE = !taller && mods.some((m) => !limpiar(m.titulo)) ? 'Completá el título de cada módulo.'
+    : !taller && mods.some((m) => limpiar(m.titulo).length > 120) ? 'Cada módulo puede tener hasta 120 caracteres.'
+    : !taller && mods.some((m) => !m.clases.length) ? `El módulo «${limpiar(mods.find((m) => !m.clases.length)!.titulo) || 'sin título'}» no tiene clases: agregale al menos una o quitalo.`
+    : clases.some((c) => !limpiar(c.titulo)) ? 'Completá el título de cada clase o quitá la que sobra.'
+    : clases.some((c) => limpiar(c.titulo).length > 200) ? 'Cada clase puede tener hasta 200 caracteres.'
+    : clases.length > 500 ? 'El plan admite hasta 500 clases.' : ''
+
+  const ids = new Set(clases.map((c) => c.id).filter(Boolean))
+  const quitadasConMaterial = inicial.clases.filter((c) => !ids.has(c.id) && conMaterial[c.id])
+  const json = JSON.stringify({
+    modulos: taller ? [] : mods.map((m) => ({ id: m.id, titulo: limpiar(m.titulo) })),
+    clases: mods.flatMap((m, i) => m.clases.map((c) => ({ id: c.id, titulo: limpiar(c.titulo), tipo: c.tipo, modulo: taller ? null : i }))),
+  })
+
+  let n = 0
+  const filaClase = (i: number, c: EC, ci: number) => {
+    n++
+    const m = mods[i]
+    return (
+      <div key={c.key} className="flex flex-wrap items-end gap-2">
+        <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{n}</span>
+        <div className="min-w-[12rem] flex-1">
+          <input aria-label={`Título de la clase ${n}`} className="input" maxLength={200} placeholder="Ej: Introducción" value={c.titulo} onChange={(e) => updC(i, ci, { titulo: e.target.value })} /></div>
+        <div>
+          <select aria-label={`Tipo de la clase ${n}`} className="input" value={c.tipo} onChange={(e) => updC(i, ci, { tipo: e.target.value as TipoClase })}>
+            <option value="teorica">Teórica</option><option value="practica">Práctica</option>
+          </select></div>
+        {!taller && mods.length > 1 && (
+          <div>
+            <select aria-label={`Mover la clase ${n} a otro módulo`} className="input" value={i} onChange={(e) => aModulo(i, ci, Number(e.target.value))}>
+              {mods.map((x, j) => <option key={x.key} value={j}>{j === i ? 'Mover a…' : `→ ${limpiar(x.titulo) || `Módulo ${j + 1}`}`}</option>)}
+            </select></div>
+        )}
+        <OrdenBotones label={`la clase ${n}`} arriba={ci > 0 ? () => updM(i, { clases: mover(m.clases, ci, -1) }) : undefined}
+          abajo={ci < m.clases.length - 1 ? () => updM(i, { clases: mover(m.clases, ci, 1) }) : undefined} />
+        <RemoveButton onClick={() => updM(i, { clases: m.clases.filter((_, j) => j !== ci) })} label={`Quitar la clase ${n}`} />
+        {c.id && conMaterial[c.id] ? <p className="basis-full pl-10 text-xs text-on-surface-variant">{conMaterial[c.id]} material{conMaterial[c.id] === 1 ? '' : 'es'}</p> : null}
+      </div>
+    )
+  }
+  const nuevaClase = (): EC => ({ key: k(), titulo: '', tipo: 'teorica' })
+
   return (
-    <div className="space-y-3">
-      <Serial name={name} value={rows.map((r, i) => `${i + 1} | ${limpiar(r.titulo)}`).join('\n')} />
-      <Guard error={errP} />
-      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay clases en el plan.</p>}
-      {rows.map((r, i) => (
-        <div key={i} className="flex items-end gap-2">
-          <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{i + 1}</span>
-          <div className="flex-1"><label className="sr-only">Título clase {i + 1}</label>
-            <input className="input" maxLength={200} placeholder="Ej: Diagnóstico visual" value={r.titulo} onChange={(e) => upd(i, { titulo: e.target.value })} /></div>
-          <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label={`Quitar clase ${i + 1}`} />
+    <div className="space-y-4">
+      <Serial name={name} value={json} />
+      <Guard error={errE} />
+      {taller ? (
+        <div className="space-y-2">
+          {!mods[0].clases.length && <p className="text-sm text-on-surface-variant">Todavía no hay clases. Los talleres no llevan módulos.</p>}
+          {mods[0].clases.map((c, ci) => filaClase(0, c, ci))}
+          <AddButton onClick={() => updM(0, { clases: [...mods[0].clases, nuevaClase()] })}>Agregar clase</AddButton>
         </div>
-      ))}
-      {errP && <p role="alert" className="text-sm text-red-400">{errP}</p>}
-      <AddButton onClick={() => setRows([...rows, { titulo: '' }])}>Agregar clase</AddButton>
+      ) : (
+        <>
+          {!mods.length && <p className="text-sm text-on-surface-variant">Todavía no hay módulos. Cada módulo agrupa sus clases (teóricas o prácticas).</p>}
+          {mods.map((m, i) => (
+            <div key={m.key} className="rounded border border-outline-variant p-4">
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-[12rem] flex-1"><label className="label">Módulo {i + 1}</label>
+                  <input className="input" maxLength={120} placeholder="Ej: Fundamentos" value={m.titulo} onChange={(e) => updM(i, { titulo: e.target.value })} /></div>
+                <OrdenBotones label={`el módulo ${i + 1}`} arriba={i > 0 ? () => setMods(mover(mods, i, -1)) : undefined}
+                  abajo={i < mods.length - 1 ? () => setMods(mover(mods, i, 1)) : undefined} />
+                <RemoveButton onClick={() => setMods(mods.filter((_, j) => j !== i))} label={`Quitar el módulo ${i + 1}`}
+                  disabled={m.clases.length ? 'Para quitar el módulo, mové sus clases a otro o quitalas' : undefined} />
+              </div>
+              <div className="mt-3 space-y-2">
+                {m.clases.map((c, ci) => filaClase(i, c, ci))}
+                <AddButton onClick={() => updM(i, { clases: [...m.clases, nuevaClase()] })}>Agregar clase</AddButton>
+              </div>
+            </div>
+          ))}
+          <AddButton onClick={() => setMods([...mods, { key: k(), titulo: '', clases: [nuevaClase()] }])}>Agregar módulo</AddButton>
+        </>
+      )}
+      {quitadasConMaterial.length > 0 && (
+        <p role="status" className="rounded border border-amber-400/50 p-3 text-sm text-amber-300">
+          Al guardar, el material de {quitadasConMaterial.map((c) => `«${c.titulo}» (${conMaterial[c.id]})`).join(', ')} va a quedar como <strong>material general</strong>. No se borra.
+        </p>
+      )}
+      {errE && <p role="alert" className="text-sm text-red-400">{errE}</p>}
     </div>
   )
 }
 
-// ── Calendario de una edición: fecha y estado de cada clase del plan ────────────────────────────
-type C = { numero: number; titulo: string; fecha: string; estado: string }
+function OrdenBotones({ label, arriba, abajo }: { label: string; arriba?: () => void; abajo?: () => void }) {
+  const cls = 'grid h-9 w-9 shrink-0 place-items-center rounded border border-outline-variant text-on-surface-variant hover:text-on-surface disabled:opacity-30'
+  return (
+    <div className="flex gap-1">
+      <button type="button" className={cls} disabled={!arriba} onClick={arriba} aria-label={`Subir ${label}`} title="Subir"><ArrowUp size={15} aria-hidden /></button>
+      <button type="button" className={cls} disabled={!abajo} onClick={abajo} aria-label={`Bajar ${label}`} title="Bajar"><ArrowDown size={15} aria-hidden /></button>
+    </div>
+  )
+}
+
+// ── Calendario de una edición: fecha y estado de cada clase del curso ───────────────────────────
+type C = { id: string; numero: number; titulo: string; modulo?: string; fecha: string; estado: string }
 
 // Fechas desde `inicio` que caen en los días de la semana dados (0=Domingo … 6=Sábado).
 function generarFechas(inicio: string, dias: number[], cantidad: number): string[] {
@@ -175,31 +243,32 @@ function generarFechas(inicio: string, dias: number[], cantidad: number): string
   return out
 }
 
-// Las filas son las clases del plan del curso (los títulos no se editan acá). Al crear o duplicar una edición
+// Las filas son las clases del curso en su orden (los títulos no se editan acá). Al crear o duplicar una edición
 // las fechas empiezan vacías: «Proponer fechas» las arma desde la fecha de inicio y los días de cursada (R8).
+// El orden es flexible: se puede adelantar una clase (fecha antes que otras) o saltearla (no se dicta).
 export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
-  name: string; plan: { numero: number; titulo: string }[]; inicial: { numero: number; fecha: string; estado: string }[]
+  name: string; plan: { id: string; numero: number; titulo: string; modulo?: string }[]; inicial: { plan_clase_id: string; fecha: string; estado: string }[]
   inicio?: string | null; dias?: number[]; avisar?: React.ReactNode
 }) {
-  const previo = new Map(inicial.map((c) => [c.numero, c]))
-  const [rows, setRows] = useState<C[]>(plan.map((p) => ({ ...p, fecha: previo.get(p.numero)?.fecha ?? '', estado: previo.get(p.numero)?.estado ?? 'programada' })))
+  const previo = new Map(inicial.map((c) => [c.plan_clase_id, c]))
+  const [rows, setRows] = useState<C[]>(plan.map((p) => ({ ...p, fecha: previo.get(p.id)?.fecha ?? '', estado: previo.get(p.id)?.estado ?? 'programada' })))
   const upd = (i: number, p: Partial<C>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
   const conFecha = rows.filter((r) => r.fecha)
-  const fechas = conFecha.map((r) => r.fecha)
+  const dictadas = conFecha.filter((r) => r.estado !== 'salteada').map((r) => r.fecha)
+  const primera = conFecha.map((r) => r.fecha).sort()[0]
   const errC = !conFecha.length ? 'Asigná la fecha de al menos una clase.'
-    : new Set(fechas).size < fechas.length ? 'Hay dos clases en la misma fecha.'
-    : fechas.some((f, i) => i > 0 && f < fechas[i - 1]) ? 'Las fechas tienen que seguir el orden de las clases.'
-    : inicio && fechas[0] < inicio ? `Ninguna clase puede ser anterior al inicio de la edición (${inicio.split('-').reverse().join('/')}).` : ''
+    : new Set(dictadas).size < dictadas.length ? 'Hay dos clases en la misma fecha.'
+    : inicio && primera < inicio ? `Ninguna clase puede ser anterior al inicio de la edición (${inicio.split('-').reverse().join('/')}).` : ''
   const puedeGenerar = !!inicio && !!dias?.length
   const generar = () => {
     const f = generarFechas(inicio!, dias!, rows.length)
     setRows(rows.map((r, i) => ({ ...r, fecha: f[i] ?? '' })))
   }
   const sinFecha = rows.length - conFecha.length
-  if (!plan.length) return <p className="text-sm text-on-surface-variant">El curso todavía no tiene plan de clases. Cargalo en la pestaña «Plan de clases» del curso.</p>
+  if (!plan.length) return <p className="text-sm text-on-surface-variant">El curso todavía no tiene clases. Cargalas en la pestaña «Estructura» del curso.</p>
   return (
     <div className="space-y-4">
-      <Serial name={name} value={conFecha.map((r) => `${r.numero} | ${r.fecha} | ${r.estado}`).join('\n')} />
+      <Serial name={name} value={conFecha.map((r) => `${r.id} | ${r.fecha} | ${r.estado}`).join('\n')} />
       <Guard error={errC} />
       <div className="flex flex-wrap items-center gap-2 rounded border border-dashed border-outline-variant p-3">
         <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost !px-3 !py-2 disabled:opacity-50"><Wand2 size={14} aria-hidden /> Proponer fechas</button>
@@ -207,15 +276,16 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
           {puedeGenerar ? 'Asigna una fecha a cada clase desde el inicio de la edición, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas, cargá antes la fecha de inicio (Datos) y los horarios de la edición.'}
         </p>
       </div>
+      <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y no cuenta para el N° de clase de deserción. El material lo liberás vos, clase por clase. Saltear o adelantar no avisa por mail.</p>
       <div className="space-y-2">
         {rows.map((r, i) => (
-          <div key={r.numero} className="flex flex-wrap items-end gap-2">
+          <div key={r.id} className="flex flex-wrap items-end gap-2">
             <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{r.numero}</span>
-            <p className="min-w-[10rem] flex-1 pb-2 text-sm">{r.titulo}</p>
-            <div><label className="sr-only">Fecha clase {r.numero}</label><input type="date" className="input" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} /></div>
-            <div><label className="sr-only">Estado clase {r.numero}</label>
-              <select className="input" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
-                <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option>
+            <p className="min-w-[10rem] flex-1 pb-2 text-sm">{r.titulo}{r.modulo && <span className="block text-xs text-on-surface-variant">{r.modulo}</span>}</p>
+            <div><input type="date" aria-label={`Fecha de ${r.titulo}`} className="input" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} /></div>
+            <div>
+              <select aria-label={`Estado de ${r.titulo}`} className="input" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
+                <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option><option value="salteada">Salteada</option>
               </select></div>
           </div>
         ))}

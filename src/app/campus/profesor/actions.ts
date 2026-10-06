@@ -8,20 +8,18 @@ const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
 const MAX_PDF = 25 * 1024 * 1024
 const revalidar = () => { revalidatePath('/campus', 'layout') }
 
-// El material es del curso (lo comparten sus ediciones) y se asocia a un N° del plan de clases o queda «general».
-// Lo cargan el admin y los profesores que dictan una edición activa del curso (RLS). Cada edición lo libera sola
-// cuando llega la fecha de esa clase en su calendario; «Liberar ahora» es solo para la edición del profesor.
-async function validarMaterial(sb: Awaited<ReturnType<typeof requireRole>>['sb'], fd: FormData): Promise<{ error: string } | { curso_id: string; titulo: string; clase_numero: number | null }> {
-  const curso_id = txt(fd, 'curso_id'), titulo = txt(fd, 'titulo'), n = txt(fd, 'clase_numero')
+// El material es del curso (lo comparten sus ediciones) y se asocia a una CLASE del curso (por id: si la clase cambia
+// de lugar, el material la sigue) o queda «general». Lo cargan el admin y los profesores que dictan una edición activa
+// del curso (RLS). En cada edición el alumno lo ve solo cuando el profesor lo libera (RF-32: siempre a mano); la
+// liberación es de la edición del profesor.
+async function validarMaterial(sb: Awaited<ReturnType<typeof requireRole>>['sb'], fd: FormData): Promise<{ error: string } | { curso_id: string; titulo: string; plan_clase_id: string | null }> {
+  const curso_id = txt(fd, 'curso_id'), titulo = txt(fd, 'titulo'), plan_clase_id = txt(fd, 'plan_clase_id') || null
   if (!titulo || titulo.length > 200) return { error: 'Poné un título de hasta 200 caracteres.' }
-  let clase_numero: number | null = null
-  if (n) {
-    clase_numero = Number(n)
-    if (!Number.isInteger(clase_numero) || clase_numero < 1) return { error: 'Elegí una clase válida.' }
-    const { data } = await sb.from('plan_clases').select('numero').eq('curso_id', curso_id).eq('numero', clase_numero).maybeSingle()
-    if (!data) return { error: 'Esa clase no está en el plan del curso.' }
+  if (plan_clase_id) {
+    const { data } = await sb.from('plan_clases').select('id').eq('curso_id', curso_id).eq('id', plan_clase_id).maybeSingle()
+    if (!data) return { error: 'Esa clase no es de este curso.' }
   }
-  return { curso_id, titulo, clase_numero }
+  return { curso_id, titulo, plan_clase_id }
 }
 
 // Si se tildó «liberar ya en esta edición», se registra la liberación manual en esa edición.

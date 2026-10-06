@@ -85,13 +85,15 @@ export function FileField({ label, name, accept, required, hint }: { label: stri
   )
 }
 
-export function Select({ name, label, defaultValue, options, empty }: { name: string; label: string; defaultValue?: string | null; options: [string, string][]; empty?: string }) {
+// `grupos` agrega <optgroup> (ej. clases agrupadas por módulo) después de las `options` sueltas.
+export function Select({ name, label, defaultValue, options, empty, grupos }: { name: string; label: string; defaultValue?: string | null; options: [string, string][]; empty?: string; grupos?: [string, [string, string][]][] }) {
   return (
     <Field label={label} name={name}>
       {(p) => (
         <select {...p} name={name} defaultValue={defaultValue ?? ''} className="input">
           {empty !== undefined && <option value="">{empty}</option>}
           {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          {grupos?.map(([g, ops]) => <optgroup key={g} label={g}>{ops.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</optgroup>)}
         </select>
       )}
     </Field>

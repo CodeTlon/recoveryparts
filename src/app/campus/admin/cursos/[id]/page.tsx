@@ -6,12 +6,13 @@ import CursoForm from '@/components/campus/CursoForm'
 import EdicionForm from '@/components/campus/EdicionForm'
 import DuplicarEdicion from '@/components/campus/DuplicarEdicion'
 import { ActionForm, Badge, Empty, ModalButton, PageHead, BackLink } from '@/components/campus/ui'
-import { guardarKit, guardarModulos, guardarPlanClases, setEstadoEdicion } from '../../actions'
+import { guardarEstructura, guardarKit, setEstadoEdicion } from '../../actions'
 import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
-import { KitEditor, ModulosEditor, PlanEditor } from '@/components/campus/ListEditors'
+import { EstructuraEditor, KitEditor } from '@/components/campus/ListEditors'
+import ArbolEstructura, { type ArbolClase, type ArbolMaterial, type ArbolModulo } from '@/components/campus/ArbolEstructura'
 
 // El curso es el catálogo (se carga una vez); cada vez que se dicta es una edición.
-const TABS = [['ediciones', 'Ediciones'], ['datos', 'Datos'], ['plan', 'Plan de estudios'], ['kit', 'Kit'], ['clases', 'Plan de clases'], ['material', 'Material']] as const
+const TABS = [['ediciones', 'Ediciones'], ['datos', 'Datos'], ['estructura', 'Estructura'], ['kit', 'Kit'], ['material', 'Material']] as const
 
 type Ed = { id: string; fecha_inicio: string | null; cupo: number; activo: boolean; aula_id: string | null; profesor_id: string | null; aulas: { nombre: string } | null; profiles: { nombre: string; apellido: string } | null; inscripciones: { id: string }[]; clases: { fecha: string }[] }
 
@@ -36,18 +37,20 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
     sb.from('ediciones').select('id, fecha_inicio, cupo, activo, aula_id, profesor_id, aulas(nombre), profiles(nombre, apellido), inscripciones(id), clases(fecha)').eq('curso_id', id).order('fecha_inicio', { ascending: false }),
     sb.from('aulas').select('id, nombre, capacidad, activa').eq('activa', true).order('nombre'),
     sb.from('profiles').select('id, nombre, apellido').eq('rol', 'profesor').neq('estado_cuenta', 'inactiva').order('apellido'),
-    sb.from('modulos_curso').select('*').eq('curso_id', id).order('orden'),
+    sb.from('modulos_curso').select('id, titulo, orden').eq('curso_id', id).order('orden'),
     sb.from('kit_items').select('*').eq('curso_id', id).order('orden'),
-    sb.from('plan_clases').select('numero, titulo').eq('curso_id', id).order('numero'),
-    sb.from('materiales').select('id, tipo, titulo, clase_numero').eq('curso_id', id).order('clase_numero', { nullsFirst: true }),
+    sb.from('plan_clases').select('id, numero, titulo, tipo, modulo_id').eq('curso_id', id).order('numero'),
+    sb.from('materiales').select('id, tipo, titulo, plan_clase_id').eq('curso_id', id).order('creado_en'),
   ])
   const ediciones = (eds ?? []) as unknown as Ed[]
   const hoy = hoyAR()
   const profOpts: [string, string][] = (profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])
-  const mIni = (mods ?? []).map((m) => ({ titulo: m.titulo as string, temas: (m.items as string[]).join('\n') }))
   const kIni = (kit ?? []).map((k) => ({ nombre: k.nombre as string, descripcion: (k.descripcion ?? '') as string, precio: k.precio == null ? '' : String(k.precio), link: (k.link_externo ?? '') as string, requerido: (k.requerido ?? true) as boolean }))
-  const pIni = (plan ?? []).map((p) => ({ titulo: p.titulo as string }))
-  const tituloClase = (n: number | null) => (n == null ? 'Material general' : `Clase ${n} · ${plan?.find((p) => p.numero === n)?.titulo ?? '(fuera del plan)'}`)
+  const modulos = (mods ?? []) as ArbolModulo[]
+  const clases = (plan ?? []) as ArbolClase[]
+  const materiales = (mats ?? []) as ArbolMaterial[]
+  const conMaterial = Object.fromEntries(clases.map((c) => [c.id, materiales.filter((m) => m.plan_clase_id === c.id).length]))
+  const taller = curso.tipo === 'taller'
 
   const sec = 'mb-12'
   const href = (k: string) => `/campus/admin/cursos/${id}?tab=${k}`
@@ -70,7 +73,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
             <p className="text-sm text-on-surface-variant">Cada vez que se dicta el curso: fecha, aula, profesor, cupo, calendario y alumnos. Una edición activa por vez.</p>
           </div>
           <ModalButton label={<><CalendarPlus size={16} aria-hidden /> Nueva edición</>} title={`Nueva edición de ${curso.nombre}`} className="btn-primary whitespace-nowrap" wide>
-            {!plan?.length && <p className="mb-4 rounded border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">El curso todavía no tiene plan de clases: cargalo antes para poder armar el calendario de la edición.</p>}
+            {!plan?.length && <p className="mb-4 rounded border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">El curso todavía no tiene clases: cargalas en «Estructura» para poder armar el calendario de la edición.</p>}
             <EdicionForm cursoId={id} aulas={aulas ?? []} profesores={profOpts} />
           </ModalButton>
         </div>
@@ -123,13 +126,19 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         <CursoForm curso={curso} />
       </section>}
 
-      {tab === 'plan' && <section className={sec}>
-        <h2 className="mb-1 text-xl font-semibold">Plan de estudios público</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Solo el temario de alto nivel; nunca se expone el material del campus.</p>
-        <div className="card max-w-3xl p-6"><ActionForm action={guardarModulos} reset={false}>
+      {tab === 'estructura' && <section className={sec}>
+        <h2 className="mb-1 text-xl font-semibold">Estructura del curso</h2>
+        <p className="mb-4 text-sm text-on-surface-variant">
+          {taller ? 'Las clases del taller, en orden (los talleres no llevan módulos).' : 'Los módulos y, dentro de cada uno, sus clases en orden. Todo módulo tiene clases y toda clase está en un módulo.'}
+          {' '}La comparten todas las ediciones; cada edición pone las fechas en su calendario. En el sitio solo se ven los títulos de los módulos.
+        </p>
+        <div className="card max-w-3xl p-6"><ActionForm action={guardarEstructura} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
-          <ModulosEditor name="modulos" inicial={mIni} />
+          {/* key: tras guardar se vuelve a montar con los ids nuevos (si no, un segundo guardado duplicaría lo agregado) */}
+          <EstructuraEditor key={[...modulos, ...clases].map((x) => x.id).join()} name="estructura" taller={taller} inicial={{ modulos, clases }} conMaterial={conMaterial} />
         </ActionForm></div>
+        <h3 className="mb-3 mt-10 text-lg font-semibold">Cómo queda</h3>
+        <div className="max-w-3xl"><ArbolEstructura modulos={modulos} clases={clases} materiales={materiales} /></div>
       </section>}
 
       {tab === 'kit' && <section className={sec}>
@@ -141,21 +150,11 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         </ActionForm></div>
       </section>}
 
-      {tab === 'clases' && <section className={sec}>
-        <h2 className="mb-1 text-xl font-semibold">Plan de clases</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">El título de cada clase, igual en todas las ediciones. Cada edición le asigna sus fechas en su Calendario. El material se asocia a estos números de clase.</p>
-        <div className="card max-w-3xl p-6"><ActionForm action={guardarPlanClases} reset={false}>
-          <input type="hidden" name="curso_id" value={id} />
-          <PlanEditor name="plan" inicial={pIni} />
-        </ActionForm></div>
-      </section>}
-
       {tab === 'material' && <section>
         <h2 className="mb-1 text-xl font-semibold">Material del curso</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Lo suben los profesores que dictan el curso. Cada edición lo libera sola cuando llega la fecha de esa clase en su calendario, o el profesor lo libera antes en su edición.</p>
-        {!mats?.length ? <Empty>Todavía no hay material cargado.</Empty> : (
-          <ul className="card divide-y divide-outline-variant">{mats.map((m) => <li key={m.id} className="flex flex-wrap justify-between gap-2 p-4 text-sm"><span>{m.titulo} <span className="ml-2 text-xs uppercase text-on-surface-variant">{m.tipo}</span></span><span className="text-on-surface-variant">{tituloClase(m.clase_numero)}</span></li>)}</ul>
-        )}
+        <p className="mb-4 text-sm text-on-surface-variant">Lo suben los profesores que dictan el curso. En cada edición el alumno lo ve solo cuando el profesor lo libera (RF-32).</p>
+        {!materiales.length && <Empty>Todavía no hay material cargado.</Empty>}
+        <div className="max-w-3xl"><ArbolEstructura modulos={modulos} clases={clases} materiales={materiales} /></div>
       </section>}
     </>
   )

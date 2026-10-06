@@ -18,8 +18,11 @@ function traducir(m: string) {
   if (/^(Cargá la capacidad|La capacidad del aula|No se puede dar de baja el aula|El aula .+ está dada de baja|El cupo \(\d+\) supera|Las aulas no se borran)/.test(m)) return m
   if (/aulas_nombre/.test(m)) return 'Ya existe un aula con ese nombre.'
   // Ediciones (0011): mensajes legibles de la base (superposición, fechas, plan de clases, curso de baja).
-  if (/^(Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase \d+ |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
+  if (/^(Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
   if (/ediciones_cupo_check/.test(m)) return 'El cupo debe ser un número entero entre 1 y 500.'
+  // Estructura del curso (0013): módulo vacío, clase sin módulo, taller con módulos, clase con fechas.
+  if (/^(La clase «|El módulo «|Un taller no lleva|Las clases de cada módulo|El plan admite|No tenés permiso para editar)/.test(m)) return m
+  if (/modulos_curso_titulo_check/.test(m)) return 'Cada módulo necesita un título de hasta 120 caracteres.'
   if (/plan_clases_titulo_check|plan_clases_numero_check/.test(m)) return 'Revisá el plan: cada clase necesita un título de hasta 200 caracteres.'
   if (/cupos disponibles/.test(m)) return 'El curso no tiene cupos disponibles.'
   if (/cupo no puede ser menor/.test(m)) return 'El cupo no puede ser menor que los alumnos ya asignados.'
@@ -166,42 +169,25 @@ export async function reactivarCurso(_: R, fd: FormData): Promise<R> {
   return { ok: true }
 }
 
-// Temario público: "# Título del módulo" seguido de un ítem por línea.
-export async function guardarModulos(_: R, fd: FormData): Promise<R> {
-  const { sb } = await requireRole('admin')
-  const curso_id = txt(fd, 'curso_id')
-  const mods: { curso_id: string; orden: number; titulo: string; items: string[] }[] = []
-  for (const l of txt(fd, 'modulos').split('\n').map((x) => x.trim()).filter(Boolean)) {
-    if (l.startsWith('#')) mods.push({ curso_id, orden: mods.length, titulo: l.replace(/^#+\s*/, ''), items: [] })
-    else mods.at(-1)?.items.push(l.replace(/^[-•]\s*/, ''))
-  }
-  const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'modulos_curso', p_id: curso_id, p_filas: mods })
-  if (error) return { error: 'No se pudo guardar el temario.' }
-  revalidarCursos()
-  return { ok: true }
-}
-
-// Plan de clases del curso (RF-31): "N | Título" por línea. Los títulos son los mismos en todas las ediciones;
-// cada edición pone sus fechas. Lo edita el admin o un profesor que dicte una edición activa del curso (RLS).
-export async function guardarPlanClases(_: R, fd: FormData): Promise<R> {
+// Estructura del curso (RF-26, RF-31): módulos con sus clases (teóricas o prácticas); en talleres, solo clases.
+// Llega como JSON del EstructuraEditor. La base guarda todo de una vez y valida la regla de estructura
+// (sin clases sueltas ni módulos vacíos en cursos; sin módulos en talleres). Admin o profesor de una edición activa.
+type EstructuraIn = { modulos: { id?: string; titulo: string }[]; clases: { id?: string; titulo: string; tipo: string; modulo: number | null }[] }
+export async function guardarEstructura(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin', 'profesor')
   const curso_id = txt(fd, 'curso_id')
-  const filas = txt(fd, 'plan').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
-    const [n, ...resto] = l.split('|'); const titulo = resto.join('|').trim()
-    return /^\d+$/.test(n.trim()) && titulo && titulo.length <= 200 ? { curso_id, numero: Number(n), titulo } : null
+  let e: EstructuraIn
+  try { e = JSON.parse(txt(fd, 'estructura')) } catch { return { error: 'No se pudo leer la estructura.' } }
+  if (!Array.isArray(e?.modulos) || !Array.isArray(e?.clases)) return { error: 'No se pudo leer la estructura.' }
+  if (e.modulos.some((m) => !m.titulo?.trim() || m.titulo.trim().length > 120)) return { error: 'Cada módulo necesita un título de hasta 120 caracteres.' }
+  if (e.clases.some((c) => !c.titulo?.trim() || c.titulo.trim().length > 200)) return { error: 'Cada clase necesita un título de hasta 200 caracteres.' }
+  if (e.clases.some((c) => !['teorica', 'practica'].includes(c.tipo))) return { error: 'Cada clase es teórica o práctica.' }
+  if (e.clases.length > 500) return { error: 'El plan admite hasta 500 clases.' }
+  const { error } = await sb.rpc('guardar_estructura', {
+    p_curso: curso_id,
+    p_modulos: e.modulos.map((m) => ({ id: m.id ?? null, titulo: m.titulo.trim() })),
+    p_clases: e.clases.map((c) => ({ id: c.id ?? null, titulo: c.titulo.trim(), tipo: c.tipo, modulo: c.modulo })),
   })
-  if (filas.some((f) => !f)) return { error: 'Cada clase necesita un título de hasta 200 caracteres.' }
-  const ok = filas as { numero: number }[]
-  if (ok.length > 500) return { error: 'El plan admite hasta 500 clases.' }
-  if (new Set(ok.map((f) => f.numero)).size !== ok.length) return { error: 'Hay números de clase repetidos.' }
-  // No dejar fuera del plan clases que ya están en el calendario de alguna edición o que tienen material.
-  const max = Math.max(0, ...ok.map((f) => f.numero))
-  const { data: eds } = await sb.from('ediciones').select('id').eq('curso_id', curso_id)
-  const { data: enUso } = eds?.length ? await sb.from('clases').select('numero').in('edicion_id', eds.map((e) => e.id)).gt('numero', max).limit(1) : { data: [] }
-  if (enUso?.length) return { error: `La clase ${enUso[0].numero} está en el calendario de una edición. Sacala del calendario antes de quitarla del plan.` }
-  const { data: conMat } = await sb.from('materiales').select('clase_numero').eq('curso_id', curso_id).gt('clase_numero', max).limit(1)
-  if (conMat?.length) return { error: `La clase ${conMat[0].clase_numero} tiene material. Pasá ese material a otra clase o a «general» antes de quitarla.` }
-  const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'plan_clases', p_id: curso_id, p_filas: ok })
   if (error) return { error: traducir(error.message) }
   revalidarCursos()
   return { ok: true }
@@ -332,39 +318,42 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin', 'profesor')
   const edicion_id = txt(fd, 'edicion_id')
   const filas = txt(fd, 'clases').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
-    const [n, fecha, estado] = l.split('|').map((x) => x.trim())
-    if (!/^\d+$/.test(n) || !fechaValida(fecha ?? '')) return null
-    if (estado && !['programada', 'suspendida', 'reprogramada'].includes(estado)) return null
-    return { edicion_id, numero: Number(n), fecha, estado: estado || 'programada' }
+    const [plan_clase_id, fecha, estado] = l.split('|').map((x) => x.trim())
+    if (!/^[0-9a-f-]{36}$/i.test(plan_clase_id) || !fechaValida(fecha ?? '')) return null
+    if (estado && !['programada', 'suspendida', 'reprogramada', 'salteada'].includes(estado)) return null
+    return { edicion_id, plan_clase_id, fecha, estado: estado || 'programada' }
   })
   if (filas.some((f) => !f)) return { error: 'Revisá el calendario: cada clase necesita una fecha válida.' }
-  const ok = filas as { numero: number; estado: string; fecha: string }[]
+  const ok = filas as { plan_clase_id: string; estado: string; fecha: string }[]
   if (!ok.length) return { error: 'Asigná la fecha de al menos una clase.' }
-  if (new Set(ok.map((f) => f.numero)).size !== ok.length) return { error: 'Hay números de clase repetidos.' }
-  if (new Set(ok.map((f) => f.fecha)).size !== ok.length) return { error: 'Hay dos clases en la misma fecha.' }
-  const ordenadas = [...ok].sort((a, b) => a.numero - b.numero)
-  if (ordenadas.some((f, i) => i > 0 && f.fecha < ordenadas[i - 1].fecha)) return { error: 'Las fechas tienen que seguir el orden de las clases.' }
-  const nums = ok.map((f) => f.numero)
+  if (new Set(ok.map((f) => f.plan_clase_id)).size !== ok.length) return { error: 'Hay clases repetidas.' }
+  // Orden flexible: el profesor puede adelantar una clase (fecha antes que otras) o saltearla. Una salteada no se
+  // dicta, así que su fecha puede quedar ocupada por otra clase.
+  const dictadas = ok.filter((f) => f.estado !== 'salteada').map((f) => f.fecha)
+  if (new Set(dictadas).size !== dictadas.length) return { error: 'Hay dos clases en la misma fecha.' }
+  const ids = ok.map((f) => f.plan_clase_id)
 
-  const { data: previas } = await sb.from('clases').select('id, numero, fecha, estado').eq('edicion_id', edicion_id)
-  const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'edicion_id,numero' })
+  const { data: previas } = await sb.from('clases').select('id, plan_clase_id, fecha, estado').eq('edicion_id', edicion_id)
+  const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'edicion_id,plan_clase_id' })
   if (error) return { error: traducir(error.message) }
-  const aBorrar = (previas ?? []).filter((c: any) => !nums.includes(c.numero))
+  const aBorrar = (previas ?? []).filter((c: any) => !ids.includes(c.plan_clase_id))
   if (aBorrar.length) {
     const { error: eDel } = await sb.from('clases').delete().in('id', aBorrar.map((c: any) => c.id))
     if (eDel) return { error: 'Se guardó el calendario, pero no se pudieron quitar las clases que faltaban.' }
   }
 
   // RF-38 (por mail): avisar a los alumnos activos de clases suspendidas/reprogramadas (solo lo que cambió).
-  const previa = new Map((previas ?? []).map((c: any) => [c.numero, c]))
-  const aviso = ok.filter((f) => f.estado !== 'programada' && (() => { const a: any = previa.get(f.numero); return !a || a.estado !== f.estado || a.fecha !== f.fecha })())
+  // Saltear o adelantar una clase NO avisa: el día de cursada no cambia y el profesor lo dice en clase.
+  const previa = new Map((previas ?? []).map((c: any) => [c.plan_clase_id, c]))
+  const aviso = ok.filter((f) => ['suspendida', 'reprogramada'].includes(f.estado) && (() => { const a: any = previa.get(f.plan_clase_id); return !a || a.estado !== f.estado || a.fecha !== f.fecha })())
   if (aviso.length && fd.get('avisar') === 'on') {
     const { data: ins } = await sb.from('inscripciones').select('profiles!inscripciones_alumno_id_fkey(email)').eq('edicion_id', edicion_id).eq('estado', 'activo')
     const { data: e } = await sb.from('ediciones').select('cursos(nombre)').eq('id', edicion_id).single()
+    const { data: pcs } = await sb.from('plan_clases').select('id, titulo').in('id', aviso.map((a) => a.plan_clase_id))
     const nombre = uno(e?.cursos as unknown as { nombre?: string } | { nombre?: string }[] | null)?.nombre ?? 'tu curso'
     const to: string[] = (ins ?? []).map((i: any) => i.profiles?.email).filter(Boolean)
     // Un mail por alumno: en un único `to` cada uno vería el email de sus compañeros.
-    const texto = aviso.map((a) => `Clase ${a.numero} (${a.fecha}): ${a.estado}`).join('\n') + '\n\nRecovery Parts'
+    const texto = aviso.map((a) => `${pcs?.find((p) => p.id === a.plan_clase_id)?.titulo ?? 'Clase'} (${a.fecha}): ${a.estado}`).join('\n') + '\n\nRecovery Parts'
     const envios = await Promise.all(to.map((t) => enviarMail(t, `Cambios en las clases de ${nombre}`, texto)))
     if (to.length && envios.some((x) => !x)) {
       revalidarCursos()

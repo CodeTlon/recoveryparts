@@ -4,6 +4,12 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-06 | **Estructura del curso** (RF-58): módulos → clases (título libre, teórica o práctica) → material. En cursos no hay clases sin módulo ni módulos sin clases y las clases de un módulo van juntas; los talleres no llevan módulos. Lo editan admin y profesor | Módulos, plan de clases y material estaban sueltos: el temario se escribía dos veces y el material se ataba a un número |
+| 2026-10-06 | El material y el calendario apuntan a la clase por id (no por su N°); si se borra una clase, su material queda «general» | Reordenar el plan cambiaba el material de clase sin aviso |
+| 2026-10-06 | Orden flexible por edición: el profesor puede adelantar o saltear una clase (estado `salteada`); no avisa por mail | El profesor ajusta el ritmo del grupo; el aviso se da en clase para que el alumno no lo use para decidir si falta |
+| 2026-10-06 | **RF-32 cambia: liberación del material siempre manual** (antes, automática por fecha + manual) | Con el orden flexible, la fecha deja de decir qué se dio; la responsabilidad es del profesor |
+| 2026-10-06 | Sitio público: solo títulos de módulos (sin clases ni viñetas). Alumno: todos los módulos, pero no las clases de los que no empezaron; de la próxima, título y tipo | Que nadie conozca el temario completo para adelantarse (RF-26, RF-37) |
+| 2026-10-06 | Los cursos ya cargados en homologación se recargan a mano con la estructura nueva | No hay datos reales; convertirlos automáticamente no vale la pena |
 | 2026-10-06 | Migraciones 0009–0011 aplicadas a mano en el SQL Editor de homologación: 0009+0010 antes del deploy y 0011 justo después del deploy del PR #7 | Falta el secreto del workflow y homologación es la base de la demo del cliente: la 0011 rompe el código viejo, así que tenía que llegar junto con el código nuevo |
 | 2026-10-05 | **Ediciones de curso** (rama `feat/ediciones-cursos`, en revisión): `cursos` = catálogo y `ediciones` = cada dictado; cada curso existente migra a una edición con el mismo id | Los cursos se dictan varias veces al año; reactivar o recrear cursos mezclaba alumnos, cupos, fechas y reportes |
 | 2026-10-05 | Una edición activa por vez por curso; un solo precio por curso; títulos de clase en el curso y fechas en cada edición; encuesta por edición | Decisiones del producto para la primera versión; reportes por curso/edición se profundizan después |
