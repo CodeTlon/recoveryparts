@@ -4,6 +4,7 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-06 | Migraciones 0009–0011 aplicadas a mano en el SQL Editor de homologación: 0009+0010 antes del deploy y 0011 justo después del deploy del PR #7 | Falta el secreto del workflow y homologación es la base de la demo del cliente: la 0011 rompe el código viejo, así que tenía que llegar junto con el código nuevo |
 | 2026-10-05 | **Ediciones de curso** (rama `feat/ediciones-cursos`, en revisión): `cursos` = catálogo y `ediciones` = cada dictado; cada curso existente migra a una edición con el mismo id | Los cursos se dictan varias veces al año; reactivar o recrear cursos mezclaba alumnos, cupos, fechas y reportes |
 | 2026-10-05 | Una edición activa por vez por curso; un solo precio por curso; títulos de clase en el curso y fechas en cada edición; encuesta por edición | Decisiones del producto para la primera versión; reportes por curso/edición se profundizan después |
 | 2026-10-05 | Material del curso por N° de clase, liberado según el calendario de cada edición o a mano por edición; al crear/duplicar una edición se asignan fechas de nuevo | Se carga una vez y cada grupo respeta su ritmo |
