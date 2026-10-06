@@ -7,7 +7,7 @@ import { requireRole } from '@/lib/auth'
 export default async function Ver({ params }: { params: Promise<{ id: string; mid: string }> }) {
   const { id, mid } = await params
   const { sb } = await requireRole('alumno')
-  const { data: vis } = await sb.rpc('material_visible', { p_curso: id })
+  const { data: vis } = await sb.rpc('material_visible', { p_edicion: id })
   const m = (vis as { id: string; titulo: string; tipo: string }[] | null)?.find((v) => v.id === mid && v.tipo === 'pdf')
   if (!m) notFound()
 

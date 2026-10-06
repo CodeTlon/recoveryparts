@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseConfigured } from '@/lib/supabase/env'
-import type { CursoPublico, Horario } from '@/lib/types'
+import type { CursoPublico, EdicionPublica, Horario } from '@/lib/types'
 
 // Todo el contenido público sale de la base (CMS). Sin Supabase configurado, devuelve vacíos.
 export type Settings = {
@@ -41,6 +41,8 @@ export async function query<T>(fn: (sb: Awaited<ReturnType<typeof createClient>>
 
 export const getCursos = cache(() =>
   query<CursoPublico[]>((sb) => sb.from('cursos_publicos').select('*').order('orden'), []))
+export const getEdiciones = cache(() =>
+  query<EdicionPublica[]>((sb) => sb.from('ediciones_publicas').select('id, curso_id, fecha_inicio, fecha_fin, cupo, cupos_disponibles, aula, profesor_nombre').order('fecha_inicio'), []))
 export const getHorarios = cache(() =>
   query<Horario[]>((sb) => sb.from('horarios_publicos').select('*').order('dia_semana').order('hora_inicio'), []))
 

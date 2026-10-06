@@ -32,6 +32,11 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 ## Sin hacer de la auditoría
 `ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP se arma en memoria.
 
+## Abiertos tras la sesión 2026-10-05 (aulas)
+- **Los cursos del seed no se pueden guardar desde «Datos»**: su `imagen_url` es una ruta relativa (`/images/…`) y `guardarCurso` solo acepta URLs http(s) (`urlOpcional`). Afecta también a la demo en homologación.
+- **Acciones de `<form action>` simples descartan el error**: `bajaCurso`, `setEstadoCuenta`. Si la base las rechaza, la página se recarga sin mostrar el motivo. Usar `ActionForm` en un modal, como ya hacen «Reactivar» curso y la baja de aulas.
+- **`npm run seed:dev` no anda en Windows**: el script usa `ENV_FILE=…` (sintaxis de shell POSIX), `.env.development` tiene finales CRLF (`APP_ENV` queda con un retorno de carro al final y no pasa el chequeo) y al final escribe en `/dev/null`. Rodeo: correr `node scripts/seed-pruebas.mjs` desde Git Bash con una copia LF del `.env` y `CREDS_OUT` a un archivo temporal.
+
 ## Abiertos tras la sesión 2026-10-05
 - **Fotos de ejemplo**: las imágenes de cursos/talleres del seed son flyers viejos de `public/images` (mencionan «4 cuotas», precios y «mes de junio»). Chocan con la regla «sin pagos/cuotas» y no corresponden a cada curso: reemplazar por fotos finales (con consentimiento).
 - **Sin probar en navegador**: pestaña Material del curso (admin) y la ficha pública de cada taller en tablet más allá de lo medido.

@@ -3,15 +3,11 @@ import CursoForm from '@/components/campus/CursoForm'
 import { PageHead } from '@/components/campus/ui'
 
 export default async function Nuevo() {
-  const { sb } = await requireRole('admin')
-  const [{ data: aulas }, { data: profes }] = await Promise.all([
-    sb.from('aulas').select('id, nombre').order('nombre'),
-    sb.from('profiles').select('id, nombre, apellido').eq('rol', 'profesor').neq('estado_cuenta', 'inactiva').order('apellido'),
-  ])
+  await requireRole('admin')
   return (
     <>
-      <PageHead title="Crear curso o taller" sub="Después de crearlo vas a poder cargar horarios, temario, kit y alumnos." />
-      <CursoForm aulas={(aulas ?? []).map((a) => [a.id, a.nombre])} profesores={(profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])} />
+      <PageHead title="Crear curso o taller" sub="Primero el contenido (se carga una vez). Después vas a cargar el plan de clases y crear la primera edición con su fecha, aula, profesor y cupo." />
+      <CursoForm />
     </>
   )
 }

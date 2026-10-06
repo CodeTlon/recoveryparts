@@ -4,8 +4,8 @@ import { supabaseConfigured } from '@/lib/supabase/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Sirve el PDF tras validar acceso: inline para la vista previa, o como descarga con ?download=1:
-//  - alumno: solo si el material está liberado y su inscripción no es desertor (material_visible, RF-34/37);
-//  - profesor/admin: RLS sobre `materiales`.
+//  - alumno: solo si el material está liberado en alguna de sus ediciones no desertoras (material_visible, RF-34/37);
+//  - profesor/admin: RLS sobre `materiales` (profesores que dictan una edición activa del curso).
 // El archivo nunca se expone con URL pública ni de Storage; no se cachea.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!supabaseConfigured) return new NextResponse('Servicio no configurado', { status: 503 })
@@ -19,13 +19,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   let titulo = 'material'
   let alumnoCurso: string | null = null
   if (!m) {
-    const { data: ins } = await sb.from('inscripciones').select('curso_id').eq('alumno_id', user.id).neq('estado', 'desertor')
+    const { data: ins } = await sb.from('inscripciones').select('edicion_id').eq('alumno_id', user.id).neq('estado', 'desertor')
     for (const i of ins ?? []) {
-      const { data: vis } = await sb.rpc('material_visible', { p_curso: i.curso_id })
+      const { data: vis } = await sb.rpc('material_visible', { p_edicion: i.edicion_id })
       if ((vis as { id: string }[] | null)?.some((v) => v.id === id)) {
-        const { data } = await createAdminClient().from('materiales').select('storage_path, tipo, titulo').eq('id', id).single()
+        const { data } = await createAdminClient().from('materiales').select('storage_path, tipo, titulo, curso_id').eq('id', id).single()
         if (data?.tipo === 'pdf') {
-          alumnoCurso = i.curso_id
+          alumnoCurso = data.curso_id // el material es del curso (lo comparten sus ediciones)
           storagePath = data.storage_path
           titulo = data.titulo
         }

@@ -5,7 +5,7 @@
 ### Sitio web + Campus Virtual para Academia de Cursos Técnicos
 
 ![Estado](https://img.shields.io/badge/estado-borrador-orange?style=for-the-badge)
-![Versión](https://img.shields.io/badge/versión-0.6-blue?style=for-the-badge)
+![Versión](https://img.shields.io/badge/versión-0.11-blue?style=for-the-badge)
 ![Cliente](https://img.shields.io/badge/cliente-Recovery_Parts-1e3a8a?style=for-the-badge)
 ![Tipo](https://img.shields.io/badge/proyecto-real-success?style=for-the-badge)
 
@@ -452,7 +452,7 @@ sequenceDiagram
 |---|---|:-:|:-:|
 | RF-01 | El administrador crea y da de baja cursos y talleres. | 🟢 | 🛡️ |
 | RF-02 | El administrador asigna un profesor a cada curso o taller. | 🟢 | 🛡️ |
-| RF-03 | El administrador gestiona aulas, cupos, insumos y precios de cada curso. | 🟡 | 🛡️ |
+| RF-03 | El administrador gestiona aulas, cupos, insumos y precios de cada curso. **Aulas**: módulo propio (Campus › Aulas) con capacidad, baja lógica y sin borrado. **Cupo y precio**: en el curso; el cupo nunca supera la capacidad del aula. **Insumos**: solo el kit informativo (RF-45/46); el stock lo maneja el software externo. | 🟢 | 🛡️ |
 | RF-04 | El profesor ve sus cursos asignados, con horario, aula y listado de alumnos. | 🟢 | 👨‍🏫 |
 | RF-05 | El profesor carga material teórico (PDFs). | 🟢 | 👨‍🏫 |
 | RF-06 | El profesor toma o carga asistencia. | 🔴 | 👨‍🏫 |
@@ -465,7 +465,7 @@ sequenceDiagram
 <details>
 <summary>❓ Preguntas pendientes</summary>
 
-- **RF-03**: ¿aulas, cupos, insumos y precios se gestionan desde una sola pantalla por curso, o cada uno tiene su módulo?
+- ✅ **RF-03**: cerrado en v0.10. Lo propio de cada curso (cupo, precio, kit) se edita en el curso; lo compartido (aulas) tiene su módulo. La capacidad del aula es el techo físico y el cupo del curso, el límite elegido (cupo ≤ capacidad).
 - ✅ **RF-11**: confirmado en v0.6. Con un solo curso *activo* entra directo; si es desertor o finalizó ve la lista (aviso o botón del ZIP). Configurable en el CMS.
 
 </details>
@@ -511,9 +511,9 @@ sequenceDiagram
 
 | ID | Descripción | Estado | Rol |
 |---|---|:-:|:-:|
-| RF-16 | Al crear un curso se definen día(s), horario, aula, duración (semanas) y cupo máximo. | 🟢 | 🛡️ |
-| RF-17 | Se valida la superposición de horario y aula antes de crear. | 🟢 | ⚙️ |
-| RF-18 | Cada curso o taller tiene **un único** profesor. | 🟢 | — |
+| RF-16 | Al crear un curso se definen día(s), horario, aula, duración (semanas) y cupo máximo. **Desde v0.11:** el curso (contenido, precio, plan de clases, material) se carga una vez; día(s), horario, aula, cupo y fecha de inicio son de cada **edición** (cada vez que se dicta). | 🟢 | 🛡️ |
+| RF-17 | Se valida la superposición de horario y aula antes de crear. Entre ediciones, solo si sus períodos se superponen. | 🟢 | ⚙️ |
+| RF-18 | Cada curso o taller tiene **un único** profesor **por edición**. | 🟢 | — |
 | RF-19 | Modalidad presencial. | 🟢 | — |
 | RF-20 | Virtual en vivo. | 🔴 | — |
 | RF-21 | Virtual grabado. | 🔴 | — |
@@ -665,6 +665,8 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.11 | 2026-10-05 | **Ediciones de curso** (cursos recurrentes): el curso es el catálogo (contenido, precio, kit, plan de clases, material por N° de clase) y cada dictado es una edición (fecha, horarios, aula, profesor, cupo, calendario, alumnos, encuesta). Una edición activa por vez por curso; duplicar edición copia horarios/aula/profesor/cupo y obliga a asignar fechas de nuevo; material liberado por edición; un alumno puede cursar otra edición del mismo curso; en el sitio, un curso con sus «Próximas fechas» o «Próximamente nuevas fechas». *(Propuesta en revisión del equipo.)* |
+| 0.10 | 2026-10-05 | **RF-03** 🟢: aulas como catálogo propio (capacidad obligatoria en aulas nuevas, una sola capacidad por aula, baja lógica sin borrado, sin baja con cursos activos); el cupo del curso no supera la capacidad de su aula (validado en la base). |
 | 0.9 | 2026-10-05 | **RF-45/46**: cada ítem del kit es «necesario» o «recomendado»; el link de compra puede ser a Mundo Parts (solo enlace). Páginas propias de Contacto y Preguntas frecuentes; módulos visibles en el catálogo. |
 | 0.8 | 2026-10-05 | Preparación de la demo: talleres de formato corto (1 jornada, días seguidos o 1–2 semanas), edición del curso por filas con calendario generable, imagen de curso subida desde el formulario, reportes con gráficos, modales propios y validaciones de rango. Sin cambios de reglas de producto ni de base. |
 | 0.7 | 2026-10-04 | Auditoría de seguridad, lógica y UI. **RF-35**: el ZIP trae solo el material liberado. Se confirma que el desertor sigue ocupando cupo. Fechas siempre en hora de Córdoba (RF-55). Ver `.ai/context/DECISIONS.md`. |

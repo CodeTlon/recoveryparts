@@ -4,6 +4,16 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-05 | **Ediciones de curso** (rama `feat/ediciones-cursos`, en revisión): `cursos` = catálogo y `ediciones` = cada dictado; cada curso existente migra a una edición con el mismo id | Los cursos se dictan varias veces al año; reactivar o recrear cursos mezclaba alumnos, cupos, fechas y reportes |
+| 2026-10-05 | Una edición activa por vez por curso; un solo precio por curso; títulos de clase en el curso y fechas en cada edición; encuesta por edición | Decisiones del producto para la primera versión; reportes por curso/edición se profundizan después |
+| 2026-10-05 | Material del curso por N° de clase, liberado según el calendario de cada edición o a mano por edición; al crear/duplicar una edición se asignan fechas de nuevo | Se carga una vez y cada grupo respeta su ritmo |
+| 2026-10-05 | Material y plan de clases los edita cualquier profesor con una edición activa del curso | Respeta RF-31 (el profesor carga el temario); el cambio afecta a todas las ediciones |
+| 2026-10-05 | Choques de aula/profesor solo entre ediciones con períodos superpuestos | Sin esto, duplicar una edición (misma aula/horario en otro período) chocaba consigo misma |
+| 2026-10-05 | «Próximas fechas» públicas = ediciones que empiezan hoy o después | A una edición en curso no se puede anotar nadie; sin otra, el curso muestra «Próximamente nuevas fechas» |
+| 2026-10-05 | RF-03 🟢: aulas como catálogo propio (Campus › Aulas); cupo y precio siguen en el curso; insumos = solo kit informativo | Lo propio de cada curso se edita en el curso y lo compartido tiene su módulo, igual que profesores en Usuarios |
+| 2026-10-05 | El cupo del curso nunca supera la capacidad del aula, controlado en la base (no solo aviso) | La capacidad es física (bancos/puestos); el cupo es el límite elegido por curso (equipamiento, atención del profesor, tipo de actividad) |
+| 2026-10-05 | Capacidad obligatoria en aulas nuevas; las existentes sin capacidad no se validan hasta cargarla. Una sola capacidad por aula | Homologación/producción tienen aulas sin capacidad: no invalidar cursos existentes. Si una actividad admite menos personas, lo refleja el cupo del curso |
+| 2026-10-05 | Aulas con baja lógica y sin borrado (también para aulas nunca usadas) | Conservar el dato histórico de los cursos; más simple y sin riesgo |
 | 2026-10-05 | Reportes se fusiona con el Resumen del admin; el sitio web se edita por pestañas | El resumen era solo 4 tarjetas y la edición del sitio era una página larga sin contexto de qué se editaba |
 | 2026-10-05 | Kit por ítem «necesario»/«recomendado» (`kit_items.requerido`, migración 0009) con link de compra a Mundo Parts | Algunos materiales hacen falta para cursar y otros son sugeridos; la tienda socia solo se enlaza (la venta no pasa por el sistema, RF-45/46) |
 | 2026-10-05 | Contacto y Preguntas frecuentes con página propia; la home queda como resumen | Pedido del cliente: ordenar el sitio. La home muestra 4 FAQ y una banda hacia `/contacto` |

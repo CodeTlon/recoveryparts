@@ -53,7 +53,10 @@ for (const u of USUARIOS) {
 ok(await sb.from('profiles').update({ experiencia: 'Técnico con 10 años de experiencia en microelectrónica. (dato de prueba)', certificaciones: 'Curso de microsoldadura (prueba)' }).eq('id', ids.profe1), 'mini-cv')
 
 // ── 2. Cursos ──────────────────────────────────────────────
-const aulas = Object.fromEntries(ok(await sb.from('aulas').select('id, nombre'), 'aulas').map((a) => [a.nombre, a.id]))
+// RF-03: el cupo de cada curso no puede superar la capacidad de su aula (los cupos de abajo caben).
+for (const [nombre, capacidad] of [['Aula 1', 12], ['Aula 2', 10], ['Aula 3', 10]])
+  ok(await sb.from('aulas').update({ capacidad }).eq('nombre', nombre), `capacidad ${nombre}`)
+const aulas =Object.fromEntries(ok(await sb.from('aulas').select('id, nombre'), 'aulas').map((a) => [a.nombre, a.id]))
 // Calendario semanal: n clases desde `inicio`, una por semana.
 const semanal = (inicio, n, tema) => Array.from({ length: n }, (_, i) => {
   const d = new Date(`${inicio}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 7 * i)
@@ -145,25 +148,43 @@ const CURSOS = [
     horarios: [[5, '14:00', '17:00']], modulos: [['Fallas comunes', ['Sobrecalentamiento', 'Lectores y puertos']]], kit: [], clases: semanal('2026-11-13', 2, 'Consolas') },
 ]
 
-const cid = {}
+// Cada entrada de CURSOS es un curso (catálogo) con su primera edición (fecha, aula, profesor, cupo,
+// horarios y calendario). Los títulos de clase van al plan del curso; fechas y estados, a la edición.
+const EDICIONES_EXTRA = [
+  // Curso recurrente: segunda edición de Celulares, después de que termina la primera (una edición por vez).
+  { slug: 'reparacion-de-celulares', clave: 'reparacion-de-celulares#2', fecha_inicio: '2026-11-02', cupo: 8, aula: 'Aula 1', profesor: 'profe1', horarios: [[1, '18:00', '20:00']], semanas: 6 },
+]
+const cid = {}, eid = {}
+async function edicion(curso_id, clave, { fecha_inicio, cupo, aula_id, profesor_id }, horarios, clases) {
+  let e = (await sb.from('ediciones').select('id').eq('curso_id', curso_id).eq('fecha_inicio', fecha_inicio).maybeSingle()).data
+  if (!e) e = ok(await sb.from('ediciones').insert({ curso_id, fecha_inicio, cupo, aula_id, profesor_id }).select('id').single(), `edición ${clave}`)
+  else ok(await sb.from('ediciones').update({ cupo, aula_id, profesor_id }).eq('id', e.id), `edición ${clave}`)
+  eid[clave] = e.id
+  ok(await sb.from('horarios_curso').delete().eq('edicion_id', e.id), 'del horarios')
+  for (const [d, a, b] of horarios) ok(await sb.from('horarios_curso').insert({ edicion_id: e.id, dia_semana: d, hora_inicio: a, hora_fin: b }), `horario ${clave}`)
+  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, estado]) => ({ edicion_id: e.id, numero, fecha, estado })), { onConflict: 'edicion_id,numero' }), `clases ${clave}`)
+}
 for (const c of CURSOS) {
-  const { horarios, modulos, kit, clases, ...row } = c
+  const { horarios, modulos, kit, clases, cupo, fecha_inicio, aula_id, profesor_id, ...row } = c
   const data = ok(await sb.from('cursos').upsert(row, { onConflict: 'slug' }).select('id').single(), `curso ${c.slug}`)
   cid[c.slug] = data.id
-  ok(await sb.from('horarios_curso').delete().eq('curso_id', data.id), 'del horarios')
-  for (const [d, a, b] of horarios) ok(await sb.from('horarios_curso').insert({ curso_id: data.id, dia_semana: d, hora_inicio: a, hora_fin: b }), `horario ${c.slug}`)
   ok(await sb.from('modulos_curso').delete().eq('curso_id', data.id), 'del modulos')
   for (const [i, [t, items]] of [...modulos, ...(MODULOS_EXTRA[c.slug] ?? [])].entries()) ok(await sb.from('modulos_curso').insert({ curso_id: data.id, orden: i, titulo: t, items }), 'modulo')
   ok(await sb.from('kit_items').delete().eq('curso_id', data.id), 'del kit')
   for (const [i, [n, d, p, l, req]] of kit.entries()) ok(await sb.from('kit_items').insert({ curso_id: data.id, orden: i, nombre: n, descripcion: d, precio: p, link_externo: l, requerido: req !== false }), 'kit')
-  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, titulo, estado]) => ({ curso_id: data.id, numero, fecha, titulo, estado })), { onConflict: 'curso_id,numero' }), `clases ${c.slug}`)
+  ok(await sb.from('plan_clases').upsert(clases.map(([numero, , titulo]) => ({ curso_id: data.id, numero, titulo })), { onConflict: 'curso_id,numero' }), `plan ${c.slug}`)
+  await edicion(data.id, c.slug, { fecha_inicio, cupo, aula_id, profesor_id }, horarios, clases.map(([n, f, , e]) => [n, f, e]))
+}
+for (const x of EDICIONES_EXTRA) {
+  const fechas = semanal(x.fecha_inicio, x.semanas, '').map(([n, f]) => [n, f, 'programada'])
+  await edicion(cid[x.slug], x.clave, { fecha_inicio: x.fecha_inicio, cupo: x.cupo, aula_id: aulas[x.aula], profesor_id: ids[x.profesor] }, x.horarios, fechas)
 }
 
-// ── 3. Inscripciones (no se borran; se saltea lo que ya existe) ─
-const inscribir = async (alumno, slug, patch = {}) => {
-  const ex = (await sb.from('inscripciones').select('id, estado').eq('alumno_id', ids[alumno]).eq('curso_id', cid[slug]).maybeSingle()).data
-  if (!ex) ok(await sb.from('inscripciones').insert({ alumno_id: ids[alumno], curso_id: cid[slug] }), `insc ${alumno}`)
-  const row = ex ?? (await sb.from('inscripciones').select('id, estado').eq('alumno_id', ids[alumno]).eq('curso_id', cid[slug]).single()).data
+// ── 3. Inscripciones por edición (no se borran; se saltea lo que ya existe) ─
+const inscribir = async (alumno, clave, patch = {}) => {
+  const ex = (await sb.from('inscripciones').select('id, estado').eq('alumno_id', ids[alumno]).eq('edicion_id', eid[clave]).maybeSingle()).data
+  if (!ex) ok(await sb.from('inscripciones').insert({ alumno_id: ids[alumno], edicion_id: eid[clave] }), `insc ${alumno}`)
+  const row = ex ?? (await sb.from('inscripciones').select('id, estado').eq('alumno_id', ids[alumno]).eq('edicion_id', eid[clave]).single()).data
   if (patch.estado && row.estado === 'activo') ok(await sb.from('inscripciones').update(patch).eq('id', row.id), `estado ${alumno}`)
 }
 await inscribir('alumno1', 'reparacion-de-celulares')
@@ -198,30 +219,36 @@ await inscribir('alumno3', 'electronica-basica')
 await inscribir('alumno5', 'electronica-basica')
 await inscribir('alumno6', 'diseno-grafico-para-redes')
 await inscribir('alumno2', 'reparacion-de-iphone-avanzada')
+// Mariana desertó de la primera edición de Celulares y retoma en la segunda; Martín se suma a la segunda.
+await inscribir('alumno2', 'reparacion-de-celulares#2')
+await inscribir('alumno5', 'reparacion-de-celulares#2')
 
-// ── 4. Material (PDF real mínimo + links) ──────────────────
+// ── 4. Material del curso por N° de clase (PDF real mínimo + links); liberación por edición ─
 const pdf = (t) => { const s = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 144]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 56>>stream\nBT /F1 14 Tf 20 70 Td (${t}) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`; return Buffer.from(s) }
-const claseId = async (slug, n) => ok(await sb.from('clases').select('id').eq('curso_id', cid[slug]).eq('numero', n).single(), 'clase').id
-async function material(slug, titulo, extra, archivo) {
-  if ((await sb.from('materiales').select('id').eq('curso_id', cid[slug]).eq('titulo', titulo).maybeSingle()).data) return
-  const row = { curso_id: cid[slug], titulo, subido_por: ids.profe1, ...extra }
-  if (archivo) {
-    const path = `${cid[slug]}/${randomUUID()}.pdf`
-    ok(await sb.storage.from('materiales').upload(path, archivo, { contentType: 'application/pdf' }), `subir ${titulo}`)
-    Object.assign(row, { tipo: 'pdf', storage_path: path })
-  } else row.tipo = 'link'
-  ok(await sb.from('materiales').insert(row), `material ${titulo}`)
+// `liberarEn`: ediciones donde se libera a mano (el material de una clase también se libera solo al llegar su fecha).
+async function material(slug, titulo, extra, archivo, liberarEn = []) {
+  let m = (await sb.from('materiales').select('id').eq('curso_id', cid[slug]).eq('titulo', titulo).maybeSingle()).data
+  if (!m) {
+    const row = { curso_id: cid[slug], titulo, subido_por: ids.profe1, ...extra }
+    if (archivo) {
+      const path = `${cid[slug]}/${randomUUID()}.pdf`
+      ok(await sb.storage.from('materiales').upload(path, archivo, { contentType: 'application/pdf' }), `subir ${titulo}`)
+      Object.assign(row, { tipo: 'pdf', storage_path: path })
+    } else row.tipo = 'link'
+    m = ok(await sb.from('materiales').insert(row).select('id').single(), `material ${titulo}`)
+  }
+  for (const clave of liberarEn) ok(await sb.from('materiales_liberados').upsert({ edicion_id: eid[clave], material_id: m.id }, { onConflict: 'edicion_id,material_id' }), `liberar ${titulo}`)
 }
-await material('reparacion-de-celulares', 'Apunte Clase 1 (liberado)', { liberado_manual: true, clase_id: await claseId('reparacion-de-celulares', 1) }, pdf('Apunte clase 1 - prueba'))
-await material('reparacion-de-celulares', 'Apunte Clase 6 (oculto)', { liberar_en: '2026-12-01', clase_id: await claseId('reparacion-de-celulares', 6) }, pdf('Apunte clase 6 - OCULTO'))
-await material('reparacion-de-celulares', 'Video introductorio (link)', { liberado_manual: true, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' })
-await material('reparacion-de-notebooks', 'Guía de desarme de notebooks', { liberado_manual: true, clase_id: await claseId('reparacion-de-notebooks', 1) }, pdf('Guia notebooks - prueba'))
-await material('armado-y-mantenimiento-de-pcs', 'Checklist de armado', { liberado_manual: true }, pdf('Checklist armado PC - prueba'))
-await material('taller-cambio-de-glass', 'Guía de cambio de glass', { liberado_manual: true }, pdf('Guia glass - prueba'))
+await material('reparacion-de-celulares', 'Apunte Clase 1', { clase_numero: 1 }, pdf('Apunte clase 1 - prueba'))
+await material('reparacion-de-celulares', 'Apunte Clase 6', { clase_numero: 6 }, pdf('Apunte clase 6 - prueba'))
+await material('reparacion-de-celulares', 'Video introductorio (link)', { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }, null, ['reparacion-de-celulares'])
+await material('reparacion-de-notebooks', 'Guía de desarme de notebooks', { clase_numero: 1 }, pdf('Guia notebooks - prueba'))
+await material('armado-y-mantenimiento-de-pcs', 'Checklist de armado', {}, pdf('Checklist armado PC - prueba'), ['armado-y-mantenimiento-de-pcs'])
+await material('taller-cambio-de-glass', 'Guía de cambio de glass', {}, pdf('Guia glass - prueba'), ['taller-cambio-de-glass'])
 
-// ── 5. Encuesta, CMS y ajustes ─────────────────────────────
+// ── 5. Encuesta (por edición), CMS y ajustes ───────────────
 if (!(await sb.from('encuestas').select('id').eq('titulo', 'Encuesta de fin de curso — Celulares').maybeSingle()).data)
-  ok(await sb.from('encuestas').insert({ curso_id: cid['reparacion-de-celulares'], titulo: 'Encuesta de fin de curso — Celulares', preguntas: [{ tipo: 'puntaje', texto: '¿Cómo calificás al profesor?' }, { tipo: 'texto', texto: '¿Qué mejorarías?' }] }), 'encuesta')
+  ok(await sb.from('encuestas').insert({ edicion_id: eid['reparacion-de-celulares'], titulo: 'Encuesta de fin de curso — Celulares', preguntas: [{ tipo: 'puntaje', texto: '¿Cómo calificás al profesor?' }, { tipo: 'texto', texto: '¿Qué mejorarías?' }] }), 'encuesta')
 
 const set = (clave, valor) => sb.from('site_settings').upsert({ clave, valor }).then((r) => ok(r, clave))
 await set('hero', { titulo: 'Aprendé un oficio con equipos reales', subtitulo: 'Cursos y talleres presenciales de diseño y tecnología en Córdoba. (texto de prueba)', imagen_url: '/images/hero.jpg', cta_cursos: 'Ver cursos', cta_whatsapp: 'WhatsApp' })
@@ -279,4 +306,4 @@ ok(await sb.from('cms_galeria').insert(G.map(([categoria, area, imagen_url, alt]
 // ── Salida ─────────────────────────────────────────────────
 const tabla = USUARIOS.map((u) => `${u.rol.padEnd(9)} ${u.email.padEnd(32)} ${u.password}`).join('\n')
 console.log(`\nCUENTAS DE PRUEBA (${env.APP_ENV})\n` + tabla)
-writeFileSync(process.env.CREDS_OUT ?? '/dev/null', JSON.stringify({ usuarios: USUARIOS, ids, cursos: cid }, null, 2), { mode: 0o600 })
+writeFileSync(process.env.CREDS_OUT ?? '/dev/null', JSON.stringify({ usuarios: USUARIOS, ids, cursos: cid, ediciones: eid }, null, 2), { mode: 0o600 })
