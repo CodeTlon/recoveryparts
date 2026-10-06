@@ -190,8 +190,10 @@ create constraint trigger plan_clases_estructura after insert or update or delet
   deferrable initially deferred for each row execute function estructura_validar_trigger();
 create constraint trigger modulos_curso_estructura after insert or update or delete on modulos_curso
   deferrable initially deferred for each row execute function estructura_validar_trigger();
+-- Solo si el tipo cambia de verdad: guardar los datos de un curso cargado antes de la estructura no debe fallar.
 create constraint trigger cursos_estructura after update of tipo on cursos
-  deferrable initially deferred for each row execute function estructura_validar_trigger();
+  deferrable initially deferred for each row when (old.tipo is distinct from new.tipo)
+  execute function estructura_validar_trigger();
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 -- 5. Liberación SIEMPRE MANUAL (RF-32, cambiado en v0.12)

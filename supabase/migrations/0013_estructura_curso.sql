@@ -33,6 +33,9 @@ from plan_clases pc where pc.curso_id = m.curso_id and pc.numero = m.clase_numer
 create index on materiales (plan_clase_id);
 
 alter table clases add column plan_clase_id uuid references plan_clases(id) on delete restrict;      -- no se borra una clase con fechas
+-- Con datos, el relleno dispara el trigger diferido de período de la edición y Postgres no permite ALTER TABLE con
+-- eventos pendientes: durante la migración esos triggers corren en el momento.
+set constraints all immediate;
 update clases cl set plan_clase_id = pc.id
 from ediciones e join plan_clases pc on pc.curso_id = e.curso_id
 where e.id = cl.edicion_id and pc.numero = cl.numero;
