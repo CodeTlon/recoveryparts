@@ -13,6 +13,16 @@ export function urlOpcional(v: string): string | null | undefined {
   return esUrlHttp(v) ? v : undefined
 }
 
+/** Para campos opcionales de IMAGEN (se usan como `src`, nunca como `href`): '' → null; URL http(s) o ruta
+ * del propio sitio (archivos de `public/`, ej. "/images/curso.jpg") → la misma; otra cosa → undefined.
+ * Se rechazan `//host` (protocolo relativo), `..`, barras invertidas y caracteres fuera de [A-Za-z0-9._-/]. */
+export function imagenOpcional(v: string): string | null | undefined {
+  if (!v) return null
+  const url: string = v // copia aparte: esUrlHttp es un type guard y dejaría `v` como never después del return
+  if (esUrlHttp(url)) return url
+  return /^\/(?!\/)[A-Za-z0-9._\-/]+$/.test(v) && !v.includes('..') ? v : undefined
+}
+
 /** href seguro para renderizar: solo http(s), si no `undefined` (el link no se muestra). */
 export const hrefSeguro = (u: string | null | undefined) => (esUrlHttp(u) ? u : undefined)
 
