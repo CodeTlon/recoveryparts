@@ -20,6 +20,9 @@ function traducir(m: string) {
   // Ediciones (0011): mensajes legibles de la base (superposición, fechas, plan de clases, curso de baja).
   if (/^(Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase \d+ |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
   if (/ediciones_cupo_check/.test(m)) return 'El cupo debe ser un número entero entre 1 y 500.'
+  // Estructura del curso (0013): módulo vacío, clase sin módulo, taller con módulos, clase con fechas.
+  if (/^(La clase «|El módulo «|Un taller no lleva|Las clases de cada módulo|El plan admite|No tenés permiso para editar)/.test(m)) return m
+  if (/modulos_curso_titulo_check/.test(m)) return 'Cada módulo necesita un título de hasta 120 caracteres.'
   if (/plan_clases_titulo_check|plan_clases_numero_check/.test(m)) return 'Revisá el plan: cada clase necesita un título de hasta 200 caracteres.'
   if (/cupos disponibles/.test(m)) return 'El curso no tiene cupos disponibles.'
   if (/cupo no puede ser menor/.test(m)) return 'El cupo no puede ser menor que los alumnos ya asignados.'
@@ -202,6 +205,30 @@ export async function guardarPlanClases(_: R, fd: FormData): Promise<R> {
   const { data: conMat } = await sb.from('materiales').select('clase_numero').eq('curso_id', curso_id).gt('clase_numero', max).limit(1)
   if (conMat?.length) return { error: `La clase ${conMat[0].clase_numero} tiene material. Pasá ese material a otra clase o a «general» antes de quitarla.` }
   const { error } = await sb.rpc('reemplazar_filas_curso', { p_tabla: 'plan_clases', p_id: curso_id, p_filas: ok })
+  if (error) return { error: traducir(error.message) }
+  revalidarCursos()
+  return { ok: true }
+}
+
+// Estructura del curso (RF-26, RF-31): módulos con sus clases (teóricas o prácticas); en talleres, solo clases.
+// Llega como JSON del EstructuraEditor. La base guarda todo de una vez y valida la regla de estructura
+// (sin clases sueltas ni módulos vacíos en cursos; sin módulos en talleres). Admin o profesor de una edición activa.
+type EstructuraIn = { modulos: { id?: string; titulo: string }[]; clases: { id?: string; titulo: string; tipo: string; modulo: number | null }[] }
+export async function guardarEstructura(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin', 'profesor')
+  const curso_id = txt(fd, 'curso_id')
+  let e: EstructuraIn
+  try { e = JSON.parse(txt(fd, 'estructura')) } catch { return { error: 'No se pudo leer la estructura.' } }
+  if (!Array.isArray(e?.modulos) || !Array.isArray(e?.clases)) return { error: 'No se pudo leer la estructura.' }
+  if (e.modulos.some((m) => !m.titulo?.trim() || m.titulo.trim().length > 120)) return { error: 'Cada módulo necesita un título de hasta 120 caracteres.' }
+  if (e.clases.some((c) => !c.titulo?.trim() || c.titulo.trim().length > 200)) return { error: 'Cada clase necesita un título de hasta 200 caracteres.' }
+  if (e.clases.some((c) => !['teorica', 'practica'].includes(c.tipo))) return { error: 'Cada clase es teórica o práctica.' }
+  if (e.clases.length > 500) return { error: 'El plan admite hasta 500 clases.' }
+  const { error } = await sb.rpc('guardar_estructura', {
+    p_curso: curso_id,
+    p_modulos: e.modulos.map((m) => ({ id: m.id ?? null, titulo: m.titulo.trim() })),
+    p_clases: e.clases.map((c) => ({ id: c.id ?? null, titulo: c.titulo.trim(), tipo: c.tipo, modulo: c.modulo })),
+  })
   if (error) return { error: traducir(error.message) }
   revalidarCursos()
   return { ok: true }
