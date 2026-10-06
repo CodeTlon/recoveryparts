@@ -126,7 +126,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
       <section className="mb-12">
         <h2 className="mb-1 text-xl font-semibold">Calendario de esta edición</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase: podés adelantar una clase o saltearla, o marcarla suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
-        <div className="card max-w-4xl p-6">
+        <div className="max-w-4xl">
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="edicion_id" value={id} />
             <ClasesEditor name="clases" plan={clasesPlan.map((p) => ({ ...p, modulo: modulos.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={(clases ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]} inicio={ed.fecha_inicio} dias={[...new Set((hs ?? []).map((h) => h.dia_semana as number))]}
@@ -138,7 +138,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
       <section>
         <h2 className="mb-1 text-xl font-semibold">Estructura del curso</h2>
         <p className="mb-4 text-sm text-secondary">Ojo: la estructura (módulos y clases) es del curso y la comparten todas sus ediciones. Cambiar un título lo cambia en todas.</p>
-        <div className="card max-w-3xl p-6">
+        <div className="max-w-4xl">
           <ActionForm action={guardarEstructura} reset={false}>
             <input type="hidden" name="curso_id" value={ed.curso_id} />
             {/* key: tras guardar se vuelve a montar con los ids nuevos */}

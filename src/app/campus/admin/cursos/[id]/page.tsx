@@ -130,9 +130,9 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         <h2 className="mb-1 text-xl font-semibold">Estructura del curso</h2>
         <p className="mb-4 text-sm text-on-surface-variant">
           {taller ? 'Las clases del taller, en orden (los talleres no llevan módulos).' : 'Los módulos y, dentro de cada uno, sus clases en orden. Todo módulo tiene clases y toda clase está en un módulo.'}
-          {' '}La comparten todas las ediciones; cada edición pone las fechas en su calendario. En el sitio solo se ven los títulos de los módulos.
+          {' '}La comparten todas las ediciones; cada edición pone las fechas en su calendario. {taller ? 'En el sitio no se muestra temario.' : 'En el sitio solo se ven los títulos de los módulos.'}
         </p>
-        <div className="card max-w-3xl p-6"><ActionForm action={guardarEstructura} reset={false}>
+        <div className="max-w-4xl"><ActionForm action={guardarEstructura} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
           {/* key: tras guardar se vuelve a montar con los ids nuevos (si no, un segundo guardado duplicaría lo agregado) */}
           <EstructuraEditor key={[...modulos, ...clases].map((x) => x.id).join()} name="estructura" taller={taller} inicial={{ modulos, clases }} conMaterial={conMaterial} />
