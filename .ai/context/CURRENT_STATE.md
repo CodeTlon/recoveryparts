@@ -11,7 +11,7 @@ Qué es verdad ahora (2026-10-06). Esto envejece rápido: si pasó más de un me
 - **Homologación = base de la demo del cliente.** El proyecto Supabase «RecoveryParts HOMOLOGACIÓN» (ref `kdgjcgtuknexzimnpksz`) es el que usa el sitio `recoveryparts-biud.vercel.app`, que despliega `main`. Tiene aplicadas **0001–0011**: la 0009, la 0010 y la 0011 se aplicaron **a mano en el SQL Editor** el 2026-10-06 (la 0011 justo después del deploy del PR #7) y están registradas en `supabase_migrations.schema_migrations`.
 - Hay un segundo proyecto Supabase, «Recovery Parts» (us-west-2). **Sin verificar** si es o será producción.
 - El workflow «Migraciones a Supabase» falla en `test` y `main` porque falta el secreto `SUPABASE_DB_URL` en los environments de GitHub (ver `KNOWN_ISSUES.md`).
-- Las aulas de la demo **todavía no tienen capacidad cargada**: cargarla en Campus › Aulas (mientras falte, no se valida el cupo contra esa aula).
+- Las aulas de la demo tienen capacidad cargada desde el 2026-10-06 (Aula 1 = 12, Aula 2 = 10, Aula 3 = 10; provisorias, ajustar a las reales en Campus › Aulas). El cupo de cada edición ya se valida contra su aula.
 - La demo tiene **una edición por curso** (los datos migrados). Para mostrar la recurrencia, duplicar una edición desde el campus.
 
 ## Pendientes de la spec (🟡, preguntar antes de implementar)
