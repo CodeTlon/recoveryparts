@@ -34,15 +34,15 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
   const opcion = (p: ArbolClase): [string, string] => [p.id, `${p.numero}. ${p.titulo} · ${TIPO_CLASE[p.tipo]}`]
   const claseOpts: [string, string][] = clasesPlan.filter((p) => !modulos.some((m) => m.id === p.modulo_id)).map(opcion)
   const claseGrupos: [string, [string, string][]][] = modulos.map((m, i) => [`Módulo ${i + 1} · ${m.titulo}`, clasesPlan.filter((p) => p.modulo_id === m.id).map(opcion)])
-  // Estado del material en ESTA edición: liberado a mano, liberado porque llegó su clase, programado u oculto.
-  // Una clase salteada o suspendida no libera su material sola (se libera a mano).
+  // Estado del material en ESTA edición (RF-32): el alumno lo ve solo si el profesor lo liberó. La fecha de la clase
+  // es una referencia para el profesor; no libera nada.
   const estado = (m: { id: string; plan_clase_id: string | null }) => {
     if (liberados.has(m.id)) return { visible: true, label: 'Liberado en esta edición', manual: true }
     const c = m.plan_clase_id ? fechaClase.get(m.plan_clase_id) : undefined
-    if (c?.estado === 'salteada') return { visible: false, label: 'Clase salteada: liberalo a mano', manual: false }
-    if (c && c.estado !== 'suspendida' && c.fecha <= hoy) return { visible: true, label: 'Liberado (llegó su clase)', manual: false }
-    if (c && c.estado !== 'suspendida') return { visible: false, label: `Se libera el ${fechaAR(c.fecha)}`, manual: false }
-    return { visible: false, label: c ? 'Clase suspendida' : m.plan_clase_id ? 'Su clase no tiene fecha' : 'Oculto hasta liberarlo', manual: false }
+    if (c?.estado === 'salteada') return { visible: false, label: 'Oculto · clase salteada', manual: false }
+    if (c?.estado === 'suspendida') return { visible: false, label: 'Oculto · clase suspendida', manual: false }
+    if (c) return { visible: false, label: `Oculto · su clase ${c.fecha <= hoy ? 'fue' : 'es'} el ${fechaAR(c.fecha)}`, manual: false }
+    return { visible: false, label: 'Oculto hasta liberarlo', manual: false }
   }
   type Mat = { id: string; tipo: 'pdf' | 'link'; titulo: string; url: string | null; plan_clase_id: string | null }
   const filaMaterial = (m: Mat) => {
@@ -95,7 +95,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
 
       <section className="mb-12">
         <h2 className="mb-1 text-xl font-semibold">Material del curso</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Es el mismo en todas las ediciones. En esta edición se libera solo cuando llega la fecha de su clase; con «Liberar ahora» lo adelantás solo acá.</p>
+        <p className="mb-4 text-sm text-on-surface-variant">Es el mismo en todas las ediciones. En esta edición el alumno ve cada material solo cuando lo liberás con «Liberar ahora».</p>
         {!mats?.length && <Empty>Todavía no hay material cargado.</Empty>}
         <div className="mb-6"><ArbolEstructura modulos={modulos} clases={clasesPlan} materiales={(mats ?? []) as Mat[]} renderMaterial={filaMaterial} /></div>
 
@@ -106,7 +106,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
               <input type="hidden" name="curso_id" value={ed.curso_id} /><input type="hidden" name="edicion_id" value={id} />
               <Field label="Título" name="titulo" placeholder="Ej: Apunte de la clase 1" required />
               <FileField label="Archivo (PDF, máx. 25 MB)" name="archivo" accept="application/pdf" required />
-              <Select name="plan_clase_id" label="Clase" empty="Material general (se libera a mano)" options={claseOpts} grupos={claseGrupos} />
+              <Select name="plan_clase_id" label="Clase" empty="Material general (sin clase)" options={claseOpts} grupos={claseGrupos} />
               <Check name="liberar_ya">Liberarlo ya en esta edición</Check>
             </ActionForm>
           </div>
@@ -116,7 +116,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
               <input type="hidden" name="curso_id" value={ed.curso_id} /><input type="hidden" name="edicion_id" value={id} />
               <Field label="Título" name="titulo" placeholder="Ej: Video de la clase 1" required />
               <Field label="Link" name="url" type="url" required placeholder="https://" hint="Subí los videos a YouTube (no listado) o Drive. No se alojan videos." />
-              <Select name="plan_clase_id" label="Clase" empty="Material general (se libera a mano)" options={claseOpts} grupos={claseGrupos} />
+              <Select name="plan_clase_id" label="Clase" empty="Material general (sin clase)" options={claseOpts} grupos={claseGrupos} />
               <Check name="liberar_ya">Liberarlo ya en esta edición</Check>
             </ActionForm>
           </div>

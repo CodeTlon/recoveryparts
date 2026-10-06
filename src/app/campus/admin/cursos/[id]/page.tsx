@@ -152,7 +152,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
 
       {tab === 'material' && <section>
         <h2 className="mb-1 text-xl font-semibold">Material del curso</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Lo suben los profesores que dictan el curso. Cada edición lo libera sola cuando llega la fecha de esa clase en su calendario, o el profesor lo libera antes en su edición.</p>
+        <p className="mb-4 text-sm text-on-surface-variant">Lo suben los profesores que dictan el curso. En cada edición el alumno lo ve solo cuando el profesor lo libera (RF-32).</p>
         {!materiales.length && <Empty>Todavía no hay material cargado.</Empty>}
         <div className="max-w-3xl"><ArbolEstructura modulos={modulos} clases={clases} materiales={materiales} /></div>
       </section>}

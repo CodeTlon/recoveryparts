@@ -50,7 +50,7 @@ export default function ArbolEstructura<M extends ArbolMaterial>({ modulos, clas
       )}
       {generales.length > 0 && (
         <section className="card">
-          <h3 className="border-b border-outline-variant px-4 py-3 font-semibold">Material general <span className="text-sm font-normal text-on-surface-variant">(se libera a mano)</span></h3>
+          <h3 className="border-b border-outline-variant px-4 py-3 font-semibold">Material general <span className="text-sm font-normal text-on-surface-variant">(sin clase)</span></h3>
           <ul className="space-y-1 p-4 text-sm">{generales.map((m) => <li key={m.id}>{item(m)}</li>)}</ul>
         </section>
       )}

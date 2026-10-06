@@ -18,7 +18,7 @@ function traducir(m: string) {
   if (/^(Cargá la capacidad|La capacidad del aula|No se puede dar de baja el aula|El aula .+ está dada de baja|El cupo \(\d+\) supera|Las aulas no se borran)/.test(m)) return m
   if (/aulas_nombre/.test(m)) return 'Ya existe un aula con ese nombre.'
   // Ediciones (0011): mensajes legibles de la base (superposición, fechas, plan de clases, curso de baja).
-  if (/^(Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase \d+ |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
+  if (/^(Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
   if (/ediciones_cupo_check/.test(m)) return 'El cupo debe ser un número entero entre 1 y 500.'
   // Estructura del curso (0013): módulo vacío, clase sin módulo, taller con módulos, clase con fechas.
   if (/^(La clase «|El módulo «|Un taller no lleva|Las clases de cada módulo|El plan admite|No tenés permiso para editar)/.test(m)) return m

@@ -276,7 +276,7 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
           {puedeGenerar ? 'Asigna una fecha a cada clase desde el inicio de la edición, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas, cargá antes la fecha de inicio (Datos) y los horarios de la edición.'}
         </p>
       </div>
-      <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y su material no se libera solo (lo liberás a mano si corresponde). Saltear o adelantar no avisa por mail.</p>
+      <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y no cuenta para el N° de clase de deserción. El material lo liberás vos, clase por clase. Saltear o adelantar no avisa por mail.</p>
       <div className="space-y-2">
         {rows.map((r, i) => (
           <div key={r.id} className="flex flex-wrap items-end gap-2">

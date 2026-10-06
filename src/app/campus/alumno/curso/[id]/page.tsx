@@ -88,7 +88,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
                         {c.es_proxima && <Badge tone="ok">Próxima clase</Badge>}
                       </h3>
                       {ms.length ? <ul className="space-y-2">{ms.map(item)}</ul>
-                        : <p className="text-sm text-on-surface-variant">{c.es_proxima ? 'El material se libera con la clase.' : 'Sin material para esta clase.'}</p>}
+                        : <p className="text-sm text-on-surface-variant">{c.es_proxima ? 'Tu profesor libera el material de cada clase.' : 'Sin material para esta clase.'}</p>}
                     </section>
                   )
                 })}

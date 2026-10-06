@@ -10,8 +10,8 @@ const revalidar = () => { revalidatePath('/campus', 'layout') }
 
 // El material es del curso (lo comparten sus ediciones) y se asocia a una CLASE del curso (por id: si la clase cambia
 // de lugar, el material la sigue) o queda «general». Lo cargan el admin y los profesores que dictan una edición activa
-// del curso (RLS). Cada edición lo libera sola cuando llega la fecha de esa clase en su calendario; «Liberar ahora» es
-// solo para la edición del profesor.
+// del curso (RLS). En cada edición el alumno lo ve solo cuando el profesor lo libera (RF-32: siempre a mano); la
+// liberación es de la edición del profesor.
 async function validarMaterial(sb: Awaited<ReturnType<typeof requireRole>>['sb'], fd: FormData): Promise<{ error: string } | { curso_id: string; titulo: string; plan_clase_id: string | null }> {
   const curso_id = txt(fd, 'curso_id'), titulo = txt(fd, 'titulo'), plan_clase_id = txt(fd, 'plan_clase_id') || null
   if (!titulo || titulo.length > 200) return { error: 'Poné un título de hasta 200 caracteres.' }
