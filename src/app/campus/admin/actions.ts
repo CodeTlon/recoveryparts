@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { siteUrl } from '@/lib/supabase/env'
 import { enviarMail } from '@/lib/mail'
 import { DIAS } from '@/lib/types'
-import { urlOpcional, extensionImagen, esUrlHttp } from '@/lib/validar'
+import { urlOpcional, imagenOpcional, extensionImagen, esUrlHttp } from '@/lib/validar'
 import { hoyAR } from '@/lib/fechas'
 
 export type R = { ok?: boolean; error?: string }
@@ -91,8 +91,8 @@ export async function cambiarEmail(_: R, fd: FormData): Promise<R> {
 
 export async function actualizarPerfil(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
-  const foto = urlOpcional(txt(fd, 'foto_url'))
-  if (foto === undefined) return { error: 'La foto debe ser una URL http(s).' }
+  const foto = imagenOpcional(txt(fd, 'foto_url'))
+  if (foto === undefined) return { error: 'La foto debe ser una URL http(s) o una ruta del sitio (/images/…).' }
   const { error } = await sb.from('profiles').update({
     nombre: txt(fd, 'nombre'), apellido: txt(fd, 'apellido'), telefono: txt(fd, 'telefono') || null,
     experiencia: txt(fd, 'experiencia') || null, certificaciones: txt(fd, 'certificaciones') || null,
@@ -123,8 +123,9 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
   if (dur !== null && !(Number.isInteger(dur) && dur >= 1 && dur <= 104)) return { error: 'La duración debe ser de 1 a 104 semanas.' }
   if (!(Number.isInteger(orden) && orden >= 0 && orden <= 9999)) return { error: 'El orden debe ser un número entero entre 0 y 9999.' }
   if (!['diseno', 'tecnico'].includes(txt(fd, 'area')) || !['curso', 'taller'].includes(txt(fd, 'tipo'))) return { error: 'Área o tipo inválidos.' }
-  const imagen = urlOpcional(txt(fd, 'imagen_url')), video = urlOpcional(txt(fd, 'video_url'))
-  if (imagen === undefined || video === undefined) return { error: 'La imagen y el video deben ser URLs http(s).' }
+  const imagen = imagenOpcional(txt(fd, 'imagen_url')), video = urlOpcional(txt(fd, 'video_url'))
+  if (imagen === undefined) return { error: 'La imagen debe ser una URL http(s) o una ruta del sitio (/images/…).' }
+  if (video === undefined) return { error: 'El video debe ser un link http(s).' }
   const row = {
     nombre, slug: slugify(txt(fd, 'slug') || nombre),
     area: txt(fd, 'area'), tipo: txt(fd, 'tipo'), nivel: txt(fd, 'nivel') || null,
@@ -511,8 +512,8 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   const tabla = TABLAS_CMS[tipo]
   if (!tabla) return { error: 'Tipo inválido.' }
   const orden = num(fd, 'orden') ?? 0
-  const foto = urlOpcional(txt(fd, 'foto_url')), imagen = urlOpcional(txt(fd, 'imagen_url'))
-  if (foto === undefined || imagen === undefined) return { error: 'Las imágenes deben ser URLs http(s).' }
+  const foto = imagenOpcional(txt(fd, 'foto_url')), imagen = imagenOpcional(txt(fd, 'imagen_url'))
+  if (foto === undefined || imagen === undefined) return { error: 'Las imágenes deben ser URLs http(s) o rutas del sitio (/images/…).' }
   const rows: Record<string, unknown> = {
     egresado: { nombre: txt(fd, 'nombre'), especialidad: txt(fd, 'especialidad'), foto_url: foto, destacado: fd.get('destacado') === 'on', orden },
     testimonio: { nombre: txt(fd, 'nombre'), curso: txt(fd, 'curso') || null, texto: txt(fd, 'texto'), puntaje: num(fd, 'puntaje') ?? 5, foto_url: foto, curso_id: txt(fd, 'curso_id') || null, orden },
