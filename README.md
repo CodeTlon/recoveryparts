@@ -22,3 +22,4 @@ Requiere Node ≥ 20 y Docker. Entornos y ramas: `docs/ENTORNOS.md`.
 - `docs/ARQUITECTURA.md` — capas, seguridad, modelo de datos y flujos.
 - `.ai/context/DECISIONS.md` — registro de decisiones.
 - `docs/SETUP-SUPABASE.md` — puesta en marcha de la base y Auth.
+- `docs/propuestas/` — explicación de mejoras grandes ya incorporadas (ediciones de curso, estructura del curso).

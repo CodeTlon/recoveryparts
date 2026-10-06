@@ -72,7 +72,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       {tab === 'calendario' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Las clases y sus títulos vienen de la estructura del curso; acá se asigna la fecha de cada una en esta edición (se puede adelantar o saltear una clase). Las suspendidas, reprogramadas y salteadas no cuentan para el N° de clase de deserción.</p>
-        <div className="card max-w-4xl p-6"><ActionForm action={guardarClases} reset={false}>
+        <div className="max-w-4xl"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="edicion_id" value={eid} />
           <ClasesEditor name="clases" plan={(plan ?? []).map((p) => ({ ...p, modulo: mods?.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
             avisar={<Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>} />
