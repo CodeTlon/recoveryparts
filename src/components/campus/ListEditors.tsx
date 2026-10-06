@@ -229,8 +229,8 @@ function OrdenBotones({ label, arriba, abajo }: { label: string; arriba?: () => 
   )
 }
 
-// ── Calendario de una edición: fecha y estado de cada clase del plan ────────────────────────────
-type C = { numero: number; titulo: string; fecha: string; estado: string }
+// ── Calendario de una edición: fecha y estado de cada clase del curso ───────────────────────────
+type C = { id: string; numero: number; titulo: string; modulo?: string; fecha: string; estado: string }
 
 // Fechas desde `inicio` que caen en los días de la semana dados (0=Domingo … 6=Sábado).
 function generarFechas(inicio: string, dias: number[], cantidad: number): string[] {
@@ -243,31 +243,32 @@ function generarFechas(inicio: string, dias: number[], cantidad: number): string
   return out
 }
 
-// Las filas son las clases del plan del curso (los títulos no se editan acá). Al crear o duplicar una edición
+// Las filas son las clases del curso en su orden (los títulos no se editan acá). Al crear o duplicar una edición
 // las fechas empiezan vacías: «Proponer fechas» las arma desde la fecha de inicio y los días de cursada (R8).
+// El orden es flexible: se puede adelantar una clase (fecha antes que otras) o saltearla (no se dicta).
 export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
-  name: string; plan: { numero: number; titulo: string }[]; inicial: { numero: number; fecha: string; estado: string }[]
+  name: string; plan: { id: string; numero: number; titulo: string; modulo?: string }[]; inicial: { plan_clase_id: string; fecha: string; estado: string }[]
   inicio?: string | null; dias?: number[]; avisar?: React.ReactNode
 }) {
-  const previo = new Map(inicial.map((c) => [c.numero, c]))
-  const [rows, setRows] = useState<C[]>(plan.map((p) => ({ ...p, fecha: previo.get(p.numero)?.fecha ?? '', estado: previo.get(p.numero)?.estado ?? 'programada' })))
+  const previo = new Map(inicial.map((c) => [c.plan_clase_id, c]))
+  const [rows, setRows] = useState<C[]>(plan.map((p) => ({ ...p, fecha: previo.get(p.id)?.fecha ?? '', estado: previo.get(p.id)?.estado ?? 'programada' })))
   const upd = (i: number, p: Partial<C>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
   const conFecha = rows.filter((r) => r.fecha)
-  const fechas = conFecha.map((r) => r.fecha)
+  const dictadas = conFecha.filter((r) => r.estado !== 'salteada').map((r) => r.fecha)
+  const primera = conFecha.map((r) => r.fecha).sort()[0]
   const errC = !conFecha.length ? 'Asigná la fecha de al menos una clase.'
-    : new Set(fechas).size < fechas.length ? 'Hay dos clases en la misma fecha.'
-    : fechas.some((f, i) => i > 0 && f < fechas[i - 1]) ? 'Las fechas tienen que seguir el orden de las clases.'
-    : inicio && fechas[0] < inicio ? `Ninguna clase puede ser anterior al inicio de la edición (${inicio.split('-').reverse().join('/')}).` : ''
+    : new Set(dictadas).size < dictadas.length ? 'Hay dos clases en la misma fecha.'
+    : inicio && primera < inicio ? `Ninguna clase puede ser anterior al inicio de la edición (${inicio.split('-').reverse().join('/')}).` : ''
   const puedeGenerar = !!inicio && !!dias?.length
   const generar = () => {
     const f = generarFechas(inicio!, dias!, rows.length)
     setRows(rows.map((r, i) => ({ ...r, fecha: f[i] ?? '' })))
   }
   const sinFecha = rows.length - conFecha.length
-  if (!plan.length) return <p className="text-sm text-on-surface-variant">El curso todavía no tiene plan de clases. Cargalo en la pestaña «Plan de clases» del curso.</p>
+  if (!plan.length) return <p className="text-sm text-on-surface-variant">El curso todavía no tiene clases. Cargalas en la pestaña «Estructura» del curso.</p>
   return (
     <div className="space-y-4">
-      <Serial name={name} value={conFecha.map((r) => `${r.numero} | ${r.fecha} | ${r.estado}`).join('\n')} />
+      <Serial name={name} value={conFecha.map((r) => `${r.id} | ${r.fecha} | ${r.estado}`).join('\n')} />
       <Guard error={errC} />
       <div className="flex flex-wrap items-center gap-2 rounded border border-dashed border-outline-variant p-3">
         <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost !px-3 !py-2 disabled:opacity-50"><Wand2 size={14} aria-hidden /> Proponer fechas</button>
@@ -275,15 +276,16 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
           {puedeGenerar ? 'Asigna una fecha a cada clase desde el inicio de la edición, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas, cargá antes la fecha de inicio (Datos) y los horarios de la edición.'}
         </p>
       </div>
+      <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y su material no se libera solo (lo liberás a mano si corresponde). Saltear o adelantar no avisa por mail.</p>
       <div className="space-y-2">
         {rows.map((r, i) => (
-          <div key={r.numero} className="flex flex-wrap items-end gap-2">
+          <div key={r.id} className="flex flex-wrap items-end gap-2">
             <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{r.numero}</span>
-            <p className="min-w-[10rem] flex-1 pb-2 text-sm">{r.titulo}</p>
-            <div><label className="sr-only">Fecha clase {r.numero}</label><input type="date" className="input" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} /></div>
-            <div><label className="sr-only">Estado clase {r.numero}</label>
-              <select className="input" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
-                <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option>
+            <p className="min-w-[10rem] flex-1 pb-2 text-sm">{r.titulo}{r.modulo && <span className="block text-xs text-on-surface-variant">{r.modulo}</span>}</p>
+            <div><input type="date" aria-label={`Fecha de ${r.titulo}`} className="input" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} /></div>
+            <div>
+              <select aria-label={`Estado de ${r.titulo}`} className="input" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
+                <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option><option value="salteada">Salteada</option>
               </select></div>
           </div>
         ))}

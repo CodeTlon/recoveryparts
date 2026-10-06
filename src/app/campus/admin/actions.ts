@@ -318,39 +318,42 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin', 'profesor')
   const edicion_id = txt(fd, 'edicion_id')
   const filas = txt(fd, 'clases').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
-    const [n, fecha, estado] = l.split('|').map((x) => x.trim())
-    if (!/^\d+$/.test(n) || !fechaValida(fecha ?? '')) return null
-    if (estado && !['programada', 'suspendida', 'reprogramada'].includes(estado)) return null
-    return { edicion_id, numero: Number(n), fecha, estado: estado || 'programada' }
+    const [plan_clase_id, fecha, estado] = l.split('|').map((x) => x.trim())
+    if (!/^[0-9a-f-]{36}$/i.test(plan_clase_id) || !fechaValida(fecha ?? '')) return null
+    if (estado && !['programada', 'suspendida', 'reprogramada', 'salteada'].includes(estado)) return null
+    return { edicion_id, plan_clase_id, fecha, estado: estado || 'programada' }
   })
   if (filas.some((f) => !f)) return { error: 'Revisá el calendario: cada clase necesita una fecha válida.' }
-  const ok = filas as { numero: number; estado: string; fecha: string }[]
+  const ok = filas as { plan_clase_id: string; estado: string; fecha: string }[]
   if (!ok.length) return { error: 'Asigná la fecha de al menos una clase.' }
-  if (new Set(ok.map((f) => f.numero)).size !== ok.length) return { error: 'Hay números de clase repetidos.' }
-  if (new Set(ok.map((f) => f.fecha)).size !== ok.length) return { error: 'Hay dos clases en la misma fecha.' }
-  const ordenadas = [...ok].sort((a, b) => a.numero - b.numero)
-  if (ordenadas.some((f, i) => i > 0 && f.fecha < ordenadas[i - 1].fecha)) return { error: 'Las fechas tienen que seguir el orden de las clases.' }
-  const nums = ok.map((f) => f.numero)
+  if (new Set(ok.map((f) => f.plan_clase_id)).size !== ok.length) return { error: 'Hay clases repetidas.' }
+  // Orden flexible: el profesor puede adelantar una clase (fecha antes que otras) o saltearla. Una salteada no se
+  // dicta, así que su fecha puede quedar ocupada por otra clase.
+  const dictadas = ok.filter((f) => f.estado !== 'salteada').map((f) => f.fecha)
+  if (new Set(dictadas).size !== dictadas.length) return { error: 'Hay dos clases en la misma fecha.' }
+  const ids = ok.map((f) => f.plan_clase_id)
 
-  const { data: previas } = await sb.from('clases').select('id, numero, fecha, estado').eq('edicion_id', edicion_id)
+  const { data: previas } = await sb.from('clases').select('id, plan_clase_id, fecha, estado').eq('edicion_id', edicion_id)
   const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'edicion_id,plan_clase_id' })
   if (error) return { error: traducir(error.message) }
-  const aBorrar = (previas ?? []).filter((c: any) => !nums.includes(c.numero))
+  const aBorrar = (previas ?? []).filter((c: any) => !ids.includes(c.plan_clase_id))
   if (aBorrar.length) {
     const { error: eDel } = await sb.from('clases').delete().in('id', aBorrar.map((c: any) => c.id))
     if (eDel) return { error: 'Se guardó el calendario, pero no se pudieron quitar las clases que faltaban.' }
   }
 
   // RF-38 (por mail): avisar a los alumnos activos de clases suspendidas/reprogramadas (solo lo que cambió).
-  const previa = new Map((previas ?? []).map((c: any) => [c.numero, c]))
-  const aviso = ok.filter((f) => f.estado !== 'programada' && (() => { const a: any = previa.get(f.numero); return !a || a.estado !== f.estado || a.fecha !== f.fecha })())
+  // Saltear o adelantar una clase NO avisa: el día de cursada no cambia y el profesor lo dice en clase.
+  const previa = new Map((previas ?? []).map((c: any) => [c.plan_clase_id, c]))
+  const aviso = ok.filter((f) => ['suspendida', 'reprogramada'].includes(f.estado) && (() => { const a: any = previa.get(f.plan_clase_id); return !a || a.estado !== f.estado || a.fecha !== f.fecha })())
   if (aviso.length && fd.get('avisar') === 'on') {
     const { data: ins } = await sb.from('inscripciones').select('profiles!inscripciones_alumno_id_fkey(email)').eq('edicion_id', edicion_id).eq('estado', 'activo')
     const { data: e } = await sb.from('ediciones').select('cursos(nombre)').eq('id', edicion_id).single()
+    const { data: pcs } = await sb.from('plan_clases').select('id, titulo').in('id', aviso.map((a) => a.plan_clase_id))
     const nombre = uno(e?.cursos as unknown as { nombre?: string } | { nombre?: string }[] | null)?.nombre ?? 'tu curso'
     const to: string[] = (ins ?? []).map((i: any) => i.profiles?.email).filter(Boolean)
     // Un mail por alumno: en un único `to` cada uno vería el email de sus compañeros.
-    const texto = aviso.map((a) => `Clase ${a.numero} (${a.fecha}): ${a.estado}`).join('\n') + '\n\nRecovery Parts'
+    const texto = aviso.map((a) => `${pcs?.find((p) => p.id === a.plan_clase_id)?.titulo ?? 'Clase'} (${a.fecha}): ${a.estado}`).join('\n') + '\n\nRecovery Parts'
     const envios = await Promise.all(to.map((t) => enviarMail(t, `Cambios en las clases de ${nombre}`, texto)))
     if (to.length && envios.some((x) => !x)) {
       revalidarCursos()

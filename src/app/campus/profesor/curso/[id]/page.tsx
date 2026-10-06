@@ -125,11 +125,11 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
 
       <section className="mb-12">
         <h2 className="mb-1 text-xl font-semibold">Calendario de esta edición</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase, o marcá una clase como suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
+        <p className="mb-4 text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase: podés adelantar una clase o saltearla, o marcarla suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
         <div className="card max-w-4xl p-6">
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="edicion_id" value={id} />
-            <ClasesEditor name="clases" plan={plan ?? []} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set((hs ?? []).map((h) => h.dia_semana as number))]}
+            <ClasesEditor name="clases" plan={clasesPlan.map((p) => ({ ...p, modulo: modulos.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={(clases ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]} inicio={ed.fecha_inicio} dias={[...new Set((hs ?? []).map((h) => h.dia_semana as number))]}
               avisar={<Check name="avisar">Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check>} />
           </ActionForm>
         </div>
