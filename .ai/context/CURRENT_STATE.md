@@ -21,6 +21,8 @@ RF-12 y RF-13 (alta de alumno con curso / vincular a curso nuevo), RF-14 (al fin
 Cargar en GitHub el secreto `SUPABASE_DB_URL` en los environments `test` y `production` (lo tiene que hacer un admin del repo) · separar la base de homologación de la de la demo del cliente · SMTP propio y plantillas de Auth apuntando a `/auth/confirm` · desactivar el registro público en el Auth remoto · rotar las claves y la contraseña de base que se compartieron por chat · crear el proyecto Supabase de producción · proteger ramas y crear environments en GitHub · imágenes finales sin flyers viejos y con consentimiento · dominio.
 
 ## Hecho
+Sesión 2026-10-06: las imágenes (curso, foto del profesor, egresados, testimonios, galería) aceptan rutas del propio sitio (`/images/…`) además de URLs http(s) (`imagenOpcional` en `src/lib/validar.ts`); los cursos y el contenido del seed ya se pueden guardar desde el campus.
+
 Sesión 2026-10-05/06 (5): **ediciones de curso** (cursos recurrentes; migración 0011): el curso es el catálogo y cada dictado una edición; duplicar edición, una por vez, material liberado por edición, sitio con «Próximas fechas». Mergeado a `dev`, `test` y `main` (PR #7). Migraciones 0009–0011 aplicadas a mano en homologación/demo, coordinadas con el deploy. Propuesta para el equipo en `docs/propuestas/ediciones-de-curso.md`.
 
 Sesión 2026-10-05 (4): gestión de aulas (RF-03 🟢). Pantalla Campus › Aulas (crear/editar en modal, baja lógica y reactivación con el motivo si la base lo impide), selector de aula del curso con capacidad y cupo sugerido, reglas en la base (migración 0010) y auditoría sobre `aulas`. `supabase/seed.sql` carga capacidades provisorias (12/10/10) porque la capacidad es obligatoria en aulas nuevas.
