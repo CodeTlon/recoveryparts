@@ -1,6 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { withSecurityHeaders } from '@/lib/security-headers'
+import { COOKIE, leerToken } from '@/lib/session'
+import { perfilDeSesion } from '@/lib/users'
+import { dbConfigured } from '@/lib/env'
 
 const ROLE_HOME = { admin: '/campus/admin', profesor: '/campus/profesor', alumno: '/campus/alumno' } as const
 
@@ -9,43 +11,26 @@ export async function middleware(request: NextRequest) {
 }
 
 async function autenticar(request: NextRequest): Promise<NextResponse> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const path = request.nextUrl.pathname
+  if (!path.startsWith('/campus')) return NextResponse.next()
 
-  // Sin Supabase configurado el campus no se puede usar: se muestra aviso en /login.
-  if (!url || !key) {
-    if (path.startsWith('/campus')) return NextResponse.redirect(new URL('/login', request.url))
-    return NextResponse.next()
+  // Sin base configurada el campus no se puede usar: se muestra aviso en /login.
+  if (!dbConfigured) return NextResponse.redirect(new URL('/login', request.url))
+
+  const ses = leerToken(request.cookies.get(COOKIE)?.value)
+  if (!ses) return NextResponse.redirect(new URL('/login', request.url))
+
+  const perfil = await perfilDeSesion(ses.sub, ses.iat)
+  if (!perfil || perfil.estado_cuenta !== 'activa') {
+    const res = NextResponse.redirect(new URL('/login?error=cuenta', request.url))
+    res.cookies.delete(COOKIE)
+    return res
   }
-
-  let response = NextResponse.next({ request })
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (list) => {
-        list.forEach(({ name, value }) => request.cookies.set(name, value))
-        response = NextResponse.next({ request })
-        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
-      },
-    },
-  })
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (path.startsWith('/campus')) {
-    if (!user) return NextResponse.redirect(new URL('/login', request.url))
-    const { data: perfil } = await supabase.from('profiles').select('rol, estado_cuenta').eq('id', user.id).single()
-    if (!perfil || perfil.estado_cuenta !== 'activa') {
-      await supabase.auth.signOut()
-      return NextResponse.redirect(new URL('/login?error=cuenta', request.url))
-    }
-    const home = ROLE_HOME[perfil.rol as keyof typeof ROLE_HOME]
-    // Cada rol solo entra a su sección (la autorización real vuelve a validarse en RLS).
-    if (path === '/campus' || !path.startsWith(home)) return NextResponse.redirect(new URL(home, request.url))
-  }
-
-  return response
+  const home = ROLE_HOME[perfil.rol as keyof typeof ROLE_HOME]
+  // Cada rol solo entra a su sección (la autorización real vuelve a validarse en requireRole y RLS).
+  if (path === '/campus' || !path.startsWith(home)) return NextResponse.redirect(new URL(home, request.url))
+  return NextResponse.next()
 }
 
-export const config = { matcher: ['/((?!_next/static|_next/image|images|favicon.ico).*)'] }
+// runtime nodejs: el middleware consulta Postgres y firma con node:crypto.
+export const config = { runtime: 'nodejs', matcher: ['/((?!_next/static|_next/image|images|favicon.ico).*)'] }
