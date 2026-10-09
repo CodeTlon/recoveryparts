@@ -1,3 +1,4 @@
+import { imagenCurso } from '@/lib/imagen-curso'
 import { duracionTexto } from '@/lib/fechas'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -38,6 +39,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
     query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>((sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
   ])
 
+  const foto = imagenCurso(c)
   const wa = waLink(settings.contacto.whatsapp, `Hola! Quiero info del curso ${c.nombre}`)
   const totalKit = kit.filter((k) => k.requerido !== false).reduce((s, k) => s + (k.precio ?? 0), 0)
   const row = 'flex items-start gap-3 text-sm text-on-surface-variant'
@@ -47,7 +49,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] flex-grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
         <section className="mb-16 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
-          <div className={`flex flex-col gap-6 ${c.imagen_url ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+          <div className={`flex flex-col gap-6 ${foto ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
             <div className="flex flex-wrap gap-2">
               <span className="badge border border-outline-variant bg-surface-container-high text-primary">{AREA_LABEL[c.area]}</span>
               <span className="badge bg-accent text-surface">{TIPO_LABEL[c.tipo]}</span>
@@ -56,9 +58,9 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{c.nombre}</h1>
             {c.descripcion && <p className="max-w-2xl whitespace-pre-line border-l-2 border-accent pl-4 text-lg leading-relaxed text-on-surface-variant">{c.descripcion}</p>}
           </div>
-          {c.imagen_url && (
+          {foto && (
             <div className="relative h-64 overflow-hidden rounded border border-outline-variant bg-surface-container lg:col-span-5 lg:h-[380px]">
-              <Image src={c.imagen_url} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 42vw" className="object-cover" />
+              <Image src={foto} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 42vw" className="object-cover" />
             </div>
           )}
         </section>
