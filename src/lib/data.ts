@@ -6,7 +6,7 @@ import type { CursoPublico, EdicionPublica, Horario } from '@/lib/types'
 // Todo el contenido público sale de la base (CMS). Sin Supabase configurado, devuelve vacíos.
 export type Settings = {
   contacto: { direccion?: string; telefono?: string; email?: string; whatsapp?: string; instagram?: string; horario?: string }
-  hero: { titulo?: string; subtitulo?: string; imagen_url?: string; cta_cursos?: string; cta_whatsapp?: string }
+  hero: { titulo?: string; subtitulo?: string; imagen_url?: string; video_url?: string; cta_cursos?: string; cta_whatsapp?: string }
   stats: { aulas?: number; profesores?: number; egresados?: number }
   nosotros: { titulo?: string; texto?: string }
   areas: Record<'diseno' | 'tecnico', { titulo?: string; texto?: string; imagen_url?: string }>
