@@ -36,6 +36,22 @@ Para probar contra homologación desde tu máquina: `npm run dev:test`.
 3. Se aplica a homologación al mergear a `test` (workflow `deploy-db.yml`) o a mano con `npm run db:push:test` (muestra qué va a aplicar y pide confirmación).
 4. A producción solo desde `main`, con aprobación del environment `production`.
 
+### Aplicar migraciones a mano en homologación (mientras falte el secreto del workflow)
+Homologación es la base de la demo del cliente, que corre `main`. Si una migración cambia columnas que usa el código desplegado, la demo se rompe hasta que el código nuevo llega. Orden:
+
+1. **Probarla con datos**, no solo desde cero: `db:reset` aplica sobre una base vacía y no detecta, por ejemplo, un `ALTER TABLE` después de un `UPDATE` que dispara triggers diferidos (le pasó a la 0013). Dejar la base local en la versión de homologación, cargar el seed de esa versión y correr el script encima.
+2. **Chequeo previo** en el SQL Editor (solo lectura): `select max(version) from supabase_migrations.schema_migrations;` y las consultas que la migración necesite (datos que la harían fallar).
+3. **Primero el código**: mergear el PR `test → main` y **esperar a que termine el deploy** de Vercel.
+4. **Enseguida, las migraciones**: cada una en su **propia ejecución** del SQL Editor y en orden, envuelta así:
+   ```sql
+   begin;
+   -- contenido de supabase/migrations/NNNN_nombre.sql
+   insert into supabase_migrations.schema_migrations (version, name) values ('NNNN', 'nombre');
+   commit;
+   ```
+   Si falla, se deshace entera. Un `alter type … add value` va solo y confirmado antes de la migración que usa el valor nuevo.
+5. Entre el paso 3 y el 4 la demo puede fallar: hacerlos seguidos. Comprobar el sitio y el campus al terminar.
+
 ## Qué hace la CI
 - **En cada PR** a `dev`/`test`/`main`: type-check + build, y levanta un Supabase vacío, aplica todas las migraciones y verifica que **todas las tablas tengan RLS** y que **un registro público no genere perfil**.
 - **Al mergear** a `test` o `main` con cambios en `supabase/migrations/**`: aplica las migraciones al Supabase de ese entorno.

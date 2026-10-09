@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, Plus, Trash2, Wand2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, CornerDownRight, FileText, MoreHorizontal, Plus, Trash2, Wand2 } from 'lucide-react'
 import { DIAS } from '@/lib/types'
 import { MUNDO_PARTS_URL } from '@/lib/validar'
 
@@ -103,6 +103,77 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
   )
 }
 
+// ── Piezas compartidas por la estructura y el calendario ──────────────────────────────────────
+// Número de clase en un círculo.
+function Num({ n }: { n: number }) {
+  return <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface-container-highest text-xs font-bold text-on-surface" aria-hidden>{n}</span>
+}
+
+// Botón ancho con borde punteado para agregar una fila o un bloque.
+function AgregarFila({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick}
+      className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border border-dashed border-outline-variant px-3 text-sm font-semibold text-on-surface-variant transition-colors hover:border-secondary hover:text-secondary">
+      <Plus size={15} aria-hidden /> {children}
+    </button>
+  )
+}
+
+// Bloque de un módulo: cabecera con franja naranja y el contenido debajo.
+function BloqueModulo({ cabecera, children }: { cabecera?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="rounded-lg border border-outline-variant bg-surface-container-low">
+      {cabecera && <header className="rounded-t-lg border-b border-l-4 border-outline-variant border-l-accent bg-surface-container-high py-2.5 pl-3 pr-2 sm:pl-4">{cabecera}</header>}
+      {children}
+    </section>
+  )
+}
+
+// Menú «⋯» de acciones de una fila: agrupa subir, bajar, mover y quitar para que cada fila entre en un renglón.
+// Se cierra con Escape (vuelve el foco al botón) o al tocar afuera; las opciones se recorren con Tab.
+type Accion = { label: string; icon?: React.ReactNode; onClick: () => void; danger?: boolean; disabled?: boolean; nota?: string } | 'sep'
+
+function MenuAcciones({ label, acciones }: { label: string; acciones: Accion[] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const boton = useRef<HTMLButtonElement>(null)
+  const id = useId()
+  useEffect(() => {
+    if (!open) return
+    const fuera = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    const tecla = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); boton.current?.focus() } }
+    document.addEventListener('pointerdown', fuera)
+    document.addEventListener('keydown', tecla)
+    ref.current?.querySelector<HTMLButtonElement>('[role=menuitem]:not([disabled])')?.focus()
+    return () => { document.removeEventListener('pointerdown', fuera); document.removeEventListener('keydown', tecla) }
+  }, [open])
+  return (
+    <div ref={ref} className="relative">
+      <button ref={boton} type="button" aria-label={label} title={label} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined}
+        onClick={() => setOpen(!open)}
+        className={`grid h-10 w-10 place-items-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface ${open ? 'bg-surface-container-highest text-on-surface' : ''}`}>
+        <MoreHorizontal size={18} aria-hidden />
+      </button>
+      {open && (
+        <div id={id} role="menu" aria-label={label}
+          className="absolute right-0 top-full z-30 mt-1 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-outline-variant bg-surface-container-high py-1 shadow-xl shadow-black/40">
+          {acciones.map((a, i) => a === 'sep' ? <div key={i} role="separator" className="my-1 border-t border-outline-variant" /> : (
+            <button key={i} type="button" role="menuitem" disabled={a.disabled}
+              onClick={() => { setOpen(false); a.onClick() }}
+              className={`flex min-h-[44px] w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${a.danger ? 'text-red-300 hover:bg-red-500/10' : 'text-on-surface hover:bg-surface-container-highest'}`}>
+              <span className="w-4 shrink-0 text-on-surface-variant" aria-hidden>{a.icon}</span>
+              <span className="min-w-0">
+                <span className="block">{a.label}</span>
+                {a.nota && <span className="block text-xs text-on-surface-variant">{a.nota}</span>}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Estructura del curso: módulos → clases (RF-26, RF-31) ─────────────────────────────────────
 // Curso: módulos con sus clases (sin clases sueltas ni módulos vacíos). Taller: solo clases, sin módulos.
 // Serializa JSON {modulos:[{id?,titulo}], clases:[{id?,titulo,tipo,modulo}]} que entiende guardarEstructura.
@@ -112,6 +183,21 @@ type EC = { key: string; id?: string; titulo: string; tipo: TipoClase }
 type EM = { key: string; id?: string; titulo: string; clases: EC[] }
 let nKey = 0
 const k = () => `n${++nKey}`
+
+// Selector de dos opciones (teórica / práctica): más rápido que un desplegable y entra en la fila.
+function TipoToggle({ value, onChange, label }: { value: TipoClase; onChange: (v: TipoClase) => void; label: string }) {
+  const op = (v: TipoClase, texto: string) => (
+    <button type="button" aria-pressed={value === v} onClick={() => onChange(v)}
+      className={`px-3 py-2 text-xs font-semibold transition-colors sm:py-1.5 ${value === v
+        ? v === 'practica' ? 'bg-secondary/20 text-secondary' : 'bg-primary/15 text-primary'
+        : 'text-on-surface-variant hover:text-on-surface'}`}>{texto}</button>
+  )
+  return (
+    <div role="group" aria-label={label} className="inline-flex shrink-0 divide-x divide-outline-variant overflow-hidden rounded-full border border-outline-variant">
+      {op('teorica', 'Teórica')}{op('practica', 'Práctica')}
+    </div>
+  )
+}
 
 export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
   name: string; taller: boolean
@@ -148,31 +234,37 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
     modulos: taller ? [] : mods.map((m) => ({ id: m.id, titulo: limpiar(m.titulo) })),
     clases: mods.flatMap((m, i) => m.clases.map((c) => ({ id: c.id, titulo: limpiar(c.titulo), tipo: c.tipo, modulo: taller ? null : i }))),
   })
+  const nombreModulo = (j: number) => limpiar(mods[j].titulo) || `Módulo ${j + 1}`
 
+  // Una fila por clase en escritorio; en el celular, número + título arriba y tipo, material y menú abajo.
   let n = 0
   const filaClase = (i: number, c: EC, ci: number) => {
     n++
     const m = mods[i]
+    const mat = c.id ? conMaterial[c.id] ?? 0 : 0
+    const acciones: Accion[] = [
+      { label: 'Subir', icon: <ArrowUp size={16} />, disabled: ci === 0, onClick: () => updM(i, { clases: mover(m.clases, ci, -1) }) },
+      { label: 'Bajar', icon: <ArrowDown size={16} />, disabled: ci === m.clases.length - 1, onClick: () => updM(i, { clases: mover(m.clases, ci, 1) }) },
+      ...(!taller && mods.length > 1 ? ['sep' as const, ...mods.flatMap((_, j): Accion[] => j === i ? [] : [{ label: `Mover a «${nombreModulo(j)}»`, icon: <CornerDownRight size={16} />, onClick: () => aModulo(i, ci, j) }])] : []),
+      'sep',
+      { label: 'Quitar clase', icon: <Trash2 size={16} />, danger: true, nota: mat ? 'Su material queda como general' : undefined, onClick: () => updM(i, { clases: m.clases.filter((_, j) => j !== ci) }) },
+    ]
     return (
-      <div key={c.key} className="flex flex-wrap items-end gap-2">
-        <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{n}</span>
-        <div className="min-w-[12rem] flex-1">
-          <input aria-label={`Título de la clase ${n}`} className="input" maxLength={200} placeholder="Ej: Introducción" value={c.titulo} onChange={(e) => updC(i, ci, { titulo: e.target.value })} /></div>
-        <div>
-          <select aria-label={`Tipo de la clase ${n}`} className="input" value={c.tipo} onChange={(e) => updC(i, ci, { tipo: e.target.value as TipoClase })}>
-            <option value="teorica">Teórica</option><option value="practica">Práctica</option>
-          </select></div>
-        {!taller && mods.length > 1 && (
-          <div>
-            <select aria-label={`Mover la clase ${n} a otro módulo`} className="input" value={i} onChange={(e) => aModulo(i, ci, Number(e.target.value))}>
-              {mods.map((x, j) => <option key={x.key} value={j}>{j === i ? 'Mover a…' : `→ ${limpiar(x.titulo) || `Módulo ${j + 1}`}`}</option>)}
-            </select></div>
-        )}
-        <OrdenBotones label={`la clase ${n}`} arriba={ci > 0 ? () => updM(i, { clases: mover(m.clases, ci, -1) }) : undefined}
-          abajo={ci < m.clases.length - 1 ? () => updM(i, { clases: mover(m.clases, ci, 1) }) : undefined} />
-        <RemoveButton onClick={() => updM(i, { clases: m.clases.filter((_, j) => j !== ci) })} label={`Quitar la clase ${n}`} />
-        {c.id && conMaterial[c.id] ? <p className="basis-full pl-10 text-xs text-on-surface-variant">{conMaterial[c.id]} material{conMaterial[c.id] === 1 ? '' : 'es'}</p> : null}
-      </div>
+      <li key={c.key} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:grid-cols-[auto_1fr_auto_auto] sm:px-4">
+        <Num n={n} />
+        <input aria-label={`Título de la clase ${n}`} className="input min-w-0 !py-2" maxLength={200} placeholder="Título de la clase" value={c.titulo} onChange={(e) => updC(i, ci, { titulo: e.target.value })} />
+        <div className="col-start-2 row-start-2 flex flex-wrap items-center gap-2 sm:col-start-auto sm:row-start-auto sm:w-48">
+          <TipoToggle label={`Tipo de la clase ${n}`} value={c.tipo} onChange={(tipo) => updC(i, ci, { tipo })} />
+          {mat > 0 && (
+            <span title={`${mat} material${mat === 1 ? '' : 'es'}`} className="inline-flex items-center gap-1 rounded-full bg-surface-container-highest px-2 py-1 text-xs text-on-surface-variant">
+              <FileText size={12} aria-hidden /> {mat}<span className="sr-only"> material{mat === 1 ? '' : 'es'}</span>
+            </span>
+          )}
+        </div>
+        <div className="col-start-3 row-start-1 sm:col-start-auto sm:row-start-auto">
+          <MenuAcciones label={`Acciones de la clase ${n}`} acciones={acciones} />
+        </div>
+      </li>
     )
   }
   const nuevaClase = (): EC => ({ key: k(), titulo: '', tipo: 'teorica' })
@@ -182,31 +274,36 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
       <Serial name={name} value={json} />
       <Guard error={errE} />
       {taller ? (
-        <div className="space-y-2">
-          {!mods[0].clases.length && <p className="text-sm text-on-surface-variant">Todavía no hay clases. Los talleres no llevan módulos.</p>}
-          {mods[0].clases.map((c, ci) => filaClase(0, c, ci))}
-          <AddButton onClick={() => updM(0, { clases: [...mods[0].clases, nuevaClase()] })}>Agregar clase</AddButton>
-        </div>
+        <BloqueModulo>
+          {!mods[0].clases.length && <p className="px-4 pt-4 text-sm text-on-surface-variant">Todavía no hay clases. Los talleres no llevan módulos.</p>}
+          <ul className="divide-y divide-outline-variant/50">{mods[0].clases.map((c, ci) => filaClase(0, c, ci))}</ul>
+          <div className="p-2 sm:px-4 sm:pb-3"><AgregarFila onClick={() => updM(0, { clases: [...mods[0].clases, nuevaClase()] })}>Agregar clase</AgregarFila></div>
+        </BloqueModulo>
       ) : (
         <>
           {!mods.length && <p className="text-sm text-on-surface-variant">Todavía no hay módulos. Cada módulo agrupa sus clases (teóricas o prácticas).</p>}
           {mods.map((m, i) => (
-            <div key={m.key} className="rounded border border-outline-variant p-4">
-              <div className="flex flex-wrap items-end gap-2">
-                <div className="min-w-[12rem] flex-1"><label className="label">Módulo {i + 1}</label>
-                  <input className="input" maxLength={120} placeholder="Ej: Fundamentos" value={m.titulo} onChange={(e) => updM(i, { titulo: e.target.value })} /></div>
-                <OrdenBotones label={`el módulo ${i + 1}`} arriba={i > 0 ? () => setMods(mover(mods, i, -1)) : undefined}
-                  abajo={i < mods.length - 1 ? () => setMods(mover(mods, i, 1)) : undefined} />
-                <RemoveButton onClick={() => setMods(mods.filter((_, j) => j !== i))} label={`Quitar el módulo ${i + 1}`}
-                  disabled={m.clases.length ? 'Para quitar el módulo, mové sus clases a otro o quitalas' : undefined} />
+            <BloqueModulo key={m.key} cabecera={
+              <div className="flex items-end gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-secondary">
+                    Módulo {i + 1} <span className="font-normal normal-case tracking-normal text-on-surface-variant">· {m.clases.length} clase{m.clases.length === 1 ? '' : 's'}</span>
+                  </p>
+                  <input aria-label={`Título del módulo ${i + 1}`} className="input min-w-0 !py-2 font-semibold" maxLength={120} placeholder="Título del módulo" value={m.titulo} onChange={(e) => updM(i, { titulo: e.target.value })} />
+                </div>
+                <MenuAcciones label={`Acciones del módulo ${i + 1}`} acciones={[
+                  { label: 'Subir módulo', icon: <ArrowUp size={16} />, disabled: i === 0, onClick: () => setMods(mover(mods, i, -1)) },
+                  { label: 'Bajar módulo', icon: <ArrowDown size={16} />, disabled: i === mods.length - 1, onClick: () => setMods(mover(mods, i, 1)) },
+                  'sep',
+                  { label: 'Quitar módulo', icon: <Trash2 size={16} />, danger: true, disabled: m.clases.length > 0, nota: m.clases.length ? 'Primero mové o quitá sus clases' : undefined, onClick: () => setMods(mods.filter((_, j) => j !== i)) },
+                ]} />
               </div>
-              <div className="mt-3 space-y-2">
-                {m.clases.map((c, ci) => filaClase(i, c, ci))}
-                <AddButton onClick={() => updM(i, { clases: [...m.clases, nuevaClase()] })}>Agregar clase</AddButton>
-              </div>
-            </div>
+            }>
+              <ul className="divide-y divide-outline-variant/50">{m.clases.map((c, ci) => filaClase(i, c, ci))}</ul>
+              <div className="p-2 sm:px-4 sm:pb-3"><AgregarFila onClick={() => updM(i, { clases: [...m.clases, nuevaClase()] })}>Agregar clase</AgregarFila></div>
+            </BloqueModulo>
           ))}
-          <AddButton onClick={() => setMods([...mods, { key: k(), titulo: '', clases: [nuevaClase()] }])}>Agregar módulo</AddButton>
+          <AgregarFila onClick={() => setMods([...mods, { key: k(), titulo: '', clases: [nuevaClase()] }])}>Agregar módulo</AgregarFila>
         </>
       )}
       {quitadasConMaterial.length > 0 && (
@@ -215,16 +312,6 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
         </p>
       )}
       {errE && <p role="alert" className="text-sm text-red-400">{errE}</p>}
-    </div>
-  )
-}
-
-function OrdenBotones({ label, arriba, abajo }: { label: string; arriba?: () => void; abajo?: () => void }) {
-  const cls = 'grid h-9 w-9 shrink-0 place-items-center rounded border border-outline-variant text-on-surface-variant hover:text-on-surface disabled:opacity-30'
-  return (
-    <div className="flex gap-1">
-      <button type="button" className={cls} disabled={!arriba} onClick={arriba} aria-label={`Subir ${label}`} title="Subir"><ArrowUp size={15} aria-hidden /></button>
-      <button type="button" className={cls} disabled={!abajo} onClick={abajo} aria-label={`Bajar ${label}`} title="Bajar"><ArrowDown size={15} aria-hidden /></button>
     </div>
   )
 }
@@ -243,9 +330,9 @@ function generarFechas(inicio: string, dias: number[], cantidad: number): string
   return out
 }
 
-// Las filas son las clases del curso en su orden (los títulos no se editan acá). Al crear o duplicar una edición
-// las fechas empiezan vacías: «Proponer fechas» las arma desde la fecha de inicio y los días de cursada (R8).
-// El orden es flexible: se puede adelantar una clase (fecha antes que otras) o saltearla (no se dicta).
+// Las filas son las clases del curso en su orden (los títulos no se editan acá), agrupadas por módulo. Al crear o
+// duplicar una edición las fechas empiezan vacías: «Proponer fechas» las arma desde la fecha de inicio y los días de
+// cursada (R8). El orden es flexible: se puede adelantar una clase (fecha antes que otras) o saltearla (no se dicta).
 export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
   name: string; plan: { id: string; numero: number; titulo: string; modulo?: string }[]; inicial: { plan_clase_id: string; fecha: string; estado: string }[]
   inicio?: string | null; dias?: number[]; avisar?: React.ReactNode
@@ -265,31 +352,49 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
     setRows(rows.map((r, i) => ({ ...r, fecha: f[i] ?? '' })))
   }
   const sinFecha = rows.length - conFecha.length
+  // Bloques consecutivos por módulo (en talleres, un solo bloque sin cabecera).
+  const grupos: { modulo?: string; filas: { r: C; i: number }[] }[] = []
+  rows.forEach((r, i) => {
+    const g = grupos.at(-1)
+    if (g && g.modulo === r.modulo) g.filas.push({ r, i })
+    else grupos.push({ modulo: r.modulo, filas: [{ r, i }] })
+  })
   if (!plan.length) return <p className="text-sm text-on-surface-variant">El curso todavía no tiene clases. Cargalas en la pestaña «Estructura» del curso.</p>
+  let nMod = 0
   return (
     <div className="space-y-4">
       <Serial name={name} value={conFecha.map((r) => `${r.id} | ${r.fecha} | ${r.estado}`).join('\n')} />
       <Guard error={errC} />
-      <div className="flex flex-wrap items-center gap-2 rounded border border-dashed border-outline-variant p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-outline-variant p-3">
         <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost !px-3 !py-2 disabled:opacity-50"><Wand2 size={14} aria-hidden /> Proponer fechas</button>
         <p className="min-w-[12rem] flex-1 text-xs text-on-surface-variant">
           {puedeGenerar ? 'Asigna una fecha a cada clase desde el inicio de la edición, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas, cargá antes la fecha de inicio (Datos) y los horarios de la edición.'}
         </p>
       </div>
       <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y no cuenta para el N° de clase de deserción. El material lo liberás vos, clase por clase. Saltear o adelantar no avisa por mail.</p>
-      <div className="space-y-2">
-        {rows.map((r, i) => (
-          <div key={r.id} className="flex flex-wrap items-end gap-2">
-            <span className="w-8 shrink-0 pb-2 text-center text-sm font-semibold text-on-surface-variant" aria-hidden>{r.numero}</span>
-            <p className="min-w-[10rem] flex-1 pb-2 text-sm">{r.titulo}{r.modulo && <span className="block text-xs text-on-surface-variant">{r.modulo}</span>}</p>
-            <div><input type="date" aria-label={`Fecha de ${r.titulo}`} className="input" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} /></div>
-            <div>
-              <select aria-label={`Estado de ${r.titulo}`} className="input" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
-                <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option><option value="salteada">Salteada</option>
-              </select></div>
-          </div>
-        ))}
-      </div>
+      {grupos.map((g, gi) => (
+        <BloqueModulo key={gi} cabecera={g.modulo ? (
+          <p className="pr-2 text-sm font-semibold"><span className="mr-1 text-[11px] uppercase tracking-wider text-secondary">Módulo {++nMod}</span> {g.modulo}</p>
+        ) : undefined}>
+          <ul className="divide-y divide-outline-variant/50">
+            {g.filas.map(({ r, i }) => {
+              const fuera = r.estado === 'salteada' || r.estado === 'suspendida'
+              return (
+                <li key={r.id} className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:grid-cols-[auto_1fr_auto] sm:px-4">
+                  <Num n={r.numero} />
+                  <p className={`min-w-0 text-sm font-medium ${fuera ? 'text-on-surface-variant line-through decoration-on-surface-variant/60' : ''}`}>{r.titulo}</p>
+                  <div className="col-span-2 flex gap-2 sm:col-span-1">
+                    <input type="date" aria-label={`Fecha de ${r.titulo}`} className="input min-w-0 flex-1 !px-3 !py-2 sm:w-40 sm:flex-none" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} />
+                    <select aria-label={`Estado de ${r.titulo}`} className="input min-w-0 flex-1 !py-2 !pl-3 !pr-1 sm:w-40 sm:flex-none" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
+                      <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option><option value="salteada">Salteada</option>
+                    </select>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </BloqueModulo>
+      ))}
       {sinFecha > 0 && !errC && <p className="text-sm text-secondary">{sinFecha} clase{sinFecha === 1 ? '' : 's'} sin fecha: no se mostrarán en el calendario de esta edición.</p>}
       {errC && <p role="alert" className="text-sm text-red-400">{errC}</p>}
       {avisar}
