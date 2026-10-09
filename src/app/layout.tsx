@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: { default: 'Recovery Parts — Academia de cursos técnicos', template: '%s · Recovery Parts' },
   description: 'Cursos y talleres presenciales de diseño y tecnología en Córdoba.',
   referrer: 'no-referrer',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   openGraph: { type: 'website', locale: 'es_AR', siteName: 'Recovery Parts', title: 'Recovery Parts — Academia de cursos técnicos', description: 'Cursos y talleres presenciales de diseño y tecnología en Córdoba.' },
 }
 

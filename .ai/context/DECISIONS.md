@@ -4,6 +4,12 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-09 | Se saca Supabase: Postgres plano + auth propia + archivos en disco, desplegado con Docker en Coolify | Control de la infraestructura y un solo servidor; no había datos reales que migrar (todo era de prueba) |
+| 2026-10-09 | Se mantienen las 72 políticas RLS: el backend fija rol y `app.user_id` por transacción (`SET LOCAL`); `auth.uid()`/`auth.role()` salen de `db/bootstrap.sql` | Conserva el modelo de seguridad ya probado sin reescribir la autorización en el servidor |
+| 2026-10-09 | `src/lib/db/builder.ts` imita la API de supabase-js en vez de reescribir ~130 consultas a SQL | Menos regresiones; el SQL generado es parametrizado y los identificadores se validan |
+| 2026-10-09 | Sesión = cookie firmada (HMAC) validada contra la base en cada request; contraseñas scrypt; tokens de un solo uso con hash en `auth.tokens` | Sin dependencias nuevas; el estado de la cuenta y `sesion_desde` cortan sesiones al instante |
+| 2026-10-09 | PDFs privados y fotos/videos en un volumen (`STORAGE_DIR`), sin MinIO; subida de media por `POST /api/media` | Menos piezas que operar; sin el límite de body de Vercel ya no hacen falta URLs firmadas |
+| 2026-10-09 | Las migraciones corren al arrancar la app (`docker-entrypoint.sh`) y se quita `deploy-db.yml` | En Coolify el deploy y la base van juntos; el runner es idempotente |
 | 2026-10-06 | **Estructura del curso** (RF-58): módulos → clases (título libre, teórica o práctica) → material. En cursos no hay clases sin módulo ni módulos sin clases y las clases de un módulo van juntas; los talleres no llevan módulos. Lo editan admin y profesor | Módulos, plan de clases y material estaban sueltos: el temario se escribía dos veces y el material se ataba a un número |
 | 2026-10-06 | El material y el calendario apuntan a la clase por id (no por su N°); si se borra una clase, su material queda «general» | Reordenar el plan cambiaba el material de clase sin aviso |
 | 2026-10-06 | Orden flexible por edición: el profesor puede adelantar o saltear una clase (estado `salteada`); no avisa por mail | El profesor ajusta el ritmo del grupo; el aviso se da en clase para que el alumno no lo use para decidir si falta |

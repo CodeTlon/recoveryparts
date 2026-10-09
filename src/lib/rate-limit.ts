@@ -1,5 +1,5 @@
 // Rate limit en memoria (mejor esfuerzo; en serverless cada instancia tiene su contador).
-// Complementa los límites propios de Supabase Auth.
+// Es el único límite de intentos: corre por instancia (una sola réplica en Coolify).
 const hits = new Map<string, { n: number; reset: number }>()
 const MAX_CLAVES = 5000
 

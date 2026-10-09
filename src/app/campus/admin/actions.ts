@@ -2,12 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireRole } from '@/lib/auth'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { siteUrl } from '@/lib/supabase/env'
+import { enviarLinkAcceso, invitarUsuario, cambiarEmailUsuario, eliminarUsuario } from '@/lib/users'
+import { clienteAdmin } from '@/lib/db'
 import { enviarMail } from '@/lib/mail'
 import { DIAS } from '@/lib/types'
 import { urlOpcional, imagenOpcional, extensionImagen, esUrlHttp } from '@/lib/validar'
 import { hoyAR } from '@/lib/fechas'
+import { guardarArchivo, urlPublica } from '@/lib/storage'
 
 export type R = { ok?: boolean; error?: string }
 const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
@@ -36,7 +37,7 @@ function traducir(m: string) {
 const fail = (e: { message: string } | null): R | null => (e ? { error: traducir(e.message) } : null)
 
 // ── Usuarios ─────────────────────────────────────────────
-// Solo el admin crea usuarios. Supabase genera el token (un solo uso, vence) y envía el mail.
+// Solo el admin crea usuarios. Se genera un token de un solo uso (vence) y se envía por mail.
 export async function crearUsuario(_: R, fd: FormData): Promise<R> {
   const { perfil: yo, sb } = await requireRole('admin')
   const email = txt(fd, 'email').toLowerCase()
@@ -48,11 +49,8 @@ export async function crearUsuario(_: R, fd: FormData): Promise<R> {
   const { data: existente } = await sb.from('profiles').select('id, rol').eq('email', email).maybeSingle()
   if (existente) return { error: 'Ese email ya existe. Para un alumno, usá "Agregar alumno" desde el curso.' }
 
-  const { error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
-    data: { rol, nombre, apellido, telefono: txt(fd, 'telefono') || null },
-    redirectTo: `${siteUrl}/auth/confirm`,
-  })
-  if (error) return { error: 'No se pudo enviar la invitación.' }
+  const uid = await invitarUsuario(email, { rol, nombre, apellido, telefono: txt(fd, 'telefono') || null })
+  if (!uid) return { error: 'No se pudo enviar la invitación.' }
   await sb.from('audit_log').insert({ actor_id: yo.id, accion: 'invitar', entidad: 'profiles', detalle: { rol } })
   revalidatePath('/campus/admin/usuarios')
   return { ok: true }
@@ -63,7 +61,7 @@ export async function reenviarInvitacion(fd: FormData) {
   const { data: p } = await sb.from('profiles').select('email, estado_cuenta').eq('id', txt(fd, 'id')).single()
   if (!p || p.estado_cuenta !== 'pendiente_activacion') return
   // Un token nuevo invalida el anterior.
-  await createAdminClient().auth.resetPasswordForEmail(p.email, { redirectTo: `${siteUrl}/auth/confirm` })
+  await enviarLinkAcceso(p.email, txt(fd, 'id'), 'invite')
   await sb.from('audit_log').insert({ actor_id: yo.id, accion: 'reenviar_invitacion', entidad: 'profiles', entidad_id: txt(fd, 'id') })
 }
 
@@ -73,10 +71,7 @@ export async function setEstadoCuenta(fd: FormData) {
   if (id === yo.id || !['activa', 'inactiva'].includes(estado)) return // el admin no se deshabilita a sí mismo
   const { error } = await sb.from('profiles').update({ estado_cuenta: estado }).eq('id', id)
   if (error) return
-  // signOut() de admin espera el JWT del usuario, no su id: se revoca con un ban (invalida el refresh token).
-  await createAdminClient().auth.admin
-    .updateUserById(id, { ban_duration: estado === 'inactiva' ? '876000h' : 'none' })
-    .catch(() => {})
+  // Inactiva: requireRole y el middleware miran estado_cuenta en cada request, así que corta la sesión al instante.
   revalidatePath('/campus/admin/usuarios')
 }
 
@@ -84,8 +79,7 @@ export async function cambiarEmail(_: R, fd: FormData): Promise<R> {
   const { sb, perfil: yo } = await requireRole('admin')
   const id = txt(fd, 'id'), email = txt(fd, 'email').toLowerCase()
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: 'Email inválido.' }
-  const { error } = await createAdminClient().auth.admin.updateUserById(id, { email, email_confirm: false })
-  if (error) return { error: 'No se pudo cambiar el email (¿ya está en uso?).' }
+  try { await cambiarEmailUsuario(id, email) } catch { return { error: 'No se pudo cambiar el email (¿ya está en uso?).' } }
   await sb.from('profiles').update({ email }).eq('id', id)
   await sb.from('audit_log').insert({ actor_id: yo.id, accion: 'cambiar_email', entidad: 'profiles', entidad_id: id })
   revalidatePath('/campus/admin/usuarios')
@@ -385,18 +379,15 @@ export async function agregarAlumno(_: R, fd: FormData): Promise<R> {
   if (!alumno) {
     const nombre = txt(fd, 'nombre'), apellido = txt(fd, 'apellido')
     if (!nombre || !apellido || !/^\S+@\S+\.\S+$/.test(email)) return { error: 'Alumno nuevo: completá nombre, apellido y un email válido.' }
-    const { data, error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
-      data: { rol: 'alumno', nombre, apellido, telefono: txt(fd, 'telefono') || null },
-      redirectTo: `${siteUrl}/auth/confirm`,
-    })
-    if (error || !data.user) return { error: 'No se pudo enviar la invitación.' }
-    alumno = { id: data.user.id, rol: 'alumno', nombre }
+    const uid = await invitarUsuario(email, { rol: 'alumno', nombre, apellido, telefono: txt(fd, 'telefono') || null })
+    if (!uid) return { error: 'No se pudo enviar la invitación.' }
+    alumno = { id: uid, rol: 'alumno', nombre }
     nuevo = true
   }
 
   const { error } = await sb.from('inscripciones').insert({ alumno_id: alumno.id, edicion_id })
   if (error) {
-    if (nuevo) await createAdminClient().auth.admin.deleteUser(alumno.id).catch(() => {}) // sin cuentas huérfanas
+    if (nuevo) await eliminarUsuario(alumno.id).catch(() => {}) // sin cuentas huérfanas
     return { error: /duplicate|unique/.test(error.message) ? 'El alumno ya está en esta edición.' : traducir(error.message) }
   }
   if (!nuevo) await enviarMail(email, `Te sumaron al curso ${curso.nombre} — Recovery Parts`, `Hola ${alumno.nombre}, fuiste agregado al curso ${curso.nombre}${ed.fecha_inicio ? ` (inicia el ${ed.fecha_inicio})` : ''}. Ingresá al Campus con tu cuenta de siempre.`)
@@ -528,28 +519,16 @@ export async function marcarContactoLeido(fd: FormData) {
   revalidatePath('/campus/admin/consultas')
 }
 
-// Sube una imagen al bucket público del CMS y devuelve la URL (para pegar en los campos de imagen).
+// Sube una imagen del CMS y devuelve la URL (para pegar en los campos de imagen).
 export async function subirImagen(_: { url?: string; error?: string }, fd: FormData): Promise<{ url?: string; error?: string }> {
-  const { sb } = await requireRole('admin')
+  await requireRole('admin')
   const f = fd.get('archivo') as File | null
   if (!f || !f.size) return { error: 'Elegí una imagen.' }
   if (!['image/webp', 'image/jpeg', 'image/png', 'image/avif'].includes(f.type) || f.size > 8 * 1024 * 1024) return { error: 'Solo WebP/JPG/PNG/AVIF de hasta 8 MB.' }
   // El `type` lo manda el cliente: se confirma con la firma real del archivo.
   const ext = extensionImagen(new Uint8Array(await f.slice(0, 12).arrayBuffer()))
   if (!ext) return { error: 'El archivo no es una imagen válida.' }
-  const path = `${crypto.randomUUID()}.${ext}`
-  const { error } = await sb.storage.from('sitio').upload(path, f, { contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}` })
-  if (error) return { error: 'No se pudo subir la imagen.' }
-  return { url: sb.storage.from('sitio').getPublicUrl(path).data.publicUrl }
-}
-
-// Firma una subida directa a `sitio` (el navegador comprime y sube; Vercel no deja pasar archivos grandes
-// por una server action). Solo admin; el servidor fija la ruta y la extensión permitida.
-export async function firmarSubidaMedia(ext: string): Promise<{ path?: string; token?: string; url?: string; error?: string }> {
-  const { sb } = await requireRole('admin')
-  if (!['webp', 'jpg', 'mp4', 'webm'].includes(ext)) return { error: 'Formato no permitido.' }
-  const path = `${crypto.randomUUID()}.${ext}`
-  const { data, error } = await sb.storage.from('sitio').createSignedUploadUrl(path)
-  if (error || !data) return { error: 'No se pudo preparar la subida.' }
-  return { path, token: data.token, url: sb.storage.from('sitio').getPublicUrl(path).data.publicUrl }
+  const nombre = `${crypto.randomUUID()}.${ext}`
+  try { await guardarArchivo('sitio', nombre, new Uint8Array(await f.arrayBuffer())) } catch { return { error: 'No se pudo subir la imagen.' } }
+  return { url: urlPublica(nombre) }
 }

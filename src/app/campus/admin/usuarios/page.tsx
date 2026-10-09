@@ -12,7 +12,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
   const { sb, perfil } = await requireRole('admin')
   let query = sb.from('profiles').select('*').order('apellido')
   if (rol) query = query.eq('rol', rol)
-  if (q) query = query.or(`nombre.ilike.%${q.replace(/[%,()]/g, '')}%,apellido.ilike.%${q.replace(/[%,()]/g, '')}%,email.ilike.%${q.replace(/[%,()]/g, '')}%`)
+  if (q) query = query.buscar(['nombre', 'apellido', 'email'], q)
   const { data: users } = await query
 
   const tab = (v: string | undefined, l: string) => (
