@@ -19,13 +19,17 @@ try {
   const e = email.toLowerCase()
   const [existente] = await sql`select u.id, p.rol from auth.users u left join public.profiles p on p.id = u.id where u.email = ${e}`
   if (existente && existente.rol !== 'admin') throw new Error('Ese email ya existe con otro rol.')
-  // invited_at hace que el trigger cree el perfil con el rol de los metadatos; email_confirmed_at lo deja activo.
-  if (!existente) {
-    await sql`insert into auth.users (email, raw_user_meta_data, invited_at, email_confirmed_at, password_hash)
-      values (${e}, ${sql.json({ rol: 'admin', nombre, apellido })}, now(), now(), ${hash})`
+  // invited_at hace que el trigger cree el perfil con el rol de los metadatos.
+  let id = existente?.id
+  if (!id) {
+    ;[{ id }] = await sql`insert into auth.users (email, raw_user_meta_data, invited_at, password_hash)
+      values (${e}, ${sql.json({ rol: 'admin', nombre, apellido })}, now(), ${hash}) returning id`
   } else {
-    await sql`update auth.users set password_hash = ${hash}, sesion_desde = now() where id = ${existente.id}`
+    await sql`update auth.users set password_hash = ${hash}, sesion_desde = now() where id = ${id}`
   }
+  // El trigger que activa la cuenta se dispara al CONFIRMAR el email (update), no al insertar.
+  await sql`update auth.users set email_confirmed_at = coalesce(email_confirmed_at, now()) where id = ${id}`
+  await sql`update public.profiles set estado_cuenta = 'activa' where id = ${id} and rol = 'admin'`
   console.log(`✔ Administrador listo: ${e}`)
 } catch (e) {
   console.error('Error:', e.message)
