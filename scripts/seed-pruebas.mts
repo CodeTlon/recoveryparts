@@ -7,8 +7,12 @@ import postgres from 'postgres'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { QB, cargarMeta, rpc } from '../src/lib/db/builder'
-import { hashPassword } from '../src/lib/password-hash'
+// Los .ts de src/ se cargan como CommonJS: con Node 22 sus exports con nombre no se detectan desde un .mts,
+// así que se toman del módulo completo (funciona igual en Node 20).
+import * as builder from '../src/lib/db/builder'
+import * as passwordHash from '../src/lib/password-hash'
+const { QB, cargarMeta, rpc } = ((builder as any).default ?? builder) as typeof builder
+const { hashPassword } = ((passwordHash as any).default ?? passwordHash) as typeof passwordHash
 
 const ENV_FILE = process.env.ENV_FILE ?? '.env.development'
 if (!process.argv.includes('--confirmo-no-produccion')) {
