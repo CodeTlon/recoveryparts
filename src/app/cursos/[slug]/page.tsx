@@ -108,7 +108,9 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
             {c.video_url && (
               <section>
                 <h2 className="mb-4 text-2xl font-semibold">Conocé las clases</h2>
-                <a href={hrefSeguro(c.video_url)} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>
+                {/\.(mp4|webm)(\?|$)/i.test(c.video_url)
+                  ? <video src={hrefSeguro(c.video_url)} poster={c.imagen_url || undefined} controls playsInline preload="metadata" className="max-h-[70vh] w-full rounded-lg bg-black" />
+                  : <a href={hrefSeguro(c.video_url)} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>}
               </section>
             )}
 

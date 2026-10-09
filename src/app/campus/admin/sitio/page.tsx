@@ -1,3 +1,4 @@
+import { MediaField } from '@/components/campus/MediaField'
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth'
 import ImageUploader from '@/components/campus/ImageUploader'
@@ -77,7 +78,8 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         <div className="space-y-6">
         <Setting clave="hero" title="Portada" hint="Lo primero que se ve al entrar al sitio: título, subtítulo, imagen de fondo y botones.">
           <Field label="Título" name="titulo" placeholder="Ej: Aprendé un oficio con salida laboral" defaultValue={h.titulo} /><Field label="Subtítulo" name="subtitulo" placeholder="Ej: Aprendé un oficio con salida laboral" rows={2} defaultValue={h.subtitulo} />
-          <Field label="Imagen de fondo (URL)" name="imagen_url" placeholder="https://…/imagen.jpg" defaultValue={h.imagen_url} />
+          <MediaField tipo="imagen" label="Imagen de fondo" name="imagen_url" defaultValue={h.imagen_url} />
+          <MediaField tipo="video" label="Video de fondo (opcional)" name="video_url" defaultValue={h.video_url} hint="Se reproduce en la portada, sin sonido y en bucle. Hasta 60 s; se comprime solo a 720p." />
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Texto botón cursos" name="cta_cursos" placeholder="Ej: Ver cursos" defaultValue={h.cta_cursos} /><Field label="Texto botón WhatsApp" name="cta_whatsapp" placeholder="Ej: Consultar por WhatsApp" defaultValue={h.cta_whatsapp} /></div>
         </Setting>
         <Setting clave="areas" title="Las dos áreas" hint="Las dos tarjetas grandes del inicio que llevan al catálogo de cada área.">
@@ -152,7 +154,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         {[...(gal ?? []), null].map((r) => (
           <Item key={r?.id ?? 'nuevo'} tipo="foto" row={r ?? undefined}>
             {!r && <p className="font-semibold">Nueva foto</p>}
-            <Field label="Imagen (URL)" name="imagen_url" placeholder="https://…/imagen.jpg" defaultValue={r?.imagen_url} required /><Field label="Texto alternativo (accesibilidad)" name="alt" placeholder="Ej: Alumnos trabajando en el taller" defaultValue={r?.alt} required />
+            <MediaField tipo="imagen" label="Imagen" name="imagen_url" defaultValue={r?.imagen_url} /><Field label="Texto alternativo (accesibilidad)" name="alt" placeholder="Ej: Alumnos trabajando en el taller" defaultValue={r?.alt} required />
             <Field label="Descripción corta" name="descripcion" placeholder="Contá qué se aprende y para quién…" defaultValue={r?.descripcion} />
             <div className="grid gap-4 sm:grid-cols-2"><Select name="categoria" label="Categoría" defaultValue={r?.categoria ?? 'aulas'} options={CATS} /><Select name="area" label="Área" defaultValue={r?.area} empty="—" options={AREAS} /></div>
           </Item>
