@@ -20,7 +20,7 @@ COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
 COPY --from=build --chown=app:app /app/public ./public
 COPY --from=build --chown=app:app /app/db ./db
-COPY --from=build --chown=app:app /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=build --chown=app:app /app/scripts/migrate.mjs /app/scripts/crear-admin.mjs ./scripts/
 COPY --chown=app:app docker-entrypoint.sh ./
 USER app
 VOLUME /data/storage

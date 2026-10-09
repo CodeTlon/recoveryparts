@@ -5,17 +5,23 @@ Restricciones y riesgos a tener en cuenta (no son bugs para arreglar ya).
 ## El contexto se desincroniza si nadie fuerza el proceso
 Si se edita código sin actualizar `.ai/context/` (y la spec) en el mismo cambio, los docs mienten. `/cambio` y `/cerrar` existen para forzarlo; sin esa disciplina el riesgo vuelve.
 
-## Node 20 limita las versiones de Supabase
-`supabase-js` 2.100.0 y `ssr` 0.9.0 fijados. Subirlos exige Node 22 en local, CI y Vercel a la vez.
+## El constructor de consultas no es PostgREST completo
+`src/lib/db/builder.ts` cubre solo los operadores y embeds que usa el código. Una relación ambigua (dos FK entre las mismas tablas) exige `rel!nombre_fk`. Agregar un operador nuevo se hace en `cond()`; los embeds no se soportan dentro de `returning` (insert/update + select).
 
-## El Auth remoto permite registro público hasta que se desactive en el panel
-Está cerrado en la base (migración 0006: perfil solo con `invited_at`) y en `config.toml` local, pero en los proyectos remotos hay que apagarlo a mano en el panel de Auth.
+## Una sola réplica de la app
+El rate limit de login/reset (`src/lib/rate-limit.ts`) vive en memoria del proceso. Con varias réplicas el límite se multiplica.
+
+## La app se conecta con el mismo usuario que migra
+`DATABASE_URL` es el dueño de la base (superusuario en el contenedor oficial) y cambia de rol con `SET LOCAL ROLE`. RLS sigue vigente, pero un usuario de conexión sin superusuario sería más seguro (pendiente).
+
+## Las sesiones son cookies firmadas sin tabla
+No hay revocación individual: se invalidan todas las de un usuario con `auth.users.sesion_desde` (se actualiza al cambiar la contraseña) o desactivando la cuenta. Cambiar `SESSION_SECRET` cierra todas.
 
 ## Sin tests automáticos de UI ni de políticas RLS
-La CI verifica tipos, build, migraciones, RLS activo en todas las tablas y que un signUp público no cree perfil. No prueba las políticas por rol ni las pantallas.
+La CI verifica tipos, build, migraciones, RLS activo en todas las tablas y que un alta sin invitación no cree perfil. No prueba las políticas por rol ni las pantallas.
 
-## El mail de aviso de contactos requiere configuración externa
-El formulario guarda en `contactos` (bandeja del admin); el aviso por mail necesita webhook/SMTP (`docs/SETUP-SUPABASE.md`).
+## El mail depende de SMTP
+Invitaciones, recuperación de contraseña y avisos salen por `src/lib/mail.ts`. Sin `SMTP_HOST`/`MAIL_FROM` no se envía nada (el alta del usuario queda hecha, pero nadie recibe el link): configurarlo antes de invitar en cada entorno.
 
 ## Cuentas y secretos
 `docs/CUENTAS-HOMOLOGACION.md`, `.env.test` y `.env.production` están gitignored. Nunca pegar claves en el chat ni en commits.

@@ -29,6 +29,9 @@ const sql = postgres(url, { max: 1, onnotice: () => {} })
 try {
   await sql.file(join(raiz, 'db/bootstrap.sql'))
   await sql`create table if not exists schema_migrations (nombre text primary key, aplicada_en timestamptz not null default now())`
+  // Registro interno: sin acceso para los roles de la app y con RLS (la CI exige RLS en todo public).
+  await sql`revoke all on schema_migrations from public, anon, authenticated`
+  await sql`alter table schema_migrations enable row level security`
   const hechas = new Set((await sql`select nombre from schema_migrations`).map((r) => r.nombre))
   const archivos = readdirSync(join(raiz, 'db/migrations')).filter((f) => f.endsWith('.sql')).sort()
   for (const f of archivos) {
