@@ -9,7 +9,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Sin DATABASE_URL en el build: las páginas con datos se renderizan por request.
-ENV NEXT_TELEMETRY_DISABLED=1
+# La URL pública se incrusta en sitemap, robots y metadatos: tiene que llegar como argumento de build.
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 RUN npm run build
 
 FROM node:20-alpine AS run

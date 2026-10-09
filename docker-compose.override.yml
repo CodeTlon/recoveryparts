@@ -1,0 +1,6 @@
+# Solo desarrollo: `docker compose` lo carga solo. Coolify usa únicamente docker-compose.yml,
+# así test y producción pueden convivir en el mismo servidor sin pelear por el puerto.
+services:
+  db:
+    ports:
+      - '127.0.0.1:54322:5432'

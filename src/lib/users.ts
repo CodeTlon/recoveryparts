@@ -61,7 +61,7 @@ export async function consumirToken(token: string, tipo: TipoToken): Promise<str
 
 export async function enviarLinkAcceso(email: string, userId: string, tipo: TipoToken): Promise<boolean> {
   const token = await emitirToken(userId, tipo)
-  const link = `${siteUrl}/auth/confirm?token=${token}&type=${tipo}`
+  const link = `${siteUrl()}/auth/confirm?token=${token}&type=${tipo}`
   return tipo === 'invite'
     ? enviarMail(email, 'Activá tu cuenta de Recovery Parts',
         `Te invitamos al campus de Recovery Parts.\n\nCreá tu contraseña desde este link (se usa una sola vez y vence en 7 días):\n${link}\n`)
