@@ -542,3 +542,14 @@ export async function subirImagen(_: { url?: string; error?: string }, fd: FormD
   if (error) return { error: 'No se pudo subir la imagen.' }
   return { url: sb.storage.from('sitio').getPublicUrl(path).data.publicUrl }
 }
+
+// Firma una subida directa a `sitio` (el navegador comprime y sube; Vercel no deja pasar archivos grandes
+// por una server action). Solo admin; el servidor fija la ruta y la extensión permitida.
+export async function firmarSubidaMedia(ext: string): Promise<{ path?: string; token?: string; url?: string; error?: string }> {
+  const { sb } = await requireRole('admin')
+  if (!['webp', 'jpg', 'mp4', 'webm'].includes(ext)) return { error: 'Formato no permitido.' }
+  const path = `${crypto.randomUUID()}.${ext}`
+  const { data, error } = await sb.storage.from('sitio').createSignedUploadUrl(path)
+  if (error || !data) return { error: 'No se pudo preparar la subida.' }
+  return { path, token: data.token, url: sb.storage.from('sitio').getPublicUrl(path).data.publicUrl }
+}
