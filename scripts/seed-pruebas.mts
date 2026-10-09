@@ -1,11 +1,14 @@
-// Cuentas y datos de PRUEBA para desarrollo (Supabase local) u homologación. Idempotente.
-// Uso: ENV_FILE=.env.development node scripts/seed-pruebas.mjs --confirmo-no-produccion
-//      ENV_FILE=.env.test     node scripts/seed-pruebas.mjs --confirmo-no-produccion
+// Cuentas y datos de PRUEBA para desarrollo (Postgres local) u homologación. Idempotente.
+// Uso: ENV_FILE=.env.development tsx scripts/seed-pruebas.mts --confirmo-no-produccion
+//      ENV_FILE=.env.test     tsx scripts/seed-pruebas.mts --confirmo-no-produccion
 // Se niega a correr si APP_ENV=production. Emails @homologacion.example.com (fáciles de borrar).
 // No envía ningún mail. Las contraseñas se generan al azar y se imprimen al final.
-import { createClient } from '@supabase/supabase-js'
-import { readFileSync, writeFileSync } from 'node:fs'
+import postgres from 'postgres'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { QB, cargarMeta, rpc } from '../src/lib/db/builder'
+import { hashPassword } from '../src/lib/password-hash'
 
 const ENV_FILE = process.env.ENV_FILE ?? '.env.development'
 if (!process.argv.includes('--confirmo-no-produccion')) {
@@ -18,9 +21,16 @@ if (env.APP_ENV === 'production' || !['development', 'test'].includes(env.APP_EN
   console.error(`Abortado: ${ENV_FILE} no declara APP_ENV=development|test (APP_ENV=${env.APP_ENV ?? 'sin definir'}).`)
   process.exit(1)
 }
-console.log(`Entorno: ${env.APP_ENV} → ${env.NEXT_PUBLIC_SUPABASE_URL}`)
-const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
-const ok = (r, ctx) => { if (r.error) throw new Error(`${ctx}: ${r.error.message}`); return r.data }
+if (!env.DATABASE_URL) { console.error(`Falta DATABASE_URL en ${ENV_FILE}.`); process.exit(1) }
+console.log(`Entorno: ${env.APP_ENV} → ${new URL(env.DATABASE_URL).host}`)
+const pg = postgres(env.DATABASE_URL, { onnotice: () => {}, max: 1 })
+// Mismo constructor de consultas que usa la app, con rol de servicio (se saltea RLS).
+const run = (text: string, params: any[]) => pg.begin(async (tx) => { await tx`select set_config('role', 'service_role', true), set_config('app.role', 'service_role', true)`; return tx.unsafe(text, params) }) as unknown as Promise<any[]>
+let meta: Promise<any> | undefined
+const getMeta = () => (meta ??= cargarMeta(run))
+const sb = { from: (t: string) => new QB(t, run, getMeta), rpc: (n: string, a: any = {}) => rpc(n, a, run, getMeta) }
+const STORAGE_DIR = resolve(env.STORAGE_DIR ?? './storage')
+const ok = (r: any, ctx: string) => { if (r.error) throw new Error(`${ctx}: ${r.error.message}`); return r.data }
 
 const D = '@demo.example.com'
 // Cuentas de demo con datos fáciles de dictar (el script se niega a correr fuera de development/test).
@@ -42,11 +52,11 @@ const ids = {}
 for (const u of USUARIOS) {
   let { data: p } = await sb.from('profiles').select('id').eq('email', u.email).maybeSingle()
   if (!p) {
-    // generateLink(invite) crea el usuario con invited_at (pasa el bloqueo de autoregistro) y NO envía mail.
-    const g = ok(await sb.auth.admin.generateLink({ type: 'invite', email: u.email, options: { data: { rol: u.rol, nombre: u.nombre, apellido: u.apellido } } }), `crear ${u.email}`)
-    p = { id: g.user.id }
+    // Con invited_at el trigger crea el perfil (pasa el bloqueo de autoregistro). No envía mail.
+    const [g] = await run('insert into auth.users (email, raw_user_meta_data, invited_at) values ($1, $2::jsonb, now()) returning id', [u.email, { rol: u.rol, nombre: u.nombre, apellido: u.apellido }])
+    p = { id: g.id }
   }
-  ok(await sb.auth.admin.updateUserById(p.id, { password: u.password, email_confirm: true }), `password ${u.email}`)
+  await run('update auth.users set password_hash = $2, email_confirmed_at = coalesce(email_confirmed_at, now()) where id = $1', [p.id, await hashPassword(u.password)])
   ok(await sb.from('profiles').update({ rol: u.rol, estado_cuenta: 'activa', nombre: u.nombre, apellido: u.apellido, telefono: u.rol === 'alumno' ? '3510000000' : null }).eq('id', p.id), `perfil ${u.email}`)
   ids[u.key] = p.id
 }
@@ -259,7 +269,8 @@ async function material(slug, titulo, extra, archivo, liberarEn = []) {
     const row = { curso_id: cid[slug], titulo, subido_por: ids.profe1, plan_clase_id: clase ? plan[slug][clase] : null, ...resto }
     if (archivo) {
       const path = `${cid[slug]}/${randomUUID()}.pdf`
-      ok(await sb.storage.from('materiales').upload(path, archivo, { contentType: 'application/pdf' }), `subir ${titulo}`)
+      mkdirSync(dirname(join(STORAGE_DIR, 'materiales', path)), { recursive: true })
+      writeFileSync(join(STORAGE_DIR, 'materiales', path), archivo)
       Object.assign(row, { tipo: 'pdf', storage_path: path })
     } else row.tipo = 'link'
     m = ok(await sb.from('materiales').insert(row).select('id').single(), `material ${titulo}`)
@@ -335,3 +346,4 @@ ok(await sb.from('cms_galeria').insert(G.map(([categoria, area, imagen_url, alt]
 const tabla = USUARIOS.map((u) => `${u.rol.padEnd(9)} ${u.email.padEnd(32)} ${u.password}`).join('\n')
 console.log(`\nCUENTAS DE PRUEBA (${env.APP_ENV})\n` + tabla)
 if (process.env.CREDS_OUT) writeFileSync(process.env.CREDS_OUT, JSON.stringify({ usuarios: USUARIOS, ids, cursos: cid, ediciones: eid }, null, 2), { mode: 0o600 })
+await pg.end()

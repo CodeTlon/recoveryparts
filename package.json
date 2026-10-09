@@ -5,22 +5,19 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "next dev",
-    "dev:test": "node --env-file=.env.test node_modules/next/dist/bin/next dev",
     "build": "next build",
     "start": "next start",
     "type-check": "tsc --noEmit",
-    "db:start": "supabase start -x realtime,edge-runtime,vector,logflare,imgproxy,studio,postgres-meta,supavisor",
-    "db:stop": "supabase stop",
-    "db:status": "supabase status",
-    "db:reset": "supabase db reset",
-    "db:push:test": "node scripts/db-push.mjs test",
-    "db:push:production": "node scripts/db-push.mjs production",
-    "seed:dev": "ENV_FILE=.env.development node scripts/seed-pruebas.mjs --confirmo-no-produccion",
-    "seed:test": "ENV_FILE=.env.test node scripts/seed-pruebas.mjs --confirmo-no-produccion"
+    "db:start": "docker compose up -d db",
+    "db:stop": "docker compose stop db",
+    "db:migrate": "ENV_FILE=.env.development node scripts/migrate.mjs",
+    "db:reset": "docker compose down -v db && docker compose up -d db --wait && npm run db:migrate",
+    "db:migrate:test": "ENV_FILE=.env.test node scripts/migrate.mjs",
+    "db:migrate:production": "ENV_FILE=.env.production node scripts/migrate.mjs",
+    "seed:dev": "ENV_FILE=.env.development tsx scripts/seed-pruebas.mts --confirmo-no-produccion",
+    "seed:test": "ENV_FILE=.env.test tsx scripts/seed-pruebas.mts --confirmo-no-produccion"
   },
   "dependencies": {
-    "@supabase/ssr": "0.9.0",
-    "@supabase/supabase-js": "2.100.0",
     "clsx": "^2.1.0",
     "jszip": "^3.10.2",
     "lucide-react": "^0.400.0",
@@ -42,6 +39,7 @@
     "postcss": "^8.4.0",
     "supabase": "2.119.0",
     "tailwindcss": "^3.4.0",
+    "tsx": "4.19.2",
     "typescript": "^5.4.0"
   },
   "engines": {

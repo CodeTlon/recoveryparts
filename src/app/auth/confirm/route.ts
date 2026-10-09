@@ -1,20 +1,21 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import type { EmailOtpType } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
+import { consumirToken, type TipoToken } from '@/lib/users'
+import { firmarSesion, COOKIE, opcionesCookie } from '@/lib/session'
+import { limited } from '@/lib/rate-limit'
 
-// El mail de Supabase apunta acá (ver docs/SETUP-SUPABASE.md):
-//   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite
-// Se valida el token (un solo uso) y se redirige: el token sale de la URL.
+// Link de invitación / recuperación: valida el token (un solo uso, vence), abre la sesión y
+// manda a /activar para definir la contraseña.
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl
-  const token_hash = searchParams.get('token_hash')
-  const type = searchParams.get('type') as EmailOtpType | null
-  const dest = new URL('/activar', request.url)
+  const token = request.nextUrl.searchParams.get('token')
+  const type = request.nextUrl.searchParams.get('type')
+  const falla = () => NextResponse.redirect(new URL('/activar?error=1', request.url))
+  if (!token || (type !== 'invite' && type !== 'recovery')) return falla()
+  const ip = request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
+  if (limited(`confirm:ip:${ip}`, 20, 15 * 60_000)) return falla()
 
-  if (token_hash && type) {
-    const sb = await createClient()
-    const { error } = await sb.auth.verifyOtp({ type, token_hash })
-    if (!error) return NextResponse.redirect(dest)
-  }
-  return NextResponse.redirect(new URL('/activar?error=1', request.url))
+  const userId = await consumirToken(token, type as TipoToken)
+  if (!userId) return falla()
+  const res = NextResponse.redirect(new URL('/activar', request.url))
+  res.cookies.set(COOKIE, firmarSesion(userId).token, opcionesCookie)
+  return res
 }

@@ -3,12 +3,10 @@
 import { useId, useState } from 'react'
 import Image from 'next/image'
 import { ImagePlus, Loader2, Video, X } from 'lucide-react'
-import { firmarSubidaMedia } from '@/app/campus/admin/actions'
-import { createClient } from '@/lib/supabase/client'
 import { comprimirImagen, comprimirVideo, MAX_SUBIDA, type Comprimido } from '@/lib/media'
 
-// Campo de foto o video para formularios: comprime en el navegador, sube directo al bucket público `sitio`
-// con una URL firmada y guarda la URL final en un input oculto con el `name` del campo.
+// Campo de foto o video para formularios: comprime en el navegador, la sube a /api/media
+// y guarda la URL final en un input oculto con el `name` del campo.
 export function MediaField({ label, name, tipo, defaultValue, hint }: { label: string; name: string; tipo: 'imagen' | 'video'; defaultValue?: string | null; hint?: string }) {
   const id = useId()
   const [url, setUrl] = useState(defaultValue ?? '')
@@ -26,11 +24,10 @@ export function MediaField({ label, name, tipo, defaultValue, hint }: { label: s
       const c: Comprimido = esVideo ? await comprimirVideo(f, p => setEstado(`Comprimiendo… ${Math.round(p * 100)}%`)) : await comprimirImagen(f)
       if (c.blob.size > MAX_SUBIDA) throw new Error('Quedó muy pesado (más de 25 MB). Usá un clip más corto.')
       setEstado('Subiendo…')
-      const firma = await firmarSubidaMedia(c.ext)
-      if (firma.error || !firma.path || !firma.token || !firma.url) throw new Error(firma.error ?? 'No se pudo subir.')
-      const { error: err } = await createClient().storage.from('sitio').uploadToSignedUrl(firma.path, firma.token, c.blob, { contentType: c.mime })
-      if (err) throw new Error('No se pudo subir el archivo.')
-      setUrl(firma.url)
+      const r = await fetch('/api/media', { method: 'POST', headers: { 'Content-Type': c.mime }, body: c.blob })
+      const j = (await r.json().catch(() => ({}))) as { url?: string; error?: string }
+      if (!r.ok || !j.url) throw new Error(j.error ?? 'No se pudo subir el archivo.')
+      setUrl(j.url)
     } catch (x) { setError(x instanceof Error ? x.message : 'No se pudo procesar el archivo.') }
     setEstado('')
   }

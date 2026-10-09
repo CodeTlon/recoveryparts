@@ -3,6 +3,9 @@
 -- Los triggers de 0006 se mantienen: el perfil solo se crea si invited_at está seteado (RF-57).
 
 alter table auth.users add column if not exists password_hash text;
+-- Las sesiones (cookie firmada) emitidas antes de este instante dejan de valer: se actualiza
+-- al cambiar la contraseña para cerrar las demás sesiones abiertas.
+alter table auth.users add column if not exists sesion_desde timestamptz;
 
 -- Tokens de invitación y de recuperación de contraseña. Se guarda solo el hash (sha256).
 create table if not exists auth.tokens (

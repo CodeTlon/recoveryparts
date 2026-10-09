@@ -31,6 +31,11 @@ grant usage on schema auth to anon, authenticated, service_role;
 create or replace function auth.uid() returns uuid
 language sql stable as $$ select nullif(current_setting('app.user_id', true), '')::uuid $$;
 
+-- Rol de la request (anon / authenticated / service_role), fijado por el backend junto con el usuario.
+-- No se usa current_user porque cambia dentro de las funciones SECURITY DEFINER.
+create or replace function auth.role() returns text
+language sql stable as $$ select nullif(current_setting('app.role', true), '') $$;
+
 create table if not exists auth.users (
   id uuid primary key default gen_random_uuid(),
   email text unique,
