@@ -1,3 +1,4 @@
+import { hrefSeguro } from '@/lib/validar'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Star, ChevronDown, Search } from 'lucide-react'
@@ -49,6 +50,7 @@ export default async function Home() {
         {/* 1 · Hero */}
         <section className="relative flex min-h-[85vh] items-center overflow-hidden pt-20">
           {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}
+          {hrefSeguro(s.hero.video_url) && <video src={hrefSeguro(s.hero.video_url)} poster={s.hero.imagen_url || undefined} autoPlay muted loop playsInline preload="metadata" aria-hidden className="absolute inset-0 h-full w-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/85 to-surface/40" />
           <div className="pointer-events-none absolute -bottom-1/4 -left-1/4 h-[500px] w-[500px] rounded-full bg-accent/20 blur-[130px]" />
           <div className="relative mx-auto w-full max-w-[1280px] px-4 py-20 md:px-12">
