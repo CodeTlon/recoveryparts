@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireRole } from '@/lib/auth'
+import { guardarArchivo, borrarArchivo } from '@/lib/storage'
 import type { R } from '../admin/actions'
 
 const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
@@ -39,14 +40,13 @@ export async function subirPdf(_: R, fd: FormData): Promise<R> {
   const head = new TextDecoder().decode(new Uint8Array(await f.slice(0, 5).arrayBuffer()))
   if (f.type !== 'application/pdf' || head !== '%PDF-') return { error: 'El archivo no es un PDF válido.' }
 
+  // Primero la fila: RLS de `materiales` verifica que dicte este curso. Recién después se guarda el archivo.
   const path = `${v.curso_id}/${crypto.randomUUID()}.pdf`
-  const up = await sb.storage.from('materiales').upload(path, f, { contentType: 'application/pdf' })
-  if (up.error) return { error: 'No se pudo subir el PDF (¿dictás este curso?).' }
-
   const { data, error } = await sb.from('materiales').insert({ ...v, tipo: 'pdf', storage_path: path, subido_por: perfil.id }).select('id').single()
-  if (error || !data) {
-    await sb.storage.from('materiales').remove([path])
-    return { error: 'No se pudo registrar el material.' }
+  if (error || !data) return { error: 'No se pudo registrar el material (¿dictás este curso?).' }
+  try { await guardarArchivo('materiales', path, new Uint8Array(await f.arrayBuffer())) } catch {
+    await sb.from('materiales').delete().eq('id', data.id)
+    return { error: 'No se pudo subir el PDF.' }
   }
   await liberarSiCorresponde(sb, fd, data.id)
   revalidar()
@@ -82,6 +82,6 @@ export async function borrarMaterial(fd: FormData) {
   const { sb } = await requireRole('profesor', 'admin')
   const { data: m } = await sb.from('materiales').select('storage_path').eq('id', txt(fd, 'id')).single()
   const { error } = await sb.from('materiales').delete().eq('id', txt(fd, 'id'))
-  if (!error && m?.storage_path) await sb.storage.from('materiales').remove([m.storage_path])
+  if (!error && m?.storage_path) await borrarArchivo('materiales', m.storage_path)
   revalidar()
 }

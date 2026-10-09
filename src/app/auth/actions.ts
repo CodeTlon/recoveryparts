@@ -2,8 +2,9 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { siteUrl, supabaseConfigured } from '@/lib/supabase/env'
+import { clienteAdmin, dbConfigured } from '@/lib/db'
+import { iniciarSesion, cerrarSesion, sesionActual } from '@/lib/session'
+import { buscarIdPorEmail, enviarLinkAcceso, establecerPassword, perfilDeSesion, verificarCredenciales } from '@/lib/users'
 import { limited, bloqueado, registrar } from '@/lib/rate-limit'
 import { validarPassword } from '@/lib/password'
 
@@ -16,7 +17,7 @@ async function ip() {
 }
 
 export async function login(_: AuthState, fd: FormData): Promise<AuthState> {
-  if (!supabaseConfigured) return { error: 'El campus todavía no está configurado.' }
+  if (!dbConfigured) return { error: 'El campus todavía no está configurado.' }
   const email = String(fd.get('email') ?? '').trim().toLowerCase()
   const password = String(fd.get('password') ?? '')
   // Bloqueo temporal tras intentos FALLIDOS (por IP y por email): los logins correctos no cuentan.
@@ -24,31 +25,29 @@ export async function login(_: AuthState, fd: FormData): Promise<AuthState> {
   if (bloqueado(kIp, 20) || bloqueado(kEm, 8))
     return { error: 'Demasiados intentos. Esperá unos minutos e intentá de nuevo.' }
 
-  const sb = await createClient()
-  const { error } = await sb.auth.signInWithPassword({ email, password })
-  if (error) {
+  const userId = await verificarCredenciales(email, password)
+  if (!userId) {
     registrar(kIp, 15 * 60_000); registrar(kEm, 15 * 60_000)
     return { error: 'Email o contraseña incorrectos.' } // mensaje genérico
   }
+  await iniciarSesion(userId)
   // Directo al panel de su rol (el middleware vuelve a validar rol y cuenta activa).
-  const { data: { user } } = await sb.auth.getUser()
-  const { data: perfil } = user ? await sb.from('profiles').select('rol').eq('id', user.id).maybeSingle() : { data: null }
+  const { data: perfil } = await clienteAdmin().from('profiles').select('rol').eq('id', userId).maybeSingle()
   redirect(perfil ? `/campus/${perfil.rol}` : '/login?error=cuenta')
 }
 
 export async function logout() {
-  const sb = await createClient()
-  await sb.auth.signOut()
+  await cerrarSesion()
   redirect('/login')
 }
 
 // Siempre responde lo mismo: no revela qué cuentas existen.
 export async function olvideContrasena(_: AuthState, fd: FormData): Promise<AuthState> {
-  if (!supabaseConfigured) return { error: 'No disponible por el momento.' }
+  if (!dbConfigured) return { error: 'No disponible por el momento.' }
   const email = String(fd.get('email') ?? '').trim().toLowerCase()
   if (!limited(`reset:ip:${await ip()}`, 5, 15 * 60_000) && !limited(`reset:em:${email}`, 5, 15 * 60_000) && email) {
-    const sb = await createClient()
-    await sb.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl}/auth/confirm?next=/activar` })
+    const id = await buscarIdPorEmail(email)
+    if (id) await enviarLinkAcceso(email, id, 'recovery').catch(() => {})
   }
   return { ok: true }
 }
@@ -60,14 +59,12 @@ export async function definirContrasena(_: AuthState, fd: FormData): Promise<Aut
   const invalida = validarPassword(password)
   if (invalida) return { error: invalida }
 
-  const sb = await createClient()
-  const { data: { user } } = await sb.auth.getUser()
-  if (!user) return { error: 'El link venció. Pedí uno nuevo desde "¿Olvidaste tu contraseña?".' }
+  const ses = await sesionActual()
+  const perfilActual = ses ? await perfilDeSesion(ses.sub, ses.iat) : null
+  if (!ses || !perfilActual) return { error: 'El link venció. Pedí uno nuevo desde "¿Olvidaste tu contraseña?".' }
 
-  const { error } = await sb.auth.updateUser({ password })
-  if (error) return { error: 'No pudimos guardar la contraseña. Probá con otra.' }
-  await sb.from('profiles').update({ estado_cuenta: 'activa' }).eq('id', user.id).eq('estado_cuenta', 'pendiente_activacion')
-  await sb.auth.signOut({ scope: 'others' }) // invalida las demás sesiones abiertas
-  const { data: perfil } = await sb.from('profiles').select('rol').eq('id', user.id).maybeSingle()
-  redirect(perfil ? `/campus/${perfil.rol}` : '/login')
+  // Fija la contraseña, activa la cuenta pendiente (trigger al confirmar el email) y cierra las demás sesiones.
+  await establecerPassword(ses.sub, password).catch(() => { throw new Error('No pudimos guardar la contraseña.') })
+  await iniciarSesion(ses.sub)
+  redirect(`/campus/${perfilActual.rol}`)
 }
