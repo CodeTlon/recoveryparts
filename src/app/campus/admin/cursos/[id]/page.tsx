@@ -7,7 +7,7 @@ import EdicionForm from '@/components/campus/EdicionForm'
 import DuplicarEdicion from '@/components/campus/DuplicarEdicion'
 import { ActionForm, Badge, Empty, ModalButton, PageHead, BackLink } from '@/components/campus/ui'
 import { guardarEstructura, guardarKit, setEstadoEdicion } from '../../actions'
-import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
+import { hoyAR, etiquetaEdicion, momentoEdicion } from '@/lib/fechas'
 import { EstructuraEditor, KitEditor } from '@/components/campus/ListEditors'
 import ArbolEstructura, { type ArbolClase, type ArbolMaterial, type ArbolModulo } from '@/components/campus/ArbolEstructura'
 
@@ -17,12 +17,10 @@ const TABS = [['ediciones', 'Ediciones'], ['datos', 'Datos'], ['estructura', 'Es
 type Ed = { id: string; fecha_inicio: string | null; cupo: number; activo: boolean; aula_id: string | null; profesor_id: string | null; aulas: { nombre: string } | null; profiles: { nombre: string; apellido: string } | null; inscripciones: { id: string }[]; clases: { fecha: string }[] }
 
 // Estado temporal de una edición según sus fechas (en curso / próxima / terminada).
+const MOMENTO = { baja: ['De baja', 'neutral'], proxima: ['Próxima', 'warn'], terminada: ['Terminada', 'neutral'], en_curso: ['En curso', 'ok'] } as const
 function momento(e: Ed, hoy: string) {
-  const fin = e.clases.reduce((m, c) => (c.fecha > m ? c.fecha : m), e.fecha_inicio ?? '')
-  if (!e.activo) return { fin, label: 'De baja', tone: 'neutral' as const }
-  if (e.fecha_inicio && e.fecha_inicio > hoy) return { fin, label: 'Próxima', tone: 'warn' as const }
-  if (fin && fin < hoy) return { fin, label: 'Terminada', tone: 'neutral' as const }
-  return { fin, label: 'En curso', tone: 'ok' as const }
+  const { momento: m, fin } = momentoEdicion({ activo: e.activo, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha) }, hoy)
+  return { fin, label: MOMENTO[m][0], tone: MOMENTO[m][1] }
 }
 
 export default async function CursoAdmin({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
