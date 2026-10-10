@@ -5,15 +5,18 @@ import { requireRole, fechaAR } from '@/lib/auth'
 import { ActionForm, Badge, Confirm, Empty, Field, FileField, PageHead, Select, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { guardarClases, guardarEstructura } from '../../../admin/actions'
 import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
-import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
+import { hoyAR, etiquetaEdicion, momentoEdicion } from '@/lib/fechas'
 import ArbolEstructura, { TIPO_CLASE, type ArbolClase, type ArbolModulo } from '@/components/campus/ArbolEstructura'
 
 // Página de una EDICIÓN que dicta el profesor (el id de la ruta es el de la edición).
 export default async function EdicionProfesor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { sb, perfil } = await requireRole('profesor')
-  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, cursos(nombre, tipo), aulas(nombre)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
-  if (!ed) notFound() // un profesor nunca ve ediciones ajenas
+  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, activo, cursos(nombre, tipo), aulas(nombre), clases(fecha)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
+  if (!ed) notFound() // un profesor nunca ve ediciones ajenas (ni terminadas: RLS con edicion_vigente)
+  // RF-04: una edición terminada o dada de baja no se abre (también lo impide la base).
+  const { momento } = momentoEdicion({ activo: ed.activo, fecha_inicio: ed.fecha_inicio, fechas: ((ed.clases ?? []) as { fecha: string }[]).map((c) => c.fecha) }, hoyAR())
+  if (momento !== 'en_curso' && momento !== 'proxima') notFound()
   const curso = ed.cursos as unknown as { nombre: string; tipo: string }
 
   const [{ data: alumnos }, { data: mats }, { data: libs }, { data: clases }, { data: plan }, { data: hs }, { data: mods }] = await Promise.all([
