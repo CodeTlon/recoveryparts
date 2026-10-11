@@ -1,8 +1,9 @@
 # CURRENT_STATE — Recovery Parts
 
-Qué es verdad ahora (2026-10-06). Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
+Qué es verdad ahora (2026-10-11). Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
 
 ## Ramas
+- Rama `feat/estructura-por-edicion` (desde `dev`, **sin mergear ni pushear** al 2026-10-11): panel del profesor y estructura por edición. Migración **0017** (`db/migrations/0017_estructura_por_edicion.sql`). Al desplegar corre sola con la app; si se aplica a mano, **junto con el código** (cambia RLS y funciones que usa la versión anterior).
 - `dev`, `test` y `main` al día con la **estructura del curso** (PR #11 `test → main`, mergeado el 2026-10-06): estructura del curso módulos → clases → material (RF-58), orden flexible por edición y liberación siempre manual (RF-32). Migraciones **0012–0014**.
 - `dev`, `test` y `main` están al día con **gestión de aulas (RF-03)** y **ediciones de curso** (PR #7 `test → main`, mergeado el 2026-10-06). Las ramas de trabajo de esas mejoras ya se mergearon.
 - La rama remota `feat/unificacion` es otro linaje (esquema `matriculas`/`sitio_config`/`faq`, migraciones `0001_auth_profiles…0011`) y quedó **descartada**: `dev` ya tiene todo lo equivalente.
@@ -23,6 +24,7 @@ Crear los recursos de Coolify para `test` y `main` con sus variables (`docs/DESP
 
 ## Hecho
 
+Sesión 2026-10-11: **panel del profesor y estructura por edición** (RF-04, RF-05, RF-31, RF-58). «Mis cursos» con estado (en curso / próximo), sin terminados y sin la palabra «edición»; guía general del curso (admin) + estructura propia de cada edición con «Volver a la guía general»; material base (admin) y material del profesor por edición; el admin tiene pestaña Estructura en la edición y carga material base en el curso; el profesor ya no lee el kit. Seed: la segunda edición de Celulares queda personalizada con un PDF propio. Verificado en local por HTTP y SQL con las cuentas del seed, y la 0017 probada sobre una base con datos. **Falta:** probar en navegador real el modal de «Volver a la guía» desde el admin y desplegar.
 Sesión 2026-10-09: **se sacó Supabase** (rama `refactor/sin-supabase`). Postgres plano con RLS (`db/`), auth propia (cookie firmada, scrypt, tokens), archivos en disco, `Dockerfile` + `docker-compose.yml` para Coolify, CI sobre Postgres de servicio. Todo era de prueba: no hubo migración de datos. Verificado en local: login por rol, aislamiento de materiales del alumno, invitación → activación, subida de media con Range. **Falta:** probar el despliegue real en Coolify (ver pendientes) y retirar el proyecto Supabase de homologación.
 Sesión 2026-10-06 (2): **estructura del curso** (RF-58): módulos → clases (teóricas/prácticas) → material, regla en la base, pestaña «Estructura» para admin y profesor, temario del alumno por módulo, ficha pública solo con títulos de módulos, adelantar/saltear clases por edición y liberación siempre manual. Seed con un curso de 4 módulos, una clase salteada y otra adelantada.
 

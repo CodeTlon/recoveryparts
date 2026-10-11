@@ -4,6 +4,13 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-11 | **Guía general + estructura propia por edición** (RF-58): la guía la edita solo el admin; la edición la sigue hasta que su profesor (o el admin) la modifica y ahí se copia (copy-on-write). Edición nueva = guía | Un profesor cambiaba la estructura de todos los dictados y el siguiente profesor quedaba atado a lo que hizo el anterior |
+| 2026-10-11 | Guía y estructura propia en las **mismas tablas** con `edicion_id` (null = guía) y `origen_id`; «personalizada» se deriva de las filas, sin columna indicadora | No duplicar triggers, validación ni las funciones del alumno; un indicador aparte podía desincronizarse |
+| 2026-10-11 | «Volver a la guía general» pide confirmar en un modal con la advertencia (se pierden los cambios; material sin clase de origen queda general; esas fechas se borran) | Pedido del cliente: que el botón avise antes de descartar |
+| 2026-10-11 | **Material base** (admin, sobre la guía) y **material del profesor** por edición; el profesor solo borra el suyo. Todo el material previo quedó como base | Cualquier profesor podía borrar material de todas las ediciones |
+| 2026-10-11 | El profesor ve solo dictados en curso y próximos; los terminados desaparecen y se cortan también en la base (`es_profesor_de` exige edición vigente). No hay historial | Pedido del cliente; «ocultar un botón no alcanza» |
+| 2026-10-11 | El profesor no ve «edición» en la UI (son «sus cursos»), no ve el kit en el campus y no marca desertores | El kit se habla en el aula; la deserción es del admin; la lógica de ediciones es interna |
+| 2026-10-11 | Los PDFs siguen en `curso/uuid.pdf` y el permiso de borrar se decide por la fila (RLS): el archivo se borra solo si la base borró la fila | Con archivos en disco no hay políticas de storage; `storage.ts` admite dos segmentos |
 | 2026-10-09 | Se saca Supabase: Postgres plano + auth propia + archivos en disco, desplegado con Docker en Coolify | Control de la infraestructura y un solo servidor; no había datos reales que migrar (todo era de prueba) |
 | 2026-10-09 | Se mantienen las 72 políticas RLS: el backend fija rol y `app.user_id` por transacción (`SET LOCAL`); `auth.uid()`/`auth.role()` salen de `db/bootstrap.sql` | Conserva el modelo de seguridad ya probado sin reescribir la autorización en el servidor |
 | 2026-10-09 | `src/lib/db/builder.ts` imita la API de supabase-js en vez de reescribir ~130 consultas a SQL | Menos regresiones; el SQL generado es parametrizado y los identificadores se validan |
