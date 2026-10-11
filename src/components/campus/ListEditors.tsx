@@ -345,7 +345,7 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
   const primera = conFecha.map((r) => r.fecha).sort()[0]
   const errC = !conFecha.length ? 'Asigná la fecha de al menos una clase.'
     : new Set(dictadas).size < dictadas.length ? 'Hay dos clases en la misma fecha.'
-    : inicio && primera < inicio ? `Ninguna clase puede ser anterior al inicio de la edición (${inicio.split('-').reverse().join('/')}).` : ''
+    : inicio && primera < inicio ? `Ninguna clase puede ser anterior a la fecha de inicio (${inicio.split('-').reverse().join('/')}).` : ''
   const puedeGenerar = !!inicio && !!dias?.length
   const generar = () => {
     const f = generarFechas(inicio!, dias!, rows.length)
@@ -368,7 +368,7 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-outline-variant p-3">
         <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost !px-3 !py-2 disabled:opacity-50"><Wand2 size={14} aria-hidden /> Proponer fechas</button>
         <p className="min-w-[12rem] flex-1 text-xs text-on-surface-variant">
-          {puedeGenerar ? 'Asigna una fecha a cada clase desde el inicio de la edición, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas, cargá antes la fecha de inicio (Datos) y los horarios de la edición.'}
+          {puedeGenerar ? 'Asigna una fecha a cada clase desde la fecha de inicio, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas hacen falta la fecha de inicio y los horarios de cursada.'}
         </p>
       </div>
       <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y no cuenta para el N° de clase de deserción. El material lo liberás vos, clase por clase. Saltear o adelantar no avisa por mail.</p>
@@ -395,7 +395,7 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
           </ul>
         </BloqueModulo>
       ))}
-      {sinFecha > 0 && !errC && <p className="text-sm text-secondary">{sinFecha} clase{sinFecha === 1 ? '' : 's'} sin fecha: no se mostrarán en el calendario de esta edición.</p>}
+      {sinFecha > 0 && !errC && <p className="text-sm text-secondary">{sinFecha} clase{sinFecha === 1 ? '' : 's'} sin fecha: no se mostrarán en el calendario.</p>}
       {errC && <p role="alert" className="text-sm text-red-400">{errC}</p>}
       {avisar}
     </div>
