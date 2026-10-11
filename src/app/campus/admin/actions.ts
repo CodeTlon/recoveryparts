@@ -339,7 +339,7 @@ export async function guardarHorarios(_: R, fd: FormData): Promise<R> {
 // del curso. Admin y profesor de la edición (RLS). La base valida que cada N° esté en el plan, que ninguna clase
 // sea anterior al inicio y que el período no se superponga con otra edición del curso.
 export async function guardarClases(_: R, fd: FormData): Promise<R> {
-  const { sb } = await requireRole('admin', 'profesor')
+  const { sb, perfil } = await requireRole('admin', 'profesor')
   const edicion_id = txt(fd, 'edicion_id')
   const filas = txt(fd, 'clases').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
     const [plan_clase_id, fecha, estado] = l.split('|').map((x) => x.trim())
@@ -359,7 +359,11 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
 
   const { data: previas } = await sb.from('clases').select('id, plan_clase_id, fecha, estado').eq('edicion_id', edicion_id)
   const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'edicion_id,plan_clase_id' })
-  if (error) return { error: traducir(error.message) }
+  if (error) {
+    const msg = traducir(error.message)
+    // El profesor no maneja el concepto de «edición»: para él son otras fechas del mismo curso.
+    return { error: perfil.rol === 'profesor' ? msg.replace(/^Se superpone con la edición del (\S+) de este curso\./, 'Las fechas se superponen con otro dictado de este curso, que empieza el $1.') : msg }
+  }
   const aBorrar = (previas ?? []).filter((c: any) => !ids.includes(c.plan_clase_id))
   if (aBorrar.length) {
     const { error: eDel } = await sb.from('clases').delete().in('id', aBorrar.map((c: any) => c.id))
