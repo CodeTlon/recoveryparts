@@ -23,6 +23,9 @@ function traducir(m: string) {
   if (/ediciones_cupo_check/.test(m)) return 'El cupo debe ser un número entero entre 1 y 500.'
   // Estructura del curso (0013): módulo vacío, clase sin módulo, taller con módulos, clase con fechas.
   if (/^(La clase «|El módulo «|Un taller no lleva|Las clases de cada módulo|El plan admite|No tenés permiso para editar)/.test(m)) return m
+  // Estructura por edición y material base (0017).
+  if (/^(Solo la administración edita la guía|El curso necesita al menos una clase|El material base va en una clase|Ese material no es de este curso|El material no es de este curso)/.test(m)) return m
+  if (/^Estructura inválida/.test(m)) return 'La estructura cambió mientras la editabas. Recargá la página y volvé a intentar.'
   if (/modulos_curso_titulo_check/.test(m)) return 'Cada módulo necesita un título de hasta 120 caracteres.'
   if (/plan_clases_titulo_check|plan_clases_numero_check/.test(m)) return 'Revisá el plan: cada clase necesita un título de hasta 200 caracteres.'
   if (/cupos disponibles/.test(m)) return 'El curso no tiene cupos disponibles.'
@@ -163,13 +166,11 @@ export async function reactivarCurso(_: R, fd: FormData): Promise<R> {
   return { ok: true }
 }
 
-// Estructura del curso (RF-26, RF-31): módulos con sus clases (teóricas o prácticas); en talleres, solo clases.
+// Estructura del curso (RF-26, RF-31, RF-58): módulos con sus clases (teóricas o prácticas); en talleres, solo clases.
 // Llega como JSON del EstructuraEditor. La base guarda todo de una vez y valida la regla de estructura
-// (sin clases sueltas ni módulos vacíos en cursos; sin módulos en talleres). Admin o profesor de una edición activa.
+// (sin clases sueltas ni módulos vacíos en cursos; sin módulos en talleres).
 type EstructuraIn = { modulos: { id?: string; titulo: string }[]; clases: { id?: string; titulo: string; tipo: string; modulo: number | null }[] }
-export async function guardarEstructura(_: R, fd: FormData): Promise<R> {
-  const { sb } = await requireRole('admin', 'profesor')
-  const curso_id = txt(fd, 'curso_id')
+function leerEstructura(fd: FormData): { error: string } | { p_modulos: unknown[]; p_clases: unknown[] } {
   let e: EstructuraIn
   try { e = JSON.parse(txt(fd, 'estructura')) } catch { return { error: 'No se pudo leer la estructura.' } }
   if (!Array.isArray(e?.modulos) || !Array.isArray(e?.clases)) return { error: 'No se pudo leer la estructura.' }
@@ -177,11 +178,40 @@ export async function guardarEstructura(_: R, fd: FormData): Promise<R> {
   if (e.clases.some((c) => !c.titulo?.trim() || c.titulo.trim().length > 200)) return { error: 'Cada clase necesita un título de hasta 200 caracteres.' }
   if (e.clases.some((c) => !['teorica', 'practica'].includes(c.tipo))) return { error: 'Cada clase es teórica o práctica.' }
   if (e.clases.length > 500) return { error: 'El plan admite hasta 500 clases.' }
-  const { error } = await sb.rpc('guardar_estructura', {
-    p_curso: curso_id,
+  return {
     p_modulos: e.modulos.map((m) => ({ id: m.id ?? null, titulo: m.titulo.trim() })),
     p_clases: e.clases.map((c) => ({ id: c.id ?? null, titulo: c.titulo.trim(), tipo: c.tipo, modulo: c.modulo })),
-  })
+  }
+}
+
+// Guía general del curso: solo el admin. Es con lo que arranca cada edición nueva.
+export async function guardarEstructura(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin')
+  const e = leerEstructura(fd)
+  if ('error' in e) return e
+  const { error } = await sb.rpc('guardar_estructura', { p_curso: txt(fd, 'curso_id'), ...e })
+  if (error) return { error: traducir(error.message) }
+  revalidarCursos()
+  return { ok: true }
+}
+
+// Estructura propia de una edición (admin o su profesor; la base valida el permiso). La primera vez copia la guía
+// a la edición; los cambios no tocan la guía ni las otras ediciones.
+export async function guardarEstructuraEdicion(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin', 'profesor')
+  const e = leerEstructura(fd)
+  if ('error' in e) return e
+  if (!e.p_clases.length) return { error: 'El curso necesita al menos una clase.' }
+  const { error } = await sb.rpc('guardar_estructura_edicion', { p_edicion: txt(fd, 'edicion_id'), ...e })
+  if (error) return { error: traducir(error.message) }
+  revalidarCursos()
+  return { ok: true }
+}
+
+// Volver a la guía general: descarta la estructura propia de la edición (la UI pide confirmar antes).
+export async function restablecerEstructura(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin', 'profesor')
+  const { error } = await sb.rpc('restablecer_estructura', { p_edicion: txt(fd, 'edicion_id') })
   if (error) return { error: traducir(error.message) }
   revalidarCursos()
   return { ok: true }

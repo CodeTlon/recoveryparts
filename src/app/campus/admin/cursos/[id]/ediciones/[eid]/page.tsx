@@ -18,15 +18,16 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
   if (!ed) notFound()
   const curso = ed.cursos as unknown as { nombre: string; activo: boolean }
 
-  const [{ data: aulas }, { data: profes }, { data: hs }, { data: plan }, { data: clases }, { data: insc }, { data: mods }] = await Promise.all([
+  const [{ data: aulas }, { data: profes }, { data: hs }, { data: est }, { data: clases }, { data: insc }] = await Promise.all([
     sb.from('aulas').select('id, nombre, capacidad, activa').order('nombre'),
     sb.from('profiles').select('id, nombre, apellido').eq('rol', 'profesor').neq('estado_cuenta', 'inactiva').order('apellido'),
     sb.from('horarios_curso').select('*').eq('edicion_id', eid).order('dia_semana'),
-    sb.from('plan_clases').select('id, numero, titulo, modulo_id').eq('curso_id', id).order('numero'),
+    sb.rpc('estructura_edicion', { p_edicion: eid }), // RF-58: la guía general o la estructura propia de la edición
     sb.from('clases').select('plan_clase_id, fecha, estado').eq('edicion_id', eid),
     sb.from('inscripciones').select('id, estado, fecha_desercion, n_clase_desercion, motivo_desercion, profiles!inscripciones_alumno_id_fkey(nombre, apellido, email, estado_cuenta)').eq('edicion_id', eid),
-    sb.from('modulos_curso').select('id, titulo').eq('curso_id', id),
   ])
+  const estructura = (est ?? { personalizada: false, modulos: [], clases: [] }) as { personalizada: boolean; modulos: { id: string; titulo: string }[]; clases: { id: string; numero: number; titulo: string; tipo: 'teorica' | 'practica'; modulo_id: string | null }[] }
+  const plan = estructura.clases, mods = estructura.modulos
   const totalClases = clases?.filter((c) => c.estado === 'programada').length ?? 0
   const hoy = hoyAR()
   const activos = insc?.filter((i) => i.estado === 'activo').length ?? 0
@@ -74,7 +75,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
         <p className="mb-4 text-sm text-on-surface-variant">Las clases y sus títulos vienen de la estructura del curso; acá se asigna la fecha de cada una en esta edición (se puede adelantar o saltear una clase). Las suspendidas, reprogramadas y salteadas no cuentan para el N° de clase de deserción.</p>
         <div className="max-w-4xl"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="edicion_id" value={eid} />
-          <ClasesEditor name="clases" plan={(plan ?? []).map((p) => ({ ...p, modulo: mods?.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
+          <ClasesEditor name="clases" plan={plan.map((p) => ({ ...p, modulo: mods.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
             avisar={<Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>} />
         </ActionForm></div>
       </section>}

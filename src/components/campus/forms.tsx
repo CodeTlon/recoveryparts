@@ -10,7 +10,7 @@ import { useModalClose } from './Modal'
 // Formulario con server action: muestra error/ok y se resetea al guardar.
 // `S` permite que la acción devuelva datos extra (ej. el id del curso creado) que recibe `onSuccess`.
 export function ActionForm<S extends R = R>({ action, children, submit = 'Guardar', className = '', reset = true, onSuccess }: {
-  action: (s: S, fd: FormData) => Promise<S>; children: React.ReactNode; submit?: string; className?: string; reset?: boolean; onSuccess?: (s: S) => void
+  action: (s: S, fd: FormData) => Promise<S>; children: React.ReactNode; submit?: string | null; className?: string; reset?: boolean; onSuccess?: (s: S) => void
 }) {
   const [s, run, pending] = useActionState<S, FormData>(action as unknown as (s: Awaited<S>, fd: FormData) => Promise<S>, {} as Awaited<S>)
   const closeModal = useModalClose()
@@ -32,7 +32,7 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
     <form ref={ref} action={run} className={`space-y-4 ${className}`}>
       {children}
       {s.error && <p role="alert" className="text-sm text-red-400">{s.error}</p>}
-      <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : submit}</button>
+      {submit !== null && <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : submit}</button>}
       <AnimatePresence>
         {toast === 'ok' && (
           <motion.div role="status" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
@@ -103,7 +103,8 @@ export function Select({ name, label, defaultValue, options, empty, grupos }: { 
 // Botón de envío para acciones destructivas (<form action={serverAction}>).
 // Con mouse/touch hay que MANTENERLO apretado ~1 s (el relleno naranja indica el avance);
 // con teclado se abre un modal de confirmación propio, así sigue siendo accesible.
-export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2', name, value }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string }) {
+// `modal`: el clic siempre abre el modal con el mensaje (para advertencias que hay que leer antes de confirmar).
+export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2', name, value, modal }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string; modal?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null)
   const dlg = useRef<HTMLDialogElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>()
@@ -120,14 +121,14 @@ export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2'
     <>
     <button ref={ref} name={name} value={value} title={message} className={`relative select-none overflow-hidden [-webkit-touch-callout:none] ${className}`} onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => {
-        if (e.pointerType === 'mouse' && e.button !== 0) return
+        if (modal || (e.pointerType === 'mouse' && e.button !== 0)) return
         setHolding(true)
         fired.current = false
         timer.current = setTimeout(() => { fired.current = true; setHolding(false); ref.current?.form?.requestSubmit(ref.current) }, 1000)
       }}
       onPointerUp={cancel} onPointerLeave={cancel} onPointerCancel={cancel}
       onClick={(e) => {
-        if (e.detail === 0) { e.preventDefault(); dlg.current?.showModal(); return } // teclado: modal propio, sin confirm() del navegador
+        if (modal || e.detail === 0) { e.preventDefault(); dlg.current?.showModal(); return } // teclado (o `modal`): modal propio, sin confirm() del navegador
         if (fired.current) { e.preventDefault(); return } // ya se envió al completar la pulsación
         if (e.isTrusted) { e.preventDefault(); setHint(true); clearTimeout(hintTimer.current); hintTimer.current = setTimeout(() => setHint(false), 2200) } // click corto
       }}>

@@ -1,9 +1,9 @@
 import { ClasesEditor, EstructuraEditor } from '@/components/campus/ListEditors'
 import { notFound } from 'next/navigation'
-import { FileText, Link2, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { FileText, Link2, Eye, EyeOff, Trash2, RotateCcw } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { ActionForm, Badge, Confirm, Empty, Field, FileField, PageHead, Select, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
-import { guardarClases, guardarEstructura } from '../../../admin/actions'
+import { guardarClases, guardarEstructuraEdicion, restablecerEstructura } from '../../../admin/actions'
 import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
 import { hoyAR, etiquetaEdicion, momentoEdicion } from '@/lib/fechas'
 import ArbolEstructura, { TIPO_CLASE, type ArbolClase, type ArbolModulo } from '@/components/campus/ArbolEstructura'
@@ -19,19 +19,20 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
   if (momento !== 'en_curso' && momento !== 'proxima') notFound()
   const curso = ed.cursos as unknown as { nombre: string; tipo: string }
 
-  const [{ data: alumnos }, { data: mats }, { data: libs }, { data: clases }, { data: plan }, { data: hs }, { data: mods }] = await Promise.all([
+  // RF-58: la estructura que vale en esta edición (la guía general o la propia, si el profesor la adaptó) y su
+  // material (el base del curso y el que se subió para esta edición).
+  const [{ data: alumnos }, { data: mats }, { data: clases }, { data: est }, { data: hs }] = await Promise.all([
     sb.from('inscripciones').select('id, estado, profiles!inscripciones_alumno_id_fkey(nombre, apellido, email, telefono)').eq('edicion_id', id),
-    sb.from('materiales').select('id, tipo, titulo, url, plan_clase_id').eq('curso_id', ed.curso_id).order('creado_en'),
-    sb.from('materiales_liberados').select('material_id').eq('edicion_id', id),
-    sb.from('clases').select('numero, fecha, estado, plan_clase_id').eq('edicion_id', id).order('numero'),
-    sb.from('plan_clases').select('id, numero, titulo, tipo, modulo_id').eq('curso_id', ed.curso_id).order('numero'),
+    sb.rpc('materiales_edicion', { p_edicion: id }),
+    sb.from('clases').select('fecha, estado, plan_clase_id').eq('edicion_id', id).order('fecha'),
+    sb.rpc('estructura_edicion', { p_edicion: id }),
     sb.from('horarios_curso').select('dia_semana').eq('edicion_id', id),
-    sb.from('modulos_curso').select('id, titulo, orden').eq('curso_id', ed.curso_id).order('orden'),
   ])
   const hoy = hoyAR()
-  const liberados = new Set((libs ?? []).map((l) => l.material_id))
-  const modulos = (mods ?? []) as ArbolModulo[]
-  const clasesPlan = (plan ?? []) as ArbolClase[]
+  const estructura = (est ?? { personalizada: false, modulos: [], clases: [] }) as { personalizada: boolean; modulos: ArbolModulo[]; clases: ArbolClase[] }
+  const liberados = new Set(((mats ?? []) as { id: string; liberado: boolean }[]).filter((m) => m.liberado).map((m) => m.id))
+  const modulos = estructura.modulos
+  const clasesPlan = estructura.clases
   const fechaClase = new Map((clases ?? []).map((c) => [c.plan_clase_id as string, c]))
   // Selector de clase agrupado por módulo (en talleres, sin grupos).
   const opcion = (p: ArbolClase): [string, string] => [p.id, `${p.numero}. ${p.titulo} · ${TIPO_CLASE[p.tipo]}`]
@@ -139,16 +140,27 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
       </section>
 
       <section>
-        <h2 className="mb-1 text-xl font-semibold">Estructura del curso</h2>
-        <p className="mb-4 text-sm text-secondary">Ojo: la estructura (módulos y clases) es del curso y la comparten todas sus ediciones. Cambiar un título lo cambia en todas.</p>
+        <div className="mb-1 flex flex-wrap items-center gap-3">
+          <h2 className="text-xl font-semibold">Estructura de tu curso</h2>
+          {estructura.personalizada ? <Badge tone="warn">Personalizada para este curso</Badge> : <Badge>Sigue la guía general</Badge>}
+        </div>
+        <p className="mb-4 text-sm text-on-surface-variant">Podés agregar, quitar, renombrar y reordenar módulos y clases según lo necesites. Los cambios valen solo para este curso: la guía general de la academia no cambia.</p>
         <div className="max-w-4xl">
-          <ActionForm action={guardarEstructura} reset={false}>
-            <input type="hidden" name="curso_id" value={ed.curso_id} />
-            {/* key: tras guardar se vuelve a montar con los ids nuevos */}
+          <ActionForm action={guardarEstructuraEdicion} reset={false}>
+            <input type="hidden" name="edicion_id" value={id} />
+            {/* key: al personalizar o volver a la guía cambian los ids, y el editor se vuelve a montar */}
             <EstructuraEditor key={[...modulos, ...clasesPlan].map((x) => x.id).join()} name="estructura" taller={curso.tipo === 'taller'}
               inicial={{ modulos, clases: clasesPlan }}
-              conMaterial={Object.fromEntries(clasesPlan.map((p) => [p.id, (mats ?? []).filter((m) => m.plan_clase_id === p.id).length]))} />
+              conMaterial={Object.fromEntries(clasesPlan.map((p) => [p.id, ((mats ?? []) as { plan_clase_id: string | null }[]).filter((m) => m.plan_clase_id === p.id).length]))} />
           </ActionForm>
+          {estructura.personalizada && (
+            <ActionForm action={restablecerEstructura} submit={null} className="mt-4">
+              <input type="hidden" name="edicion_id" value={id} />
+              <Confirm modal className="btn-ghost !px-4 !py-2" message="Se van a perder los cambios que hiciste en la estructura de este curso y va a volver a la guía general. El material que subiste a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
+                <RotateCcw size={14} /> Volver a la guía general
+              </Confirm>
+            </ActionForm>
+          )}
         </div>
       </section>
     </>
