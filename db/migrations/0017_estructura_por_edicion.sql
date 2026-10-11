@@ -500,3 +500,22 @@ revoke execute on function guardar_estructura_edicion(uuid, jsonb, jsonb) from p
 revoke execute on function restablecer_estructura(uuid) from public, anon;
 revoke execute on function material_visible(uuid) from public, anon;
 revoke execute on function temario_alumno(uuid) from public, anon;
+
+-- ════════════════════════════════════════════════════════════════════════════════════════════
+-- 9. Material base y material de la edición (RF-05, RF-32); el kit no es del campus del profesor
+-- ════════════════════════════════════════════════════════════════════════════════════════════
+-- El profesor LEE el material base de sus cursos y el de sus ediciones (nunca el de otras ediciones). Solo carga,
+-- modifica y borra el que subió él para su edición: el material base (del admin) no lo puede borrar.
+drop policy mat_profesor on materiales;
+create policy mat_profesor_select on materiales for select
+  using ((edicion_id is null and es_profesor_del_curso(curso_id)) or es_profesor_de(edicion_id));
+create policy mat_profesor_insert on materiales for insert
+  with check (edicion_id is not null and es_profesor_de(edicion_id) and subido_por = auth.uid());
+create policy mat_profesor_update on materiales for update
+  using (edicion_id is not null and es_profesor_de(edicion_id) and subido_por = auth.uid())
+  with check (edicion_id is not null and es_profesor_de(edicion_id) and subido_por = auth.uid());
+create policy mat_profesor_delete on materiales for delete
+  using (edicion_id is not null and es_profesor_de(edicion_id) and subido_por = auth.uid());
+
+-- El kit se conversa en el aula: en el campus el profesor no lo ve (sigue público en la ficha del curso).
+drop policy kit_profesor on kit_items;

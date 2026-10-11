@@ -41,20 +41,21 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
   // Estado del material en ESTA edición (RF-32): el alumno lo ve solo si el profesor lo liberó. La fecha de la clase
   // es una referencia para el profesor; no libera nada.
   const estado = (m: { id: string; plan_clase_id: string | null }) => {
-    if (liberados.has(m.id)) return { visible: true, label: 'Liberado en esta edición', manual: true }
+    if (liberados.has(m.id)) return { visible: true, label: 'Liberado', manual: true }
     const c = m.plan_clase_id ? fechaClase.get(m.plan_clase_id) : undefined
     if (c?.estado === 'salteada') return { visible: false, label: 'Oculto · clase salteada', manual: false }
     if (c?.estado === 'suspendida') return { visible: false, label: 'Oculto · clase suspendida', manual: false }
     if (c) return { visible: false, label: `Oculto · su clase ${c.fecha <= hoy ? 'fue' : 'es'} el ${fechaAR(c.fecha)}`, manual: false }
     return { visible: false, label: 'Oculto hasta liberarlo', manual: false }
   }
-  type Mat = { id: string; tipo: 'pdf' | 'link'; titulo: string; url: string | null; plan_clase_id: string | null }
+  type Mat = { id: string; tipo: 'pdf' | 'link'; titulo: string; url: string | null; plan_clase_id: string | null; base: boolean; propio: boolean }
   const filaMaterial = (m: Mat) => {
     const st = estado(m)
     return (
       <div className="flex flex-wrap items-center gap-3">
         {m.tipo === 'pdf' ? <FileText size={16} className="text-primary" /> : <Link2 size={16} className="text-primary" />}
         <span className="min-w-0 flex-1 font-medium">{m.titulo}</span>
+        {m.base && <Badge>Material base</Badge>}
         <Badge tone={st.visible ? 'ok' : 'neutral'}>{st.label}</Badge>
         {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Ver</a>}
         {(!st.visible || st.manual) && (
@@ -63,17 +64,20 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
             <SubmitButton>{st.manual ? <><EyeOff size={14} /> Quitar liberación</> : <><Eye size={14} /> Liberar ahora</>}</SubmitButton>
           </form>
         )}
-        <form action={borrarMaterial}>
-          <input type="hidden" name="id" value={m.id} />
-          <Confirm message="¿Eliminar este material? Deja de verse en todas las ediciones del curso."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>
-        </form>
+        {/* El material base (de la academia) no se borra desde acá: solo el que subió el profesor. */}
+        {m.propio && (
+          <form action={borrarMaterial}>
+            <input type="hidden" name="id" value={m.id} />
+            <Confirm message="¿Eliminar este material? Tus alumnos dejan de verlo."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>
+          </form>
+        )}
       </div>
     )
   }
 
   return (
     <>
-      <BackLink href="/campus/profesor">Mis ediciones</BackLink>
+      <BackLink href="/campus/profesor">Mis cursos</BackLink>
       <PageHead title={`${curso.nombre} · ${etiquetaEdicion(ed.fecha_inicio)}`} sub={`${(ed.aulas as unknown as { nombre: string } | null)?.nombre ?? 'Aula sin asignar'} · inicia el ${fechaAR(ed.fecha_inicio)}`} />
 
       <section className="mb-12">
@@ -98,8 +102,8 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-1 text-xl font-semibold">Material del curso</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Es el mismo en todas las ediciones. En esta edición el alumno ve cada material solo cuando lo liberás con «Liberar ahora».</p>
+        <h2 className="mb-1 text-xl font-semibold">Material</h2>
+        <p className="mb-4 text-sm text-on-surface-variant">El «material base» lo carga la academia; el resto es el que subís vos para este curso. Tus alumnos ven cada material solo cuando lo liberás con «Liberar ahora».</p>
         {!mats?.length && <Empty>Todavía no hay material cargado.</Empty>}
         <div className="mb-6"><ArbolEstructura modulos={modulos} clases={clasesPlan} materiales={(mats ?? []) as Mat[]} renderMaterial={filaMaterial} /></div>
 
@@ -111,7 +115,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
               <Field label="Título" name="titulo" placeholder="Ej: Apunte de la clase 1" required />
               <FileField label="Archivo (PDF, máx. 25 MB)" name="archivo" accept="application/pdf" required />
               <Select name="plan_clase_id" label="Clase" empty="Material general (sin clase)" options={claseOpts} grupos={claseGrupos} />
-              <Check name="liberar_ya">Liberarlo ya en esta edición</Check>
+              <Check name="liberar_ya">Liberarlo ya para mis alumnos</Check>
             </ActionForm>
           </div>
           <div className="card p-6">
@@ -121,14 +125,14 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
               <Field label="Título" name="titulo" placeholder="Ej: Video de la clase 1" required />
               <Field label="Link" name="url" type="url" required placeholder="https://" hint="Subí los videos a YouTube (no listado) o Drive. No se alojan videos." />
               <Select name="plan_clase_id" label="Clase" empty="Material general (sin clase)" options={claseOpts} grupos={claseGrupos} />
-              <Check name="liberar_ya">Liberarlo ya en esta edición</Check>
+              <Check name="liberar_ya">Liberarlo ya para mis alumnos</Check>
             </ActionForm>
           </div>
         </div>
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-1 text-xl font-semibold">Calendario de esta edición</h2>
+        <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase: podés adelantar una clase o saltearla, o marcarla suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
         <div className="max-w-4xl">
           <ActionForm action={guardarClases} reset={false}>
