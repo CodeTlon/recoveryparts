@@ -176,7 +176,11 @@ async function edicion(curso_id, clave, { fecha_inicio, cupo, aula_id, profesor_
   eid[clave] = e.id
   ok(await sb.from('horarios_curso').delete().eq('edicion_id', e.id), 'del horarios')
   for (const [d, a, b] of horarios) ok(await sb.from('horarios_curso').insert({ edicion_id: e.id, dia_semana: d, hora_inicio: a, hora_fin: b }), `horario ${clave}`)
-  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, estado]) => ({ edicion_id: e.id, plan_clase_id: pm[numero], fecha, estado })), { onConflict: 'edicion_id,plan_clase_id' }), `clases ${clave}`)
+  // El calendario va sobre las clases que valen en la edición: las de la guía (pm) o, si la edición ya tiene
+  // estructura propia (segunda corrida del seed), sus copias.
+  const est = ok(await sb.rpc('estructura_edicion', { p_edicion: e.id }), `estructura ${clave}`)
+  const porNumero = est.personalizada ? Object.fromEntries(est.clases.map((c) => [c.numero, c.id])) : pm
+  ok(await sb.from('clases').upsert(clases.map(([numero, fecha, estado]) => ({ edicion_id: e.id, plan_clase_id: porNumero[numero], fecha, estado })), { onConflict: 'edicion_id,plan_clase_id' }), `clases ${clave}`)
 }
 // Estructura (RF-26, RF-31): en cursos, módulos con sus clases en orden; los talleres no llevan módulos.
 // Por defecto las clases se reparten en bloques consecutivos entre los módulos y una de cada tres es práctica.
@@ -188,21 +192,22 @@ const PRACTICAS = { 'reparacion-de-celulares': [2, 3, 4, 5] }
 const plan = {} // slug → { N° de clase → id de la clase }
 async function estructura(slug, curso_id, tipo, modulos, clases) {
   const [{ data: mods }, { data: pcs }] = await Promise.all([
-    sb.from('modulos_curso').select('id, orden').eq('curso_id', curso_id),
-    sb.from('plan_clases').select('id, numero').eq('curso_id', curso_id),
+    sb.from('modulos_curso').select('id, orden').eq('curso_id', curso_id).is('edicion_id', null),
+    sb.from('plan_clases').select('id, numero').eq('curso_id', curso_id).is('edicion_id', null),
   ])
   const titulos = tipo === 'taller' ? [] : ESTRUCTURA[slug]?.map(([t]) => t) ?? [...modulos, ...(MODULOS_EXTRA[slug] ?? [])].map(([t]) => t)
   const modulo = (n) => tipo === 'taller' ? null
     : ESTRUCTURA[slug] ? ESTRUCTURA[slug].findIndex(([, ns]) => ns.includes(n))
     : Math.floor((n - 1) * titulos.length / clases.length)
   const practica = (n) => (PRACTICAS[slug] ? PRACTICAS[slug].includes(n) : n % 3 === 0)
-  // Upsert por id (se conservan entre corridas): guardar_estructura valida la regla en la base.
+  // Guía general del curso (filas sin edición). Upsert por id (se conservan entre corridas): guardar_estructura
+  // valida la regla en la base.
   ok(await sb.rpc('guardar_estructura', {
     p_curso: curso_id,
     p_modulos: titulos.map((titulo, i) => ({ id: mods?.find((m) => m.orden === i)?.id ?? null, titulo })),
     p_clases: clases.map(([n, , titulo]) => ({ id: pcs?.find((p) => p.numero === n)?.id ?? null, titulo, tipo: practica(n) ? 'practica' : 'teorica', modulo: modulo(n) })),
   }), `estructura ${slug}`)
-  const { data } = await sb.from('plan_clases').select('id, numero').eq('curso_id', curso_id)
+  const { data } = await sb.from('plan_clases').select('id, numero').eq('curso_id', curso_id).is('edicion_id', null)
   plan[slug] = Object.fromEntries((data ?? []).map((x) => [x.numero, x.id]))
 }
 for (const c of CURSOS) {
@@ -264,13 +269,18 @@ await inscribir('alumno5', 'reparacion-de-celulares#2')
 
 // ── 4. Material del curso por clase (PDF real mínimo + links); se libera a mano en cada edición (RF-32) ─
 const pdf = (t) => { const s = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 144]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length 56>>stream\nBT /F1 14 Tf 20 70 Td (${t}) Tj ET\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`; return Buffer.from(s) }
-// `clase`: N° de la clase en el curso (sin clase = material general). `liberarEn`: ediciones donde el profesor ya
-// lo liberó; lo demás queda oculto aunque haya llegado la fecha de su clase.
-async function material(slug, titulo, extra, archivo, liberarEn = []) {
-  let m = (await sb.from('materiales').select('id').eq('curso_id', cid[slug]).eq('titulo', titulo).maybeSingle()).data
+// Material BASE del curso (lo carga el admin sobre la guía general). `clase`: N° de la clase en la guía (sin clase =
+// material general). `liberarEn`: ediciones donde el profesor ya lo liberó; lo demás queda oculto aunque haya
+// llegado la fecha de su clase.
+// Con `propio` = { edicion, claseId } es material que el profesor subió para ESA edición (no se ve en las demás).
+async function material(slug, titulo, extra, archivo, liberarEn = [], propio = null) {
+  const q = sb.from('materiales').select('id').eq('curso_id', cid[slug]).eq('titulo', titulo)
+  let m = (await (propio ? q.eq('edicion_id', eid[propio.edicion]) : q.is('edicion_id', null)).maybeSingle()).data
   if (!m) {
     const { clase, ...resto } = extra
-    const row = { curso_id: cid[slug], titulo, subido_por: ids.profe1, plan_clase_id: clase ? plan[slug][clase] : null, ...resto }
+    const row = propio
+      ? { curso_id: cid[slug], edicion_id: eid[propio.edicion], titulo, subido_por: ids.profe1, plan_clase_id: propio.claseId ?? null, ...resto }
+      : { curso_id: cid[slug], titulo, subido_por: ids.admin, plan_clase_id: clase ? plan[slug][clase] : null, ...resto }
     if (archivo) {
       const path = `${cid[slug]}/${randomUUID()}.pdf`
       mkdirSync(dirname(join(STORAGE_DIR, 'materiales', path)), { recursive: true })
@@ -288,6 +298,27 @@ await material('reparacion-de-celulares', 'Video introductorio (link)', { url: '
 await material('reparacion-de-notebooks', 'Guía de desarme de notebooks', { clase: 1 }, pdf('Guia notebooks - prueba'), ['reparacion-de-notebooks'])
 await material('armado-y-mantenimiento-de-pcs', 'Checklist de armado', {}, pdf('Checklist armado PC - prueba'), ['armado-y-mantenimiento-de-pcs'])
 await material('taller-cambio-de-glass', 'Guía de cambio de glass', {}, pdf('Guia glass - prueba'), ['taller-cambio-de-glass'])
+
+// RF-58: la segunda edición de Celulares tiene estructura PROPIA (el profesor la adaptó): renombra la clase 2 y
+// agrega una clase al final, con un PDF que subió para esa edición. La guía general y la primera edición no cambian.
+{
+  const clave = 'reparacion-de-celulares#2', EXTRA = 'Clase extra de práctica'
+  let est = ok(await sb.rpc('estructura_edicion', { p_edicion: eid[clave] }), 'estructura de la edición')
+  if (!est.personalizada) {
+    const idx = Object.fromEntries(est.modulos.map((m, i) => [m.id, i]))
+    ok(await sb.rpc('guardar_estructura_edicion', {
+      p_edicion: eid[clave],
+      p_modulos: est.modulos.map((m) => ({ id: m.id, titulo: m.titulo })),
+      p_clases: [
+        ...est.clases.map((c) => ({ id: c.id, titulo: c.numero === 2 ? `${c.titulo} (con equipos de los alumnos)` : c.titulo, tipo: c.tipo, modulo: idx[c.modulo_id] })),
+        { id: null, titulo: EXTRA, tipo: 'practica', modulo: est.modulos.length - 1 },
+      ],
+    }), 'personalizar la edición')
+    est = ok(await sb.rpc('estructura_edicion', { p_edicion: eid[clave] }), 'estructura de la edición')
+  }
+  await material('reparacion-de-celulares', 'Guía de la práctica extra', {}, pdf('Guia practica extra - prueba'), [clave],
+    { edicion: clave, claseId: est.clases.find((c) => c.titulo === EXTRA)?.id })
+}
 
 // ── 5. Encuesta (por edición), CMS y ajustes ───────────────
 if (!(await sb.from('encuestas').select('id').eq('titulo', 'Encuesta de fin de curso — Celulares').maybeSingle()).data)
