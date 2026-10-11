@@ -2,11 +2,12 @@ import { ClasesEditor, EstructuraEditor } from '@/components/campus/ListEditors'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, Eye, EyeOff, Trash2, RotateCcw } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { ActionForm, Badge, Confirm, Empty, Field, FileField, PageHead, Select, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, PageHead, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { guardarClases, guardarEstructuraEdicion, restablecerEstructura } from '../../../admin/actions'
-import { agregarLink, borrarMaterial, liberarMaterial, subirPdf } from '../../actions'
+import { borrarMaterial, liberarMaterial } from '../../actions'
+import MaterialForms from '@/components/campus/MaterialForms'
 import { hoyAR, etiquetaEdicion, momentoEdicion } from '@/lib/fechas'
-import ArbolEstructura, { TIPO_CLASE, type ArbolClase, type ArbolModulo } from '@/components/campus/ArbolEstructura'
+import ArbolEstructura, { type ArbolClase, type ArbolModulo } from '@/components/campus/ArbolEstructura'
 
 // Página de una EDICIÓN que dicta el profesor (el id de la ruta es el de la edición).
 export default async function EdicionProfesor({ params }: { params: Promise<{ id: string }> }) {
@@ -34,10 +35,6 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
   const modulos = estructura.modulos
   const clasesPlan = estructura.clases
   const fechaClase = new Map((clases ?? []).map((c) => [c.plan_clase_id as string, c]))
-  // Selector de clase agrupado por módulo (en talleres, sin grupos).
-  const opcion = (p: ArbolClase): [string, string] => [p.id, `${p.numero}. ${p.titulo} · ${TIPO_CLASE[p.tipo]}`]
-  const claseOpts: [string, string][] = clasesPlan.filter((p) => !modulos.some((m) => m.id === p.modulo_id)).map(opcion)
-  const claseGrupos: [string, [string, string][]][] = modulos.map((m, i) => [`Módulo ${i + 1} · ${m.titulo}`, clasesPlan.filter((p) => p.modulo_id === m.id).map(opcion)])
   // Estado del material en ESTA edición (RF-32): el alumno lo ve solo si el profesor lo liberó. La fecha de la clase
   // es una referencia para el profesor; no libera nada.
   const estado = (m: { id: string; plan_clase_id: string | null }) => {
@@ -107,28 +104,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
         {!mats?.length && <Empty>Todavía no hay material cargado.</Empty>}
         <div className="mb-6"><ArbolEstructura modulos={modulos} clases={clasesPlan} materiales={(mats ?? []) as Mat[]} renderMaterial={filaMaterial} /></div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="card p-6">
-            <h3 className="mb-4 font-semibold">Subir PDF</h3>
-            <ActionForm action={subirPdf} submit="Subir PDF">
-              <input type="hidden" name="curso_id" value={ed.curso_id} /><input type="hidden" name="edicion_id" value={id} />
-              <Field label="Título" name="titulo" placeholder="Ej: Apunte de la clase 1" required />
-              <FileField label="Archivo (PDF, máx. 25 MB)" name="archivo" accept="application/pdf" required />
-              <Select name="plan_clase_id" label="Clase" empty="Material general (sin clase)" options={claseOpts} grupos={claseGrupos} />
-              <Check name="liberar_ya">Liberarlo ya para mis alumnos</Check>
-            </ActionForm>
-          </div>
-          <div className="card p-6">
-            <h3 className="mb-4 font-semibold">Agregar link (video, Drive…)</h3>
-            <ActionForm action={agregarLink} submit="Agregar link">
-              <input type="hidden" name="curso_id" value={ed.curso_id} /><input type="hidden" name="edicion_id" value={id} />
-              <Field label="Título" name="titulo" placeholder="Ej: Video de la clase 1" required />
-              <Field label="Link" name="url" type="url" required placeholder="https://" hint="Subí los videos a YouTube (no listado) o Drive. No se alojan videos." />
-              <Select name="plan_clase_id" label="Clase" empty="Material general (sin clase)" options={claseOpts} grupos={claseGrupos} />
-              <Check name="liberar_ya">Liberarlo ya para mis alumnos</Check>
-            </ActionForm>
-          </div>
-        </div>
+        <MaterialForms cursoId={ed.curso_id} edicionId={id} modulos={modulos} clases={clasesPlan} />
       </section>
 
       <section className="mb-12">
