@@ -7,12 +7,11 @@ Navegador
        ├─ Server Components: leen datos con la sesión del usuario (RLS aplica)
        ├─ Server Actions / Route Handlers: escrituras y archivos; validan rol con requireRole()
        └─ middleware.ts: refresca sesión; en /campus/* exige sesión, cuenta activa y rol
-            └─ Supabase
-                 ├─ Auth (invitación, reset, sesiones en cookies httpOnly)
-                 ├─ Postgres: tablas + RLS + triggers + funciones SQL
-                 └─ Storage: `materiales` (privado, PDFs) · `sitio` (público, imágenes del CMS)
+            ├─ Auth propio (`lib/users.ts`): invitación, reset, sesiones en cookies httpOnly
+            ├─ Postgres plano (`lib/db`): tablas + RLS + triggers + funciones SQL
+            └─ Archivos en disco (`STORAGE_DIR`): `materiales` (privado, PDFs) · `sitio` (público, `/media/…`)
 ```
-El cliente `service_role` (`lib/supabase/admin.ts`) se usa solo en el servidor, y siempre después de validar el rol: invitar usuarios, cambiar email, cerrar sesiones, servir PDFs y armar el ZIP.
+El acceso con rol `service_role` (`sqlAdmin()` / `clienteAdmin()`) se usa solo en el servidor, y siempre después de validar el rol: invitar usuarios, cambiar email, cerrar sesiones, servir PDFs y armar el ZIP.
 
 ## Autorización en tres capas
 1. **Middleware**: sin sesión → `/login`; cuenta no activa → fuera; cada rol solo entra a su `/campus/<rol>`.
@@ -32,7 +31,7 @@ El cliente `service_role` (`lib/supabase/admin.ts`) se usa solo en el servidor, 
 Vistas públicas con solo columnas seguras: `cursos_publicos` (incluye `cupos_disponibles` en tiempo real), `horarios_publicos`, `modulos_publicos`, `kit_publico`.
 
 ## Flujos clave
-- **Alta de usuario**: el admin invita (`inviteUserByEmail`, con `rol/nombre/apellido` en metadatos). Un trigger crea el perfil **solo** si hay `invited_at`. El usuario abre el mail → `/auth/confirm` valida el token → `/activar` define su contraseña → cuenta `activa`. Un signUp público no genera perfil ni acceso.
+- **Alta de usuario**: el admin invita (mail con link de un solo uso; `rol/nombre/apellido` en metadatos). Un trigger crea el perfil **solo** si hay `invited_at`. El usuario abre el mail → `/auth/confirm` valida el token → `/activar` define su contraseña → cuenta `activa`. Un signUp público no genera perfil ni acceso.
 - **Alumno ya existente**: se vincula al curso y se le avisa por mail (sin token).
 - **Material visible**: `material_visible(edicion)` devuelve solo lo que el profesor liberó a mano en esa edición (`materiales_liberados`; RF-32, siempre manual desde 0014) y solo si el alumno no es desertor. Para un PDF, `/api/material/[id]` revalida y sirve el archivo (`?download=1` para descarga). El alumno ve solo el *título y tipo* de la próxima clase (`proxima_clase_titulo`, por fecha) y su temario (`temario_alumno`: todos los módulos, y solo las clases dictadas, con material liberado o la próxima); no puede leer `clases`, `plan_clases` ni `modulos_curso`.
 - **Deserción**: el admin marca Desertor con fecha y motivo. El trigger calcula `n_clase_desercion` (clases programadas con fecha ≤ la de deserción; las suspendidas, reprogramadas y salteadas no cuentan), impide volver a activo y la inscripción no se puede borrar.
@@ -42,10 +41,10 @@ Vistas públicas con solo columnas seguras: `cursos_publicos` (incluye `cupos_di
 - **Aulas** (RF-03): catálogo en Campus › Aulas. Capacidad obligatoria en aulas nuevas, baja lógica (`activa`), sin DELETE y sin baja con cursos activos; un aula dada de baja no se puede asignar.
 - **Encuesta anónima**: `responder_encuesta()` guarda que el alumno respondió (para no repetir) y la respuesta en otra tabla sin su id.
 - **ZIP**: `/api/curso/[id]/zip` solo para inscripciones `finalizado` y cursos no dados de baja.
-- **Contacto**: el formulario guarda en `contactos` (bandeja del admin). El mail de aviso requiere un webhook/SMTP (ver SETUP).
+- **Contacto**: el formulario guarda en `contactos` (bandeja del admin). El mail de aviso todavía no está implementado.
 
 ## Entornos
-Desarrollo (Supabase local en Docker), homologación (`test`) y producción (`main`). Ver `docs/ENTORNOS.md`.
+Desarrollo (Postgres local en Docker), homologación (`test`) y producción (`main`). Ver `docs/ENTORNOS.md`.
 
 ## Qué no existe a propósito
 Pagos, inscripciones, asistencia, stock, registro público, WhatsApp flotante/bot, videos alojados (solo links), modalidad virtual, carreras.

@@ -1,6 +1,6 @@
 # DOMAIN — Recovery Parts
 
-Resumen del dominio. El esquema real está en `supabase/migrations/0001_schema.sql`; los requisitos, en la spec.
+Resumen del dominio. El esquema real está en `db/migrations/0001_schema.sql`; los requisitos, en la spec.
 
 ## Entidades
 - `profiles`: rol (`admin` | `profesor` | `alumno`), estado de cuenta (`activa`…), mini-CV del profesor. Solo se crea si el usuario fue invitado.

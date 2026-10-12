@@ -13,8 +13,7 @@ async function ip() {
 }
 const DEMASIADOS = 'Enviaste muchas consultas seguidas. Probá de nuevo en unos minutos.'
 
-// RF-42: guarda la consulta en la bandeja interna. (El mail de aviso lo dispara un
-// Database Webhook / Edge Function configurado en docs/SETUP-SUPABASE.md.)
+// RF-42: guarda la consulta en la bandeja interna. (Todavía no avisa por mail.)
 export async function enviarContacto(_: FormState, fd: FormData): Promise<FormState> {
   if (!dbConfigured) return { error: 'El formulario no está disponible por el momento.' }
   if (fd.get('website')) return { ok: true } // honeypot anti-spam
