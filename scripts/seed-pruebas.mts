@@ -1,12 +1,14 @@
 // Cuentas y datos de PRUEBA para desarrollo (Postgres local) u homologación. Idempotente.
 // Uso: ENV_FILE=.env.development tsx scripts/seed-pruebas.mts --confirmo-no-produccion
 //      ENV_FILE=.env.test     tsx scripts/seed-pruebas.mts --confirmo-no-produccion
-// Se niega a correr si APP_ENV=production. Emails @homologacion.example.com (fáciles de borrar).
+// Se niega a correr si APP_ENV=production, salvo el modo demo para el cliente (ver abajo). Emails @demo.example.com (fáciles de borrar).
+// Modo `--demo-cliente` (único caso en que se permite producción, mientras se entrega el demo): exige ALLOW_DEMO_SEED=1,
+//   aborta si ya hay alumnos o profesores reales, y genera contraseñas al azar. Se deshace con scripts/purgar-demo.mts.
 // No envía ningún mail. Las contraseñas se generan al azar y se imprimen al final.
 import postgres from 'postgres'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, randomBytes } from 'node:crypto'
 // Los .ts de src/ se cargan como CommonJS: con Node 22 sus exports con nombre no se detectan desde un .mts,
 // así que se toman del módulo completo (funciona igual en Node 20).
 import * as builder from '../src/lib/db/builder'
@@ -15,14 +17,17 @@ const { QB, cargarMeta, rpc } = ((builder as any).default ?? builder) as typeof 
 const { hashPassword } = ((passwordHash as any).default ?? passwordHash) as typeof passwordHash
 
 const ENV_FILE = process.env.ENV_FILE ?? '.env.development'
-if (!process.argv.includes('--confirmo-no-produccion')) {
-  console.error('Este script crea datos de prueba. Corrélo con --confirmo-no-produccion (desarrollo u homologación).')
+const DEMO_CLIENTE = process.argv.includes('--demo-cliente')
+if (DEMO_CLIENTE ? process.env.ALLOW_DEMO_SEED !== '1' : !process.argv.includes('--confirmo-no-produccion')) {
+  console.error(DEMO_CLIENTE
+    ? 'El demo en producción exige ALLOW_DEMO_SEED=1 en el entorno.'
+    : 'Este script crea datos de prueba. Corrélo con --confirmo-no-produccion (desarrollo u homologación).')
   process.exit(1)
 }
 
 const env = Object.fromEntries(readFileSync(ENV_FILE, 'utf8').split(/\r?\n/).filter((l) => l.includes('=') && !l.startsWith('#')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]))
-if (env.APP_ENV === 'production' || !['development', 'test'].includes(env.APP_ENV ?? '')) {
-  console.error(`Abortado: ${ENV_FILE} no declara APP_ENV=development|test (APP_ENV=${env.APP_ENV ?? 'sin definir'}).`)
+if (!(DEMO_CLIENTE ? ['development', 'test', 'production'] : ['development', 'test']).includes(env.APP_ENV ?? '')) {
+  console.error(`Abortado: ${ENV_FILE} no declara APP_ENV=development|test${DEMO_CLIENTE ? '|production' : ''} (APP_ENV=${env.APP_ENV ?? 'sin definir'}).`)
   process.exit(1)
 }
 if (!env.DATABASE_URL) { console.error(`Falta DATABASE_URL en ${ENV_FILE}.`); process.exit(1) }
@@ -37,8 +42,14 @@ const STORAGE_DIR = resolve(env.STORAGE_DIR ?? './storage')
 const ok = (r: any, ctx: string) => { if (r.error) throw new Error(`${ctx}: ${r.error.message}`); return r.data }
 
 const D = '@demo.example.com'
+// Candado del demo: si ya hay alumnos o profesores que no son de demo, esto es producción con datos reales.
+if (DEMO_CLIENTE) {
+  const [{ n }] = await pg`select count(*)::int as n from profiles where rol in ('alumno', 'profesor') and email not like ${'%' + D}`
+  if (n > 0) { console.error(`Abortado: hay ${n} alumnos/profesores reales; el demo solo va en una base sin ellos.`); process.exit(1) }
+}
 // Cuentas de demo con datos fáciles de dictar (el script se niega a correr fuera de development/test).
-const PASSWORD_DEMO = 'demo1234'
+// En producción cada corrida genera contraseñas al azar (se imprimen una sola vez).
+const clave = () => (DEMO_CLIENTE ? randomBytes(9).toString('base64url') : 'demo1234')
 const USUARIOS = [
   { key: 'admin', rol: 'admin', nombre: 'Maxi', apellido: 'Escaroni' },
   { key: 'profe1', rol: 'profesor', nombre: 'Pablo', apellido: 'Ledesma' },
@@ -49,7 +60,7 @@ const USUARIOS = [
   { key: 'alumno4', rol: 'alumno', nombre: 'Sofía', apellido: 'Argañaraz' },
   { key: 'alumno5', rol: 'alumno', nombre: 'Martín', apellido: 'Quiroga' },
   { key: 'alumno6', rol: 'alumno', nombre: 'Julieta', apellido: 'Montenegro' },
-].map((u) => ({ ...u, email: `${u.key}${D}`, password: PASSWORD_DEMO }))
+].map((u) => ({ ...u, email: `${u.key}${D}`, password: clave() }))
 
 // ── 1. Usuarios (sin mail) ─────────────────────────────────
 const ids = {}

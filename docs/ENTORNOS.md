@@ -23,4 +23,7 @@ npm run dev
 3. Al mergear a `test`/`main`, Coolify redeploya y `docker-entrypoint.sh` aplica las pendientes antes de arrancar la app. `scripts/migrate.mjs` es idempotente y registra cada archivo en `schema_migrations`.
 
 ## Homologación y producción
-Ver `docs/DESPLIEGUE-COOLIFY.md` (variables, volúmenes, primer administrador, backups). El seed se niega a correr si `APP_ENV` no es `development` o `test`; en homologación se usa `npm run seed:test` con un `.env.test` propio (gitignored) apuntando a esa base. **Nunca correr `seed:*` contra producción.**
+Ver `docs/DESPLIEGUE-COOLIFY.md` (variables, volúmenes, primer administrador, backups). El seed se niega a correr si `APP_ENV` no es `development` o `test`; en homologación se usa `npm run seed:test` con un `.env.test` propio (gitignored) apuntando a esa base. **Nunca correr `seed:dev`/`seed:test` contra producción.**
+
+### Demo para el cliente en producción (temporal)
+Mientras se entrega la demo, producción puede llevar datos de prueba: `ALLOW_DEMO_SEED=1 npm run seed:demo-cliente` (con `.env.production`, desde un entorno con acceso a la base). Aborta si hay alumnos/profesores reales y genera contraseñas al azar (se imprimen una vez; guardalas). Para pasar a datos reales: backup (`pg_dump`) y `ALLOW_DEMO_SEED=1 npm run seed:demo-cliente:purge`; después reeditá hero/áreas/contacto desde el CMS.
