@@ -4,6 +4,7 @@ import { hashPassword, verificarHash } from '@/lib/password-hash'
 import { sqlAdmin } from '@/lib/db'
 import { siteUrl } from '@/lib/env'
 import { enviarMail } from '@/lib/mail'
+import { mailInvitacion, mailRecuperacion } from '@/lib/mail-templates'
 
 // Cuentas, contraseñas y tokens de un solo uso (auth propio).
 // Todo corre con el rol de servicio: auth.users y auth.tokens no son visibles para anon/authenticated.
@@ -62,11 +63,7 @@ export async function consumirToken(token: string, tipo: TipoToken): Promise<str
 export async function enviarLinkAcceso(email: string, userId: string, tipo: TipoToken): Promise<boolean> {
   const token = await emitirToken(userId, tipo)
   const link = `${siteUrl()}/auth/confirm?token=${token}&type=${tipo}`
-  return tipo === 'invite'
-    ? enviarMail(email, 'Activá tu cuenta de Recovery Parts',
-        `Te invitamos al campus de Recovery Parts.\n\nCreá tu contraseña desde este link (se usa una sola vez y vence en 7 días):\n${link}\n`)
-    : enviarMail(email, 'Recuperá tu contraseña',
-        `Entrá a este link para crear una contraseña nueva (se usa una sola vez y vence en 1 hora):\n${link}\n\nSi no lo pediste vos, ignoralo: tu contraseña actual sigue funcionando.\n`)
+  return enviarMail(email, tipo === 'invite' ? mailInvitacion(link) : mailRecuperacion(link))
 }
 
 // ── Cuentas ───────────────────────────────────────────────

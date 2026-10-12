@@ -31,3 +31,6 @@ Tokens en `tailwind.config.ts` + clases `btn-*`, `card`, `input`, `badge` en `sr
 - **Rangos**: `Field` acepta `min/max/step`; el servidor revalida (`guardarCurso`) y la base tiene los `check`.
 - **Gráficos**: SVG propio en `components/campus/charts.tsx` (sin librerías).
 - **Seed de demo**: `seed:dev`/`seed:test` crean cuentas `@demo.example.com` (contraseña `demo1234`), 5 cursos y 4 talleres cortos.
+
+## Mails
+Los mails transaccionales (invitación, recuperación de clave, cambios de clases, alta en curso) se arman en `src/lib/mail-templates.ts` (HTML responsivo con logo `public/images/logo-mail.png`, más texto plano de respaldo) y se envían con `enviarMail(to, mail)` de `src/lib/mail.ts` (SMTP por nodemailer; con Resend: `smtp.resend.com`, usuario `resend`, clave = API key). Un mail nuevo = una función nueva en `mail-templates.ts`; nunca strings sueltos en las actions.
