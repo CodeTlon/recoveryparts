@@ -13,6 +13,4 @@ insert into site_settings (clave, valor) values
   ('areas', '{"diseno":{"titulo":"Creación y Diseño","texto":"","imagen_url":""},"tecnico":{"titulo":"Reparación y Tecnología","texto":"","imagen_url":""}}')
 on conflict (clave) do nothing;
 
--- Primer administrador: crealo desde Auth > Users del panel de Supabase
--- (o con docs/SETUP-SUPABASE.md) y luego ejecutá:
---   update profiles set rol = 'admin', estado_cuenta = 'activa' where email = 'TU-EMAIL';
+-- Primer administrador: creálo con scripts/crear-admin.mjs (ver docs/DESPLIEGUE-COOLIFY.md).
