@@ -18,8 +18,10 @@ export async function enviarMail(to: string | string[], { subject, text, html }:
     })
     await t.sendMail({ from: process.env.MAIL_FROM, to, subject, text, html })
     return true
-  } catch (e) {
-    console.error('mail: fallo de envío') // sin datos personales en logs
+  } catch (e: any) {
+    // Causa técnica (código, respuesta del SMTP) para diagnosticar; se tachan los emails: nada de datos personales en logs.
+    const causa = [e?.code, e?.responseCode, e?.command, String(e?.response ?? e?.message ?? '').split('\n')[0]].filter(Boolean).join(' ')
+    console.error('mail: fallo de envío —', causa.replace(/[^\s@<>"']+@[^\s@<>"']+/g, '[email]').slice(0, 300))
     return false
   }
 }
