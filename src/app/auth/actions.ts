@@ -68,3 +68,29 @@ export async function definirContrasena(_: AuthState, fd: FormData): Promise<Aut
   await iniciarSesion(ses.sub)
   redirect(`/campus/${perfilActual.rol}`)
 }
+
+// Cambia la contraseña con la sesión iniciada (Mi cuenta). Pide la contraseña actual, la cuenta sale siempre de la
+// sesión (nunca del formulario) y los fallos se limitan como en el login. Cierra las demás sesiones y renueva esta.
+export async function cambiarContrasena(_: AuthState, fd: FormData): Promise<AuthState> {
+  const actual = String(fd.get('actual') ?? ''), nueva = String(fd.get('password') ?? '')
+  const ses = await sesionActual()
+  const perfil = ses ? await perfilDeSesion(ses.sub, ses.iat) : null
+  if (!ses || !perfil || perfil.estado_cuenta !== 'activa') return { error: 'Tu sesión venció. Volvé a ingresar.' }
+
+  const kIp = `pass:ip:${await ip()}`, kUs = `pass:user:${perfil.id}`
+  if (bloqueado(kIp, 20) || bloqueado(kUs, 8))
+    return { error: 'Demasiados intentos. Esperá unos minutos e intentá de nuevo.' }
+  if ((await verificarCredenciales(perfil.email.toLowerCase(), actual)) !== perfil.id) {
+    registrar(kIp, 15 * 60_000); registrar(kUs, 15 * 60_000)
+    return { error: 'La contraseña actual no es correcta.' }
+  }
+  if (nueva !== String(fd.get('confirm') ?? '')) return { error: 'Las contraseñas nuevas no coinciden.' }
+  const invalida = validarPassword(nueva)
+  if (invalida) return { error: invalida }
+  if (nueva === actual) return { error: 'La contraseña nueva tiene que ser distinta de la actual.' }
+
+  // sesion_desde = now() deja sin efecto las cookies anteriores; esta sesión se vuelve a emitir.
+  try { await establecerPassword(perfil.id, nueva) } catch { return { error: 'No pudimos guardar la contraseña. Probá de nuevo.' } }
+  await iniciarSesion(perfil.id)
+  return { ok: true }
+}
