@@ -276,6 +276,9 @@ await inscribir('alumno3', 'electronica-basica')
 await inscribir('alumno5', 'electronica-basica')
 await inscribir('alumno6', 'diseno-grafico-para-redes')
 await inscribir('alumno7', 'reparacion-de-celulares')
+// RF-34/35: el acceso al material de un curso finalizado dura 3 meses. alumno5 terminó el taller hace más que eso
+// (acceso vencido); alumno3 y alumno4 lo terminaron recién y todavía entran.
+ok(await sb.from('inscripciones').update({ finalizado_el: '2026-06-01' }).eq('alumno_id', ids.alumno5).eq('edicion_id', eid['taller-cambio-de-glass']).eq('estado', 'finalizado'), 'acceso vencido alumno5')
 await inscribir('alumno2', 'reparacion-de-iphone-avanzada')
 // Mariana desertó de la primera edición de Celulares y retoma en la segunda; Martín se suma a la segunda.
 await inscribir('alumno2', 'reparacion-de-celulares#2')
