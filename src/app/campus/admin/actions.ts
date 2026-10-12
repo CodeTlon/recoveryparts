@@ -53,10 +53,11 @@ export async function crearUsuario(_: R, fd: FormData): Promise<R> {
   const { data: existente } = await sb.from('profiles').select('id, rol').eq('email', email).maybeSingle()
   if (existente) return { error: 'Ese email ya existe. Para un alumno, usá "Agregar alumno" desde el curso.' }
 
-  const uid = await invitarUsuario(email, { rol, nombre, apellido, telefono: txt(fd, 'telefono') || null })
-  if (!uid) return { error: 'No se pudo enviar la invitación.' }
+  const inv = await invitarUsuario(email, { rol, nombre, apellido, telefono: txt(fd, 'telefono') || null })
+  if (!inv) return { error: 'No se pudo crear el usuario.' }
   await sb.from('audit_log').insert({ actor_id: yo.id, accion: 'invitar', entidad: 'profiles', detalle: { rol } })
   revalidatePath('/campus/admin/usuarios')
+  if (!inv.enviado) return { error: 'El usuario se creó, pero no se pudo enviar el mail. Usá «Reenviar invitación» desde la lista.' }
   return { ok: true }
 }
 
@@ -411,13 +412,15 @@ export async function agregarAlumno(_: R, fd: FormData): Promise<R> {
   let nuevo = false
   if (alumno && alumno.rol !== 'alumno') return { error: 'Ese email pertenece a un profesor o admin.' }
 
+  let mailPendiente = false
   if (!alumno) {
     const nombre = txt(fd, 'nombre'), apellido = txt(fd, 'apellido')
     if (!nombre || !apellido || !/^\S+@\S+\.\S+$/.test(email)) return { error: 'Alumno nuevo: completá nombre, apellido y un email válido.' }
-    const uid = await invitarUsuario(email, { rol: 'alumno', nombre, apellido, telefono: txt(fd, 'telefono') || null })
-    if (!uid) return { error: 'No se pudo enviar la invitación.' }
-    alumno = { id: uid, rol: 'alumno', nombre }
+    const inv = await invitarUsuario(email, { rol: 'alumno', nombre, apellido, telefono: txt(fd, 'telefono') || null })
+    if (!inv) return { error: 'No se pudo crear el alumno.' }
+    alumno = { id: inv.id, rol: 'alumno', nombre }
     nuevo = true
+    mailPendiente = !inv.enviado
   }
 
   const { error } = await sb.from('inscripciones').insert({ alumno_id: alumno.id, edicion_id })
@@ -428,6 +431,7 @@ export async function agregarAlumno(_: R, fd: FormData): Promise<R> {
   if (!nuevo) await enviarMail(email, mailAgregadoCurso(alumno.nombre, curso.nombre, ed.fecha_inicio))
   await sb.from('audit_log').insert({ actor_id: yo.id, accion: 'agregar_alumno', entidad: 'inscripciones', detalle: { edicion_id } })
   revalidarCursos()
+  if (mailPendiente) return { error: 'El alumno se agregó al curso, pero no se pudo enviar el mail de invitación. Usá «Reenviar invitación» desde Usuarios.' }
   return { ok: true }
 }
 

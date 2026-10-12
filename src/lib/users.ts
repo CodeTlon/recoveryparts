@@ -67,13 +67,14 @@ export async function enviarLinkAcceso(email: string, userId: string, tipo: Tipo
 }
 
 // ── Cuentas ───────────────────────────────────────────────
-export async function invitarUsuario(email: string, meta: { rol: string; nombre: string; apellido: string; telefono: string | null }): Promise<string | null> {
+export async function invitarUsuario(email: string, meta: { rol: string; nombre: string; apellido: string; telefono: string | null }): Promise<{ id: string; enviado: boolean } | null> {
   const [u] = await sqlAdmin<{ id: string }>(
     `insert into auth.users (email, raw_user_meta_data, invited_at) values ($1, $2::jsonb, now()) returning id`,
     [email, meta]).catch(() => [])
   if (!u) return null
-  if (!(await enviarLinkAcceso(email, u.id, 'invite'))) console.error('invitación: no se pudo enviar el mail')
-  return u.id
+  const enviado = await enviarLinkAcceso(email, u.id, 'invite')
+  if (!enviado) console.error('invitación: no se pudo enviar el mail')
+  return { id: u.id, enviado }
 }
 
 export async function buscarIdPorEmail(email: string): Promise<string | null> {
