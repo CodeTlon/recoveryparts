@@ -2,31 +2,34 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireRole, fechaAR } from '@/lib/auth'
 import EdicionForm from '@/components/campus/EdicionForm'
-import { ActionForm, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
-import { agregarAlumno, corregirFechaDesercion, finalizarEdicion, guardarClases, guardarHorarios, marcarDesertor } from '../../../../actions'
+import { RotateCcw } from 'lucide-react'
+import { ActionForm, Badge, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
+import { agregarAlumno, corregirFechaDesercion, finalizarEdicion, guardarClases, guardarEstructuraEdicion, guardarHorarios, marcarDesertor, restablecerEstructura } from '../../../../actions'
 import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
-import { ClasesEditor, HorariosEditor } from '@/components/campus/ListEditors'
+import { ClasesEditor, EstructuraEditor, HorariosEditor } from '@/components/campus/ListEditors'
 
-const TABS = [['datos', 'Datos'], ['horarios', 'Horarios'], ['calendario', 'Calendario'], ['alumnos', 'Alumnos']] as const
+const TABS = [['datos', 'Datos'], ['horarios', 'Horarios'], ['estructura', 'Estructura'], ['calendario', 'Calendario'], ['alumnos', 'Alumnos']] as const
 
 export default async function EdicionAdmin({ params, searchParams }: { params: Promise<{ id: string; eid: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { id, eid } = await params
   const { tab: t } = await searchParams
   const tab = TABS.some(([k]) => k === t) ? t! : 'datos'
   const { sb } = await requireRole('admin')
-  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, aula_id, profesor_id, cupo, activo, cursos(nombre, activo)').eq('id', eid).eq('curso_id', id).maybeSingle()
+  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, aula_id, profesor_id, cupo, activo, cursos(nombre, activo, tipo)').eq('id', eid).eq('curso_id', id).maybeSingle()
   if (!ed) notFound()
-  const curso = ed.cursos as unknown as { nombre: string; activo: boolean }
+  const curso = ed.cursos as unknown as { nombre: string; activo: boolean; tipo: string }
 
-  const [{ data: aulas }, { data: profes }, { data: hs }, { data: plan }, { data: clases }, { data: insc }, { data: mods }] = await Promise.all([
+  const [{ data: aulas }, { data: profes }, { data: hs }, { data: est }, { data: clases }, { data: insc }, { data: mats }] = await Promise.all([
     sb.from('aulas').select('id, nombre, capacidad, activa').order('nombre'),
     sb.from('profiles').select('id, nombre, apellido').eq('rol', 'profesor').neq('estado_cuenta', 'inactiva').order('apellido'),
     sb.from('horarios_curso').select('*').eq('edicion_id', eid).order('dia_semana'),
-    sb.from('plan_clases').select('id, numero, titulo, modulo_id').eq('curso_id', id).order('numero'),
+    sb.rpc('estructura_edicion', { p_edicion: eid }), // RF-58: la guía general o la estructura propia de la edición
     sb.from('clases').select('plan_clase_id, fecha, estado').eq('edicion_id', eid),
     sb.from('inscripciones').select('id, estado, fecha_desercion, n_clase_desercion, motivo_desercion, profiles!inscripciones_alumno_id_fkey(nombre, apellido, email, estado_cuenta)').eq('edicion_id', eid),
-    sb.from('modulos_curso').select('id, titulo').eq('curso_id', id),
+    sb.rpc('materiales_edicion', { p_edicion: eid }),
   ])
+  const estructura = (est ?? { personalizada: false, modulos: [], clases: [] }) as { personalizada: boolean; modulos: { id: string; titulo: string }[]; clases: { id: string; numero: number; titulo: string; tipo: 'teorica' | 'practica'; modulo_id: string | null }[] }
+  const plan = estructura.clases, mods = estructura.modulos
   const totalClases = clases?.filter((c) => c.estado === 'programada').length ?? 0
   const hoy = hoyAR()
   const activos = insc?.filter((i) => i.estado === 'activo').length ?? 0
@@ -69,12 +72,36 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
         </ActionForm></div>
       </section>}
 
+      {tab === 'estructura' && <section className={sec}>
+        <div className="mb-1 flex flex-wrap items-center gap-3">
+          <h2 className="text-xl font-semibold">Estructura de esta edición</h2>
+          {estructura.personalizada ? <Badge tone="warn">Estructura propia</Badge> : <Badge>Sigue la guía general</Badge>}
+        </div>
+        <p className="mb-4 text-sm text-on-surface-variant">Los cambios valen solo para esta edición (la puede adaptar también su profesor); la guía general del curso no cambia. Mientras nadie la modifique, la edición sigue la guía general.</p>
+        <div className="max-w-4xl">
+          <ActionForm action={guardarEstructuraEdicion} reset={false}>
+            <input type="hidden" name="edicion_id" value={eid} />
+            {/* key: al personalizar o volver a la guía cambian los ids, y el editor se vuelve a montar */}
+            <EstructuraEditor key={[...mods, ...plan].map((x) => x.id).join()} name="estructura" taller={curso.tipo === 'taller'} inicial={{ modulos: mods, clases: plan }}
+              conMaterial={Object.fromEntries(plan.map((p) => [p.id, ((mats ?? []) as { plan_clase_id: string | null }[]).filter((m) => m.plan_clase_id === p.id).length]))} />
+          </ActionForm>
+          {estructura.personalizada && (
+            <ActionForm action={restablecerEstructura} submit={null} className="mt-4">
+              <input type="hidden" name="edicion_id" value={eid} />
+              <Confirm modal className="btn-ghost !px-4 !py-2" message="Se van a perder los cambios hechos en la estructura de esta edición y va a volver a la guía general. El material que el profesor subió a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
+                <RotateCcw size={14} /> Volver a la guía general
+              </Confirm>
+            </ActionForm>
+          )}
+        </div>
+      </section>}
+
       {tab === 'calendario' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Las clases y sus títulos vienen de la estructura del curso; acá se asigna la fecha de cada una en esta edición (se puede adelantar o saltear una clase). Las suspendidas, reprogramadas y salteadas no cuentan para el N° de clase de deserción.</p>
         <div className="max-w-4xl"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="edicion_id" value={eid} />
-          <ClasesEditor name="clases" plan={(plan ?? []).map((p) => ({ ...p, modulo: mods?.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
+          <ClasesEditor name="clases" plan={plan.map((p) => ({ ...p, modulo: mods.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
             avisar={<Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>} />
         </ActionForm></div>
       </section>}
