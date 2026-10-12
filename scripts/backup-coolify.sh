@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Backup de un recurso de Recovery Parts en Coolify (base + PDFs/imágenes). Se corre en el VPS.
-# Uso:  UUID=<uuid-del-recurso> ./backup-coolify.sh        (típico: cron diario)
+# Uso:  UUID=<uuid-del-recurso> [REMOTE=r2:backups/recoveryparts] ./backup-coolify.sh   (típico: cron diario)
 # Deja en $DEST: rp-<uuid>-db-<fecha>.dump (pg_dump -Fc) y rp-<uuid>-storage-<fecha>.tar.gz; borra los de más de $DIAS días.
 set -euo pipefail
 : "${UUID:?Falta UUID (el del recurso en Coolify)}"
@@ -20,6 +20,13 @@ mv "$DEST/.rp-db.tmp" "$DEST/rp-$UUID-db-$FECHA.dump"
 docker run --rm -v "${UUID}_storage":/data:ro -v "$DEST":/out alpine \
   tar czf "/out/.rp-storage.tmp" -C /data .
 mv "$DEST/.rp-storage.tmp" "$DEST/rp-$UUID-storage-$FECHA.tar.gz"
+
+# Copia fuera del VPS (opcional): REMOTE=<remoto-rclone>:<bucket>/<carpeta>, p. ej. r2:backups/recoveryparts.
+# La retención remota la define la regla de ciclo de vida del bucket (no hace falta permiso de borrado).
+if [ -n "${REMOTE:-}" ]; then
+  rclone copy "$DEST" "$REMOTE" --include "rp-$UUID-*-$FECHA.*"
+  echo "Subido a $REMOTE"
+fi
 
 find "$DEST" -maxdepth 1 -name "rp-$UUID-*" -mtime "+$DIAS" -delete
 echo "OK $(date +%F-%H:%M) → $DEST"; ls -lh "$DEST" | tail -n 4
