@@ -14,6 +14,8 @@ export async function enviarMail(to: string | string[], { subject, text, html }:
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT ?? 587),
       secure: Number(process.env.SMTP_PORT) === 465,
+      // Sin tiempos máximos nodemailer espera hasta 10 min y la pantalla queda en «Guardando…».
+      connectionTimeout: 8_000, greetingTimeout: 8_000, socketTimeout: 15_000,
       auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
     })
     await t.sendMail({ from: process.env.MAIL_FROM, to, subject, text, html })
