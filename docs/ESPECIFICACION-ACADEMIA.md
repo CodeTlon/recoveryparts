@@ -5,7 +5,7 @@
 ### Sitio web + Campus Virtual para Academia de Cursos Técnicos
 
 ![Estado](https://img.shields.io/badge/estado-borrador-orange?style=for-the-badge)
-![Versión](https://img.shields.io/badge/versión-0.12-blue?style=for-the-badge)
+![Versión](https://img.shields.io/badge/versión-0.13-blue?style=for-the-badge)
 ![Cliente](https://img.shields.io/badge/cliente-Recovery_Parts-1e3a8a?style=for-the-badge)
 ![Tipo](https://img.shields.io/badge/proyecto-real-success?style=for-the-badge)
 
@@ -94,8 +94,8 @@ flowchart LR
 | Cursos y talleres | ✅ | 🔒 👁️ | 🔒 👁️ | 👁️ *(ficha pública)* |
 | Aulas, horarios y cupos | ✅ | 👁️ | ❌ | 👁️ *(cupos)* |
 | Listado de alumnos | ✅ | 🔒 *(solo sus cursos)* | ❌ | ❌ |
-| Material didáctico | ✅ | 🔒 ✅ | 🔒 👁️ *(liberado)* | ❌ |
-| Kit por curso (informativo) | ✅ | 👁️ | 👁️ | 👁️ |
+| Material didáctico | ✅ *(material base)* | 🔒 ✅ *(el de su edición; el base solo lo libera)* | 🔒 👁️ *(liberado)* | ❌ |
+| Kit por curso (informativo) | ✅ | ❌ *(se habla en el aula)* | 👁️ | 👁️ |
 | Encuestas | ✅ | ❌ | 🔒 *(responder)* | ❌ |
 | Reportes | ✅ | ❌ | ❌ | ❌ |
 
@@ -314,7 +314,7 @@ stateDiagram-v2
 - Mis cursos: horario, aula y alumnos (RF-04)
 - Subir material (RF-05, RF-36)
 - Liberar contenido (RF-07)
-- Temario y calendario (RF-31)
+- Estructura de su curso y calendario (RF-31, RF-58)
 
 </td>
 <td>
@@ -453,8 +453,8 @@ sequenceDiagram
 | RF-01 | El administrador crea y da de baja cursos y talleres. | 🟢 | 🛡️ |
 | RF-02 | El administrador asigna un profesor a cada curso o taller. | 🟢 | 🛡️ |
 | RF-03 | El administrador gestiona aulas, cupos, insumos y precios de cada curso. **Aulas**: módulo propio (Campus › Aulas) con capacidad, baja lógica y sin borrado. **Cupo y precio**: en el curso; el cupo nunca supera la capacidad del aula. **Insumos**: solo el kit informativo (RF-45/46); el stock lo maneja el software externo. | 🟢 | 🛡️ |
-| RF-04 | El profesor ve sus cursos asignados, con horario, aula y listado de alumnos. | 🟢 | 👨‍🏫 |
-| RF-05 | El profesor carga material teórico (PDFs). | 🟢 | 👨‍🏫 |
+| RF-04 | El profesor ve sus cursos asignados, con horario, aula y listado de alumnos. **Desde v0.13:** «Mis cursos» muestra solo los dictados **en curso** y **próximos**, con su estado; los terminados (su última clase ya pasó) y los dados de baja no aparecen ni se pueden abrir. El profesor no ve la palabra «edición». | 🟢 | 👨‍🏫 |
+| RF-05 | El profesor carga material teórico (PDFs). **Desde v0.13:** el material que sube el profesor vale solo para su edición y solo él lo borra; el **material base** lo carga el admin sobre la guía general, aparece en todas las ediciones que conservan esa clase y el profesor lo libera pero no lo borra. | 🟢 | 👨‍🏫 🛡️ |
 | RF-06 | El profesor toma o carga asistencia. | 🔴 | 👨‍🏫 |
 | RF-07 | El profesor puede liberar contenido manualmente. | 🟢 | 👨‍🏫 |
 | RF-08 | El alumno ve los cursos en los que está inscripto. | 🟢 | 🎓 |
@@ -540,14 +540,14 @@ sequenceDiagram
 
 | ID | Descripción | Estado | Rol |
 |---|---|:-:|:-:|
-| RF-31 | Cargar de antemano todo el temario y calendario. El temario es la **estructura del curso** (RF-58) y lo editan el admin y el profesor. | 🟢 | 👨‍🏫 🛡️ |
+| RF-31 | Cargar de antemano todo el temario y calendario. El temario es la **estructura del curso** (RF-58): el admin define la guía general y el profesor la ajusta en su edición. | 🟢 | 👨‍🏫 🛡️ |
 | RF-32 | Liberación **siempre manual**: el profesor libera cada material en su edición; la fecha de la clase no libera nada. *Cambiado en v0.12: antes era automática por fecha + manual.* | 🟢 | 👨‍🏫 |
 | RF-33 | El alumno visualiza **y puede descargar** el material liberado (vista previa + botón de descarga). *Cambiado en v0.6: antes era solo visualización.* | 🟢 | 🎓 |
 | RF-34 | El acceso depende de la vigencia, no del pago; vencido el período se retira solo. | 🟢 | ⚙️ |
 | RF-35 | Al finalizar el curso aparece en el campus un **botón de descarga** del ZIP con todos los PDFs **ya liberados** (los ocultos o programados no se incluyen). Solo para alumnos que terminaron (no desertores). Disponible **mínimo 1 mes**, o hasta que se borre el curso. | 🟢 | 🎓 |
 | RF-36 | Material: **PDF + links**. Los videos se suben a YouTube (no listado) o Drive y se cargan como link. No se alojan videos. | 🟢 | 👨‍🏫 |
 | RF-37 | El alumno ve el material liberado y **solo el título** del tema de la clase siguiente. Todo lo posterior queda oculto. Ve los títulos de **todos los módulos**, pero no las clases de los módulos que no empezaron; de la próxima clase ve título y tipo, nunca su material (v0.12). | 🟢 | ⚙️ |
-| RF-58 | **Estructura del curso: módulos → clases → material.** El curso se arma con módulos que contienen clases en orden (título libre, **teórica o práctica**), y cada clase tiene su material (o ninguno). No hay clases sin módulo ni módulos sin clases; las clases de un módulo van juntas. Los talleres no llevan módulos. El material sigue a su clase aunque cambie de lugar; si se borra la clase, el material queda «general». En cada edición el profesor puede **adelantar** una clase (fecha antes que otras) o **saltearla** (no se dicta; no avisa por mail). La comparten todas las ediciones. | 🟢 | 🛡️ 👨‍🏫 |
+| RF-58 | **Estructura del curso: módulos → clases → material.** El curso se arma con módulos que contienen clases en orden (título libre, **teórica o práctica**), y cada clase tiene su material (o ninguno). No hay clases sin módulo ni módulos sin clases; las clases de un módulo van juntas. Los talleres no llevan módulos. El material sigue a su clase aunque cambie de lugar; si se borra la clase, el material queda «general». En cada edición el profesor puede **adelantar** una clase (fecha antes que otras) o **saltearla** (no se dicta; no avisa por mail). **Desde v0.13:** lo que define el admin es la **guía general** del curso (solo él la edita). Cada edición la sigue hasta que su profesor (o el admin) la modifica; desde ahí la edición tiene su **estructura propia**, que no cambia la guía ni las otras ediciones. Una edición nueva o duplicada siempre arranca de la guía. «Volver a la guía general» descarta la estructura propia, con advertencia previa. El sitio público muestra la guía. | 🟢 | 🛡️ 👨‍🏫 |
 
 <details>
 <summary>❓ Preguntas pendientes</summary>
@@ -666,6 +666,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.13 | 2026-10-11 | **Panel del profesor y estructura por edición.** RF-04: «Mis cursos» con estado (en curso / próximo), sin dictados terminados y sin el concepto de «edición» para el profesor. RF-58 / RF-31: guía general del curso (admin) + estructura propia de cada edición, que arranca de la guía y la puede modificar su profesor; «Volver a la guía general» con advertencia. RF-05: material base (admin) y material del profesor por edición; el profesor solo borra el suyo. El kit deja de verse en el campus del profesor. La deserción la marca solo el admin (sin cambios). |
 | 0.12 | 2026-10-06 | **Estructura del curso (RF-58)**: módulos → clases (teóricas o prácticas) → material, con la regla en la base; talleres sin módulos; el material sigue a su clase. Orden flexible por edición: adelantar o saltear clases (sin mail). **RF-32**: liberación siempre manual. **RF-26**: el sitio muestra solo los títulos de los módulos. **RF-37**: el alumno ve todos los módulos y solo las clases dictadas y la próxima. RF-55: la clase salteada no cuenta. |
 | 0.11 | 2026-10-05 | **Ediciones de curso** (cursos recurrentes): el curso es el catálogo (contenido, precio, kit, plan de clases, material por N° de clase) y cada dictado es una edición (fecha, horarios, aula, profesor, cupo, calendario, alumnos, encuesta). Una edición activa por vez por curso; duplicar edición copia horarios/aula/profesor/cupo y obliga a asignar fechas de nuevo; material liberado por edición; un alumno puede cursar otra edición del mismo curso; en el sitio, un curso con sus «Próximas fechas» o «Próximamente nuevas fechas». |
 | 0.10 | 2026-10-05 | **RF-03** 🟢: aulas como catálogo propio (capacidad obligatoria en aulas nuevas, una sola capacidad por aula, baja lógica sin borrado, sin baja con cursos activos); el cupo del curso no supera la capacidad de su aula (validado en la base). |

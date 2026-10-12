@@ -1,13 +1,15 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CalendarPlus, Copy, ArchiveX, ArchiveRestore, ArrowRight } from 'lucide-react'
+import { CalendarPlus, Copy, ArchiveX, ArchiveRestore, ArrowRight, FileText, Link2, Trash2 } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import CursoForm from '@/components/campus/CursoForm'
 import EdicionForm from '@/components/campus/EdicionForm'
 import DuplicarEdicion from '@/components/campus/DuplicarEdicion'
-import { ActionForm, Badge, Empty, ModalButton, PageHead, BackLink } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, ModalButton, PageHead, BackLink } from '@/components/campus/ui'
+import MaterialForms from '@/components/campus/MaterialForms'
+import { borrarMaterial } from '../../../profesor/actions'
 import { guardarEstructura, guardarKit, setEstadoEdicion } from '../../actions'
-import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
+import { hoyAR, etiquetaEdicion, momentoEdicion } from '@/lib/fechas'
 import { EstructuraEditor, KitEditor } from '@/components/campus/ListEditors'
 import ArbolEstructura, { type ArbolClase, type ArbolMaterial, type ArbolModulo } from '@/components/campus/ArbolEstructura'
 
@@ -17,12 +19,10 @@ const TABS = [['ediciones', 'Ediciones'], ['datos', 'Datos'], ['estructura', 'Es
 type Ed = { id: string; fecha_inicio: string | null; cupo: number; activo: boolean; aula_id: string | null; profesor_id: string | null; aulas: { nombre: string } | null; profiles: { nombre: string; apellido: string } | null; inscripciones: { id: string }[]; clases: { fecha: string }[] }
 
 // Estado temporal de una edición según sus fechas (en curso / próxima / terminada).
+const MOMENTO = { baja: ['De baja', 'neutral'], proxima: ['Próxima', 'warn'], terminada: ['Terminada', 'neutral'], en_curso: ['En curso', 'ok'] } as const
 function momento(e: Ed, hoy: string) {
-  const fin = e.clases.reduce((m, c) => (c.fecha > m ? c.fecha : m), e.fecha_inicio ?? '')
-  if (!e.activo) return { fin, label: 'De baja', tone: 'neutral' as const }
-  if (e.fecha_inicio && e.fecha_inicio > hoy) return { fin, label: 'Próxima', tone: 'warn' as const }
-  if (fin && fin < hoy) return { fin, label: 'Terminada', tone: 'neutral' as const }
-  return { fin, label: 'En curso', tone: 'ok' as const }
+  const { momento: m, fin } = momentoEdicion({ activo: e.activo, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha) }, hoy)
+  return { fin, label: MOMENTO[m][0], tone: MOMENTO[m][1] }
 }
 
 export default async function CursoAdmin({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
@@ -37,17 +37,20 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
     sb.from('ediciones').select('id, fecha_inicio, cupo, activo, aula_id, profesor_id, aulas(nombre), profiles(nombre, apellido), inscripciones(id), clases(fecha)').eq('curso_id', id).order('fecha_inicio', { ascending: false }),
     sb.from('aulas').select('id, nombre, capacidad, activa').eq('activa', true).order('nombre'),
     sb.from('profiles').select('id, nombre, apellido').eq('rol', 'profesor').neq('estado_cuenta', 'inactiva').order('apellido'),
-    sb.from('modulos_curso').select('id, titulo, orden').eq('curso_id', id).order('orden'),
+    sb.from('modulos_curso').select('id, titulo, orden').eq('curso_id', id).is('edicion_id', null).order('orden'), // guía general
     sb.from('kit_items').select('*').eq('curso_id', id).order('orden'),
-    sb.from('plan_clases').select('id, numero, titulo, tipo, modulo_id').eq('curso_id', id).order('numero'),
-    sb.from('materiales').select('id, tipo, titulo, plan_clase_id').eq('curso_id', id).order('creado_en'),
+    sb.from('plan_clases').select('id, numero, titulo, tipo, modulo_id, edicion_id').eq('curso_id', id).order('numero'),
+    sb.from('materiales').select('id, tipo, titulo, plan_clase_id').eq('curso_id', id).is('edicion_id', null).order('creado_en'), // material base
   ])
   const ediciones = (eds ?? []) as unknown as Ed[]
   const hoy = hoyAR()
   const profOpts: [string, string][] = (profes ?? []).map((p) => [p.id, `${p.apellido}, ${p.nombre}`])
   const kIni = (kit ?? []).map((k) => ({ nombre: k.nombre as string, descripcion: (k.descripcion ?? '') as string, precio: k.precio == null ? '' : String(k.precio), link: (k.link_externo ?? '') as string, requerido: (k.requerido ?? true) as boolean }))
   const modulos = (mods ?? []) as ArbolModulo[]
-  const clases = (plan ?? []) as ArbolClase[]
+  // RF-58: la guía general son las clases sin edición; una edición con clases propias está personalizada.
+  const planTodo = (plan ?? []) as (ArbolClase & { edicion_id: string | null })[]
+  const clases: ArbolClase[] = planTodo.filter((c) => !c.edicion_id)
+  const personalizadas = new Set(planTodo.map((c) => c.edicion_id).filter(Boolean))
   const materiales = (mats ?? []) as ArbolMaterial[]
   const conMaterial = Object.fromEntries(clases.map((c) => [c.id, materiales.filter((m) => m.plan_clase_id === c.id).length]))
   const taller = curso.tipo === 'taller'
@@ -91,6 +94,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
                       </p>
                     </div>
                     <Badge>{e.inscripciones.length}/{e.cupo} alumnos</Badge>
+                    {personalizadas.has(e.id) && <Badge tone="warn">Estructura propia</Badge>}
                     <Badge tone={m.tone}>{m.label}</Badge>
                     <div className="flex flex-wrap items-center gap-2">
                       <Link href={`/campus/admin/cursos/${id}/ediciones/${e.id}`} className="btn-ghost !px-3 !py-2">Gestionar <ArrowRight size={14} aria-hidden /></Link>
@@ -127,10 +131,10 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
       </section>}
 
       {tab === 'estructura' && <section className={sec}>
-        <h2 className="mb-1 text-xl font-semibold">Estructura del curso</h2>
+        <h2 className="mb-1 text-xl font-semibold">Guía general del curso</h2>
         <p className="mb-4 text-sm text-on-surface-variant">
           {taller ? 'Las clases del taller, en orden (los talleres no llevan módulos).' : 'Los módulos y, dentro de cada uno, sus clases en orden. Todo módulo tiene clases y toda clase está en un módulo.'}
-          {' '}La comparten todas las ediciones; cada edición pone las fechas en su calendario. {taller ? 'En el sitio no se muestra temario.' : 'En el sitio solo se ven los títulos de los módulos.'}
+          {' '}Con esta guía arranca cada edición nueva. El profesor puede adaptarla en su edición sin cambiarla acá: las ediciones con «Estructura propia» ya no siguen estos cambios. {taller ? 'En el sitio no se muestra temario.' : 'En el sitio solo se ven los títulos de los módulos.'}
         </p>
         <div className="max-w-4xl"><ActionForm action={guardarEstructura} reset={false}>
           <input type="hidden" name="curso_id" value={id} />
@@ -151,10 +155,21 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
       </section>}
 
       {tab === 'material' && <section>
-        <h2 className="mb-1 text-xl font-semibold">Material del curso</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Lo suben los profesores que dictan el curso. En cada edición el alumno lo ve solo cuando el profesor lo libera (RF-32).</p>
-        {!materiales.length && <Empty>Todavía no hay material cargado.</Empty>}
-        <div className="max-w-3xl"><ArbolEstructura modulos={modulos} clases={clases} materiales={materiales} /></div>
+        <h2 className="mb-1 text-xl font-semibold">Material base del curso</h2>
+        <p className="mb-4 text-sm text-on-surface-variant">Se carga sobre las clases de la guía general y aparece en todas las ediciones que conservan esa clase. En cada edición el alumno lo ve solo cuando el profesor lo libera (RF-32). El profesor no puede borrarlo; el material que sube él vale solo para su edición y no se muestra acá.</p>
+        {!materiales.length && <Empty>Todavía no hay material base cargado.</Empty>}
+        <div className="mb-6 max-w-3xl"><ArbolEstructura modulos={modulos} clases={clases} materiales={materiales} renderMaterial={(m) => (
+          <div className="flex flex-wrap items-center gap-3">
+            {m.tipo === 'pdf' ? <FileText size={16} className="text-primary" /> : <Link2 size={16} className="text-primary" />}
+            <span className="min-w-0 flex-1 font-medium">{m.titulo}</span>
+            {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Ver</a>}
+            <form action={borrarMaterial}>
+              <input type="hidden" name="id" value={m.id} />
+              <Confirm message="¿Eliminar este material base? Deja de verse en todas las ediciones del curso."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>
+            </form>
+          </div>
+        )} /></div>
+        <MaterialForms cursoId={id} modulos={modulos} clases={clases} />
       </section>}
     </>
   )

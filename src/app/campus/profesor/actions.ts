@@ -9,30 +9,43 @@ const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
 const MAX_PDF = 25 * 1024 * 1024
 const revalidar = () => { revalidatePath('/campus', 'layout') }
 
-// El material es del curso (lo comparten sus ediciones) y se asocia a una CLASE del curso (por id: si la clase cambia
-// de lugar, el material la sigue) o queda «general». Lo cargan el admin y los profesores que dictan una edición activa
-// del curso (RLS). En cada edición el alumno lo ve solo cuando el profesor lo libera (RF-32: siempre a mano); la
-// liberación es de la edición del profesor.
-async function validarMaterial(sb: Awaited<ReturnType<typeof requireRole>>['sb'], fd: FormData): Promise<{ error: string } | { curso_id: string; titulo: string; plan_clase_id: string | null }> {
+// RF-05 / RF-58: hay dos clases de material.
+//  - BASE: lo carga el admin en una clase de la guía general del curso; se ve en todas las ediciones que conservan
+//    esa clase y el profesor no lo puede borrar.
+//  - DE LA EDICIÓN: lo sube el profesor para su curso (edicion_id); no aparece en otras ediciones y solo él lo borra.
+// Se asocia a una clase (por id: si la clase cambia de lugar, el material la sigue) o queda «general». El alumno lo ve
+// solo cuando se libera en su edición (RF-32). RLS y los triggers de la base validan todo esto otra vez.
+type Sb = Awaited<ReturnType<typeof requireRole>>['sb']
+type Material = { curso_id: string; edicion_id: string | null; titulo: string; plan_clase_id: string | null }
+async function validarMaterial(sb: Sb, rol: string, fd: FormData): Promise<{ error: string } | Material> {
   const curso_id = txt(fd, 'curso_id'), titulo = txt(fd, 'titulo'), plan_clase_id = txt(fd, 'plan_clase_id') || null
+  const edicion_id = rol === 'profesor' ? txt(fd, 'edicion_id') || null : null
   if (!titulo || titulo.length > 200) return { error: 'Poné un título de hasta 200 caracteres.' }
+  if (rol === 'profesor' && !edicion_id) return { error: 'No se pudo identificar el curso.' }
   if (plan_clase_id) {
-    const { data } = await sb.from('plan_clases').select('id').eq('curso_id', curso_id).eq('id', plan_clase_id).maybeSingle()
-    if (!data) return { error: 'Esa clase no es de este curso.' }
+    let ok = false
+    if (edicion_id) {
+      const { data } = await sb.rpc('estructura_edicion', { p_edicion: edicion_id })
+      ok = !!(data as { clases: { id: string }[] } | null)?.clases.some((c) => c.id === plan_clase_id)
+    } else {
+      const { data } = await sb.from('plan_clases').select('id').eq('curso_id', curso_id).eq('id', plan_clase_id).is('edicion_id', null).maybeSingle()
+      ok = !!data
+    }
+    if (!ok) return { error: 'Esa clase no es de este curso.' }
   }
-  return { curso_id, titulo, plan_clase_id }
+  return { curso_id, edicion_id, titulo, plan_clase_id }
 }
 
-// Si se tildó «liberar ya en esta edición», se registra la liberación manual en esa edición.
-async function liberarSiCorresponde(sb: Awaited<ReturnType<typeof requireRole>>['sb'], fd: FormData, material_id: string) {
+// Si se tildó «liberarlo ya», se registra la liberación manual en esa edición.
+async function liberarSiCorresponde(sb: Sb, fd: FormData, material_id: string) {
   const edicion_id = txt(fd, 'edicion_id')
   if (edicion_id && fd.get('liberar_ya') === 'on') await sb.from('materiales_liberados').insert({ edicion_id, material_id })
 }
 
-// RF-05: PDF al bucket privado. RLS (storage + materiales) restringe a los profesores del curso.
+// RF-05: PDF a disco privado. RLS de `materiales`: el profesor solo carga en su edición; el admin, material base.
 export async function subirPdf(_: R, fd: FormData): Promise<R> {
   const { sb, perfil } = await requireRole('profesor', 'admin')
-  const v = await validarMaterial(sb, fd)
+  const v = await validarMaterial(sb, perfil.rol, fd)
   if ('error' in v) return v
   const f = fd.get('archivo') as File | null
   if (!f || !f.size) return { error: 'Elegí un PDF.' }
@@ -40,7 +53,7 @@ export async function subirPdf(_: R, fd: FormData): Promise<R> {
   const head = new TextDecoder().decode(new Uint8Array(await f.slice(0, 5).arrayBuffer()))
   if (f.type !== 'application/pdf' || head !== '%PDF-') return { error: 'El archivo no es un PDF válido.' }
 
-  // Primero la fila: RLS de `materiales` verifica que dicte este curso. Recién después se guarda el archivo.
+  // Primero la fila: RLS de `materiales` verifica que sea su edición. Recién después se guarda el archivo.
   const path = `${v.curso_id}/${crypto.randomUUID()}.pdf`
   const { data, error } = await sb.from('materiales').insert({ ...v, tipo: 'pdf', storage_path: path, subido_por: perfil.id }).select('id').single()
   if (error || !data) return { error: 'No se pudo registrar el material (¿dictás este curso?).' }
@@ -56,7 +69,7 @@ export async function subirPdf(_: R, fd: FormData): Promise<R> {
 // RF-36: videos como link (YouTube no listado / Drive). No se alojan videos.
 export async function agregarLink(_: R, fd: FormData): Promise<R> {
   const { sb, perfil } = await requireRole('profesor', 'admin')
-  const v = await validarMaterial(sb, fd)
+  const v = await validarMaterial(sb, perfil.rol, fd)
   if ('error' in v) return v
   const url = txt(fd, 'url')
   try { if (!['http:', 'https:'].includes(new URL(url).protocol)) throw 0 } catch { return { error: 'Link inválido (debe empezar con https://).' } }
@@ -77,11 +90,12 @@ export async function liberarMaterial(fd: FormData) {
   revalidar()
 }
 
-// Borra el material del curso (deja de verse en todas sus ediciones).
+// Borra un material. RLS decide: el profesor solo borra el que subió él para su edición (el base no); el admin, cualquiera.
+// El archivo se borra del disco solo si la base aceptó borrar la fila.
 export async function borrarMaterial(fd: FormData) {
   const { sb } = await requireRole('profesor', 'admin')
-  const { data: m } = await sb.from('materiales').select('storage_path').eq('id', txt(fd, 'id')).single()
-  const { error } = await sb.from('materiales').delete().eq('id', txt(fd, 'id'))
-  if (!error && m?.storage_path) await borrarArchivo('materiales', m.storage_path)
+  const { data } = await sb.from('materiales').delete().eq('id', txt(fd, 'id')).select('storage_path')
+  const path = (data as { storage_path: string | null }[] | null)?.[0]?.storage_path
+  if (path) await borrarArchivo('materiales', path)
   revalidar()
 }
