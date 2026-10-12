@@ -3,7 +3,7 @@
 Qué es verdad ahora (2026-10-12). Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
 
 ## Ramas
-- `dev` y `test` tienen el **panel del profesor y la estructura por edición** (rama `feat/estructura-por-edicion`, mergeada y pusheada el 2026-10-12). Migración **0017** (`db/migrations/0017_estructura_por_edicion.sql`). Falta el PR `test → main`. La migración y el código van juntos: cambia RLS y funciones que usa la versión anterior.
+- `dev`, `test` y `main` al día con el **panel del profesor y la estructura por edición** (PR #18 `test → main`, mergeado el 2026-10-12): «Mis cursos» con estado, guía general + estructura propia por edición, material base y material del profesor. Migración **0017** (`db/migrations/0017_estructura_por_edicion.sql`); en Coolify corre sola al arrancar la app. **Sin verificar** el despliegue ni la revisión en un navegador real.
 - `dev`, `test` y `main` al día con la **estructura del curso** (PR #11 `test → main`, mergeado el 2026-10-06): estructura del curso módulos → clases → material (RF-58), orden flexible por edición y liberación siempre manual (RF-32). Migraciones **0012–0014**.
 - `dev`, `test` y `main` están al día con **gestión de aulas (RF-03)** y **ediciones de curso** (PR #7 `test → main`, mergeado el 2026-10-06). Las ramas de trabajo de esas mejoras ya se mergearon.
 - La rama remota `feat/unificacion` es otro linaje (esquema `matriculas`/`sitio_config`/`faq`, migraciones `0001_auth_profiles…0011`) y quedó **descartada**: `dev` ya tiene todo lo equivalente.
