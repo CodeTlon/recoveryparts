@@ -45,7 +45,7 @@ export default function SiteNav() {
           Recovery Parts
         </Link>
 
-        <div className="hidden items-center gap-8 text-sm font-semibold uppercase tracking-wide md:flex">
+        <div className="hidden items-center gap-8 text-sm font-semibold uppercase tracking-wide lg:flex">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} aria-current={activo(l.href) ? 'page' : undefined} className={`relative py-2 ${activo(l.href) ? 'text-on-surface' : link}`}>
               {l.label}
@@ -54,16 +54,16 @@ export default function SiteNav() {
           ))}
         </div>
 
-        <Link href="/login" className="btn-primary hidden !py-2 md:inline-flex">Campus</Link>
+        <Link href="/login" className="btn-primary hidden !py-2 lg:inline-flex">Campus</Link>
 
         <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open}
-          className="-mr-1.5 inline-flex h-11 w-11 items-center justify-center rounded text-on-surface hover:text-secondary md:hidden">
+          className="-mr-1.5 inline-flex h-11 w-11 items-center justify-center rounded text-on-surface hover:text-secondary lg:hidden">
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-outline-variant bg-surface px-4 pb-4 pt-2 md:hidden">
+        <div className="border-t border-outline-variant bg-surface px-4 pb-4 pt-2 lg:hidden">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} onClick={close} className={`block rounded px-3 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-surface-container-low ${link}`}>{l.label}</Link>
           ))}
