@@ -8,3 +8,6 @@ export const siteUrl = () => env.SITE_URL || env.NEXT_PUBLIC_SITE_URL || 'http:/
 
 if (env.NODE_ENV === 'production' && dbConfigured && !env.SITE_URL && !env.NEXT_PUBLIC_SITE_URL)
   console.error('env: falta NEXT_PUBLIC_SITE_URL; los links de invitación apuntarán a localhost')
+
+// Redirecciones absolutas: en Docker `request.url` trae el host interno (0.0.0.0:3000), no el público.
+export const urlPublica = (path: string) => new URL(path, siteUrl())
