@@ -60,6 +60,8 @@ const USUARIOS = [
   { key: 'alumno4', rol: 'alumno', nombre: 'Sofía', apellido: 'Argañaraz' },
   { key: 'alumno5', rol: 'alumno', nombre: 'Martín', apellido: 'Quiroga' },
   { key: 'alumno6', rol: 'alumno', nombre: 'Julieta', apellido: 'Montenegro' },
+  // Un solo curso activo: el campus lo lleva directo al curso (RF-11); ahí tiene que ver su encuesta (RF-47).
+  { key: 'alumno7', rol: 'alumno', nombre: 'Camila', apellido: 'Ferreyra' },
 ].map((u) => ({ ...u, email: `${u.key}${D}`, password: clave() }))
 
 // ── 1. Usuarios (sin mail) ─────────────────────────────────
@@ -273,6 +275,7 @@ await inscribir('alumno1', 'taller-cambio-de-bateria')
 await inscribir('alumno3', 'electronica-basica')
 await inscribir('alumno5', 'electronica-basica')
 await inscribir('alumno6', 'diseno-grafico-para-redes')
+await inscribir('alumno7', 'reparacion-de-celulares')
 await inscribir('alumno2', 'reparacion-de-iphone-avanzada')
 // Mariana desertó de la primera edición de Celulares y retoma en la segunda; Martín se suma a la segunda.
 await inscribir('alumno2', 'reparacion-de-celulares#2')
@@ -334,6 +337,9 @@ await material('taller-cambio-de-glass', 'Guía de cambio de glass', {}, pdf('Gu
 // ── 5. Encuesta (por edición), CMS y ajustes ───────────────
 if (!(await sb.from('encuestas').select('id').eq('titulo', 'Encuesta de fin de curso — Celulares').maybeSingle()).data)
   ok(await sb.from('encuestas').insert({ edicion_id: eid['reparacion-de-celulares'], titulo: 'Encuesta de fin de curso — Celulares', preguntas: [{ tipo: 'puntaje', texto: '¿Cómo calificás al profesor?' }, { tipo: 'texto', texto: '¿Qué mejorarías?' }] }), 'encuesta')
+// Segunda encuesta activa, en otro curso: quien cursa los dos las ve juntas en «Encuestas».
+if (!(await sb.from('encuestas').select('id').eq('titulo', 'Encuesta de mitad de curso — Carteles Neón LED').maybeSingle()).data)
+  ok(await sb.from('encuestas').insert({ edicion_id: eid['carteles-neon-led'], titulo: 'Encuesta de mitad de curso — Carteles Neón LED', preguntas: [{ tipo: 'puntaje', texto: '¿Cómo venís con el ritmo de las clases?' }, { tipo: 'texto', texto: '¿Qué tema te gustaría reforzar?' }] }), 'encuesta neón')
 
 const set = (clave, valor) => sb.from('site_settings').upsert({ clave, valor }).then((r) => ok(r, clave))
 await set('hero', { titulo: 'Aprendé un oficio con equipos reales', subtitulo: 'Cursos y talleres presenciales de diseño y tecnología en Córdoba. (texto de prueba)', imagen_url: '/images/hero.jpg', cta_cursos: 'Ver cursos', cta_whatsapp: 'WhatsApp' })
