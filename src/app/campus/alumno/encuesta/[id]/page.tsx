@@ -14,7 +14,7 @@ export default async function Encuesta({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <BackLink href="/campus/alumno">Mis cursos</BackLink>
+      <BackLink href="/campus/alumno/encuestas">Encuestas</BackLink>
       <PageHead title={e.titulo} sub="Tus respuestas son anónimas: la academia no ve quién respondió qué." />
       {hecha ? <p className="card p-6 text-on-surface-variant">Ya respondiste esta encuesta. ¡Gracias!</p> : (
         <ActionForm action={responderEncuesta} submit="Enviar respuestas" className="card max-w-2xl p-6">

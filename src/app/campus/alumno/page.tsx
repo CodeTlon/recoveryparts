@@ -4,6 +4,7 @@ import { AlertTriangle, CalendarDays, Download, ClipboardList, ArrowRight, FileT
 import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { etiquetaEdicion } from '@/lib/fechas'
+import { encuestasPendientes } from '@/lib/encuestas'
 import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import Reveal from '@/components/ui/Reveal'
@@ -37,13 +38,20 @@ export default async function AlumnoHome() {
     return [i.edicion_id, (data as unknown[] | null)?.length ?? 0] as [string, number]
   })))
 
-  const { data: encuestas } = await sb.from('encuestas').select('id, titulo, edicion_id').eq('activa', true)
-  const { data: hechas } = await sb.from('encuesta_completadas').select('encuesta_id').eq('alumno_id', perfil.id)
-  const pendientes = (encuestas ?? []).filter((e) => !hechas?.some((h) => h.encuesta_id === e.id))
+  // RF-47: las encuestas tienen su pantalla; acá solo se avisa cuántas hay pendientes.
+  const pendientes = await encuestasPendientes(sb, perfil.id)
 
   return (
     <>
       <PageHead title={`Hola, ${perfil.nombre}`} sub="Tus cursos y el material liberado." />
+
+      {pendientes.length > 0 && (
+        <Link href="/campus/alumno/encuestas" className="card mb-6 flex flex-wrap items-center gap-3 border-accent/40 p-4 text-sm transition-colors hover:border-secondary">
+          <ClipboardList size={18} className="text-accent" />
+          <span className="min-w-0 flex-1">Tenés <strong>{pendientes.length}</strong> encuesta{pendientes.length === 1 ? '' : 's'} para responder.</span>
+          <span className="inline-flex items-center gap-1 font-semibold text-secondary">Ver encuestas <ArrowRight size={16} /></span>
+        </Link>
+      )}
 
       {lista.length === 0 && <Empty>Todavía no estás inscripto en ningún curso. Si ya te inscribiste, la academia te va a sumar en breve.</Empty>}
 
@@ -91,16 +99,6 @@ export default async function AlumnoHome() {
         })}
       </section>
 
-      {pendientes.length > 0 && (
-        <section className="mt-10">
-          <h2 className="mb-3 text-xl font-semibold">Encuestas pendientes</h2>
-          <ul className="space-y-2">
-            {pendientes.map((e) => (
-              <li key={e.id}><Link href={`/campus/alumno/encuesta/${e.id}`} className="card flex items-center justify-between p-4 transition-colors hover:border-secondary"><span className="flex items-center gap-2"><ClipboardList size={18} /> {e.titulo}</span><ArrowRight size={16} /></Link></li>
-            ))}
-          </ul>
-        </section>
-      )}
     </>
   )
 }
