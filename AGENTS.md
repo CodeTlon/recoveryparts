@@ -37,7 +37,7 @@ Node ≥ 20. `postgres` (postgres.js) está fijado en **3.4.5**. No hay ORM ni S
 ## Base de datos
 - **Nunca editar una migración ya aplicada**: se agrega una nueva (`db/migrations/NNNN_*.sql`) y se prueba con `npm run db:reset`.
 - Toda tabla nueva lleva RLS + políticas por rol (la CI falla si falta).
-- Nunca correr `seed:*` contra producción (el script se niega si `APP_ENV` no es development/test).
+- Nunca correr `seed:dev`/`seed:test` contra producción (se niegan si `APP_ENV` no es development/test). Única excepción, la demo al cliente: `seed:demo-cliente` (candados en `docs/ENTORNOS.md`).
 
 ## Convenciones mínimas
 - Español rioplatense en la UI (voseo). Comentarios con el ID del requisito (`RF-xx`) cuando implementan uno.

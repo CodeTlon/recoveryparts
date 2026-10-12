@@ -20,10 +20,6 @@ docs/CUENTAS-HOMOLOGACION.md
 .env.test
 .env.production
 
-# Caché de la CLI de Supabase
-supabase/.temp/
-supabase/.branches/
-
 .vercel
 .env*
 /storage

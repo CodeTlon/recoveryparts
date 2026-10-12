@@ -5,7 +5,7 @@ import { sqlAdmin } from '@/lib/db'
 import { siteUrl } from '@/lib/env'
 import { enviarMail } from '@/lib/mail'
 
-// Cuentas, contraseñas y tokens de un solo uso (reemplazan a Supabase Auth).
+// Cuentas, contraseñas y tokens de un solo uso (auth propio).
 // Todo corre con el rol de servicio: auth.users y auth.tokens no son visibles para anon/authenticated.
 // No hay registro público: el perfil solo se crea para filas con invited_at (trigger de la migración 0006).
 // Devuelve el id si el email y la contraseña son correctos.
