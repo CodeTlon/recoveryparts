@@ -13,6 +13,6 @@ export async function responderEncuesta(_: R, fd: FormData): Promise<R> {
   if (!Object.keys(respuestas).length) return { error: 'Respondé al menos una pregunta.' }
   const { error } = await sb.rpc('responder_encuesta', { p_encuesta: id, p_respuestas: respuestas })
   if (error) return { error: /duplicate|unique/.test(error.message) ? 'Ya respondiste esta encuesta.' : 'No pudiste responder esta encuesta.' }
-  revalidatePath('/campus/alumno')
+  revalidatePath('/campus', 'layout') // también el aviso del curso y el contador del menú
   return { ok: true }
 }

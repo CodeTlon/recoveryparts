@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { FileText, Link2, ExternalLink, CalendarDays } from 'lucide-react'
+import { FileText, Link2, ExternalLink, CalendarDays, ClipboardList } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { etiquetaEdicion } from '@/lib/fechas'
+import { encuestasPendientes } from '@/lib/encuestas'
 import { hrefSeguro } from '@/lib/validar'
 import { PageHead, Empty, BackLink, Badge } from '@/components/campus/ui'
 import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
@@ -33,6 +34,8 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
   const filas = (tem ?? []) as Fila[]
   const materiales = (mats ?? []) as Mat[]
   const siguiente = (prox as Prox[] | null)?.[0]
+  // RF-47: la encuesta de ESTE curso se anuncia acá (con un solo curso el alumno entra directo y no pasa por «Mis cursos»).
+  const encuestas = (await encuestasPendientes(sb, perfil.id)).filter((e) => e.edicion_id === id)
   const generales = materiales.filter((m) => !m.plan_clase_id)
 
   // Bloques en orden: un bloque por módulo (talleres: un bloque sin título con sus clases).
@@ -60,6 +63,14 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
     <>
       <BackLink href="/campus/alumno">Mis cursos</BackLink>
       <PageHead title={`${curso.nombre} · ${etiquetaEdicion(ed?.fecha_inicio)}`} sub={curso.descripcion ?? undefined} />
+
+      {encuestas.map((e) => (
+        <div key={e.id} role="status" className="card mb-4 flex flex-wrap items-center gap-3 border-accent/50 bg-accent/10 p-4 text-sm">
+          <ClipboardList size={20} className="shrink-0 text-accent" />
+          <span className="min-w-0 flex-1"><strong>Tenés una encuesta para responder:</strong> {e.titulo}. Es anónima.</span>
+          <Link href={`/campus/alumno/encuesta/${e.id}`} className="btn-primary !px-4 !py-2">Responder</Link>
+        </div>
+      ))}
 
       {siguiente && (
         <div className="card mb-8 flex flex-wrap items-center gap-3 p-4 text-sm">
