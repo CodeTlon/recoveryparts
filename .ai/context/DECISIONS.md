@@ -71,3 +71,8 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 - Bucket `sitio` acepta además `video/mp4` y `video/webm`, tope 25 MB (migración 0015). CSP: se agregó `media-src` (`blob:` para comprimir, `https:` para reproducir).
 - Videos: `cursos.video_url` (si es .mp4/.webm se reproduce con `<video controls>`, si es un link sigue como "Ver video") y `hero.video_url` (fondo de la portada, muted + loop).
 - Limitación: la compresión re-codifica en tiempo real (tarda lo que dura el clip) y depende de MediaRecorder; HEVC 4K puede no decodificarse en Chrome de Linux/Windows.
+
+## 2026-10-12 — Demo en producción para el cliente (excepción acotada a "nunca seed en producción")
+- Mientras se entrega la demo, producción lleva datos de prueba. `npm run seed:demo-cliente` (`seed-pruebas.mts --demo-cliente`) es la única forma de sembrar en `APP_ENV=production`: exige `ALLOW_DEMO_SEED=1`, aborta si hay alumnos/profesores que no sean `@demo.example.com`, y genera contraseñas al azar (se imprimen una vez). `seed:dev`/`seed:test` siguen negándose en producción.
+- `npm run seed:demo-cliente:purge` (`scripts/purgar-demo.mts`) vacía cursos/CMS/inscripciones (TRUNCATE, porque el trigger impide DELETE de inscripciones) y borra las cuentas demo; se niega si hay usuarios reales. No restaura `site_settings` ni capacidades de aulas: se reeditan desde el CMS. Backup (`pg_dump`) antes de purgar.
+- Se borró la carpeta residual `supabase/` (caché de la CLI) y las últimas menciones en comentarios/docs.

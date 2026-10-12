@@ -1,4 +1,4 @@
-// Constructor de consultas con la misma forma que usaba el código con supabase-js
+// Constructor de consultas con forma encadenada
 // (from().select().eq()…, rpc()) pero sobre Postgres plano. Cubre solo lo que el proyecto usa:
 // select con embeds (resueltos por las FK), eq/neq/in/is/gt/gte/lt/lte, order, limit,
 // single/maybeSingle, conteos, insert/update/upsert/delete y rpc.

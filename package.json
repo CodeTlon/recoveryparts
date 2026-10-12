@@ -15,7 +15,9 @@
     "db:migrate:test": "ENV_FILE=.env.test node scripts/migrate.mjs",
     "db:migrate:production": "ENV_FILE=.env.production node scripts/migrate.mjs",
     "seed:dev": "ENV_FILE=.env.development tsx scripts/seed-pruebas.mts --confirmo-no-produccion",
-    "seed:test": "ENV_FILE=.env.test tsx scripts/seed-pruebas.mts --confirmo-no-produccion"
+    "seed:test": "ENV_FILE=.env.test tsx scripts/seed-pruebas.mts --confirmo-no-produccion",
+    "seed:demo-cliente": "ENV_FILE=.env.production tsx scripts/seed-pruebas.mts --demo-cliente",
+    "seed:demo-cliente:purge": "ENV_FILE=.env.production tsx scripts/purgar-demo.mts --purgar-demo"
   },
   "dependencies": {
     "clsx": "^2.1.0",
