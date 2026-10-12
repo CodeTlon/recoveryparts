@@ -6,19 +6,23 @@ import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Users, BarChart3, Globe, Inbox, ClipboardList, DoorOpen, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Users, BarChart3, Globe, Inbox, ClipboardList, DoorOpen, UserRound, LogOut, Menu, X } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 
 // `match`: prefijo que marca el ítem como activo cuando no coincide con `href` (p. ej. el detalle de una encuesta).
 type Item = { href: string; label: string; icon: keyof typeof ICONS; match?: string }
-const ICONS = { home: LayoutDashboard, cursos: BookOpen, usuarios: Users, reportes: BarChart3, sitio: Globe, consultas: Inbox, encuestas: ClipboardList, aulas: DoorOpen }
+const ICONS = { home: LayoutDashboard, cursos: BookOpen, usuarios: Users, reportes: BarChart3, sitio: Globe, consultas: Inbox, encuestas: ClipboardList, aulas: DoorOpen, cuenta: UserRound }
 
 export const NAV: Record<string, Item[]> = {
   alumno: [
     { href: '/campus/alumno', label: 'Mis cursos', icon: 'cursos' },
     { href: '/campus/alumno/encuestas', label: 'Encuestas', icon: 'encuestas', match: '/campus/alumno/encuesta' },
+    { href: '/campus/alumno/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
   ],
-  profesor: [{ href: '/campus/profesor', label: 'Mis cursos', icon: 'cursos' }],
+  profesor: [
+    { href: '/campus/profesor', label: 'Mis cursos', icon: 'cursos' },
+    { href: '/campus/profesor/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
+  ],
   admin: [
     { href: '/campus/admin', label: 'Resumen', icon: 'home' },
     { href: '/campus/admin/usuarios', label: 'Usuarios', icon: 'usuarios' },
@@ -27,6 +31,7 @@ export const NAV: Record<string, Item[]> = {
     { href: '/campus/admin/encuestas', label: 'Encuestas', icon: 'encuestas' },
     { href: '/campus/admin/sitio', label: 'Sitio web', icon: 'sitio' },
     { href: '/campus/admin/consultas', label: 'Consultas', icon: 'consultas' },
+    { href: '/campus/admin/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
   ],
 }
 const ROL_LABEL: Record<string, string> = { admin: 'Administración', profesor: 'Profesor', alumno: 'Alumno' }
