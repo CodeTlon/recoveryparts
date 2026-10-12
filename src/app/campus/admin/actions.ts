@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { enviarLinkAcceso, invitarUsuario, cambiarEmailUsuario, eliminarUsuario } from '@/lib/users'
 import { clienteAdmin } from '@/lib/db'
 import { enviarMail } from '@/lib/mail'
+import { mailCambiosClases, mailAgregadoCurso } from '@/lib/mail-templates'
 import { DIAS } from '@/lib/types'
 import { urlOpcional, imagenOpcional, extensionImagen, esUrlHttp } from '@/lib/validar'
 import { hoyAR } from '@/lib/fechas'
@@ -381,8 +382,8 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
     const nombre = uno(e?.cursos as unknown as { nombre?: string } | { nombre?: string }[] | null)?.nombre ?? 'tu curso'
     const to: string[] = (ins ?? []).map((i: any) => i.profiles?.email).filter(Boolean)
     // Un mail por alumno: en un único `to` cada uno vería el email de sus compañeros.
-    const texto = aviso.map((a) => `${pcs?.find((p) => p.id === a.plan_clase_id)?.titulo ?? 'Clase'} (${a.fecha}): ${a.estado}`).join('\n') + '\n\nRecovery Parts'
-    const envios = await Promise.all(to.map((t) => enviarMail(t, `Cambios en las clases de ${nombre}`, texto)))
+    const mail = mailCambiosClases(nombre, aviso.map((a) => ({ clase: pcs?.find((p) => p.id === a.plan_clase_id)?.titulo ?? 'Clase', fecha: a.fecha, estado: a.estado })))
+    const envios = await Promise.all(to.map((t) => enviarMail(t, mail)))
     if (to.length && envios.some((x) => !x)) {
       revalidarCursos()
       return { error: 'El calendario se guardó, pero no se pudo enviar el aviso por mail a todos los alumnos.' }
@@ -424,7 +425,7 @@ export async function agregarAlumno(_: R, fd: FormData): Promise<R> {
     if (nuevo) await eliminarUsuario(alumno.id).catch(() => {}) // sin cuentas huérfanas
     return { error: /duplicate|unique/.test(error.message) ? 'El alumno ya está en esta edición.' : traducir(error.message) }
   }
-  if (!nuevo) await enviarMail(email, `Te sumaron al curso ${curso.nombre} — Recovery Parts`, `Hola ${alumno.nombre}, fuiste agregado al curso ${curso.nombre}${ed.fecha_inicio ? ` (inicia el ${ed.fecha_inicio})` : ''}. Ingresá al Campus con tu cuenta de siempre.`)
+  if (!nuevo) await enviarMail(email, mailAgregadoCurso(alumno.nombre, curso.nombre, ed.fecha_inicio))
   await sb.from('audit_log').insert({ actor_id: yo.id, accion: 'agregar_alumno', entidad: 'inscripciones', detalle: { edicion_id } })
   revalidarCursos()
   return { ok: true }
