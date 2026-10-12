@@ -119,3 +119,19 @@ Copiá `/backups` fuera del servidor (rclone/S3) y **probá restaurar una vez**:
 - **Una sola réplica de la app**: el límite de intentos de login vive en memoria del proceso.
 - La app se conecta con el mismo usuario de Postgres que migra y cambia de rol con `SET LOCAL ROLE` en cada consulta (RLS sigue vigente). Endurecimiento pendiente: un usuario de conexión sin privilegios de superusuario.
 - Las sesiones son cookies firmadas: no se revocan de a una (cambiar la contraseña o desactivar la cuenta las corta). Cambiar `SESSION_SECRET` cierra todas.
+
+## Problemas conocidos al configurar mails (Resend) y Coolify
+| Síntoma | Causa | Solución |
+|---|---|---|
+| La app no arranca: `Falta SESSION_SECRET` | Variables sin cargar en el recurso | Cargar `SESSION_SECRET` (32+), `NEXT_PUBLIC_SITE_URL`, `APP_ENV` antes del primer deploy |
+| `password authentication failed for user "postgres"` | Se cambió `POSTGRES_PASSWORD` con el volumen `db_data` ya creado | Con el recurso parado, `docker volume rm <uuid>_db_data` por SSH (Coolify no deja borrar volúmenes de Compose) y redeploy |
+| El sitio abre sin imágenes ni cursos | Base nueva: el hero y los cursos los carga el seed | Correr el seed en un contenedor temporal dentro de la red del recurso (ver `docs/ENTORNOS.md`) |
+| `rm: Permission denied` al borrar el clon del seed | El contenedor corrió como root y dejó `node_modules` de root | `sudo rm -rf /tmp/rp` |
+| Build corta sin error (`exit code 255`) | Fallo pasajero del build; no era RAM ni disco | Un solo Redeploy, sin repetir clics |
+| Los mails no salen, el log dice `mail: fallo de envío` | Hay que mirar la causa: desde 2026-10-12 el log la muestra (`EAUTH`, `EENVELOPE`, `550`…) | Ver filas siguientes |
+| `501 Bad sender address syntax` | `MAIL_FROM` con comillas literales en el panel de Coolify | Valor sin comillas: `Recovery Parts <onboarding@resend.dev>` |
+| `550 You can only send testing emails to your own email address` | Remitente `onboarding@resend.dev` solo envía al mail dueño de la cuenta de Resend; con Gmail `usuario+algo@` es una dirección distinta | Usar exactamente el mail de la cuenta, o verificar un dominio en resend.com/domains |
+| El pedido de reset de clave "no hace nada" y no sale mail | La cuenta no existe (se responde igual a propósito, para no revelar cuentas) | Probar con un email dado de alta |
+| El botón del mail lleva a `https://0.0.0.0:3000/...` | Las rutas con `NextResponse.redirect(new URL(x, request.url))` usan el host interno del contenedor | Usar `urlPublica()` de `src/lib/env.ts` (basada en `NEXT_PUBLIC_SITE_URL`) |
+
+SMTP con Resend: `SMTP_HOST=smtp.resend.com`, `SMTP_PORT=587`, `SMTP_USER=resend`, `SMTP_PASS=<API key>`. Los cambios de variables se aplican con Redeploy. Los preview deployments no se usan.
