@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ContactoPage() {
   const { contacto: c } = await getSettings()
-  const fila = 'flex items-start gap-3 text-on-surface-variant'
+  const fila = 'flex min-w-0 items-start gap-3 text-on-surface-variant'
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
@@ -23,14 +23,14 @@ export default async function ContactoPage() {
             <p className="max-w-2xl text-lg text-on-surface-variant">Escribinos con tu consulta o pasá por la academia. Te respondemos por mail.</p>
           </div>
         </section>
-        <section className="mx-auto grid max-w-[1280px] gap-10 px-4 py-14 md:px-12 lg:grid-cols-[1fr_1.2fr]">
+        <section className="mx-auto grid max-w-[1280px] grid-cols-1 gap-10 px-4 py-14 md:px-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <aside className="space-y-6">
             <h2 className="text-2xl font-semibold">Dónde estamos</h2>
             <ul className="space-y-4">
               {c.direccion && <li className={fila}><MapPin size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <span>{c.direccion}</span></li>}
               {c.horario && <li className={fila}><Clock size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <span>{c.horario}</span></li>}
               {c.telefono && <li className={fila}><Phone size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <span>{c.telefono}</span></li>}
-              {c.email && <li className={fila}><Mail size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <a className="hover:text-secondary" href={`mailto:${c.email}`}>{c.email}</a></li>}
+              {c.email && <li className={fila}><Mail size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <a className="min-w-0 break-words hover:text-secondary" href={`mailto:${c.email}`}>{c.email}</a></li>}
               {c.instagram && <li className={fila}><InstagramIcon size={20} className="mt-0.5 shrink-0 text-secondary" /> <a className="hover:text-secondary" href={`https://www.instagram.com/${c.instagram.replace('@', '')}/`} target="_blank" rel="noopener noreferrer">{c.instagram}</a></li>}
             </ul>
             {c.whatsapp && (
