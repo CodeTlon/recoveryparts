@@ -8,7 +8,7 @@ Server Components leen con el rol y usuario de la sesión (RLS aplica) · Server
 ## Autorización — tres capas, la real es RLS
 1. **Middleware**: sin sesión → `/login`; cuenta no activa → fuera; cada rol solo entra a su `/campus/<rol>`.
 2. **`requireRole(...roles)`** (`src/lib/auth.ts`) al inicio de cada página/acción del campus.
-3. **RLS** en todas las tablas. Helpers SQL `security definer`: `es_admin()`, `es_profesor_de(curso)`, `alumno_activo_en(curso)`.
+3. **RLS** en todas las tablas. Helpers SQL `security definer`: `es_admin()`, `es_profesor_de(edición)` y `es_profesor_del_curso(curso)` (desde la 0017 exigen una edición **vigente**: una terminada o dada de baja deja de ser accesible para el profesor), `alumno_activo_en(edición)`. El profesor **no escribe** `modulos_curso`/`plan_clases` por RLS: solo por las RPC `guardar_estructura_edicion` / `restablecer_estructura`, que validan el permiso adentro.
 
 Cualquier cambio a esos helpers o a una política necesita re-verificar el caso **anónimo** y el caso **alumno desertor**.
 

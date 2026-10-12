@@ -5,10 +5,10 @@ Resumen del dominio. El esquema real está en `supabase/migrations/0001_schema.s
 ## Entidades
 - `profiles`: rol (`admin` | `profesor` | `alumno`), estado de cuenta (`activa`…), mini-CV del profesor. Solo se crea si el usuario fue invitado.
 - `aulas` (nombre único sin distinguir mayúsculas, `capacidad`, `activa`; migración 0010).
-- `cursos` = **catálogo** (contenido, precio, `kit_items` y la **estructura**: `modulos_curso` → `plan_clases` (título libre, `tipo` teórica/práctica, `modulo_id`, `numero` = posición) → `materiales` por `plan_clase_id`; migraciones 0012–0014, RF-58). Los talleres no tienen módulos.
+- `cursos` = **catálogo** (contenido, precio, `kit_items` y la **estructura**: `modulos_curso` → `plan_clases` (título libre, `tipo` teórica/práctica, `modulo_id`, `numero` = posición) → `materiales` por `plan_clase_id`; migraciones 0012–0014, RF-58). Los talleres no tienen módulos. Desde la 0017 lo del curso es la **guía general** (filas con `edicion_id` null, solo la edita el admin); una edición puede tener su **estructura propia** (filas con `edicion_id` = la edición; cada clase copiada guarda `origen_id`). Una edición está «personalizada» si tiene clases propias (`edicion_personalizada`); si no, usa la guía.
 - `ediciones` = cada vez que se dicta un curso (migración 0011): fecha de inicio, aula, profesor, cupo, `activo`; dependen de ella `horarios_curso`, `clases` (`plan_clase_id`, fecha, estado `programada` | `suspendida` | `reprogramada` | `salteada`), `inscripciones`, `encuestas` y `materiales_liberados` (liberación manual por edición).
 - `inscripciones`: alumno ↔ curso, estado `activo` | `desertor` | `finalizado`. Nunca se borra.
-- `materiales`: PDF o link de una clase (o «general» sin clase). Liberación siempre manual por edición (RF-32).
+- `materiales`: PDF o link de una clase (o «general» sin clase). Liberación siempre manual por edición (RF-32). `edicion_id` null = **material base** (admin, sobre la guía; se ve en las ediciones que conservan esa clase); con `edicion_id` = material que el profesor subió para esa edición.
 - `encuestas`, `encuesta_completadas` (quién respondió) y `encuesta_respuestas` (sin `alumno_id`).
 - `contactos`: bandeja del formulario público.
 - `site_settings` / `cms_*`: contenido del sitio.
@@ -21,6 +21,10 @@ Resumen del dominio. El esquema real está en `supabase/migrations/0001_schema.s
 | Cursos: toda clase en un módulo, ningún módulo vacío, clases de un módulo juntas; talleres sin módulos | RF-58 | constraint trigger `validar_estructura` |
 | El material y el calendario siguen a la clase (por id); clase borrada → su material queda general; no se borra una clase con fechas | RF-58 | FK + `guardar_estructura` |
 | Orden flexible por edición: adelantar (fecha antes que otras) o saltear una clase; no avisa por mail | RF-58 | `guardarClases` |
+| Guía general (admin) + estructura propia por edición: copy-on-write al primer guardado; nueva edición = guía; «Volver a la guía general» devuelve calendario y material propio a la clase de origen (sin origen: se pierde la fecha / queda general) | RF-58 | `guardar_estructura` (solo admin), `guardar_estructura_edicion`, `restablecer_estructura`, `estructura_edicion` |
+| Calendario, material y liberación usan la estructura efectiva de la edición | RF-58 | triggers `clases_before_write`, `materiales_integridad`, `materiales_liberados_integridad` |
+| El profesor solo accede a ediciones vigentes (activas y cuya última clase no pasó); misma regla en `momentoEdicion()` (TS) y `edicion_vigente()` (SQL) | RF-04 | `es_profesor_de`, RLS `ediciones_profesor` |
+| El profesor borra solo el material que subió para su edición; el base no. No lee el kit en el campus | RF-05 | RLS `mat_profesor_*`; sin `kit_profesor` |
 | No superar el cupo ni bajarlo de los inscriptos | — | trigger |
 | No superponer aula ni profesor en mismo día y horario | — | trigger |
 | Cupo del curso ≤ capacidad del aula (al crear/editar el curso, cambiarle el aula o bajar la capacidad); capacidad obligatoria en aulas nuevas | RF-03 | trigger |
