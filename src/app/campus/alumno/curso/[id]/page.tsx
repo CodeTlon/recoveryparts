@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { FileText, Link2, ExternalLink, CalendarDays, ClipboardList } from 'lucide-react'
+import { FileText, Link2, ExternalLink, CalendarDays, ClipboardList, Download } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { etiquetaEdicion } from '@/lib/fechas'
+import { etiquetaEdicion, hoyAR } from '@/lib/fechas'
 import { encuestasPendientes } from '@/lib/encuestas'
 import { hrefSeguro } from '@/lib/validar'
 import { PageHead, Empty, BackLink, Badge } from '@/components/campus/ui'
@@ -19,10 +19,13 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
   const { sb, perfil } = await requireRole('alumno')
 
   // El id es el de la edición. RLS: solo ve su edición y el curso si su inscripción no es desertora.
-  const { data: insc } = await sb.from('inscripciones').select('estado, ediciones(fecha_inicio, cursos(id, nombre, descripcion))').eq('edicion_id', id).eq('alumno_id', perfil.id).maybeSingle()
+  const { data: insc } = await sb.from('inscripciones').select('estado, acceso_hasta, ediciones(fecha_inicio, cursos(id, nombre, descripcion))').eq('edicion_id', id).eq('alumno_id', perfil.id).maybeSingle()
   const ed = insc?.ediciones as unknown as { fecha_inicio: string | null; cursos: { id: string; nombre: string; descripcion: string | null } | null } | null
   const curso = ed?.cursos
   if (!curso || !insc || insc.estado === 'desertor') notFound()
+  // RF-34/35: terminado el curso, el material sigue disponible hasta `acceso_hasta`; después no se abre (también lo corta la base).
+  const finalizado = insc.estado === 'finalizado'
+  if (finalizado && !(insc.acceso_hasta && hoyAR() <= insc.acceso_hasta)) notFound()
 
   // RF-32/37: todos los módulos (solo título), las clases ya dictadas o con material liberado, y de la próxima
   // solo título y tipo. Nada de clases futuras ni de material sin liberar (lo filtra la base).
@@ -64,6 +67,14 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
       <BackLink href="/campus/alumno">Mis cursos</BackLink>
       <PageHead title={`${curso.nombre} · ${etiquetaEdicion(ed?.fecha_inicio)}`} sub={curso.descripcion ?? undefined} />
 
+      {finalizado && (
+        <div className="card mb-4 flex flex-wrap items-center gap-3 p-4 text-sm">
+          <CalendarDays size={18} className="text-accent" />
+          <span>Curso finalizado. Tenés acceso al material hasta el <strong>{fechaAR(insc.acceso_hasta)}</strong>.</span>
+          <a href={`/api/curso/${id}/zip`} className="btn-ghost ml-auto !px-4 !py-2"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>
+        </div>
+      )}
+
       {encuestas.map((e) => (
         <div key={e.id} role="status" className="card mb-4 flex flex-wrap items-center gap-3 border-accent/50 bg-accent/10 p-4 text-sm">
           <ClipboardList size={20} className="shrink-0 text-accent" />
@@ -79,7 +90,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {!hayAlgo && <Empty>Todavía no hay material liberado. Va a aparecer acá a medida que avance el curso.</Empty>}
+      {!hayAlgo && <Empty>{finalizado ? 'Este curso no tuvo material liberado.' : 'Todavía no hay material liberado. Va a aparecer acá a medida que avance el curso.'}</Empty>}
 
       <ol className="relative space-y-8 border-l border-outline-variant pl-6 md:pl-8">
         {bloques.map((b, idx) => (

@@ -3,22 +3,25 @@ import { redirect } from 'next/navigation'
 import { AlertTriangle, CalendarDays, Download, ClipboardList, ArrowRight, FileText, GraduationCap } from 'lucide-react'
 import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { etiquetaEdicion } from '@/lib/fechas'
+import { etiquetaEdicion, hoyAR } from '@/lib/fechas'
 import { encuestasPendientes } from '@/lib/encuestas'
 import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import Reveal from '@/components/ui/Reveal'
 
-type Insc = { id: string; edicion_id: string; estado: 'activo' | 'desertor' | 'finalizado'; motivo_desercion: string | null; fecha_desercion: string | null; n_clase_desercion: number | null; ediciones: { curso_id: string; fecha_inicio: string | null } | null }
+type Insc = { id: string; edicion_id: string; estado: 'activo' | 'desertor' | 'finalizado'; motivo_desercion: string | null; fecha_desercion: string | null; n_clase_desercion: number | null; acceso_hasta: string | null; ediciones: { curso_id: string; fecha_inicio: string | null } | null }
 
 export default async function AlumnoHome() {
   const { sb, perfil } = await requireRole('alumno')
-  const { data: inscs } = await sb.from('inscripciones').select('id, edicion_id, estado, motivo_desercion, fecha_desercion, n_clase_desercion, ediciones(curso_id, fecha_inicio)').eq('alumno_id', perfil.id)
+  const { data: inscs } = await sb.from('inscripciones').select('id, edicion_id, estado, motivo_desercion, fecha_desercion, n_clase_desercion, acceso_hasta, ediciones(curso_id, fecha_inicio)').eq('alumno_id', perfil.id)
   const lista = (inscs ?? []) as unknown as Insc[]
   // Cada inscripción es a una EDICIÓN; el nombre sale del curso (catálogo público).
   const ids = [...new Set(lista.map((i) => i.ediciones?.curso_id).filter(Boolean))] as string[]
   const { data: cursos } = ids.length ? await sb.from('cursos_publicos').select('id, nombre').in('id', ids) : { data: [] }
   const nombre = (i: Insc) => cursos?.find((c) => c.id === i.ediciones?.curso_id)
+  // RF-34/35: terminado el curso, el material sigue disponible hasta `acceso_hasta` (3 meses; lo calcula la base).
+  const hoy = hoyAR()
+  const conAcceso = (i: Insc) => i.estado === 'finalizado' && !!i.acceso_hasta && hoy <= i.acceso_hasta
 
   // RF-11 (🟡, configurable en site_settings.campus.entrada_directa; por defecto activo):
   // con un solo curso en curso se entra directo.
@@ -88,9 +91,13 @@ export default async function AlumnoHome() {
                 <p className="mb-4 flex items-center gap-2 text-sm text-on-surface-variant"><FileText size={16} /> <span className="font-semibold text-on-surface">{liberados.get(i.edicion_id) ?? 0}</span> material{liberados.get(i.edicion_id) === 1 ? '' : 'es'} liberado{liberados.get(i.edicion_id) === 1 ? '' : 's'}</p>
               )}
 
+              {i.estado === 'finalizado' && (conAcceso(i)
+                ? <p className="mb-4 flex items-center gap-2 text-sm text-on-surface-variant"><CalendarDays size={16} /> Tenés acceso al material hasta el <span className="font-semibold text-on-surface">{fechaAR(i.acceso_hasta)}</span>.</p>
+                : <p className="mb-4 text-sm text-on-surface-variant">El acceso al material de este curso venció el {fechaAR(i.acceso_hasta)}.</p>)}
+
               <div className="mt-auto flex flex-wrap gap-3 pt-2">
-                {i.estado === 'activo' && <Link href={`/campus/alumno/curso/${i.edicion_id}`} className="btn-primary">Ver material <ArrowRight size={16} /></Link>}
-                {i.estado === 'finalizado' && <a href={`/api/curso/${i.edicion_id}/zip`} className="btn-primary"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>}
+                {(i.estado === 'activo' || conAcceso(i)) && <Link href={`/campus/alumno/curso/${i.edicion_id}`} className="btn-primary">Ver material <ArrowRight size={16} /></Link>}
+                {conAcceso(i) && <a href={`/api/curso/${i.edicion_id}/zip`} className="btn-ghost"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>}
               </div>
             </article>
             </SpotlightCard>
