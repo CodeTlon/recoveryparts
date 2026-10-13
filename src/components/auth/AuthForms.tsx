@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import PasswordMeter from '@/components/ui/PasswordMeter'
-import { login, olvideContrasena, definirContrasena, type AuthState } from '@/app/auth/actions'
+import { login, olvideContrasena, definirContrasena, cambiarContrasena, type AuthState } from '@/app/auth/actions'
 
 const field = 'flex items-center gap-3 rounded border border-outline-variant bg-surface-container-low px-4 py-3 transition-colors focus-within:border-accent'
 const inp = 'w-full bg-transparent text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60'
@@ -67,6 +67,24 @@ export function ActivarForm() {
       <PasswordField name="confirm" placeholder="Repetí la contraseña" label="Repetir contraseña" autoComplete="new-password" minLength={8} />
       <Err s={s} />
       <button disabled={pending} className="btn-primary w-full">{pending ? 'Guardando…' : 'Guardar y entrar'}</button>
+    </form>
+  )
+}
+
+// Mi cuenta: cambio de contraseña con la sesión iniciada.
+export function CambiarContrasenaForm() {
+  const [s, action, pending] = useActionState<AuthState, FormData>(cambiarContrasena, {})
+  const [pw, setPw] = useState('')
+  useEffect(() => { if (s.ok) setPw('') }, [s])
+  return (
+    <form action={action} className="space-y-3">
+      <PasswordField name="actual" placeholder="Contraseña actual" label="Contraseña actual" autoComplete="current-password" />
+      <PasswordField name="password" placeholder="Nueva contraseña (mín. 8)" label="Nueva contraseña" autoComplete="new-password" minLength={8} value={pw} onChange={setPw} />
+      <PasswordMeter value={pw} />
+      <PasswordField name="confirm" placeholder="Repetí la contraseña nueva" label="Repetir contraseña nueva" autoComplete="new-password" minLength={8} />
+      <Err s={s} />
+      {s.ok && <p role="status" className="text-sm text-green-300">Contraseña actualizada. Cerramos tus otras sesiones.</p>}
+      <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : 'Cambiar contraseña'}</button>
     </form>
   )
 }

@@ -6,15 +6,23 @@ import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Users, BarChart3, Globe, Inbox, ClipboardList, DoorOpen, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Users, BarChart3, Globe, Inbox, ClipboardList, DoorOpen, UserRound, LogOut, Menu, X } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 
-type Item = { href: string; label: string; icon: keyof typeof ICONS }
-const ICONS = { home: LayoutDashboard, cursos: BookOpen, usuarios: Users, reportes: BarChart3, sitio: Globe, consultas: Inbox, encuestas: ClipboardList, aulas: DoorOpen }
+// `match`: prefijo que marca el ítem como activo cuando no coincide con `href` (p. ej. el detalle de una encuesta).
+type Item = { href: string; label: string; icon: keyof typeof ICONS; match?: string }
+const ICONS = { home: LayoutDashboard, cursos: BookOpen, usuarios: Users, reportes: BarChart3, sitio: Globe, consultas: Inbox, encuestas: ClipboardList, aulas: DoorOpen, cuenta: UserRound }
 
 export const NAV: Record<string, Item[]> = {
-  alumno: [{ href: '/campus/alumno', label: 'Mis cursos', icon: 'cursos' }],
-  profesor: [{ href: '/campus/profesor', label: 'Mis cursos', icon: 'cursos' }],
+  alumno: [
+    { href: '/campus/alumno', label: 'Mis cursos', icon: 'cursos' },
+    { href: '/campus/alumno/encuestas', label: 'Encuestas', icon: 'encuestas', match: '/campus/alumno/encuesta' },
+    { href: '/campus/alumno/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
+  ],
+  profesor: [
+    { href: '/campus/profesor', label: 'Mis cursos', icon: 'cursos' },
+    { href: '/campus/profesor/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
+  ],
   admin: [
     { href: '/campus/admin', label: 'Resumen', icon: 'home' },
     { href: '/campus/admin/usuarios', label: 'Usuarios', icon: 'usuarios' },
@@ -23,11 +31,13 @@ export const NAV: Record<string, Item[]> = {
     { href: '/campus/admin/encuestas', label: 'Encuestas', icon: 'encuestas' },
     { href: '/campus/admin/sitio', label: 'Sitio web', icon: 'sitio' },
     { href: '/campus/admin/consultas', label: 'Consultas', icon: 'consultas' },
+    { href: '/campus/admin/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
   ],
 }
 const ROL_LABEL: Record<string, string> = { admin: 'Administración', profesor: 'Profesor', alumno: 'Alumno' }
 
-function Inner({ rol, nombre, onNavigate }: { rol: string; nombre: string; onNavigate?: () => void }) {
+// `avisos`: ruta del ítem → cantidad pendiente (p. ej. encuestas sin responder del alumno, RF-47).
+function Inner({ rol, nombre, avisos, onNavigate }: { rol: string; nombre: string; avisos?: Record<string, number>; onNavigate?: () => void }) {
   const path = usePathname()
   const pillId = useId() // cada instancia (sidebar y drawer) anima su propio indicador
   const items = NAV[rol]
@@ -42,14 +52,16 @@ function Inner({ rol, nombre, onNavigate }: { rol: string; nombre: string; onNav
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1" aria-label="Campus">
-        {items.map(({ href, label, icon }) => {
+        {items.map(({ href, label, icon, match }) => {
           const Icon = ICONS[icon]
-          const on = href === items[0].href ? path === href : path.startsWith(href)
+          const on = href === items[0].href ? path === href : path.startsWith(match ?? href)
+          const n = avisos?.[href] ?? 0
           return (
             <Link key={href} href={href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
               className={`relative flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${on ? 'text-white' : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'}`}>
               {on && <motion.span layoutId={pillId} transition={{ type: 'spring', stiffness: 400, damping: 34 }} className="absolute inset-0 rounded-lg bg-secondary-container shadow-glow" />}
               <Icon size={20} className="relative" /> <span className="relative">{label}</span>
+              {n > 0 && <span className="relative ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-accent px-1.5 text-xs font-bold text-surface"><span aria-hidden>{n}</span><span className="sr-only">{n} pendiente{n === 1 ? '' : 's'}</span></span>}
             </Link>
           )
         })}
@@ -61,7 +73,7 @@ function Inner({ rol, nombre, onNavigate }: { rol: string; nombre: string; onNav
   )
 }
 
-export default function CampusShell({ rol, nombre, children }: { rol: string; nombre: string; children: React.ReactNode }) {
+export default function CampusShell({ rol, nombre, avisos, children }: { rol: string; nombre: string; avisos?: Record<string, number>; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const path = usePathname()
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -79,7 +91,7 @@ export default function CampusShell({ rol, nombre, children }: { rol: string; no
     <div className="min-h-dvh bg-surface text-on-surface">
       <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-64 flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4 md:flex">
         <Link href="/" className="mb-6 flex items-center gap-2 text-sm font-bold uppercase tracking-tighter"><Image src="/images/logo.png" alt="" width={28} height={28} /> Recovery Parts</Link>
-        <Inner rol={rol} nombre={nombre} />
+        <Inner rol={rol} nombre={nombre} avisos={avisos} />
       </aside>
 
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-outline-variant bg-surface-container px-4 md:hidden">
@@ -95,7 +107,7 @@ export default function CampusShell({ rol, nombre, children }: { rol: string; no
             <motion.div ref={drawerRef} initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', stiffness: 380, damping: 38 }}
               className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4">
               <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú" className="-mr-1.5 mb-2 flex h-11 w-11 items-center justify-center self-end rounded hover:text-secondary"><X size={24} /></button>
-              <Inner rol={rol} nombre={nombre} onNavigate={() => setOpen(false)} />
+              <Inner rol={rol} nombre={nombre} avisos={avisos} onNavigate={() => setOpen(false)} />
             </motion.div>
           </motion.div>
         )}

@@ -4,6 +4,11 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-13 | La encuesta pendiente se anuncia en la pantalla del curso y además hay «Encuestas» en el menú del alumno, con contador | Con un solo curso el alumno entra directo (RF-11) y no llegaba a la encuesta; con varios cursos se acumulan |
+| 2026-10-13 | El alumno que terminó un curso conserva el acceso al material (curso, PDFs, links y ZIP) **3 meses** desde que se finalizó; las ya finalizadas cuentan desde que se aplica la 0018 | Decisión del cliente; antes solo tenía el ZIP (sin links) y sin plazo. No había fecha de finalización guardada |
+| 2026-10-13 | El plazo vive en la base (`acceso_hasta`, columna generada) y corta `material_visible`/`temario_alumno`/`estructura_edicion`; las encuestas siguen con `alumno_activo_en` | Que no alcance con ocultar un botón; la encuesta se tiene que poder responder con el material vencido |
+| 2026-10-13 | «Mi cuenta» para los tres roles: datos en solo lectura y cambio de contraseña con la actual; no se editan datos propios ni el email | Solo el admin carga datos personales (RF-57); faltaba cambiar la contraseña sin salir |
+| 2026-10-13 | El alumno tampoco ve la palabra «edición» (aviso de deserción: «este curso», «próximas fechas») | Misma razón que con el profesor: es lógica interna |
 | 2026-10-11 | **Guía general + estructura propia por edición** (RF-58): la guía la edita solo el admin; la edición la sigue hasta que su profesor (o el admin) la modifica y ahí se copia (copy-on-write). Edición nueva = guía | Un profesor cambiaba la estructura de todos los dictados y el siguiente profesor quedaba atado a lo que hizo el anterior |
 | 2026-10-11 | Guía y estructura propia en las **mismas tablas** con `edicion_id` (null = guía) y `origen_id`; «personalizada» se deriva de las filas, sin columna indicadora | No duplicar triggers, validación ni las funciones del alumno; un indicador aparte podía desincronizarse |
 | 2026-10-11 | «Volver a la guía general» pide confirmar en un modal con la advertencia (se pierden los cambios; material sin clase de origen queda general; esas fechas se borran) | Pedido del cliente: que el botón avise antes de descartar |
