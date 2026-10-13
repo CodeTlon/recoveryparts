@@ -38,6 +38,12 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 ## Sin hacer de la auditoría
 `ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP se arma en memoria.
 
+## Abiertos tras la sesión 2026-10-13
+- **RF-39 figura 🟢 y no está en el código**: al finalizar una edición no se envía ningún mensaje recomendando el siguiente nivel. Quedó fuera a propósito; falta decidir si se implementa o se corrige el estado en la spec.
+- **Sesión cerrada por cambio de contraseña → «Tu cuenta no está activa»**: la otra sesión cae en `/login?error=cuenta`, cuyo mensaje habla de cuenta inactiva. Pasa igual al recuperar la contraseña por mail; convendría un mensaje propio («Tu sesión venció»).
+- **El plazo de acceso de las inscripciones ya finalizadas** arranca el día que se aplica la 0018 en cada entorno, así que la fecha de vencimiento puede diferir entre homologación y producción.
+- **Límite de intentos del cambio de contraseña** en memoria y por instancia, igual que el del login.
+
 ## Abiertos tras la sesión 2026-10-11
 - **Scripts `npm run db:*` / `seed:*` en Windows**: usan `ENV_FILE=… comando`, que `cmd` no entiende, y `scripts/migrate.mjs` no carga un `.env` con fin de línea CRLF («Falta DATABASE_URL»). Rodeo en Git Bash: exportar las variables (`set -a; . <(tr -d '\r' < .env.development); set +a`) y correr `node scripts/migrate.mjs` / `npx tsx scripts/seed-pruebas.mts --confirmo-no-produccion`.
 - **Guardar la estructura de una edición sin cambios la deja «personalizada»** (se copia la guía igual). No rompe nada; «Volver a la guía general» la devuelve.

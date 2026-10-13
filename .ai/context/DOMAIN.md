@@ -7,7 +7,7 @@ Resumen del dominio. El esquema real está en `db/migrations/0001_schema.sql`; l
 - `aulas` (nombre único sin distinguir mayúsculas, `capacidad`, `activa`; migración 0010).
 - `cursos` = **catálogo** (contenido, precio, `kit_items` y la **estructura**: `modulos_curso` → `plan_clases` (título libre, `tipo` teórica/práctica, `modulo_id`, `numero` = posición) → `materiales` por `plan_clase_id`; migraciones 0012–0014, RF-58). Los talleres no tienen módulos. Desde la 0017 lo del curso es la **guía general** (filas con `edicion_id` null, solo la edita el admin); una edición puede tener su **estructura propia** (filas con `edicion_id` = la edición; cada clase copiada guarda `origen_id`). Una edición está «personalizada» si tiene clases propias (`edicion_personalizada`); si no, usa la guía.
 - `ediciones` = cada vez que se dicta un curso (migración 0011): fecha de inicio, aula, profesor, cupo, `activo`; dependen de ella `horarios_curso`, `clases` (`plan_clase_id`, fecha, estado `programada` | `suspendida` | `reprogramada` | `salteada`), `inscripciones`, `encuestas` y `materiales_liberados` (liberación manual por edición).
-- `inscripciones`: alumno ↔ curso, estado `activo` | `desertor` | `finalizado`. Nunca se borra.
+- `inscripciones`: alumno ↔ curso, estado `activo` | `desertor` | `finalizado`. Nunca se borra. Al pasar a `finalizado` el trigger anota `finalizado_el` (día en Argentina) y la columna generada `acceso_hasta` = `finalizado_el` + 3 meses (migración 0018): hasta ese día el alumno sigue accediendo al material.
 - `materiales`: PDF o link de una clase (o «general» sin clase). Liberación siempre manual por edición (RF-32). `edicion_id` null = **material base** (admin, sobre la guía; se ve en las ediciones que conservan esa clase); con `edicion_id` = material que el profesor subió para esa edición.
 - `encuestas`, `encuesta_completadas` (quién respondió) y `encuesta_respuestas` (sin `alumno_id`).
 - `contactos`: bandeja del formulario público.
@@ -34,6 +34,9 @@ Resumen del dominio. El esquema real está en `db/migrations/0001_schema.sql`; l
 | Material visible en una edición: solo si el profesor lo liberó en esa edición (la fecha de la clase no libera nada) | RF-32 | `material_visible(edicion)` |
 | Un alumno puede cursar otra edición del mismo curso, no dos veces la misma | — | unique |
 | El alumno ve solo lo liberado y no si es desertor | — | `material_visible()` |
+| Tres preguntas sobre el alumno y una edición: no desertor (`alumno_activo_en`: encuestas, horarios) · con acceso al material (`alumno_con_acceso`: cursa o finalizó hace ≤ 3 meses) · cursando (`alumno_cursando`: próxima clase) | RF-34, RF-35 | 0018 |
+| Encuesta pendiente = activa, de una edición donde no es desertor y sin responder; se anuncia en el curso, en «Encuestas» y en el contador del menú | RF-47 | `encuestasPendientes()` (`src/lib/encuestas.ts`) |
+| Cambio de contraseña con sesión: pide la actual, mismo límite de intentos que el login, cierra las demás sesiones | RF-59 | `cambiarContrasena` (`src/app/auth/actions.ts`) |
 | El alumno ve todos los módulos; de las clases, solo las dictadas, las que tienen material liberado y la próxima (título y tipo) | RF-37 | `temario_alumno`, `proxima_clase_titulo` |
 | La ficha pública muestra solo los títulos de los módulos | RF-26 | vista `modulos_publicos` |
 | Un alumno con un solo curso activo entra directo a él (configurable en el CMS) | RF-11 | app |
