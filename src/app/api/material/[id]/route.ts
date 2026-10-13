@@ -5,7 +5,8 @@ import { dbConfigured } from '@/lib/env'
 import { leerArchivo } from '@/lib/storage'
 
 // Sirve el PDF tras validar acceso: inline para la vista previa, o como descarga con ?download=1:
-//  - alumno: solo si el material está liberado en alguna de sus ediciones no desertoras (material_visible, RF-34/37);
+//  - alumno: solo si el material está liberado en una edición que cursa o que terminó hace menos de 3 meses
+//    (material_visible, RF-34/37);
 //  - profesor/admin: RLS sobre `materiales` (profesores que dictan una edición activa del curso).
 // El archivo nunca se expone con URL pública; no se cachea.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -4,9 +4,10 @@ import { usuarioApi } from '@/lib/auth'
 import { clienteAdmin } from '@/lib/db'
 import { dbConfigured } from '@/lib/env'
 import { leerArchivo } from '@/lib/storage'
+import { hoyAR } from '@/lib/fechas'
 
 // RF-35: ZIP con los PDFs ya liberados EN ESA EDICIÓN (mismo criterio que material_visible), solo para alumnos
-// que la terminaron (no desertores). El id de la ruta es el de la edición.
+// que la terminaron (no desertores) y mientras dure su acceso (3 meses, RF-34). El id de la ruta es el de la edición.
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!dbConfigured) return new NextResponse('Servicio no configurado', { status: 503 })
   const { id } = await params
@@ -14,8 +15,10 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   if (!u) return new NextResponse('No autorizado', { status: 401 })
   const { sb, perfil: user } = u
 
-  const { data: ins } = await sb.from('inscripciones').select('estado').eq('edicion_id', id).eq('alumno_id', user.id).maybeSingle()
+  const { data: ins } = await sb.from('inscripciones').select('estado, acceso_hasta').eq('edicion_id', id).eq('alumno_id', user.id).maybeSingle()
   if (ins?.estado !== 'finalizado') return new NextResponse('No disponible', { status: 403 })
+  // RF-34: el acceso al material dura 3 meses desde que terminó el curso (material_visible también lo corta).
+  if (!ins.acceso_hasta || hoyAR() > ins.acceso_hasta) return new NextResponse('El acceso al material de este curso ya venció.', { status: 403 })
 
   const adm = clienteAdmin()
   const { data: ed } = await adm.from('ediciones').select('activo, curso_id, cursos(nombre, activo)').eq('id', id).single()
