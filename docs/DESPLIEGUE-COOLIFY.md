@@ -33,7 +33,7 @@ Guardalos en tu gestor de contraseñas. **Usá valores distintos en homologació
 ## 3. Crear el recurso de homologación
 1. *Projects › + Add* → nombre `Recovery Parts`. Dentro, usá un *Environment* para `test` y otro para `production`.
 2. En el entorno `test`: *+ New Resource › Docker Compose* (desde repositorio Git).
-3. Elegí el repo, **rama `test`**, *Base Directory* `/`, *Docker Compose Location* `/docker-compose.yml`.
+3. Elegí el repo, **rama `test`**, *Base Directory* `/`, *Docker Compose Location* `/docker-compose.coolify.yml`.
 4. Guardá. Coolify lee el compose y muestra los servicios `db` y `app`.
 
 ## 4. Variables de entorno

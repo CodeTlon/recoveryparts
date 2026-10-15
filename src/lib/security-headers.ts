@@ -1,8 +1,8 @@
 import type { NextResponse } from 'next/server'
 
-// Encabezados de seguridad. Viven en el middleware (y no en `headers()` de next.config) porque Vercel
-// valida los valores de los encabezados declarados en la config durante el build y el deploy fallaba
-// con "Builder returned invalid routes". Puestos en runtime no pasan por esa validación.
+// Encabezados de seguridad. Viven en el middleware (y no en `headers()` de next.config) porque en Vercel
+// (donde estuvo antes) el deploy fallaba con "Builder returned invalid routes" al validar los encabezados de la config.
+// Puestos en runtime no pasan por esa validación; se conservó así.
 const isDev = process.env.NODE_ENV !== 'production'
 
 // CSP sin nonce: Next inyecta scripts inline, así que script-src necesita 'unsafe-inline'.

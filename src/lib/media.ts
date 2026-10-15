@@ -1,5 +1,5 @@
-// Compresión en el NAVEGADOR antes de subir (RF-CMS): Vercel limita el cuerpo de un request a 4,5 MB,
-// así que las fotos y los videos se achican acá y se suben directo a Storage con una URL firmada.
+// Compresión en el NAVEGADOR antes de subir (RF-CMS): los archivos no pasan grandes por las server actions
+// (el límite de 4,5 MB vino de Vercel y se conservó), así que las fotos y los videos se achican acá antes de subirse.
 // Meta: que no se note la pérdida de calidad y que la página cargue rápido.
 
 export const IMG_MAX_LADO = 1920       // px del lado mayor
