@@ -17,7 +17,8 @@
     "seed:dev": "ENV_FILE=.env.development tsx scripts/seed-pruebas.mts --confirmo-no-produccion",
     "seed:test": "ENV_FILE=.env.test tsx scripts/seed-pruebas.mts --confirmo-no-produccion",
     "seed:demo-cliente": "ENV_FILE=.env.production tsx scripts/seed-pruebas.mts --demo-cliente",
-    "seed:demo-cliente:purge": "ENV_FILE=.env.production tsx scripts/purgar-demo.mts --purgar-demo"
+    "seed:demo-cliente:purge": "ENV_FILE=.env.production tsx scripts/purgar-demo.mts --purgar-demo",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "clsx": "^2.1.0",
@@ -33,6 +34,7 @@
     "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.1",
     "@types/node": "^20.12.0",
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^18.3.0",
