@@ -91,6 +91,8 @@ Repetí los pasos 2 a 8 en el entorno `production` con: **rama `main`**, dominio
 En cada recurso: *Webhooks › GitHub* (o activá *Auto Deploy* si usás la GitHub App). Con eso, un push a `test` redeploya homologación y uno a `main` redeploya producción. Las migraciones nuevas se aplican solas antes de arrancar.
 
 ## 11. Backups (no los omitas)
+> Estado 2026-10-15: el backup de producción corre con el script estándar `scripts/backup-coolify.sh` (v2) en el cron del VPS hacia Backblaze B2, con alarma diaria `backup-check.yml`. Lo de abajo es el procedimiento manual de respaldo.
+
 Coolify no hace backup automático de una base definida dentro de un Docker Compose. Hacelo con cron en el servidor, dos veces al día:
 ```bash
 # Base de datos (ajustá el nombre del contenedor: docker ps | grep db)

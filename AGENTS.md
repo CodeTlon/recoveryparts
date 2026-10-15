@@ -16,7 +16,7 @@ Sin `DATABASE_URL` el sitio compila y muestra vacíos; el campus redirige a `/lo
 **desarrollo** (local) → **homologación** (`test`, Coolify de pruebas) → **producción** (`main`). Ramas `feature/* → dev → test → main`: `feature → dev` y `dev → test` son **merge** directo; solo `test → main` es **PR**. Nunca commit directo a `dev`/`test`/`main`. Detalle: `docs/ENTORNOS.md`.
 
 ## Versiones que no hay que subir a ciegas
-Node ≥ 20. `postgres` (postgres.js) está fijado en **3.4.5**. No hay ORM ni Supabase: el acceso a datos es `src/lib/db` (ver `.ai/context/ARCHITECTURE.md`).
+Node 22 (Dockerfile y CI). `postgres` (postgres.js) está fijado en **3.4.5**. No hay ORM ni Supabase: el acceso a datos es `src/lib/db` (ver `.ai/context/ARCHITECTURE.md`).
 
 ## Seguridad (inamovible)
 1. Autorización **en el servidor** y en la base: middleware + `requireRole()` + RLS en todas las tablas. Ocultar un botón no alcanza.

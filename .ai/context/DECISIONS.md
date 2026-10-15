@@ -81,3 +81,13 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 - Mientras se entrega la demo, producción lleva datos de prueba. `npm run seed:demo-cliente` (`seed-pruebas.mts --demo-cliente`) es la única forma de sembrar en `APP_ENV=production`: exige `ALLOW_DEMO_SEED=1`, aborta si hay alumnos/profesores que no sean `@demo.example.com`, y genera contraseñas al azar (se imprimen una vez). `seed:dev`/`seed:test` siguen negándose en producción.
 - `npm run seed:demo-cliente:purge` (`scripts/purgar-demo.mts`) vacía cursos/CMS/inscripciones (TRUNCATE, porque el trigger impide DELETE de inscripciones) y borra las cuentas demo; se niega si hay usuarios reales. No restaura `site_settings` ni capacidades de aulas: se reeditan desde el CMS. Backup (`pg_dump`) antes de purgar.
 - Se borró la carpeta residual `supabase/` (caché de la CLI) y las últimas menciones en comentarios/docs.
+
+## 2026-10-15 — Alineación con el estándar de Coolify
+| Fecha | Decisión | Por qué |
+|---|---|---|
+| 2026-10-15 | Node 22 en Dockerfile y CI (antes 20) | Una sola versión en toda la flota; la imagen y el CI ya compilan y pasan E2E con 22 |
+| 2026-10-15 | `/api/health` suma `started_at` | Los workflows de entorno detectan que el deploy nuevo ya está corriendo (Coolify no pasa `SOURCE_COMMIT` al compose) |
+| 2026-10-15 | E2E de humo en 3 viewports como gate de CI | Estándar de calidad CodeTlon (gate 4); no depende del contenido del CMS |
+| 2026-10-15 | Videos: el servidor recomprime con el servicio global (soft-fail) además de la compresión del navegador | La compresión con `MediaRecorder` depende del navegador y topa en 60 s; el servicio da MP4 estándar. Una sola key para toda la flota, solo en Coolify |
+| 2026-10-15 | **Excepción documentada**: se conservan sesión propia (`SESSION_SECRET`), SMTP (nodemailer) y `postgres.js` con `builder.ts` | Reescribir auth/correo/ORM de un proyecto vivo no aporta al estándar; se unifica solo en un `/cambio` mayor |
+| 2026-10-15 | Override de `postcss` dentro de `next` (`overrides.next.postcss`) y borrar la copia anidada del lockfile | `npm audit fix` no toca el `postcss` que trae Next; sin el override queda una alta de runtime |

@@ -15,3 +15,8 @@ Detalle y flujo de ramas: `docs/ENTORNOS.md`. Despliegue: `docs/DESPLIEGUE-COOLI
 - Primer admin: `scripts/crear-admin.mjs` (ver `docs/DESPLIEGUE-COOLIFY.md`).
 - Cuentas de prueba: dominio `@demo.example.com`, contraseña `demo1234` en los seeds de desarrollo y homologación (`docs/CUENTAS-HOMOLOGACION.md`, gitignored).
 - La CI (`.github/workflows/ci.yml`) corre `type-check`, `build`, migraciones desde cero (y segunda corrida idempotente), verifica RLS en todas las tablas, que un alta sin invitación no genere perfil y que `auth.users`/`auth.tokens` no sean legibles por `anon`/`authenticated`; y arma la imagen Docker.
+
+## Workflows y variables (2026-10-15)
+- `ci.yml`: tipos + build, migraciones/reglas, imagen Docker y E2E (3 viewports). `entornos.yml`: push a `test` → espera el deploy (`started_at` de `/api/health`) y corre E2E contra la variable de repo `TEST_URL`; sin ella o con `test` apagado no hace nada. `produccion.yml` y `backup-check.yml`: llave `PRODUCCION_HABILITADA=true`, Environment `prod-coolify` (`PROD_URL`, `SMOKE_RUTAS`, `BACKUP_BUCKET`, `BACKUP_PROJECT`, claves de B2 solo lectura en secrets).
+- Video: `TRANSCODE_API_KEY` (y `TRANSCODE_SERVICE_URL`, opcional con valor por defecto) solo en las variables del recurso de Coolify; vacías = se guarda el video como llega. Ver `docker-compose.yml`.
+- Backup de prod: B2 con `backup-coolify.sh` (cron en el VPS, `FILES_MODE=volume`). Clave B2 compartida por la flota; nunca en el repo.
