@@ -4,6 +4,11 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-13 | La encuesta pendiente se anuncia en la pantalla del curso y además hay «Encuestas» en el menú del alumno, con contador | Con un solo curso el alumno entra directo (RF-11) y no llegaba a la encuesta; con varios cursos se acumulan |
+| 2026-10-13 | El alumno que terminó un curso conserva el acceso al material (curso, PDFs, links y ZIP) **3 meses** desde que se finalizó; las ya finalizadas cuentan desde que se aplica la 0018 | Decisión del cliente; antes solo tenía el ZIP (sin links) y sin plazo. No había fecha de finalización guardada |
+| 2026-10-13 | El plazo vive en la base (`acceso_hasta`, columna generada) y corta `material_visible`/`temario_alumno`/`estructura_edicion`; las encuestas siguen con `alumno_activo_en` | Que no alcance con ocultar un botón; la encuesta se tiene que poder responder con el material vencido |
+| 2026-10-13 | «Mi cuenta» para los tres roles: datos en solo lectura y cambio de contraseña con la actual; no se editan datos propios ni el email | Solo el admin carga datos personales (RF-57); faltaba cambiar la contraseña sin salir |
+| 2026-10-13 | El alumno tampoco ve la palabra «edición» (aviso de deserción: «este curso», «próximas fechas») | Misma razón que con el profesor: es lógica interna |
 | 2026-10-11 | **Guía general + estructura propia por edición** (RF-58): la guía la edita solo el admin; la edición la sigue hasta que su profesor (o el admin) la modifica y ahí se copia (copy-on-write). Edición nueva = guía | Un profesor cambiaba la estructura de todos los dictados y el siguiente profesor quedaba atado a lo que hizo el anterior |
 | 2026-10-11 | Guía y estructura propia en las **mismas tablas** con `edicion_id` (null = guía) y `origen_id`; «personalizada» se deriva de las filas, sin columna indicadora | No duplicar triggers, validación ni las funciones del alumno; un indicador aparte podía desincronizarse |
 | 2026-10-11 | «Volver a la guía general» pide confirmar en un modal con la advertencia (se pierden los cambios; material sin clase de origen queda general; esas fechas se borran) | Pedido del cliente: que el botón avise antes de descartar |
@@ -76,3 +81,13 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 - Mientras se entrega la demo, producción lleva datos de prueba. `npm run seed:demo-cliente` (`seed-pruebas.mts --demo-cliente`) es la única forma de sembrar en `APP_ENV=production`: exige `ALLOW_DEMO_SEED=1`, aborta si hay alumnos/profesores que no sean `@demo.example.com`, y genera contraseñas al azar (se imprimen una vez). `seed:dev`/`seed:test` siguen negándose en producción.
 - `npm run seed:demo-cliente:purge` (`scripts/purgar-demo.mts`) vacía cursos/CMS/inscripciones (TRUNCATE, porque el trigger impide DELETE de inscripciones) y borra las cuentas demo; se niega si hay usuarios reales. No restaura `site_settings` ni capacidades de aulas: se reeditan desde el CMS. Backup (`pg_dump`) antes de purgar.
 - Se borró la carpeta residual `supabase/` (caché de la CLI) y las últimas menciones en comentarios/docs.
+
+## 2026-10-15 — Alineación con el estándar de Coolify
+| Fecha | Decisión | Por qué |
+|---|---|---|
+| 2026-10-15 | Node 22 en Dockerfile y CI (antes 20) | Una sola versión en toda la flota; la imagen y el CI ya compilan y pasan E2E con 22 |
+| 2026-10-15 | `/api/health` suma `started_at` | Los workflows de entorno detectan que el deploy nuevo ya está corriendo (Coolify no pasa `SOURCE_COMMIT` al compose) |
+| 2026-10-15 | E2E de humo en 3 viewports como gate de CI | Estándar de calidad CodeTlon (gate 4); no depende del contenido del CMS |
+| 2026-10-15 | Videos: el servidor recomprime con el servicio global (soft-fail) además de la compresión del navegador | La compresión con `MediaRecorder` depende del navegador y topa en 60 s; el servicio da MP4 estándar. Una sola key para toda la flota, solo en Coolify |
+| 2026-10-15 | **Excepción documentada**: se conservan sesión propia (`SESSION_SECRET`), SMTP (nodemailer) y `postgres.js` con `builder.ts` | Reescribir auth/correo/ORM de un proyecto vivo no aporta al estándar; se unifica solo en un `/cambio` mayor |
+| 2026-10-15 | Override de `postcss` dentro de `next` (`overrides.next.postcss`) y borrar la copia anidada del lockfile | `npm audit fix` no toca el `postcss` que trae Next; sin el override queda una alta de runtime |

@@ -33,7 +33,7 @@ Guardalos en tu gestor de contraseñas. **Usá valores distintos en homologació
 ## 3. Crear el recurso de homologación
 1. *Projects › + Add* → nombre `Recovery Parts`. Dentro, usá un *Environment* para `test` y otro para `production`.
 2. En el entorno `test`: *+ New Resource › Docker Compose* (desde repositorio Git).
-3. Elegí el repo, **rama `test`**, *Base Directory* `/`, *Docker Compose Location* `/docker-compose.yml`.
+3. Elegí el repo, **rama `test`**, *Base Directory* `/`, *Docker Compose Location* `/docker-compose.coolify.yml`.
 4. Guardá. Coolify lee el compose y muestra los servicios `db` y `app`.
 
 ## 4. Variables de entorno
@@ -91,6 +91,8 @@ Repetí los pasos 2 a 8 en el entorno `production` con: **rama `main`**, dominio
 En cada recurso: *Webhooks › GitHub* (o activá *Auto Deploy* si usás la GitHub App). Con eso, un push a `test` redeploya homologación y uno a `main` redeploya producción. Las migraciones nuevas se aplican solas antes de arrancar.
 
 ## 11. Backups (no los omitas)
+> Estado 2026-10-15: el backup de producción corre con el script estándar `scripts/backup-coolify.sh` (v2) en el cron del VPS hacia Backblaze B2, con alarma diaria `backup-check.yml`. Lo de abajo es el procedimiento manual de respaldo.
+
 Coolify no hace backup automático de una base definida dentro de un Docker Compose. Hacelo con cron en el servidor, dos veces al día:
 ```bash
 # Base de datos (ajustá el nombre del contenedor: docker ps | grep db)

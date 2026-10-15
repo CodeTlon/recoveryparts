@@ -3,21 +3,25 @@ import { redirect } from 'next/navigation'
 import { AlertTriangle, CalendarDays, Download, ClipboardList, ArrowRight, FileText, GraduationCap } from 'lucide-react'
 import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { etiquetaEdicion } from '@/lib/fechas'
+import { etiquetaEdicion, hoyAR } from '@/lib/fechas'
+import { encuestasPendientes } from '@/lib/encuestas'
 import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import Reveal from '@/components/ui/Reveal'
 
-type Insc = { id: string; edicion_id: string; estado: 'activo' | 'desertor' | 'finalizado'; motivo_desercion: string | null; fecha_desercion: string | null; n_clase_desercion: number | null; ediciones: { curso_id: string; fecha_inicio: string | null } | null }
+type Insc = { id: string; edicion_id: string; estado: 'activo' | 'desertor' | 'finalizado'; motivo_desercion: string | null; fecha_desercion: string | null; n_clase_desercion: number | null; acceso_hasta: string | null; ediciones: { curso_id: string; fecha_inicio: string | null } | null }
 
 export default async function AlumnoHome() {
   const { sb, perfil } = await requireRole('alumno')
-  const { data: inscs } = await sb.from('inscripciones').select('id, edicion_id, estado, motivo_desercion, fecha_desercion, n_clase_desercion, ediciones(curso_id, fecha_inicio)').eq('alumno_id', perfil.id)
+  const { data: inscs } = await sb.from('inscripciones').select('id, edicion_id, estado, motivo_desercion, fecha_desercion, n_clase_desercion, acceso_hasta, ediciones(curso_id, fecha_inicio)').eq('alumno_id', perfil.id)
   const lista = (inscs ?? []) as unknown as Insc[]
   // Cada inscripción es a una EDICIÓN; el nombre sale del curso (catálogo público).
   const ids = [...new Set(lista.map((i) => i.ediciones?.curso_id).filter(Boolean))] as string[]
   const { data: cursos } = ids.length ? await sb.from('cursos_publicos').select('id, nombre').in('id', ids) : { data: [] }
   const nombre = (i: Insc) => cursos?.find((c) => c.id === i.ediciones?.curso_id)
+  // RF-34/35: terminado el curso, el material sigue disponible hasta `acceso_hasta` (3 meses; lo calcula la base).
+  const hoy = hoyAR()
+  const conAcceso = (i: Insc) => i.estado === 'finalizado' && !!i.acceso_hasta && hoy <= i.acceso_hasta
 
   // RF-11 (🟡, configurable en site_settings.campus.entrada_directa; por defecto activo):
   // con un solo curso en curso se entra directo.
@@ -37,13 +41,20 @@ export default async function AlumnoHome() {
     return [i.edicion_id, (data as unknown[] | null)?.length ?? 0] as [string, number]
   })))
 
-  const { data: encuestas } = await sb.from('encuestas').select('id, titulo, edicion_id').eq('activa', true)
-  const { data: hechas } = await sb.from('encuesta_completadas').select('encuesta_id').eq('alumno_id', perfil.id)
-  const pendientes = (encuestas ?? []).filter((e) => !hechas?.some((h) => h.encuesta_id === e.id))
+  // RF-47: las encuestas tienen su pantalla; acá solo se avisa cuántas hay pendientes.
+  const pendientes = await encuestasPendientes(sb, perfil.id)
 
   return (
     <>
       <PageHead title={`Hola, ${perfil.nombre}`} sub="Tus cursos y el material liberado." />
+
+      {pendientes.length > 0 && (
+        <Link href="/campus/alumno/encuestas" className="card mb-6 flex flex-wrap items-center gap-3 border-accent/40 p-4 text-sm transition-colors hover:border-secondary">
+          <ClipboardList size={18} className="text-accent" />
+          <span className="min-w-0 flex-1">Tenés <strong>{pendientes.length}</strong> encuesta{pendientes.length === 1 ? '' : 's'} para responder.</span>
+          <span className="inline-flex items-center gap-1 font-semibold text-secondary">Ver encuestas <ArrowRight size={16} /></span>
+        </Link>
+      )}
 
       {lista.length === 0 && <Empty>Todavía no estás inscripto en ningún curso. Si ya te inscribiste, la academia te va a sumar en breve.</Empty>}
 
@@ -65,9 +76,9 @@ export default async function AlumnoHome() {
                 <div role="alert" className="mb-4 flex gap-3 rounded border border-red-500/40 bg-red-500/10 p-4 text-sm">
                   <AlertTriangle size={20} className="mt-0.5 shrink-0 text-red-300" />
                   <div>
-                    <p className="font-semibold text-red-200">Fuiste dado de baja de esta edición el {fechaAR(i.fecha_desercion)}{i.n_clase_desercion != null ? ` (clase ${i.n_clase_desercion})` : ''}.</p>
+                    <p className="font-semibold text-red-200">Fuiste dado de baja de este curso el {fechaAR(i.fecha_desercion)}{i.n_clase_desercion != null ? ` (clase ${i.n_clase_desercion})` : ''}.</p>
                     <p className="mt-1 text-on-surface-variant">Motivo: {i.motivo_desercion}</p>
-                    <p className="mt-1 text-on-surface-variant">Ya no tenés acceso al material de esta edición. Si querés retomar, consultá por una próxima edición.</p>
+                    <p className="mt-1 text-on-surface-variant">Ya no tenés acceso al material de este curso. Si querés retomarlo, consultá por las próximas fechas.</p>
                   </div>
                 </div>
               )}
@@ -80,9 +91,13 @@ export default async function AlumnoHome() {
                 <p className="mb-4 flex items-center gap-2 text-sm text-on-surface-variant"><FileText size={16} /> <span className="font-semibold text-on-surface">{liberados.get(i.edicion_id) ?? 0}</span> material{liberados.get(i.edicion_id) === 1 ? '' : 'es'} liberado{liberados.get(i.edicion_id) === 1 ? '' : 's'}</p>
               )}
 
+              {i.estado === 'finalizado' && (conAcceso(i)
+                ? <p className="mb-4 flex items-center gap-2 text-sm text-on-surface-variant"><CalendarDays size={16} /> Tenés acceso al material hasta el <span className="font-semibold text-on-surface">{fechaAR(i.acceso_hasta)}</span>.</p>
+                : <p className="mb-4 text-sm text-on-surface-variant">El acceso al material de este curso venció el {fechaAR(i.acceso_hasta)}.</p>)}
+
               <div className="mt-auto flex flex-wrap gap-3 pt-2">
-                {i.estado === 'activo' && <Link href={`/campus/alumno/curso/${i.edicion_id}`} className="btn-primary">Ver material <ArrowRight size={16} /></Link>}
-                {i.estado === 'finalizado' && <a href={`/api/curso/${i.edicion_id}/zip`} className="btn-primary"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>}
+                {(i.estado === 'activo' || conAcceso(i)) && <Link href={`/campus/alumno/curso/${i.edicion_id}`} className="btn-primary">Ver material <ArrowRight size={16} /></Link>}
+                {conAcceso(i) && <a href={`/api/curso/${i.edicion_id}/zip`} className="btn-ghost"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>}
               </div>
             </article>
             </SpotlightCard>
@@ -91,16 +106,6 @@ export default async function AlumnoHome() {
         })}
       </section>
 
-      {pendientes.length > 0 && (
-        <section className="mt-10">
-          <h2 className="mb-3 text-xl font-semibold">Encuestas pendientes</h2>
-          <ul className="space-y-2">
-            {pendientes.map((e) => (
-              <li key={e.id}><Link href={`/campus/alumno/encuesta/${e.id}`} className="card flex items-center justify-between p-4 transition-colors hover:border-secondary"><span className="flex items-center gap-2"><ClipboardList size={18} /> {e.titulo}</span><ArrowRight size={16} /></Link></li>
-            ))}
-          </ul>
-        </section>
-      )}
     </>
   )
 }

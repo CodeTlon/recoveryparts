@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { usuarioApi } from '@/lib/auth'
 import { guardarArchivo, tipoMedia, urlPublica } from '@/lib/storage'
+import { transcodeWithService } from '@/lib/transcode'
 
 const MAX = 25 * 1024 * 1024
 
@@ -19,7 +20,14 @@ export async function POST(req: NextRequest) {
   if (!datos.length || datos.length > MAX) return NextResponse.json({ error: 'El archivo supera los 25 MB.' }, { status: 413 })
   const tipo = tipoMedia(datos)
   if (!tipo) return NextResponse.json({ error: 'Formato no permitido.' }, { status: 415 })
-  const nombre = `${randomUUID()}.${tipo.ext}`
-  await guardarArchivo('sitio', nombre, datos)
+  let ext: string = tipo.ext
+  let contenido: Uint8Array = datos
+  // Videos: el servicio global los recomprime a MP4 (soft-fail: si no responde, queda el que mandó el navegador).
+  if (tipo.mime.startsWith('video/')) {
+    const comprimido = await transcodeWithService(Buffer.from(datos), 'web')
+    if (comprimido) { contenido = comprimido; ext = 'mp4' }
+  }
+  const nombre = `${randomUUID()}.${ext}`
+  await guardarArchivo('sitio', nombre, contenido)
   return NextResponse.json({ url: urlPublica(nombre) })
 }

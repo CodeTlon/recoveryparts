@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { Montserrat } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 
-const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' })
+// Fuente autoalojada (src/app/fonts, subset latin): el build no depende de Google Fonts. Ver FONTS.md.
+const montserrat = localFont({ src: './fonts/montserrat-latin-wght-normal.woff2', weight: '100 900', variable: '--font-montserrat', display: 'swap' })
 
 export const metadata: Metadata = {
   title: { default: 'Recovery Parts — Academia de cursos técnicos', template: '%s · Recovery Parts' },

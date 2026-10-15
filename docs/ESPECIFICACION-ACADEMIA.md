@@ -5,7 +5,7 @@
 ### Sitio web + Campus Virtual para Academia de Cursos Técnicos
 
 ![Estado](https://img.shields.io/badge/estado-borrador-orange?style=for-the-badge)
-![Versión](https://img.shields.io/badge/versión-0.13-blue?style=for-the-badge)
+![Versión](https://img.shields.io/badge/versión-0.14-blue?style=for-the-badge)
 ![Cliente](https://img.shields.io/badge/cliente-Recovery_Parts-1e3a8a?style=for-the-badge)
 ![Tipo](https://img.shields.io/badge/proyecto-real-success?style=for-the-badge)
 
@@ -97,6 +97,7 @@ flowchart LR
 | Material didáctico | ✅ *(material base)* | 🔒 ✅ *(el de su edición; el base solo lo libera)* | 🔒 👁️ *(liberado)* | ❌ |
 | Kit por curso (informativo) | ✅ | ❌ *(se habla en el aula)* | 👁️ | 👁️ |
 | Encuestas | ✅ | ❌ | 🔒 *(responder)* | ❌ |
+| Mi cuenta (datos propios en solo lectura y cambio de contraseña) | 🔒 | 🔒 | 🔒 | ❌ |
 | Reportes | ✅ | ❌ | ❌ | ❌ |
 
 > [!WARNING]
@@ -306,7 +307,8 @@ stateDiagram-v2
 - Mis cursos (RF-08, RF-11)
 - Próximas clases (RF-09)
 - Material liberado (RF-10)
-- Encuesta de fin de curso
+- Encuestas pendientes (RF-47)
+- Mi cuenta (RF-59)
 
 </td>
 <td>
@@ -460,7 +462,7 @@ sequenceDiagram
 | RF-08 | El alumno ve los cursos en los que está inscripto. | 🟢 | 🎓 |
 | RF-09 | El alumno ve sus próximas clases. | 🟢 | 🎓 |
 | RF-10 | El alumno ve el material teórico liberado. | 🟢 | 🎓 |
-| RF-11 | "Mis cursos" aparece solo si tiene más de uno; con uno solo entra directo. | 🟢 | 🎓 |
+| RF-11 | "Mis cursos" aparece solo si tiene más de uno; con uno solo entra directo. La entrada directa no oculta las encuestas: se anuncian en el curso y en el menú (RF-47). | 🟢 | 🎓 |
 
 <details>
 <summary>❓ Preguntas pendientes</summary>
@@ -483,6 +485,7 @@ sequenceDiagram
 | RF-54 | El admin puede marcar a un alumno como **Desertor** dentro de un curso. El alumno **no se elimina** del curso: queda vinculado con ese estado. | 🟢 | 🛡️ |
 | RF-56 | El admin puede poner una **cuenta en Inactivo** (no entra al campus) y reactivarla. No borra datos. | 🟢 | 🛡️ |
 | RF-57 | Datos personales del alumno: **solo nombre, apellido, email y teléfono**. No se piden otros datos. | 🟢 | 🛡️ |
+| RF-59 | **Mi cuenta** (alumno, profesor y admin): cada usuario ve sus datos en **solo lectura** (los corrige el admin) y puede **cambiar su contraseña** con la sesión iniciada. Pide la contraseña actual, limita los intentos fallidos como el login y cierra las demás sesiones abiertas. *Nuevo en v0.14.* | 🟢 | 🎓 👨‍🏫 🛡️ |
 | RF-55 | Al marcar Desertor se guarda la **fecha**, y el sistema calcula el **N° de clase** correspondiente según el calendario del curso (ej. clase 3 de 12). Motivo en texto libre **obligatorio**, visible para el alumno como aviso. | 🟢 | 🛡️ ⚙️ |
 
 <details>
@@ -543,8 +546,8 @@ sequenceDiagram
 | RF-31 | Cargar de antemano todo el temario y calendario. El temario es la **estructura del curso** (RF-58): el admin define la guía general y el profesor la ajusta en su edición. | 🟢 | 👨‍🏫 🛡️ |
 | RF-32 | Liberación **siempre manual**: el profesor libera cada material en su edición; la fecha de la clase no libera nada. *Cambiado en v0.12: antes era automática por fecha + manual.* | 🟢 | 👨‍🏫 |
 | RF-33 | El alumno visualiza **y puede descargar** el material liberado (vista previa + botón de descarga). *Cambiado en v0.6: antes era solo visualización.* | 🟢 | 🎓 |
-| RF-34 | El acceso depende de la vigencia, no del pago; vencido el período se retira solo. | 🟢 | ⚙️ |
-| RF-35 | Al finalizar el curso aparece en el campus un **botón de descarga** del ZIP con todos los PDFs **ya liberados** (los ocultos o programados no se incluyen). Solo para alumnos que terminaron (no desertores). Disponible **mínimo 1 mes**, o hasta que se borre el curso. | 🟢 | 🎓 |
+| RF-34 | El acceso depende de la vigencia, no del pago; vencido el período se retira solo. **Desde v0.14:** el alumno que terminó un curso conserva el acceso a su material durante **3 meses desde que se finalizó**; después el curso sigue figurando como finalizado, pero el material ya no se puede abrir ni descargar. Las inscripciones finalizadas antes de v0.14 cuentan el plazo desde que se aplicó el cambio. | 🟢 | ⚙️ |
+| RF-35 | Al finalizar el curso aparece en el campus un **botón de descarga** del ZIP con todos los PDFs **ya liberados** (los ocultos o programados no se incluyen). Solo para alumnos que terminaron (no desertores). Disponible **mínimo 1 mes**, o hasta que se borre el curso. **Desde v0.14:** además del ZIP, el alumno puede seguir **abriendo el curso** para ver lo liberado (PDFs, links y videos); el ZIP y ese acceso duran 3 meses (RF-34). | 🟢 | 🎓 |
 | RF-36 | Material: **PDF + links**. Los videos se suben a YouTube (no listado) o Drive y se cargan como link. No se alojan videos. | 🟢 | 👨‍🏫 |
 | RF-37 | El alumno ve el material liberado y **solo el título** del tema de la clase siguiente. Todo lo posterior queda oculto. Ve los títulos de **todos los módulos**, pero no las clases de los módulos que no empezaron; de la próxima clase ve título y tipo, nunca su material (v0.12). | 🟢 | ⚙️ |
 | RF-58 | **Estructura del curso: módulos → clases → material.** El curso se arma con módulos que contienen clases en orden (título libre, **teórica o práctica**), y cada clase tiene su material (o ninguno). No hay clases sin módulo ni módulos sin clases; las clases de un módulo van juntas. Los talleres no llevan módulos. El material sigue a su clase aunque cambie de lugar; si se borra la clase, el material queda «general». En cada edición el profesor puede **adelantar** una clase (fecha antes que otras) o **saltearla** (no se dicta; no avisa por mail). **Desde v0.13:** lo que define el admin es la **guía general** del curso (solo él la edita). Cada edición la sigue hasta que su profesor (o el admin) la modifica; desde ahí la edición tiene su **estructura propia**, que no cambia la guía ni las otras ediciones. Una edición nueva o duplicada siempre arranca de la guía. «Volver a la guía general» descarta la estructura propia, con advertencia previa. El sitio público muestra la guía. | 🟢 | 🛡️ 👨‍🏫 |
@@ -591,7 +594,7 @@ sequenceDiagram
 
 | ID | Descripción | Estado | Rol |
 |---|---|:-:|:-:|
-| RF-47 | El admin crea y edita encuestas de fin de curso. Las respuestas son **anónimas**. | 🟢 | 🛡️ 🎓 |
+| RF-47 | El admin crea y edita encuestas de fin de curso. Las respuestas son **anónimas**. **Desde v0.14:** la encuesta pendiente se anuncia en la pantalla del curso al que pertenece y el alumno tiene «Encuestas» en el menú, con todas las pendientes y un contador. Se puede responder aunque el acceso al material haya vencido. | 🟢 | 🛡️ 🎓 |
 
 <details>
 <summary>❓ Preguntas pendientes</summary>
@@ -666,6 +669,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.14 | 2026-10-13 | **Campus del alumno.** RF-47: la encuesta pendiente se anuncia en el curso y hay una pantalla «Encuestas» con contador en el menú (antes, con un solo curso el alumno no llegaba a la encuesta). RF-34 / RF-35: el alumno que terminó sigue entrando a su curso y al ZIP durante 3 meses. **RF-59** (nuevo): «Mi cuenta» con los datos en solo lectura y cambio de contraseña con la sesión iniciada, para los tres roles. El alumno ya no ve la palabra «edición». |
 | 0.13 | 2026-10-11 | **Panel del profesor y estructura por edición.** RF-04: «Mis cursos» con estado (en curso / próximo), sin dictados terminados y sin el concepto de «edición» para el profesor. RF-58 / RF-31: guía general del curso (admin) + estructura propia de cada edición, que arranca de la guía y la puede modificar su profesor; «Volver a la guía general» con advertencia. RF-05: material base (admin) y material del profesor por edición; el profesor solo borra el suyo. El kit deja de verse en el campus del profesor. La deserción la marca solo el admin (sin cambios). |
 | 0.12 | 2026-10-06 | **Estructura del curso (RF-58)**: módulos → clases (teóricas o prácticas) → material, con la regla en la base; talleres sin módulos; el material sigue a su clase. Orden flexible por edición: adelantar o saltear clases (sin mail). **RF-32**: liberación siempre manual. **RF-26**: el sitio muestra solo los títulos de los módulos. **RF-37**: el alumno ve todos los módulos y solo las clases dictadas y la próxima. RF-55: la clase salteada no cuenta. |
 | 0.11 | 2026-10-05 | **Ediciones de curso** (cursos recurrentes): el curso es el catálogo (contenido, precio, kit, plan de clases, material por N° de clase) y cada dictado es una edición (fecha, horarios, aula, profesor, cupo, calendario, alumnos, encuesta). Una edición activa por vez por curso; duplicar edición copia horarios/aula/profesor/cupo y obliga a asignar fechas de nuevo; material liberado por edición; un alumno puede cursar otra edición del mismo curso; en el sitio, un curso con sus «Próximas fechas» o «Próximamente nuevas fechas». |
