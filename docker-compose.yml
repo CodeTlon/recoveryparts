@@ -37,6 +37,9 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      # Servicio global de compresión de video (opcional; sin él se guarda el video como llega).
+      TRANSCODE_SERVICE_URL: ${TRANSCODE_SERVICE_URL:-}
+      TRANSCODE_API_KEY: ${TRANSCODE_API_KEY:-}
     volumes:
       - storage:/data/storage
     expose:
