@@ -1,0 +1,48 @@
+import { test, expect } from '@playwright/test'
+
+// Smoke E2E resiliente: valida lo determinístico que no depende de los datos del CMS.
+//  - cada ruta pública responde sin error y monta el layout
+//  - el campus exige sesión
+//  - health, SEO (robots, sitemap) y 404
+// Corre en 3 viewports (mobile / tablet / desktop), contra `npm run build && npm start` o contra BASE_URL (test).
+
+const RUTAS_PUBLICAS = ['/', '/cursos', '/galeria', '/preguntas-frecuentes', '/contacto', '/login', '/olvide-mi-contrasena']
+
+test.describe('Público: renderiza sin error', () => {
+  for (const ruta of RUTAS_PUBLICAS) {
+    test(`${ruta} responde <400 y tiene contenido`, async ({ page }) => {
+      const res = await page.goto(ruta)
+      expect(res?.status(), `status HTTP de ${ruta}`).toBeLessThan(400)
+      await expect(page.locator('body')).not.toBeEmpty()
+      await expect(page.getByRole('heading').first()).toBeVisible()
+    })
+  }
+})
+
+test.describe('Campus: exige sesión', () => {
+  for (const ruta of ['/campus/alumno', '/campus/admin']) {
+    test(`${ruta} sin sesión no muestra el campus`, async ({ page }) => {
+      await page.goto(ruta)
+      await expect(page).toHaveURL(/\/login\b/)
+    })
+  }
+})
+
+test.describe('Infra y SEO', () => {
+  test('/api/health responde con estado y arranque', async ({ request }) => {
+    const res = await request.get('/api/health')
+    // Sin base (build de CI) responde 503; con base, 200. En ambos casos es JSON y no revienta.
+    expect([200, 503]).toContain(res.status())
+    expect(res.headers()['content-type']).toContain('application/json')
+  })
+
+  test('robots.txt y sitemap.xml existen', async ({ request }) => {
+    expect((await request.get('/robots.txt')).status()).toBe(200)
+    expect((await request.get('/sitemap.xml')).status()).toBe(200)
+  })
+
+  test('una ruta inexistente da 404', async ({ page }) => {
+    const res = await page.goto('/esta-ruta-no-existe')
+    expect(res?.status()).toBe(404)
+  })
+})
