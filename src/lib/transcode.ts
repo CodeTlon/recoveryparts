@@ -5,12 +5,14 @@ import 'server-only'
 
 export type TranscodePreset = 'hero' | 'web' | 'mobile'
 
+// Servicio compartido de toda la flota: por proyecto solo hace falta TRANSCODE_API_KEY (la URL se puede pisar con TRANSCODE_SERVICE_URL).
+const DEFAULT_URL = 'https://videotranscode.51.91.253.54.sslip.io'
 const TIMEOUT_MS = 10 * 60_000
 
 export async function transcodeWithService(input: Buffer, preset: TranscodePreset = 'web'): Promise<Buffer | null> {
-  const url = process.env.TRANSCODE_SERVICE_URL?.replace(/\/$/, '')
   const key = process.env.TRANSCODE_API_KEY
-  if (!url || !key) return null
+  if (!key) return null
+  const url = (process.env.TRANSCODE_SERVICE_URL || DEFAULT_URL).replace(/\/$/, '')
 
   const body = new FormData()
   body.append('file', new Blob([new Uint8Array(input)]), 'video')
