@@ -6,7 +6,7 @@
 - Una pantalla común a varios roles va en **una ruta por rol** (`/campus/<rol>/cuenta`) que muestra el mismo componente (`MiCuenta`): el middleware solo deja pasar `/campus/<rol>/…` y no se le abren excepciones.
 - El menú del campus (`NAV` en `CampusShell`) admite `match` (prefijo que marca el ítem activo) y recibe `avisos` (ruta → cantidad) desde el layout.
 - Formularios con `ActionForm`/`Field` de `src/components/campus/ui.tsx`.
-- Todo archivo que use `SUPABASE_SERVICE_ROLE_KEY` lleva `import 'server-only'`.
+- Todo archivo que maneje secretos o acceso a datos del servidor (`db`, `storage`, `mail`, hash de contraseñas) lleva `import 'server-only'`.
 - Sin datos mockeados: si no hay datos, la pantalla muestra el vacío.
 - Nada de datos personales ni tokens en URLs ni logs.
 

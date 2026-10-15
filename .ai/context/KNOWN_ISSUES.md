@@ -50,7 +50,8 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 - **La regla de «edición terminada» está en dos lugares**: `momentoEdicion()` (`src/lib/fechas.ts`) y `edicion_vigente()` (0017). Si cambia una, cambiar la otra.
 - **Borrar físicamente una edición** borra en cascada las filas de su material propio pero no los archivos del disco. Hoy las ediciones solo se dan de baja.
 
-## Abiertos tras la sesión 2026-10-05 (aulas)
+## Abiertos tras la sesión 2026-10-05
+> Histórico: los ítems sobre Vercel, Supabase («Migraciones a Supabase», `db:push:*`, base compartida con la demo) quedaron superados el 2026-10-09, cuando se sacó Supabase. Siguen vigentes las fotos de ejemplo, la prueba en navegador y las cuentas viejas de homologación. (aulas)
 - **Acciones de `<form action>` simples descartan el error**: `bajaCurso`, `setEstadoCuenta`. Si la base las rechaza, la página se recarga sin mostrar el motivo. Usar `ActionForm` en un modal, como ya hacen «Reactivar» curso y la baja de aulas.
 - **`npm run seed:dev` no anda desde cmd/PowerShell**: el script npm usa `ENV_FILE=…` (sintaxis POSIX). Desde el 2026-10-06 el seed tolera `.env` con CRLF y ya no escribe en `/dev/null` (solo guarda credenciales si hay `CREDS_OUT`). Rodeo: desde Git Bash, `ENV_FILE=.env.development node scripts/seed-pruebas.mjs --confirmo-no-produccion`.
 - **`db:reset` no prueba migraciones con datos**: aplica todo sobre una base vacía. Una migración que actualiza filas y después hace `ALTER TABLE` puede fallar recién en homologación (le pasó a la 0013 con un trigger diferido). Antes de aplicar a mano: base local en la versión de homologación, seed viejo y correr el script encima.

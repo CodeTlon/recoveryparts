@@ -1,6 +1,6 @@
 # CURRENT_STATE — Recovery Parts
 
-Qué es verdad ahora (2026-10-13). Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
+Qué es verdad ahora (2026-10-15): todo corre en Coolify con Postgres propio; no queda Supabase ni Vercel en runtime. Lo que sigue sobre Supabase/Vercel es histórico. Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
 
 ## Ramas
 - Rama `feat/huecos-alumno` (desde `dev`, **sin mergear ni pushear** al 2026-10-13): campus del alumno (encuestas alcanzables, curso finalizado con acceso por 3 meses, «Mi cuenta» con cambio de contraseña para los tres roles). Migración **0018** (`db/migrations/0018_acceso_alumno_finalizado.sql`): va junto con el código.
