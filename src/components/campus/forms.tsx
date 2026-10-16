@@ -107,8 +107,8 @@ export function Select({ name, label, defaultValue, options, empty, grupos }: { 
 export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2', name, value, modal }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string; modal?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null)
   const dlg = useRef<HTMLDialogElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout>>()
-  const hintTimer = useRef<ReturnType<typeof setTimeout>>()
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [holding, setHolding] = useState(false)
   const [hint, setHint] = useState(false)
   const fired = useRef(false)
