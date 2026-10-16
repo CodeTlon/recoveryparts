@@ -24,13 +24,13 @@ function Guard({ error }: { error: string }) {
 }
 
 function AddButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" onClick={onClick} className="btn-ghost !px-3 !py-2"><Plus size={14} aria-hidden /> {children}</button>
+  return <button type="button" onClick={onClick} className="btn-ghost px-3! py-2!"><Plus size={14} aria-hidden /> {children}</button>
 }
 
 function RemoveButton({ onClick, label, disabled }: { onClick: () => void; label: string; disabled?: string }) {
   return (
     <button type="button" onClick={onClick} aria-label={label} title={disabled || label} disabled={!!disabled}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded border border-outline-variant text-on-surface-variant hover:border-red-400 hover:text-red-300 disabled:pointer-events-none disabled:opacity-30">
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-outline-variant text-on-surface-variant hover:border-red-400 hover:text-red-300 disabled:pointer-events-none disabled:opacity-30">
       <Trash2 size={15} aria-hidden />
     </button>
   )
@@ -52,7 +52,7 @@ export function HorariosEditor({ name, inicial, onChange }: { name: string; inic
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay días cargados.</p>}
       {rows.map((r, i) => (
         <div key={i} className="flex flex-wrap items-end gap-2">
-          <div className="min-w-[8rem] flex-1"><label className="label">Día</label>
+          <div className="min-w-32 flex-1"><label className="label">Día</label>
             <select className="input" value={r.dia} onChange={(e) => upd(i, { dia: Number(e.target.value) })}>{DIAS.map((d, n) => <option key={d} value={n}>{d}</option>)}</select></div>
           <div><label className="label">Desde</label><input type="time" required className="input" value={r.ini} onChange={(e) => upd(i, { ini: e.target.value })} /></div>
           <div><label className="label">Hasta</label><input type="time" required className="input" value={r.fin} onChange={(e) => upd(i, { fin: e.target.value })} /></div>
@@ -82,7 +82,7 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
       {errK && <p role="alert" className="text-sm text-red-400">{errK}</p>}
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay ítems.</p>}
       {rows.map((r, i) => (
-        <div key={i} className="rounded border border-outline-variant p-4">
+        <div key={i} className="rounded-sm border border-outline-variant p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label className="label">Ítem</label><input className="input" placeholder="Ej: Multímetro" value={r.nombre} onChange={(e) => upd(i, { nombre: e.target.value })} /></div>
             <div><label className="label">Tipo</label>
@@ -252,7 +252,7 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
     return (
       <li key={c.key} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:grid-cols-[auto_1fr_auto_auto] sm:px-4">
         <Num n={n} />
-        <input aria-label={`Título de la clase ${n}`} className="input min-w-0 !py-2" maxLength={200} placeholder="Título de la clase" value={c.titulo} onChange={(e) => updC(i, ci, { titulo: e.target.value })} />
+        <input aria-label={`Título de la clase ${n}`} className="input min-w-0 py-2!" maxLength={200} placeholder="Título de la clase" value={c.titulo} onChange={(e) => updC(i, ci, { titulo: e.target.value })} />
         <div className="col-start-2 row-start-2 flex flex-wrap items-center gap-2 sm:col-start-auto sm:row-start-auto sm:w-48">
           <TipoToggle label={`Tipo de la clase ${n}`} value={c.tipo} onChange={(tipo) => updC(i, ci, { tipo })} />
           {mat > 0 && (
@@ -289,7 +289,7 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
                   <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-secondary">
                     Módulo {i + 1} <span className="font-normal normal-case tracking-normal text-on-surface-variant">· {m.clases.length} clase{m.clases.length === 1 ? '' : 's'}</span>
                   </p>
-                  <input aria-label={`Título del módulo ${i + 1}`} className="input min-w-0 !py-2 font-semibold" maxLength={120} placeholder="Título del módulo" value={m.titulo} onChange={(e) => updM(i, { titulo: e.target.value })} />
+                  <input aria-label={`Título del módulo ${i + 1}`} className="input min-w-0 py-2! font-semibold" maxLength={120} placeholder="Título del módulo" value={m.titulo} onChange={(e) => updM(i, { titulo: e.target.value })} />
                 </div>
                 <MenuAcciones label={`Acciones del módulo ${i + 1}`} acciones={[
                   { label: 'Subir módulo', icon: <ArrowUp size={16} />, disabled: i === 0, onClick: () => setMods(mover(mods, i, -1)) },
@@ -307,7 +307,7 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
         </>
       )}
       {quitadasConMaterial.length > 0 && (
-        <p role="status" className="rounded border border-amber-400/50 p-3 text-sm text-amber-300">
+        <p role="status" className="rounded-sm border border-amber-400/50 p-3 text-sm text-amber-300">
           Al guardar, el material de {quitadasConMaterial.map((c) => `«${c.titulo}» (${conMaterial[c.id]})`).join(', ')} va a quedar como <strong>material general</strong>. No se borra.
         </p>
       )}
@@ -366,8 +366,8 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
       <Serial name={name} value={conFecha.map((r) => `${r.id} | ${r.fecha} | ${r.estado}`).join('\n')} />
       <Guard error={errC} />
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-outline-variant p-3">
-        <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost !px-3 !py-2 disabled:opacity-50"><Wand2 size={14} aria-hidden /> Proponer fechas</button>
-        <p className="min-w-[12rem] flex-1 text-xs text-on-surface-variant">
+        <button type="button" disabled={!puedeGenerar} onClick={generar} className="btn-ghost px-3! py-2! disabled:opacity-50"><Wand2 size={14} aria-hidden /> Proponer fechas</button>
+        <p className="min-w-48 flex-1 text-xs text-on-surface-variant">
           {puedeGenerar ? 'Asigna una fecha a cada clase desde la fecha de inicio, en los días de cursada. Después podés ajustarlas.' : 'Para proponer fechas hacen falta la fecha de inicio y los horarios de cursada.'}
         </p>
       </div>
@@ -384,8 +384,8 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
                   <Num n={r.numero} />
                   <p className={`min-w-0 text-sm font-medium ${fuera ? 'text-on-surface-variant line-through decoration-on-surface-variant/60' : ''}`}>{r.titulo}</p>
                   <div className="col-span-2 flex gap-2 sm:col-span-1">
-                    <input type="date" aria-label={`Fecha de ${r.titulo}`} className="input min-w-0 flex-1 !px-3 !py-2 sm:w-40 sm:flex-none" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} />
-                    <select aria-label={`Estado de ${r.titulo}`} className="input min-w-0 flex-1 !py-2 !pl-3 !pr-1 sm:w-40 sm:flex-none" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
+                    <input type="date" aria-label={`Fecha de ${r.titulo}`} className="input min-w-0 flex-1 px-3! py-2! sm:w-40 sm:flex-none" min={inicio ?? undefined} value={r.fecha} onChange={(e) => upd(i, { fecha: e.target.value })} />
+                    <select aria-label={`Estado de ${r.titulo}`} className="input min-w-0 flex-1 py-2! pl-3! pr-1! sm:w-40 sm:flex-none" value={r.estado} onChange={(e) => upd(i, { estado: e.target.value })}>
                       <option value="programada">Programada</option><option value="suspendida">Suspendida</option><option value="reprogramada">Reprogramada</option><option value="salteada">Salteada</option>
                     </select>
                   </div>

@@ -25,7 +25,7 @@ export function Donut({ data, center, caption }: { data: Slice[]; center: React.
       <ul className="space-y-2 text-sm">
         {data.map((d) => (
           <li key={d.label} className="flex items-center gap-2">
-            <span aria-hidden className={`h-3 w-3 rounded-sm bg-current ${d.color}`} />
+            <span aria-hidden className={`h-3 w-3 rounded-xs bg-current ${d.color}`} />
             <span>{d.label}</span>
             <span className="ml-auto pl-4 font-semibold tabular-nums">{d.value}{total > 0 && <span className="ml-1 text-xs font-normal text-on-surface-variant">({Math.round((100 * d.value) / total)}%)</span>}</span>
           </li>

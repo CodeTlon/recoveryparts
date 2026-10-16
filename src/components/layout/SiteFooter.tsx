@@ -21,8 +21,8 @@ export default async function SiteFooter() {
           </Link>
           <p className="max-w-xs text-on-surface-variant">Academia de cursos y talleres técnicos en Córdoba.</p>
           <div className="mt-1 flex items-center gap-3">
-            {wa && <a href={wa} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="flex h-10 w-10 items-center justify-center rounded border border-outline-variant text-on-surface-variant transition-colors hover:border-secondary hover:text-white"><WhatsAppIcon size={20} /></a>}
-            {ig && <a href={`https://instagram.com/${ig}`} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="flex h-10 w-10 items-center justify-center rounded border border-outline-variant text-on-surface-variant transition-colors hover:border-secondary hover:text-white"><InstagramIcon size={20} /></a>}
+            {wa && <a href={wa} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="flex h-10 w-10 items-center justify-center rounded-sm border border-outline-variant text-on-surface-variant transition-colors hover:border-secondary hover:text-white"><WhatsAppIcon size={20} /></a>}
+            {ig && <a href={`https://instagram.com/${ig}`} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="flex h-10 w-10 items-center justify-center rounded-sm border border-outline-variant text-on-surface-variant transition-colors hover:border-secondary hover:text-white"><InstagramIcon size={20} /></a>}
           </div>
         </div>
 

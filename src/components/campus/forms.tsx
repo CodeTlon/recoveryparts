@@ -36,13 +36,13 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
       <AnimatePresence>
         {toast === 'ok' && (
           <motion.div role="status" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-pill border border-green-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-green-300 shadow-card-hover">
+            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-green-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-green-300 shadow-card-hover">
             <CheckCircle2 size={18} aria-hidden /> Guardado
           </motion.div>
         )}
         {toast === 'error' && (
           <motion.div aria-hidden initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-pill border border-red-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-red-300 shadow-card-hover">
+            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-red-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-red-300 shadow-card-hover">
             <XCircle size={18} aria-hidden /> No se pudo guardar
           </motion.div>
         )}
@@ -71,7 +71,7 @@ export function Field({ label, name, type = 'text', defaultValue, required, plac
 }
 
 // Botón de envío para <form action={serverAction}> simples: se deshabilita mientras se envía.
-export function SubmitButton({ children, className = 'btn-ghost !px-3 !py-2' }: { children: React.ReactNode; className?: string }) {
+export function SubmitButton({ children, className = 'btn-ghost px-3! py-2!' }: { children: React.ReactNode; className?: string }) {
   const { pending } = useFormStatus()
   return <button disabled={pending} aria-busy={pending} className={className}>{children}</button>
 }
@@ -104,11 +104,11 @@ export function Select({ name, label, defaultValue, options, empty, grupos }: { 
 // Con mouse/touch hay que MANTENERLO apretado ~1 s (el relleno naranja indica el avance);
 // con teclado se abre un modal de confirmación propio, así sigue siendo accesible.
 // `modal`: el clic siempre abre el modal con el mensaje (para advertencias que hay que leer antes de confirmar).
-export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2', name, value, modal }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string; modal?: boolean }) {
+export function Confirm({ children, message, className = 'btn-ghost px-3! py-2!', name, value, modal }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string; modal?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null)
   const dlg = useRef<HTMLDialogElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout>>()
-  const hintTimer = useRef<ReturnType<typeof setTimeout>>()
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [holding, setHolding] = useState(false)
   const [hint, setHint] = useState(false)
   const fired = useRef(false)
@@ -136,13 +136,13 @@ export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2'
       <span className="relative inline-flex items-center gap-1">{hint ? 'Mantené apretado' : children}</span>
     </button>
     <dialog ref={dlg} aria-label="Confirmar acción" onClick={(e) => { if (e.target === dlg.current) dlg.current?.close() }}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-card border border-outline-variant bg-surface-container p-0 text-on-surface shadow-card-hover backdrop:bg-black/60 backdrop:backdrop-blur-sm">
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-card border border-outline-variant bg-surface-container p-0 text-on-surface shadow-card-hover backdrop:bg-black/60 backdrop:backdrop-blur-xs">
       <div className="p-6">
         <h2 className="text-lg font-semibold text-primary">¿Confirmás?</h2>
         <p className="mt-2 text-sm text-on-surface-variant">{message}</p>
         <div className="mt-6 flex justify-end gap-2">
-          <button type="button" autoFocus className="btn-ghost !px-4 !py-2" onClick={() => dlg.current?.close()}>Cancelar</button>
-          <button type="button" className="btn-primary !px-4 !py-2" onClick={() => { dlg.current?.close(); ref.current?.form?.requestSubmit(ref.current) }}>Confirmar</button>
+          <button type="button" autoFocus className="btn-ghost px-4! py-2!" onClick={() => dlg.current?.close()}>Cancelar</button>
+          <button type="button" className="btn-primary px-4! py-2!" onClick={() => { dlg.current?.close(); ref.current?.form?.requestSubmit(ref.current) }}>Confirmar</button>
         </div>
       </div>
     </dialog>

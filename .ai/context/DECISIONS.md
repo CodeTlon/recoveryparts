@@ -91,3 +91,8 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 | 2026-10-15 | Videos: el servidor recomprime con el servicio global (soft-fail) además de la compresión del navegador | La compresión con `MediaRecorder` depende del navegador y topa en 60 s; el servicio da MP4 estándar. Una sola key para toda la flota, solo en Coolify |
 | 2026-10-15 | **Excepción documentada**: se conservan sesión propia (`SESSION_SECRET`), SMTP (nodemailer) y `postgres.js` con `builder.ts` | Reescribir auth/correo/ORM de un proyecto vivo no aporta al estándar; se unifica solo en un `/cambio` mayor |
 | 2026-10-15 | Override de `postcss` dentro de `next` (`overrides.next.postcss`) y borrar la copia anidada del lockfile | `npm audit fix` no toca el `postcss` que trae Next; sin el override queda una alta de runtime |
+
+## Estandar de versiones de la flota: Next 16 + React 19 + Tailwind 4 (2026-10-16)
+**Decision**: seguir el conjunto de `codetlon-cloud/.claude/modules/stack-versions.md` (versiones exactas) en `dev` y `test`. Se mantiene la excepcion de sesion propia y `postgres.js` (sin Better Auth ni Drizzle).
+**Por que**: reducir vulnerabilidades (Tailwind 3 arrastraba `chokidar`/`braces`) y tener la flota en un solo conjunto.
+**Consecuencias**: `src/middleware.ts` pasa a `src/proxy.ts`; ESLint 10 nuevo con config plana y reglas bajadas a aviso; `useRef` de React 19 con valor inicial; se retira `autoprefixer` y `tailwind.config.ts`. Postgres sigue en 16 (recurso desplegado: cambiarlo exige dump/restore).

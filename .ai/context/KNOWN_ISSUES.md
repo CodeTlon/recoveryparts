@@ -1,5 +1,10 @@
 # KNOWN_ISSUES — Recovery Parts
 
+## Vigente (2026-10-16)
+- `npm audit` completo conserva 5 altas de herramientas de desarrollo: `braces` <= 3.0.3 via `eslint-config-next` -> `fast-glob` -> `micromatch`. Sin version corregida publicada; no entra al runtime (`npm audit --omit=dev` = 0). El override `next.postcss` se retiro (Next 16.4.2 ya trae un `postcss` corregido).
+- ESLint se incorporo el 2026-10-16: 66 avisos, 0 errores. 58 son `@typescript-eslint/no-explicit-any` (el acceso a datos con `postgres.js` usa `any`), 2 `react-hooks/refs`, el resto reglas de React nuevas. Deuda; todavia no esta en el CI.
+- `npm run seed:dev` fallo en esta maquina (no se investigo); los E2E no dependen de el.
+
 Restricciones y riesgos a tener en cuenta (no son bugs para arreglar ya).
 
 ## El contexto se desincroniza si nadie fuerza el proceso

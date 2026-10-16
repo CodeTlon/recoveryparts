@@ -9,7 +9,7 @@ export default function AnimatedBar({ value, max, className = '' }: { value: num
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
       <motion.div
-        className={`h-2 rounded-full bg-gradient-to-r from-accent-hover to-accent ${className}`}
+        className={`h-2 rounded-full bg-linear-to-r from-accent-hover to-accent ${className}`}
         initial={reduce ? false : { width: 0 }}
         whileInView={{ width: `${pct}%` }}
         viewport={{ once: true }}

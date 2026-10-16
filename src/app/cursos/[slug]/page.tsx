@@ -47,7 +47,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
-      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] flex-grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
+      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
         <section className="mb-16 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
           <div className={`flex flex-col gap-6 ${foto ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
             <div className="flex flex-wrap gap-2">
@@ -59,7 +59,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
             {c.descripcion && <p className="max-w-2xl whitespace-pre-line border-l-2 border-accent pl-4 text-lg leading-relaxed text-on-surface-variant">{c.descripcion}</p>}
           </div>
           {foto && (
-            <div className="relative h-64 overflow-hidden rounded border border-outline-variant bg-surface-container lg:col-span-5 lg:h-[380px]">
+            <div className="relative h-64 overflow-hidden rounded-sm border border-outline-variant bg-surface-container lg:col-span-5 lg:h-[380px]">
               <Image src={foto} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 42vw" className="object-cover" />
             </div>
           )}
@@ -130,7 +130,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                           </div>
                           <div className="flex items-center gap-4">
                             <span className="font-bold">{formatPrecio(k.precio)}</span>
-                            {k.link_externo && <a href={k.link_externo} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">{esMundoParts(k.link_externo) ? 'Comprar en Mundo Parts' : 'Comprar'} <ExternalLink size={14} aria-hidden /></a>}
+                            {k.link_externo && <a href={k.link_externo} target="_blank" rel="noopener noreferrer" className="btn-ghost px-3! py-2!">{esMundoParts(k.link_externo) ? 'Comprar en Mundo Parts' : 'Comprar'} <ExternalLink size={14} aria-hidden /></a>}
                           </div>
                         </li>
                       ))}
@@ -170,13 +170,13 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <div>
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-secondary">Próximas fechas</h3>
                   {!ediciones.length ? (
-                    <p className="rounded border border-dashed border-outline-variant p-4 text-sm text-on-surface-variant"><strong className="block text-on-surface">Próximamente nuevas fechas</strong> Consultanos y te avisamos cuando abra la próxima edición.</p>
+                    <p className="rounded-sm border border-dashed border-outline-variant p-4 text-sm text-on-surface-variant"><strong className="block text-on-surface">Próximamente nuevas fechas</strong> Consultanos y te avisamos cuando abra la próxima edición.</p>
                   ) : (
                     <ul className="flex flex-col gap-3">
                       {ediciones.map((e) => {
                         const h = horarioTexto(horarios.filter((x) => x.edicion_id === e.id))
                         return (
-                          <li key={e.id} className="rounded border border-outline-variant p-4">
+                          <li key={e.id} className="rounded-sm border border-outline-variant p-4">
                             <p className="flex items-center gap-2 font-semibold"><CalendarDays size={16} className="shrink-0 text-accent" /> Inicia el {fechaCorta(e.fecha_inicio)}</p>
                             {h && <p className="mt-1 pl-6 text-sm text-on-surface-variant">{h}</p>}
                             {e.aula && <p className="mt-1 flex items-center gap-2 pl-6 text-sm text-on-surface-variant"><MapPin size={14} className="shrink-0" /> {e.aula}</p>}
@@ -187,7 +187,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                     </ul>
                   )}
                 </div>
-                {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-primary w-full !py-4">Consultar por WhatsApp</a>}
+                {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-primary w-full py-4!">Consultar por WhatsApp</a>}
                 <p className="text-xs text-on-surface-variant">La inscripción y el pago se gestionan por el medio que te indiquemos al consultar.</p>
               </div>
               <Link href="/cursos" className="text-center text-sm text-on-surface-variant hover:text-secondary">← Ver todos los cursos</Link>

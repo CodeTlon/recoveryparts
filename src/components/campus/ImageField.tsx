@@ -29,12 +29,12 @@ export function ImageField({ label, name, defaultValue, hint }: { label: string;
       <span className="label">{label}</span>
       <input type="hidden" name={name} value={url} />
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded border border-outline-variant bg-surface-container-high">
+        <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-sm border border-outline-variant bg-surface-container-high">
           {url ? <Image src={url} alt="" fill sizes="160px" className="object-cover" unoptimized={url.startsWith('http://')} />
             : <span className="grid h-full place-items-center text-xs text-on-surface-variant">Sin imagen</span>}
         </div>
         <div className="space-y-2">
-          <label htmlFor={id} className="btn-ghost !px-3 !py-2 cursor-pointer">
+          <label htmlFor={id} className="btn-ghost px-3! py-2! cursor-pointer">
             {estado === 'subiendo' ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <ImagePlus size={14} aria-hidden />}
             {estado === 'subiendo' ? 'Subiendo…' : url ? 'Cambiar imagen' : 'Subir imagen'}
           </label>

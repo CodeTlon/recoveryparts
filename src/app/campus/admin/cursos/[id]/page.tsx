@@ -65,7 +65,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
       <nav aria-label="Secciones del curso" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
         {TABS.map(([k, l]) => (
           <Link key={k} href={href(k)} scroll={false} aria-current={tab === k ? 'page' : undefined}
-            className={`rounded px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
+            className={`rounded-sm px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
         ))}
       </nav>
 
@@ -76,7 +76,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
             <p className="text-sm text-on-surface-variant">Cada vez que se dicta el curso: fecha, aula, profesor, cupo, calendario y alumnos. Una edición activa por vez.</p>
           </div>
           <ModalButton label={<><CalendarPlus size={16} aria-hidden /> Nueva edición</>} title={`Nueva edición de ${curso.nombre}`} className="btn-primary whitespace-nowrap" wide>
-            {!plan?.length && <p className="mb-4 rounded border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">El curso todavía no tiene clases: cargalas en «Estructura» para poder armar el calendario de la edición.</p>}
+            {!plan?.length && <p className="mb-4 rounded-sm border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">El curso todavía no tiene clases: cargalas en «Estructura» para poder armar el calendario de la edición.</p>}
             <EdicionForm cursoId={id} aulas={aulas ?? []} profesores={profOpts} />
           </ModalButton>
         </div>
@@ -97,19 +97,19 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
                     {personalizadas.has(e.id) && <Badge tone="warn">Estructura propia</Badge>}
                     <Badge tone={m.tone}>{m.label}</Badge>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/campus/admin/cursos/${id}/ediciones/${e.id}`} className="btn-ghost !px-3 !py-2">Gestionar <ArrowRight size={14} aria-hidden /></Link>
+                      <Link href={`/campus/admin/cursos/${id}/ediciones/${e.id}`} className="btn-ghost px-3! py-2!">Gestionar <ArrowRight size={14} aria-hidden /></Link>
                       <ModalButton label={<><Copy size={14} aria-hidden /> Duplicar</>} title={`Duplicar la edición de ${etiquetaEdicion(e.fecha_inicio)}`}>
                         <DuplicarEdicion cursoId={id} edicionId={e.id} />
                       </ModalButton>
                       {e.activo ? (
-                        <ModalButton label={<><ArchiveX size={14} aria-hidden /> Baja</>} title={`Dar de baja la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300">
+                        <ModalButton label={<><ArchiveX size={14} aria-hidden /> Baja</>} title={`Dar de baja la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost px-3! py-2! hover:border-red-400! hover:text-red-300!">
                           <ActionForm action={setEstadoEdicion} submit="Dar de baja">
                             <input type="hidden" name="id" value={e.id} /><input type="hidden" name="activo" value="0" />
                             <p className="text-sm text-on-surface-variant">Deja de verse en el sitio y en el panel del profesor. No afecta al curso ni a las otras ediciones; los alumnos y su historial se conservan.</p>
                           </ActionForm>
                         </ModalButton>
                       ) : (
-                        <ModalButton label={<><ArchiveRestore size={14} aria-hidden /> Reactivar</>} title={`Reactivar la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost !px-3 !py-2 hover:!border-green-400 hover:!text-green-300">
+                        <ModalButton label={<><ArchiveRestore size={14} aria-hidden /> Reactivar</>} title={`Reactivar la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost px-3! py-2! hover:border-green-400! hover:text-green-300!">
                           <ActionForm action={setEstadoEdicion} submit="Reactivar">
                             <input type="hidden" name="id" value={e.id} /><input type="hidden" name="activo" value="1" />
                             <p className="text-sm text-on-surface-variant">Se valida que no se superponga con otra edición activa, que su aula siga activa y con capacidad para el cupo, y que no choque con otros cursos.</p>
@@ -162,7 +162,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
           <div className="flex flex-wrap items-center gap-3">
             {m.tipo === 'pdf' ? <FileText size={16} className="text-primary" /> : <Link2 size={16} className="text-primary" />}
             <span className="min-w-0 flex-1 font-medium">{m.titulo}</span>
-            {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Ver</a>}
+            {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost px-3! py-2!">Ver</a>}
             <form action={borrarMaterial}>
               <input type="hidden" name="id" value={m.id} />
               <Confirm message="¿Eliminar este material base? Deja de verse en todas las ediciones del curso."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>

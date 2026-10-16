@@ -54,7 +54,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
         <span className="min-w-0 flex-1 font-medium">{m.titulo}</span>
         {m.base && <Badge>Material base</Badge>}
         <Badge tone={st.visible ? 'ok' : 'neutral'}>{st.label}</Badge>
-        {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Ver</a>}
+        {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost px-3! py-2!">Ver</a>}
         {(!st.visible || st.manual) && (
           <form action={liberarMaterial}>
             <input type="hidden" name="id" value={m.id} /><input type="hidden" name="edicion_id" value={id} /><input type="hidden" name="liberar" value={st.manual ? '0' : '1'} />
@@ -136,7 +136,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
           {estructura.personalizada && (
             <ActionForm action={restablecerEstructura} submit={null} className="mt-4">
               <input type="hidden" name="edicion_id" value={id} />
-              <Confirm modal className="btn-ghost !px-4 !py-2" message="Se van a perder los cambios que hiciste en la estructura de este curso y va a volver a la guía general. El material que subiste a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
+              <Confirm modal className="btn-ghost px-4! py-2!" message="Se van a perder los cambios que hiciste en la estructura de este curso y va a volver a la guía general. El material que subiste a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
                 <RotateCcw size={14} /> Volver a la guía general
               </Confirm>
             </ActionForm>
