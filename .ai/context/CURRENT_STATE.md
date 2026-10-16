@@ -1,5 +1,7 @@
 # CURRENT_STATE — Recovery Parts
 
+**Actualizacion 2026-10-16:** la rama `feature/dev2-estandar-2026` (integrada en `dev` y `test`) lleva el proyecto al estandar de versiones de la flota: Next 16.4.2, React 19.3.1, Tailwind 4.3.3, TypeScript 6.0.3, ESLint 10.13.0 (nuevo), `proxy.ts`. Verificado: `tsc`, build, 36 E2E en 3 viewports, imagen Docker Alpine, `npm audit --omit=dev` en 0. **Sin verificar:** despliegue en Coolify (sin recursos todavia) y el seed de pruebas en esta maquina.
+
 Qué es verdad ahora (2026-10-15): todo corre en Coolify con Postgres propio; no queda Supabase ni Vercel en runtime. Lo que sigue sobre Supabase/Vercel es histórico. Esto envejece rápido: si pasó más de un mes, verificá contra el código y git antes de confiar.
 
 ## Ramas

@@ -6,7 +6,7 @@ Versión corta para decidir dónde tocar. Detalle completo, tabla de permisos y 
 Server Components leen con el rol y usuario de la sesión (RLS aplica) · Server Actions / Route Handlers escriben y sirven archivos, validando rol con `requireRole()` · `src/middleware.ts` (runtime Node) en `/campus/*` exige sesión válida, cuenta activa y rol.
 
 ## Autorización — tres capas, la real es RLS
-1. **Middleware**: sin sesión → `/login`; cuenta no activa → fuera; cada rol solo entra a su `/campus/<rol>`.
+1. **`src/proxy.ts`** (antes `middleware.ts`, Next 16): sin sesión → `/login`; cuenta no activa → fuera; cada rol solo entra a su `/campus/<rol>`.
 2. **`requireRole(...roles)`** (`src/lib/auth.ts`) al inicio de cada página/acción del campus.
 3. **RLS** en todas las tablas. Helpers SQL `security definer`: `es_admin()`, `es_profesor_de(edición)` y `es_profesor_del_curso(curso)` (desde la 0017 exigen una edición **vigente**: una terminada o dada de baja deja de ser accesible para el profesor), `alumno_activo_en(edición)`. El profesor **no escribe** `modulos_curso`/`plan_clases` por RLS: solo por las RPC `guardar_estructura_edicion` / `restablecer_estructura`, que validan el permiso adentro.
 
@@ -35,6 +35,6 @@ Cupo, choques de aula/profesor, cupo ≤ capacidad del aula, aulas sin DELETE ni
 Pagos, inscripciones, asistencia, stock, registro público, WhatsApp flotante/bot, videos alojados (solo links), modalidad virtual, carreras.
 
 - Rutas públicas nuevas: `/contacto` (formulario `enviarContacto` + datos de `site_settings.contacto`) y `/preguntas-frecuentes` (`cms_faq`). El catálogo `/cursos` lee `modulos_publicos` para mostrar los módulos en cada tarjeta.
-- Los encabezados de seguridad viven en `src/lib/security-headers.ts` (los aplica el middleware): Vercel rechazaba los declarados en `next.config.js`. Los nombres de server actions deben ser ASCII (Next los pone en un encabezado de ruta; la `ñ` rompía el deploy).
+- Los encabezados de seguridad viven en `src/lib/security-headers.ts` (los aplica `src/proxy.ts`): Vercel rechazaba los declarados en `next.config.js`. Los nombres de server actions deben ser ASCII (Next los pone en un encabezado de ruta; la `ñ` rompía el deploy).
 
 - Panel del admin: `/campus/admin` (Resumen) renderiza `components/campus/ReportesPanel.tsx`; `/campus/admin/reportes` solo redirige. `/campus/admin/sitio?tab=…` usa pestañas por query string (mismo patrón que el curso).
