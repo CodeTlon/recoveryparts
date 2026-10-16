@@ -27,7 +27,7 @@ export default async function Cursos() {
                   <td className="px-4 py-3 text-on-surface-variant">{(() => { const p = c.ediciones.filter((e: any) => e.activo && e.fecha_inicio >= hoy).sort((a: any, b: any) => a.fecha_inicio.localeCompare(b.fecha_inicio))[0]; return p ? fechaAR(p.fecha_inicio) : '—' })()}</td>
                   <td className="px-4 py-3"><Badge tone={c.activo ? 'ok' : 'neutral'}>{c.activo ? 'Activo' : 'De baja'}</Badge></td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/campus/admin/cursos/${c.id}`} className="btn-ghost !px-3 !py-2">Gestionar</Link>
+                    <Link href={`/campus/admin/cursos/${c.id}`} className="btn-ghost px-3! py-2!">Gestionar</Link>
                     {c.activo
                       ? <form action={bajaCurso} className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><Confirm message="¿Dar de baja este curso? Dejará de verse en el sitio con todas sus ediciones.">Baja</Confirm></form>
                       : <span className="ml-2 inline-block">

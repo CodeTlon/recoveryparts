@@ -13,7 +13,7 @@ export default async function FaqPage() {
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
-      <main id="contenido" tabIndex={-1} className="flex-grow pt-20 outline-none">
+      <main id="contenido" tabIndex={-1} className="grow pt-20 outline-hidden">
         <section className="grid-bg border-b border-outline-variant">
           <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12">
             <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Preguntas frecuentes</h1>

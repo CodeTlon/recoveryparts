@@ -73,7 +73,7 @@ export default async function AlumnoHome() {
               </div>
 
               {i.estado === 'desertor' && (
-                <div role="alert" className="mb-4 flex gap-3 rounded border border-red-500/40 bg-red-500/10 p-4 text-sm">
+                <div role="alert" className="mb-4 flex gap-3 rounded-sm border border-red-500/40 bg-red-500/10 p-4 text-sm">
                   <AlertTriangle size={20} className="mt-0.5 shrink-0 text-red-300" />
                   <div>
                     <p className="font-semibold text-red-200">Fuiste dado de baja de este curso el {fechaAR(i.fecha_desercion)}{i.n_clase_desercion != null ? ` (clase ${i.n_clase_desercion})` : ''}.</p>

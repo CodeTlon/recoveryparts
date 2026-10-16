@@ -16,7 +16,7 @@ export default async function ContactoPage() {
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
-      <main id="contenido" tabIndex={-1} className="flex-grow pt-20 outline-none">
+      <main id="contenido" tabIndex={-1} className="grow pt-20 outline-hidden">
         <section className="grid-bg border-b border-outline-variant">
           <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12">
             <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Contacto</h1>
@@ -30,7 +30,7 @@ export default async function ContactoPage() {
               {c.direccion && <li className={fila}><MapPin size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <span>{c.direccion}</span></li>}
               {c.horario && <li className={fila}><Clock size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <span>{c.horario}</span></li>}
               {c.telefono && <li className={fila}><Phone size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <span>{c.telefono}</span></li>}
-              {c.email && <li className={fila}><Mail size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <a className="min-w-0 break-words hover:text-secondary" href={`mailto:${c.email}`}>{c.email}</a></li>}
+              {c.email && <li className={fila}><Mail size={20} className="mt-0.5 shrink-0 text-secondary" aria-hidden /> <a className="min-w-0 wrap-break-word hover:text-secondary" href={`mailto:${c.email}`}>{c.email}</a></li>}
               {c.instagram && <li className={fila}><InstagramIcon size={20} className="mt-0.5 shrink-0 text-secondary" /> <a className="hover:text-secondary" href={`https://www.instagram.com/${c.instagram.replace('@', '')}/`} target="_blank" rel="noopener noreferrer">{c.instagram}</a></li>}
             </ul>
             {c.whatsapp && (

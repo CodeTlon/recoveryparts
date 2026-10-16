@@ -71,7 +71,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
         <div className="card mb-4 flex flex-wrap items-center gap-3 p-4 text-sm">
           <CalendarDays size={18} className="text-accent" />
           <span>Curso finalizado. Tenés acceso al material hasta el <strong>{fechaAR(insc.acceso_hasta)}</strong>.</span>
-          <a href={`/api/curso/${id}/zip`} className="btn-ghost ml-auto !px-4 !py-2"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>
+          <a href={`/api/curso/${id}/zip`} className="btn-ghost ml-auto px-4! py-2!"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>
         </div>
       )}
 
@@ -79,7 +79,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
         <div key={e.id} role="status" className="card mb-4 flex flex-wrap items-center gap-3 border-accent/50 bg-accent/10 p-4 text-sm">
           <ClipboardList size={20} className="shrink-0 text-accent" />
           <span className="min-w-0 flex-1"><strong>Tenés una encuesta para responder:</strong> {e.titulo}. Es anónima.</span>
-          <Link href={`/campus/alumno/encuesta/${e.id}`} className="btn-primary !px-4 !py-2">Responder</Link>
+          <Link href={`/campus/alumno/encuesta/${e.id}`} className="btn-primary px-4! py-2!">Responder</Link>
         </div>
       ))}
 
@@ -96,7 +96,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
         {bloques.map((b, idx) => (
           <Reveal key={b.id} delay={Math.min(idx, 6) * 0.05}>
           <li className="relative">
-            <span aria-hidden className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full ring-4 ring-surface md:-left-[39px] ${b.clases.length ? 'bg-accent shadow-glow' : 'bg-outline-variant'}`} />
+            <span aria-hidden className={`absolute left-[-31px] top-1 h-3 w-3 rounded-full ring-4 ring-surface md:left-[-39px] ${b.clases.length ? 'bg-accent shadow-glow' : 'bg-outline-variant'}`} />
             {b.titulo && <h2 className="mb-3 text-lg font-semibold">Módulo {++nMod} · {b.titulo}</h2>}
             {!b.clases.length ? <p className="text-sm text-on-surface-variant">Próximamente.</p> : (
               <div className="space-y-5">
@@ -121,7 +121,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
         ))}
         {generales.length > 0 && (
           <li className="relative">
-            <span aria-hidden className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-accent shadow-glow ring-4 ring-surface md:-left-[39px]" />
+            <span aria-hidden className="absolute left-[-31px] top-1 h-3 w-3 rounded-full bg-accent shadow-glow ring-4 ring-surface md:left-[-39px]" />
             <h2 className="mb-3 text-lg font-semibold">Material general</h2>
             <ul className="space-y-2">{generales.map(item)}</ul>
           </li>

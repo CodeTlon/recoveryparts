@@ -13,7 +13,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }: { eyeb
           <Image src="/images/logo.png" alt="" width={36} height={36} /> Recovery Parts
         </Link>
         <div className="relative max-w-md">
-          <p className="text-4xl font-bold leading-tight tracking-tight">Aprendé un oficio con <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">equipos reales</span>.</p>
+          <p className="text-4xl font-bold leading-tight tracking-tight">Aprendé un oficio con <span className="bg-linear-to-r from-accent to-secondary bg-clip-text text-transparent">equipos reales</span>.</p>
           <p className="mt-4 text-on-surface-variant">Tu campus: clases, material y seguimiento de tus cursos en un solo lugar.</p>
         </div>
       </aside>

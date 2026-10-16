@@ -45,7 +45,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       <PageHead title={nombre} sub={!ed.activo ? 'Edición dada de baja: no se ve en el sitio ni en el panel del profesor.' : !curso.activo ? 'El curso está dado de baja.' : `Inicia el ${fechaAR(ed.fecha_inicio)}.`} />
 
       {sinFechas && tab !== 'calendario' && (
-        <p className="mb-6 rounded border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">
+        <p className="mb-6 rounded-sm border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">
           Esta edición todavía no tiene fechas de clase. <Link href={href('calendario')} className="font-semibold underline">Asignalas en Calendario</Link> (primero cargá los horarios).
         </p>
       )}
@@ -53,7 +53,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       <nav aria-label="Secciones de la edición" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
         {TABS.map(([k, l]) => (
           <Link key={k} href={href(k)} scroll={false} aria-current={tab === k ? 'page' : undefined}
-            className={`rounded px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
+            className={`rounded-sm px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
         ))}
       </nav>
 
@@ -88,7 +88,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
           {estructura.personalizada && (
             <ActionForm action={restablecerEstructura} submit={null} className="mt-4">
               <input type="hidden" name="edicion_id" value={eid} />
-              <Confirm modal className="btn-ghost !px-4 !py-2" message="Se van a perder los cambios hechos en la estructura de esta edición y va a volver a la guía general. El material que el profesor subió a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
+              <Confirm modal className="btn-ghost px-4! py-2!" message="Se van a perder los cambios hechos en la estructura de esta edición y va a volver a la guía general. El material que el profesor subió a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
                 <RotateCcw size={14} /> Volver a la guía general
               </Confirm>
             </ActionForm>
@@ -139,7 +139,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
                 </div>
 
                 {i.estado === 'desertor' && (
-                  <div className="mt-3 rounded border border-red-500/30 bg-red-500/10 p-3 text-sm">
+                  <div className="mt-3 rounded-sm border border-red-500/30 bg-red-500/10 p-3 text-sm">
                     <p className="font-semibold text-red-200">Desertó en la clase {i.n_clase_desercion} de {totalClases} · {fechaAR(i.fecha_desercion)}</p>
                     <p className="mt-1 text-on-surface-variant">Motivo: {i.motivo_desercion}</p>
                     <details className="mt-2"><summary className="cursor-pointer text-secondary">Corregir fecha</summary>
