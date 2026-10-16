@@ -16,7 +16,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
   const { data: users } = await query
 
   const tab = (v: string | undefined, l: string) => (
-    <Link href={v ? `?rol=${v}` : '?'} className={`rounded border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-surface' : 'border-outline-variant text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
+    <Link href={v ? `?rol=${v}` : '?'} className={`rounded-sm border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-surface' : 'border-outline-variant text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
   )
 
   return (
@@ -41,7 +41,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {tab(undefined, 'Todos')}{tab('alumno', 'Alumnos')}{tab('profesor', 'Profesores')}{tab('admin', 'Admins')}
-        <form className="ml-auto"><input name="q" defaultValue={q} placeholder="Buscar…" aria-label="Buscar usuarios" className="input !py-2" />{rol && <input type="hidden" name="rol" value={rol} />}</form>
+        <form className="ml-auto"><input name="q" defaultValue={q} placeholder="Buscar…" aria-label="Buscar usuarios" className="input py-2!" />{rol && <input type="hidden" name="rol" value={rol} />}</form>
       </div>
 
       {!users?.length ? <Empty>No hay usuarios.</Empty> : (
@@ -52,7 +52,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
               <Reveal key={u.id} y={8}>
               <li className="card p-4 transition-colors hover:border-outline">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-light to-accent text-sm font-bold text-white">{`${u.nombre?.[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()}</span>
+                  <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-linear-to-br from-brand-light to-accent text-sm font-bold text-white">{`${u.nombre?.[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">{u.apellido}, {u.nombre} <span className="ml-2 text-xs font-normal uppercase text-on-surface-variant">{u.rol}</span></p>
                     <p className="truncate text-sm text-on-surface-variant">{u.email}{u.telefono ? ` · ${u.telefono}` : ''}</p>
@@ -85,13 +85,13 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                     {u.id !== perfil.id && u.estado_cuenta === 'activa' && (
                       <form action={setEstadoCuenta}>
                         <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="inactiva" />
-                        <Confirm message={`¿Deshabilitar a ${u.nombre} ${u.apellido}? No podrá entrar al campus hasta que la reactives.`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
+                        <Confirm message={`¿Deshabilitar a ${u.nombre} ${u.apellido}? No podrá entrar al campus hasta que la reactives.`} className="btn-ghost px-3! py-2! hover:border-red-400! hover:text-red-300!"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
                       </form>
                     )}
                     {u.id !== perfil.id && u.estado_cuenta === 'inactiva' && (
                       <form action={setEstadoCuenta}>
                         <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="activa" />
-                        <SubmitButton className="btn-ghost !px-3 !py-2 hover:!border-green-400 hover:!text-green-300"><UserCheck size={14} aria-hidden /> Reactivar</SubmitButton>
+                        <SubmitButton className="btn-ghost px-3! py-2! hover:border-green-400! hover:text-green-300!"><UserCheck size={14} aria-hidden /> Reactivar</SubmitButton>
                       </form>
                     )}
                   </div>

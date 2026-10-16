@@ -54,10 +54,10 @@ export default function SiteNav() {
           ))}
         </div>
 
-        <Link href="/login" className="btn-primary hidden !py-2 lg:inline-flex">Campus</Link>
+        <Link href="/login" className="btn-primary hidden py-2! lg:inline-flex">Campus</Link>
 
         <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open}
-          className="-mr-1.5 inline-flex h-11 w-11 items-center justify-center rounded text-on-surface hover:text-secondary lg:hidden">
+          className="-mr-1.5 inline-flex h-11 w-11 items-center justify-center rounded-sm text-on-surface hover:text-secondary lg:hidden">
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -65,7 +65,7 @@ export default function SiteNav() {
       {open && (
         <div className="border-t border-outline-variant bg-surface px-4 pb-4 pt-2 lg:hidden">
           {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} onClick={close} className={`block rounded px-3 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-surface-container-low ${link}`}>{l.label}</Link>
+            <Link key={l.href} href={l.href} onClick={close} className={`block rounded-sm px-3 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-surface-container-low ${link}`}>{l.label}</Link>
           ))}
           <Link href="/login" onClick={close} className="btn-primary mt-2 w-full">Campus</Link>
         </div>

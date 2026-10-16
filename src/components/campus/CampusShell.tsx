@@ -45,7 +45,7 @@ function Inner({ rol, nombre, avisos, onNavigate }: { rol: string; nombre: strin
   return (
     <>
       <div className="mb-8 flex items-center gap-3 rounded-card border border-outline-variant bg-surface-container-high/60 p-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-light to-accent font-bold text-white ring-2 ring-accent/30">{iniciales}</div>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-light to-accent font-bold text-white ring-2 ring-accent/30">{iniciales}</div>
         <div className="min-w-0">
           <p className="truncate text-base font-semibold text-primary">{nombre}</p>
           <p className="text-xs text-on-surface-variant">{ROL_LABEL[rol]}</p>
@@ -96,17 +96,17 @@ export default function CampusShell({ rol, nombre, avisos, children }: { rol: st
 
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-outline-variant bg-surface-container px-4 md:hidden">
         <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-tighter"><Image src="/images/logo.png" alt="" width={28} height={28} /> Recovery Parts</span>
-        <button type="button" onClick={() => setOpen(true)} aria-label="Abrir menú" className="-mr-1.5 flex h-11 w-11 items-center justify-center rounded hover:text-secondary"><Menu size={24} /></button>
+        <button type="button" onClick={() => setOpen(true)} aria-label="Abrir menú" className="-mr-1.5 flex h-11 w-11 items-center justify-center rounded-sm hover:text-secondary"><Menu size={24} /></button>
       </header>
 
       <AnimatePresence>
         {open && (
           <motion.div key="drawer" initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 1 }} transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menú">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setOpen(false)} />
             <motion.div ref={drawerRef} initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', stiffness: 380, damping: 38 }}
               className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4">
-              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú" className="-mr-1.5 mb-2 flex h-11 w-11 items-center justify-center self-end rounded hover:text-secondary"><X size={24} /></button>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú" className="-mr-1.5 mb-2 flex h-11 w-11 items-center justify-center self-end rounded-sm hover:text-secondary"><X size={24} /></button>
               <Inner rol={rol} nombre={nombre} avisos={avisos} onNavigate={() => setOpen(false)} />
             </motion.div>
           </motion.div>

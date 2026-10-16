@@ -19,7 +19,7 @@ export default async function Ver({ params }: { params: Promise<{ id: string; mi
         <a href={`/api/material/${mid}?download=1`} className="btn-primary"><Download size={16} /> Descargar PDF</a>
       </div>
       <div>
-        <iframe src={`/api/material/${mid}#navpanes=0`} title={m.titulo} className="h-[78vh] w-full rounded border border-outline-variant bg-white" />
+        <iframe src={`/api/material/${mid}#navpanes=0`} title={m.titulo} className="h-[78vh] w-full rounded-sm border border-outline-variant bg-white" />
       </div>
     </>
   )

@@ -6,7 +6,7 @@ Qué leer según el tipo de tarea. Leé solo lo que necesites; no cargues todo e
 |---|---|
 | Primera sesión / onboarding | `PROJECT.md` + `ARCHITECTURE.md` |
 | Saber qué está pendiente o bloqueado ahora | `CURRENT_STATE.md` |
-| Tocar auth, roles, RLS, middleware, invitaciones | `ARCHITECTURE.md` (Autorización) + `docs/ARQUITECTURA.md` |
+| Tocar auth, roles, RLS, `proxy.ts` (antes middleware), invitaciones | `ARCHITECTURE.md` (Autorización) + `docs/ARQUITECTURA.md` |
 | Tocar cursos, inscripciones, deserción, cupos, material, encuestas | `DOMAIN.md` + `docs/ESPECIFICACION-ACADEMIA.md` (RF correspondiente) |
 | Migraciones, seed, Postgres local, cuentas de prueba | `ENVIRONMENTS.md` |
 | Pantallas, estilos, formularios del campus | `CONVENTIONS.md` |

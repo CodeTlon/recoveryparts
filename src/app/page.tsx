@@ -51,19 +51,19 @@ export default async function Home() {
         <section className="relative flex min-h-[85vh] items-center overflow-hidden pt-20">
           {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}
           {hrefSeguro(s.hero.video_url) && <video src={hrefSeguro(s.hero.video_url)} poster={s.hero.imagen_url || undefined} autoPlay muted loop playsInline preload="metadata" aria-hidden className="absolute inset-0 h-full w-full object-cover" />}
-          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/85 to-surface/40" />
+          <div className="absolute inset-0 bg-linear-to-r from-surface via-surface/85 to-surface/40" />
           <div className="pointer-events-none absolute -bottom-1/4 -left-1/4 h-[500px] w-[500px] rounded-full bg-accent/20 blur-[130px]" />
           <div className="relative mx-auto w-full max-w-[1280px] px-4 py-20 md:px-12">
             <BlurText text={s.hero.titulo || 'Aprendé un oficio con equipos reales'} className="mb-6 max-w-4xl text-4xl font-bold tracking-tight md:text-6xl" />
             <p className="mb-10 max-w-2xl text-lg text-on-surface-variant md:text-xl">{s.hero.subtitulo || 'Cursos y talleres presenciales en Córdoba.'}</p>
-            <form action="/cursos" role="search" className="mb-8 flex max-w-xl items-center gap-2 rounded-pill border border-outline-variant bg-surface-container/80 p-1.5 pl-5 shadow-card backdrop-blur focus-within:border-accent">
+            <form action="/cursos" role="search" className="mb-8 flex max-w-xl items-center gap-2 rounded-pill border border-outline-variant bg-surface-container/80 p-1.5 pl-5 shadow-card backdrop-blur-sm focus-within:border-accent">
               <Search size={18} aria-hidden className="shrink-0 text-on-surface-variant" />
-              <input name="q" type="search" aria-label="Buscar cursos" placeholder="¿Qué querés aprender? Ej: celulares, diseño…" className="min-w-0 flex-1 bg-transparent py-2 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none" />
-              <button className="btn-primary !rounded-pill !px-5 !py-2.5">Buscar</button>
+              <input name="q" type="search" aria-label="Buscar cursos" placeholder="¿Qué querés aprender? Ej: celulares, diseño…" className="min-w-0 flex-1 bg-transparent py-2 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-hidden" />
+              <button className="btn-primary rounded-pill! px-5! py-2.5!">Buscar</button>
             </form>
             <div className="flex flex-wrap gap-4">
-              <Link href="/cursos" className="btn-primary !px-8 !py-4">{s.hero.cta_cursos || 'Ver cursos'} <ArrowRight size={18} /></Link>
-              {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline !px-8 !py-4"><WhatsAppIcon size={18} /> {s.hero.cta_whatsapp || 'WhatsApp'}</a>}
+              <Link href="/cursos" className="btn-primary px-8! py-4!">{s.hero.cta_cursos || 'Ver cursos'} <ArrowRight size={18} /></Link>
+              {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline px-8! py-4!"><WhatsAppIcon size={18} /> {s.hero.cta_whatsapp || 'WhatsApp'}</a>}
             </div>
           </div>
         </section>
@@ -76,7 +76,7 @@ export default async function Home() {
               return (
                 <Link key={a} href={`/cursos?area=${a}`} className={`card group relative flex min-h-[300px] flex-col justify-end overflow-hidden p-8 transition-colors hover:border-accent ${a === 'diseno' ? 'border-t-4 border-t-accent' : 'border-t-4 border-t-brand-light'}`}>
                   {cfg.imagen_url && <Image src={cfg.imagen_url} alt="" fill sizes="50vw" className="object-cover opacity-40 transition-opacity group-hover:opacity-50" />}
-                  <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/90 to-surface/20" />
+                  <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/90 to-surface/20" />
                   <div className="relative">
                     <h2 className="mb-2 text-2xl font-bold">{cfg.titulo || AREA_LABEL[a]}</h2>
                     {cfg.texto && <p className="mb-4 text-on-surface-variant">{cfg.texto}</p>}
@@ -111,9 +111,9 @@ export default async function Home() {
             <SectionTitle eyebrow="Egresados">Construyendo <em>profesionales</em></SectionTitle>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:auto-rows-[200px]">
               {egresados.map((e) => (
-                <figure key={e.id} className={`relative overflow-hidden rounded border border-outline-variant bg-surface-container ${e.destacado ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square md:aspect-auto'}`}>
+                <figure key={e.id} className={`relative overflow-hidden rounded-sm border border-outline-variant bg-surface-container ${e.destacado ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square md:aspect-auto'}`}>
                   {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />}
-                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3 pt-10">
+                  <figcaption className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 to-transparent p-3 pt-10">
                     <p className="text-sm font-semibold">{e.nombre}</p>
                     <p className="text-xs text-on-surface-variant">{e.especialidad}</p>
                   </figcaption>
@@ -125,7 +125,7 @@ export default async function Home() {
 
         {/* 5 · Nosotros + stats */}
         {(s.nosotros.titulo || s.nosotros.texto) && (
-          <section className="relative overflow-hidden border-y border-outline-variant bg-gradient-to-br from-brand-dark via-surface-container-lowest to-surface-container-lowest">
+          <section className="relative overflow-hidden border-y border-outline-variant bg-linear-to-br from-brand-dark via-surface-container-lowest to-surface-container-lowest">
             <AuroraBackground className="opacity-60" />
             <div className="relative mx-auto grid max-w-[1280px] items-center gap-12 px-4 py-20 md:grid-cols-2 md:px-12">
               <div>
@@ -135,7 +135,7 @@ export default async function Home() {
               </div>
               <dl className="grid grid-cols-3 gap-4 self-center text-center">
                 {([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const).map(([k, l]) => (
-                  s.stats[k] != null && <Reveal key={k}><div className="rounded-card border border-white/10 bg-white/5 p-5 backdrop-blur"><dd className="text-4xl font-bold text-accent md:text-5xl"><CountUp to={Number(s.stats[k])} /></dd><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt></div></Reveal>
+                  s.stats[k] != null && <Reveal key={k}><div className="rounded-card border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><dd className="text-4xl font-bold text-accent md:text-5xl"><CountUp to={Number(s.stats[k])} /></dd><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt></div></Reveal>
                 ))}
               </dl>
             </div>
@@ -173,7 +173,7 @@ export default async function Home() {
         {/* 8 · Contacto: la consulta vive en /contacto */}
         <section className="border-t border-outline-variant">
           <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-            <SectionTitle eyebrow="¿Tenés dudas?" align="center" className="!mb-6"><em>Escribinos</em></SectionTitle>
+            <SectionTitle eyebrow="¿Tenés dudas?" align="center" className="mb-6!"><em>Escribinos</em></SectionTitle>
             <p className="mb-8 text-on-surface-variant">Consultanos por cursos, horarios o talleres. Te respondemos por mail.</p>
             <Link href="/contacto" className="btn-primary inline-flex">Ir a contacto</Link>
           </div>

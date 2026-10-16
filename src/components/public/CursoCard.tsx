@@ -40,7 +40,7 @@ export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPubli
   return (
     <SpotlightCard className="h-full">
     <Link href={`/cursos/${c.slug}`} className="group flex h-full flex-col">
-      <div className="relative aspect-[4/3] overflow-hidden border-b border-outline-variant bg-surface-container">
+      <div className="relative aspect-4/3 overflow-hidden border-b border-outline-variant bg-surface-container">
         {foto
           ? <Image src={foto} alt={c.nombre} fill sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           : <div className="grid-bg flex h-full items-center justify-center text-outline-variant"><Wrench size={48} aria-hidden /></div>}
@@ -49,7 +49,7 @@ export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPubli
           <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white/80 text-white"><Search size={24} /></span>
         </span>
       </div>
-      <div className="flex flex-grow flex-col p-5">
+      <div className="flex grow flex-col p-5">
         <span className="mb-1 text-xs font-bold uppercase tracking-widest text-accent">{AREA_LABEL[c.area]}</span>
         <h3 className="mb-3 text-lg font-semibold text-on-surface">{c.nombre}</h3>
         <div className="mb-1 flex items-center gap-2 text-sm text-on-surface-variant">
@@ -72,7 +72,7 @@ export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPubli
         <div className="mt-auto border-t border-outline-variant pt-4">
           <div className="flex items-end justify-between gap-3">
             <Precio c={c} size="text-2xl" />
-            <span className="rounded border-2 border-accent px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-accent transition-colors group-hover:bg-accent group-hover:text-surface">+ info</span>
+            <span className="rounded-sm border-2 border-accent px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-accent transition-colors group-hover:bg-accent group-hover:text-surface">+ info</span>
           </div>
           {c.cupos_disponibles != null && <div className="mt-2"><Cupos n={c.cupos_disponibles} /></div>}
         </div>

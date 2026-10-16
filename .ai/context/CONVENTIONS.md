@@ -11,7 +11,7 @@
 - Nada de datos personales ni tokens en URLs ni logs.
 
 ## Estilos
-Tokens en `tailwind.config.ts` + clases `btn-*`, `card`, `input`, `badge` en `src/app/globals.css`. Paleta azul/naranja/blanco (RNF-01). Un solo sistema de diseño: no reintroducir tokens `demo-*`.
+Tokens en el `@theme` de `src/app/globals.css` (ya no hay `tailwind.config.ts`) + clases `btn-*`, `card`, `input`, `badge` en `src/app/globals.css`. Paleta azul/naranja/blanco (RNF-01). Un solo sistema de diseño: no reintroducir tokens `demo-*`.
 
 ## Base de datos
 - Nunca editar una migración aplicada: nueva `NNNN_descripcion.sql`, probada con `npm run db:reset`.

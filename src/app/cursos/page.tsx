@@ -37,12 +37,12 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />
-      <main id="contenido" tabIndex={-1} className="flex-grow pt-20 outline-none">
+      <main id="contenido" tabIndex={-1} className="grow pt-20 outline-hidden">
         <section className="grid-bg border-b border-outline-variant">
           <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12">
             <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Cursos y talleres</h1>
             <p className="max-w-2xl text-lg text-on-surface-variant">Formación 100% presencial en La Rioja 345, Córdoba. Cursos de varias semanas y talleres cortos: una jornada, días seguidos o 1 a 2 semanas.</p>
-            <Suspense fallback={<div className="min-h-[9rem]" aria-hidden />}><CursosFilters /></Suspense>
+            <Suspense fallback={<div className="min-h-36" aria-hidden />}><CursosFilters /></Suspense>
           </div>
         </section>
 
