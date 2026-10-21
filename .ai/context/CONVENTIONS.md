@@ -29,7 +29,11 @@ Tokens en el `@theme` de `src/app/globals.css` (ya no hay `tailwind.config.ts`) 
 ## Formularios del campus (patrones nuevos)
 - **Modales**: `ModalButton` (`components/campus/Modal.tsx`, `<dialog>` nativo). Un `ActionForm` dentro se cierra solo al guardar. Nada de `alert()`/`confirm()`: las acciones destructivas usan `Confirm` (mantener apretado; con teclado abre un modal propio).
 - **Listas por filas** (`ListEditors.tsx`: horarios, módulos, kit, clases): serializan al mismo texto que ya parsean las server actions (`guardarHorarios`, etc.) en un `<textarea hidden>`. Un `Guard` bloquea el envío con el mensaje de validación, para no guardar una lista a medias.
-- **Imágenes**: `ImageField` sube a `sitio` (`subirImagen`) y guarda la URL; no pedir URLs pegadas.
+- **Imágenes**: `ImageField` sube a `sitio` (`subirImagen`) y guarda la URL; no pedir URLs pegadas. `imagenOpcional()` solo acepta rutas del propio sitio (`/media/…`, `/images/…`): `next/image` no tiene `remotePatterns` y una URL externa rompe la página.
+- **Botones sueltos** (baja, deshabilitar, borrar, marcar leído, liberar): la acción tiene la forma de `ActionForm` (`(_: R, fd) => Promise<R>`) y se usa `<ActionForm action={x} submit={null} reset={false} okLabel="Hecho">` con el botón (`Confirm`/`SubmitButton`) adentro. Así el error se muestra; un `<form action>` que devuelve `void` lo traga.
+- **Validación**: todo dato del formulario se revalida en el servidor (largos, rangos, UUID con `UUID`, fecha con `fechaInicioValida()`); el `required` del HTML no cuenta. Los campos del CMS con formato propio (`campoSettingInvalido` en `guardarSetting`) y las claves permitidas (`CLAVES_SETTINGS`) se listan ahí.
+- **SEO**: cada página pública exporta `metadata = metaPagina({ titulo, descripcion, ruta })` (`src/lib/seo.ts`: canonical, Open Graph y Twitter propios, imagen social por defecto). Datos estructurados con `<JsonLd datos={…} />`. La URL del sitio sale siempre de `siteUrl()` (`src/lib/env.ts`).
+- **Colores de estado**: `text-danger`, `text-success`, `text-warning`, `text-info` (tokens de `@theme`); no usar `red-400` ni similares. Bordes de controles: `border-outline` (3:1 mínimo), los divisores sutiles `border-outline-variant`.
 - **Rangos**: `Field` acepta `min/max/step`; el servidor revalida (`guardarCurso`) y la base tiene los `check`.
 - **Gráficos**: SVG propio en `components/campus/charts.tsx` (sin librerías).
 - **Seed de demo**: `seed:dev`/`seed:test` crean cuentas `@demo.example.com` (contraseña `demo1234`), 5 cursos y 4 talleres cortos.

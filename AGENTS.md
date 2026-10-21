@@ -43,6 +43,8 @@ Node 22 (Dockerfile y CI). Versiones de la flota (Next 16.4.2, React 19.3.1, Tai
 ## Convenciones mínimas
 - Español rioplatense en la UI (voseo). Comentarios con el ID del requisito (`RF-xx`) cuando implementan uno.
 - Server actions de admin en `src/app/campus/admin/actions.ts` (tipo `R` = `{ ok?, error? }`); formularios con `ActionForm`/`Field` de `src/components/campus/ui.tsx`.
+- Toda página que lea la sesión o cargue scripts es dinámica (`export const dynamic = 'force-dynamic'`): la CSP lleva un nonce por request y una página estática no puede llevarlo.
+- Una server action que cambie algo que el sitio público muestra llama a `invalidarPublico()` (el sitio cachea 60 s). Un botón suelto usa `ActionForm` con `submit={null}` para que el error se vea.
 - Más en `.ai/context/CONVENTIONS.md`.
 
 ## Flujo de trabajo

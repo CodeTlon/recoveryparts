@@ -4,6 +4,14 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-21 | **CSP con nonce por request** en `proxy.ts` (sin `unsafe-inline` en `script-src`) y páginas con scripts siempre dinámicas | Un script inyectado ya no corre; el costo es que no puede haber páginas estáticas con JavaScript |
+| 2026-10-21 | **Caché de datos del sitio público**: 60 s con tag `publico`, invalidado por las server actions que cambian datos públicos | Cada visita a la home hacía 6 consultas de 4 viajes; el contenido casi no cambia |
+| 2026-10-21 | `set_config` y la consulta de cada transacción se mandan en pipeline | Un viaje menos por consulta, el orden se conserva en la misma conexión |
+| 2026-10-21 | El ZIP y los PDF del material van por streaming (`Range`, `Content-Length`) | Se cargaban enteros en memoria (hasta 25 MB por archivo, multiplicado por descargas simultáneas) |
+| 2026-10-21 | La galería pasa de columnas a **grilla 4:3** | No se guardan las medidas de cada foto: con tamaños supuestos la página saltaba al cargar |
+| 2026-10-21 | Tokens `danger/success/warning/info` y bordes de control `border-outline` (≥ 3:1) | WCAG 1.4.11; los colores de estado estaban repartidos como `red-400` en 19 archivos |
+| 2026-10-21 | `guardar_calendario` (RPC) reemplaza upsert + borrado en tres transacciones; el trigger de deserción solo escribe si el N° de clase cambia | Guardado atómico y sin ruido de auditoría |
+| 2026-10-21 | `/activar` pasa a `force-dynamic` | Salía estática en el build y siempre decía «El link venció» |
 | 2026-10-21 | **Vigencia de tokens: invitación 7 días, reset 1 hora** (la spec decía 24 h y 10 min; se alinea la spec y los textos con el código) | 24 h es poco para una invitación que el alumno puede tardar en abrir y 10 min no tolera el retraso del mail; el riesgo está acotado por el uso único y el paso con botón |
 | 2026-10-21 | El link del mail abre `/activar/confirmar` y el token se consume con un POST (`confirmarAcceso`), que emite una sesión de **activación** de 15 min (claim `act`): solo sirve para definir la contraseña, nunca para el campus | Los escáneres de mail abren el GET y quemaban el token; una cookie normal robada no debe permitir fijar una contraseña nueva |
 | 2026-10-21 | El logout actualiza `sesion_desde` (cierra la sesión en todos los dispositivos) | El token es stateless: borrar la cookie no lo invalidaba |

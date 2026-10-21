@@ -20,10 +20,10 @@ El rate limit de login/reset (`src/lib/rate-limit.ts`) vive en memoria del proce
 `DATABASE_URL` es el dueño de la base (superusuario en el contenedor oficial) y cambia de rol con `SET LOCAL ROLE`. RLS sigue vigente, pero un usuario de conexión sin superusuario sería más seguro (pendiente).
 
 ## Las sesiones son cookies firmadas sin tabla
-No hay revocación individual: se invalidan todas las de un usuario con `auth.users.sesion_desde` (se actualiza al cambiar la contraseña) o desactivando la cuenta. Cambiar `SESSION_SECRET` cierra todas.
+No hay revocación individual: se invalidan todas las de un usuario con `auth.users.sesion_desde` (se actualiza al cambiar la contraseña, **al cerrar sesión** y al desactivar la cuenta). Cerrar sesión en un dispositivo la cierra en todos. Cambiar `SESSION_SECRET` cierra todas. Tras abrir un link de invitación/recuperación hay una sesión de **activación** (claim `act`, 15 min) que no entra al campus.
 
 ## Sin tests automáticos de UI ni de políticas RLS
-La CI verifica tipos, build, migraciones, RLS activo en todas las tablas y que un alta sin invitación no cree perfil. No prueba las políticas por rol ni las pantallas.
+La CI verifica tipos, lint, build, migraciones, RLS activo en todas las tablas, que un alta sin invitación no cree perfil, **las reglas de negocio de la base** (`tests/db/reglas.sql`: cupo, estados finales, N° de clase, encuesta anónima, RLS por rol) y **E2E con base** (`tests/e2e/auth.spec.ts`: invitación, activación, rol, logout; `csp.spec.ts`). No cubre las pantallas del campus por rol ni las acciones del admin.
 
 ## El mail depende de SMTP
 Invitaciones, recuperación de contraseña y avisos salen por `src/lib/mail.ts`. Sin `SMTP_HOST`/`MAIL_FROM` no se envía nada (el alta del usuario queda hecha, pero nadie recibe el link): configurarlo antes de invitar en cada entorno.
@@ -32,16 +32,16 @@ Invitaciones, recuperación de contraseña y avisos salen por `src/lib/mail.ts`.
 `docs/CUENTAS-HOMOLOGACION.md`, `.env.test` y `.env.production` están gitignored. Nunca pegar claves en el chat ni en commits.
 
 ## Sin verificar en navegador tras la auditoría
-La CSP (`next.config.js`) y la reactivación de cuentas (`ban_duration: 'none'` en `setEstadoCuenta`) se probaron solo por código y headers. Revisar en homologación que no bloqueen imágenes ni el iframe del PDF, y que un usuario reactivado pueda entrar.
+La CSP ahora es con nonce (`src/proxy.ts`): se verificó en Chromium contra el sitio y el campus del admin (sin violaciones; modales y menú móvil andan). **Sin verificar:** el iframe/visor de PDF y el ZIP en homologación. La página `/_not-found` es estática y sus scripts no llevan nonce (queda sin hidratar; es solo un enlace).
 
 ## Rate limit en memoria
-`src/lib/rate-limit.ts` cuenta por instancia serverless (mejor esfuerzo). Para un límite real hace falta un store compartido (tabla en Postgres o Upstash).
+`src/lib/rate-limit.ts` cuenta por instancia (mejor esfuerzo; ya no se resetea de golpe al llenarse: descarta las claves más viejas). La IP sale de `src/lib/ip.ts` (`x-real-ip`, o el último valor de `x-forwarded-for`): **confirmar en Coolify/Traefik que `x-real-ip` lo pisa el proxy**. Para un límite real entre réplicas hace falta un store compartido.
 
 ## Respuestas de encuesta por número de pregunta
 Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las preguntas de una encuesta con respuestas. Un id estable por pregunta lo resolvería.
 
 ## Sin hacer de la auditoría
-`ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP se arma en memoria.
+`ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP y los PDF ya van por streaming.
 
 ## Abiertos tras la sesión 2026-10-13
 - **RF-39 figura 🟢 y no está en el código**: al finalizar una edición no se envía ningún mensaje recomendando el siguiente nivel. Quedó fuera a propósito; falta decidir si se implementa o se corrige el estado en la spec.
@@ -75,15 +75,13 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 ## Auditoría de dependencias (2026-10-15)
 `npm audit --omit=dev --audit-level=high` en 0 (Next 15.5.28, `overrides.next.postcss` 8.5.30, `@playwright/test` 1.64.1, sharp actualizado). Si se actualiza Next y reaparece el `postcss` viejo, borrar `node_modules/next/node_modules/postcss` del `package-lock.json` y reinstalar. Las entradas sobre «Migraciones a Supabase» y `db:push:*` de arriba son históricas (ya no hay Supabase).
 
-## Auditoría 2026-10-21 — pendientes (rama `fix/auditoria-seguridad-logica`)
-Hecho en esa rama: S1-S7 (IP, rate limit, sesión de activación, logout), L1 (finalizado final, 0019), L5 (0020), L6, U1 (imágenes) y vigencia de tokens. El resto, por prioridad. Los hallazgos salen de leer el código (sin mediciones ni `EXPLAIN`): confirmar la línea citada antes de arreglar.
+## Auditoría 2026-10-21 (rama `fix/auditoria-seguridad-logica`)
+Cuatro revisiones de solo lectura (seguridad, lógica, estilos/SEO, rendimiento) y las correcciones. **Hecho:** rate limit e IP, sesión de activación y logout con revocación, finalizado como estado final (0019), fin de edición con duración (0020), índices (0021), guardado atómico del calendario (0022), validaciones de datos (0023), validación en el servidor del admin, acciones de botón con error visible, CSP con nonce, caché del sitio público, ZIP/PDF por streaming, pool SMTP, reportes con índices, SEO (metadata, canonical, OG, JSON-LD), tokens de estado y contrastes, CI con lint/E2E con base/pruebas SQL. Además se corrigió `/activar`, que salía **estática** en el build (sin `DATABASE_URL` no llamaba a `cookies()`) y siempre mostraba «El link venció».
 
-**Seguridad.** `audit_log`: insert abierto a `authenticated` y PII en el JSON (0003). CSP con `unsafe-inline` (`security-headers.ts`). `/api/media` lee el body entero antes de limitar (`route.ts:17`). Confirmar que Traefik pisa `x-real-ip`. Revisar que `.env.development` (versionado) no tenga secretos reales. Sin auditar: `npm audit`, workflows, `scripts/`, políticas de 0011/0017/0018.
+**Falsos positivos de los agentes (verificados, no hay nada que arreglar):** `audit_insert` abierto y PII en `audit_log` (ya resuelto en la 0007), «assets muertos» de `public/images` (los usan los seeds y el contenido demo; no borrar), íconos sin `aria-hidden` (lucide los marca solos), `scrypt` sincrónico (es asíncrono).
 
-**Lógica.** `guardarClases` no atómico (RPC con `for update`); aviso RF-38 manual y sin reintento; trigger de deserción escribe una fila de `audit_log` por desertor por clase; validación solo en cliente (`actualizarPerfil`, `guardarItemCms`, `guardarSetting`, `datosEdicion` sin chequear rol del profesor, `duplicarEdicion`, `slugify` vacío); `guardarEncuesta` (parser de `|`, cambio de edición con respuestas); `cambiarEmail` en dos pasos; acciones `<form action>` que tragan errores; `finalizarEdicion` sin validar ni auditar; horarios solapados; migraciones sin advisory lock. Tests: no hay de reglas de negocio; el artefacto de CI de `ci.yml:36` no sube nada (`\n` literal); `webServer` de Playwright con 120 s.
-
-**Estilos y accesibilidad.** Foco anulado en inputs (`outline-hidden`); bordes de controles a ~2:1 (WCAG pide 3:1); video hero sin `prefers-reduced-motion`; salto h1→h3 en `/cursos`; iconos sin `aria-hidden`; colores fuera de tokens (`--rp-*` duplicados, red/green/amber de Tailwind); galería 4:3 fijo (CLS).
-
-**SEO.** `openGraph` heredado de la home en todas las páginas; sin canonical, `og:image`, `twitter:card` ni JSON-LD; descripciones cortadas o ausentes (`galeria`, `cursos`); `NEXT_PUBLIC_SITE_URL` cae a localhost sin validar; sitemap sin `lastModified` y `force-dynamic`; `robots` bloquea rutas que ya tienen `noindex`; `loading.tsx` raíz renderiza `<main>`.
-
-**Rendimiento.** (1) Cada consulta son 4 viajes (BEGIN, `set_config`, query, COMMIT) en `src/lib/db/index.ts:20`: mandar `set_config` y la query en pipeline. (2) `perfilDeSesion` x3-4 por navegación y `encuestasPendientes` x2: envolver en `cache()`. (3) Todo el sitio público es `force-dynamic` + `connection()`, sin caché: `unstable_cache` con tags e invalidación desde las actions del CMS. (4) ZIP armado en memoria (`api/curso/[id]/zip`) y PDF sin streaming ni `Range` (`api/material/[id]`). (5) RLS llama funciones `SECURITY DEFINER` por fila: envolver en `(select fn())` en una migración nueva. (6) Reportes del admin agregan tablas enteras en JS (O(n²)). (7) `motion/react` completo en el sitio público (`LazyMotion`). (8) FKs sin índice (`encuestas.edicion_id`, `encuesta_respuestas.encuesta_id`, `cms_testimonios.curso_id`, `profiles.rol`). (9) SMTP sin pool, un transport por mail. (10) Sin volumen para `.next/cache` (se pierde el caché de imágenes en cada deploy). Sin revisar: `password-hash.ts` (¿scrypt sync?), tamaño de los componentes cliente del campus.
+**Pendiente:**
+- *Seguridad:* revisar a mano que `.env.development` (versionado) no tenga secretos reales (no se leyó). Sin auditar: `npm audit`, workflows `entornos`/`produccion`/`backup-check`, `scripts/` y las políticas de 0011/0017/0018.
+- *Lógica:* `guardarClases` pisa lo cargado por otra persona si la pantalla estaba vieja (serializa, pero no detecta la versión: haría falta `updated_at` en el formulario). Horarios solapados dentro de una edición y sin lock en `validar_edicion`. Migraciones sin advisory lock si arrancan dos réplicas. El aviso de clases suspendidas sigue siendo manual (ahora marcado por defecto, con «reenviar»); no hay cola de reintentos. `usuarios`, `encuestas` y `cms_*` del admin siguen sin paginar.
+- *Rendimiento:* las políticas RLS llaman funciones `SECURITY DEFINER` por fila (`es_admin()`, `auth_rol()`): envolverlas en `(select …)` pide `EXPLAIN` con volumen real, no se hizo a ciegas. `motion/react` completo en el sitio público (`layoutId` exige `domMax`, el ahorro con `LazyMotion` es poco y sin medir). Transcodificación de video dentro del request de subida (hasta 10 min, expuesto a timeouts del proxy). Sin volumen para `.next/cache` en Coolify (el caché de imágenes optimizadas se pierde en cada deploy). `logo.png` pesa 364 KB para mostrarse a 28-64 px.
+- *Estilos:* faltan `aria-controls` en el menú móvil y atrapar el foco en el drawer del campus.
