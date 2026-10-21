@@ -46,7 +46,7 @@ export function LoginForm() {
 
 export function OlvideForm() {
   const [s, action, pending] = useActionState<AuthState, FormData>(olvideContrasena, {})
-  if (s.ok) return <p role="status" className="card p-4 text-sm text-on-surface-variant">Si el email existe, te enviamos un link para crear tu contraseña. El link vence en 10 minutos.</p>
+  if (s.ok) return <p role="status" className="card p-4 text-sm text-on-surface-variant">Si el email existe, te enviamos un link para crear tu contraseña. El link vence en 1 hora y se usa una sola vez.</p>
   return (
     <form action={action} className="space-y-3">
       <label className={field}><Mail size={16} className="text-on-surface-variant" aria-hidden />

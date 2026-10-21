@@ -52,7 +52,7 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 ## Abiertos tras la sesión 2026-10-11
 - **Scripts `npm run db:*` / `seed:*` en Windows**: usan `ENV_FILE=… comando`, que `cmd` no entiende, y `scripts/migrate.mjs` no carga un `.env` con fin de línea CRLF («Falta DATABASE_URL»). Rodeo en Git Bash: exportar las variables (`set -a; . <(tr -d '\r' < .env.development); set +a`) y correr `node scripts/migrate.mjs` / `npx tsx scripts/seed-pruebas.mts --confirmo-no-produccion`.
 - **Guardar la estructura de una edición sin cambios la deja «personalizada»** (se copia la guía igual). No rompe nada; «Volver a la guía general» la devuelve.
-- **La regla de «edición terminada» está en dos lugares**: `momentoEdicion()` (`src/lib/fechas.ts`) y `edicion_vigente()` (0017). Si cambia una, cambiar la otra.
+- **La regla de «edición terminada» está en dos lugares**: `momentoEdicion()` (`src/lib/fechas.ts`) y `fin_edicion()`/`edicion_vigente()` (0017, `fin_edicion` redefinida en la 0020). Si cambia una, cambiar la otra.
 - **Borrar físicamente una edición** borra en cascada las filas de su material propio pero no los archivos del disco. Hoy las ediciones solo se dan de baja.
 
 ## Abiertos tras la sesión 2026-10-05

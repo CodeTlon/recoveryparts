@@ -4,6 +4,12 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-21 | **Vigencia de tokens: invitación 7 días, reset 1 hora** (la spec decía 24 h y 10 min; se alinea la spec y los textos con el código) | 24 h es poco para una invitación que el alumno puede tardar en abrir y 10 min no tolera el retraso del mail; el riesgo está acotado por el uso único y el paso con botón |
+| 2026-10-21 | El link del mail abre `/activar/confirmar` y el token se consume con un POST (`confirmarAcceso`), que emite una sesión de **activación** de 15 min (claim `act`): solo sirve para definir la contraseña, nunca para el campus | Los escáneres de mail abren el GET y quemaban el token; una cookie normal robada no debe permitir fijar una contraseña nueva |
+| 2026-10-21 | El logout actualiza `sesion_desde` (cierra la sesión en todos los dispositivos) | El token es stateless: borrar la cookie no lo invalidaba |
+| 2026-10-21 | **Finalizado es estado final** (trigger, migración 0019) | La spec no permite salir de Finalizado; un UPDATE directo podía pasarlo a desertor o activo |
+| 2026-10-21 | Sin calendario cargado, el fin de una edición es inicio + duración del curso (migración 0020 y `momentoEdicion`) | El profesor perdía la edición de un curso largo apenas pasaba la fecha de inicio, antes de poder cargar el calendario; el taller corto sigue terminando solo |
+| 2026-10-21 | Las imágenes del CMS solo aceptan rutas del propio sitio (`/media/…`, `/images/…`) | `next/image` no tiene `remotePatterns` y una URL externa rompía la página pública |
 | 2026-10-13 | La encuesta pendiente se anuncia en la pantalla del curso y además hay «Encuestas» en el menú del alumno, con contador | Con un solo curso el alumno entra directo (RF-11) y no llegaba a la encuesta; con varios cursos se acumulan |
 | 2026-10-13 | El alumno que terminó un curso conserva el acceso al material (curso, PDFs, links y ZIP) **3 meses** desde que se finalizó; las ya finalizadas cuentan desde que se aplica la 0018 | Decisión del cliente; antes solo tenía el ZIP (sin links) y sin plazo. No había fecha de finalización guardada |
 | 2026-10-13 | El plazo vive en la base (`acceso_hasta`, columna generada) y corta `material_visible`/`temario_alumno`/`estructura_edicion`; las encuestas siguen con `alumno_activo_en` | Que no alcance con ocultar un botón; la encuesta se tiene que poder responder con el material vencido |

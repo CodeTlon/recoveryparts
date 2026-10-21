@@ -21,7 +21,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <PageHead title="Usuarios" sub="Solo vos podés crear usuarios. Cada uno recibe un mail para crear su propia contraseña (el link vence en 24 h)."
+      <PageHead title="Usuarios" sub="Solo vos podés crear usuarios. Cada uno recibe un mail para crear su propia contraseña (el link vence en 7 días)."
         action={
           <ModalButton label={<><UserPlus size={16} aria-hidden /> Crear usuario</>} title="Crear usuario" className="btn-primary whitespace-nowrap">
             <ActionForm action={crearUsuario} submit="Crear y enviar invitación">

@@ -20,8 +20,8 @@ type Ed = { id: string; fecha_inicio: string | null; cupo: number; activo: boole
 
 // Estado temporal de una edición según sus fechas (en curso / próxima / terminada).
 const MOMENTO = { baja: ['De baja', 'neutral'], proxima: ['Próxima', 'warn'], terminada: ['Terminada', 'neutral'], en_curso: ['En curso', 'ok'] } as const
-function momento(e: Ed, hoy: string) {
-  const { momento: m, fin } = momentoEdicion({ activo: e.activo, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha) }, hoy)
+function momento(e: Ed, hoy: string, duracionSemanas: number | null) {
+  const { momento: m, fin } = momentoEdicion({ activo: e.activo, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha), duracionSemanas }, hoy)
   return { fin, label: MOMENTO[m][0], tone: MOMENTO[m][1] }
 }
 
@@ -83,7 +83,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         {!ediciones.length ? <Empty>Este curso todavía no tiene ediciones. Creá la primera con «Nueva edición».</Empty> : (
           <ul className="space-y-3">
             {ediciones.map((e) => {
-              const m = momento(e, hoy)
+              const m = momento(e, hoy, curso.duracion_semanas)
               return (
                 <li key={e.id} className={`card p-4 ${e.activo ? '' : 'opacity-70'}`}>
                   <div className="flex flex-wrap items-center gap-3">

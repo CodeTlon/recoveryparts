@@ -13,10 +13,10 @@ import ArbolEstructura, { type ArbolClase, type ArbolModulo } from '@/components
 export default async function EdicionProfesor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { sb, perfil } = await requireRole('profesor')
-  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, activo, cursos(nombre, tipo), aulas(nombre), clases(fecha)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
+  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, activo, cursos(nombre, tipo, duracion_semanas), aulas(nombre), clases(fecha)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
   if (!ed) notFound() // un profesor nunca ve ediciones ajenas (ni terminadas: RLS con edicion_vigente)
   // RF-04: una edición terminada o dada de baja no se abre (también lo impide la base).
-  const { momento } = momentoEdicion({ activo: ed.activo, fecha_inicio: ed.fecha_inicio, fechas: ((ed.clases ?? []) as { fecha: string }[]).map((c) => c.fecha) }, hoyAR())
+  const { momento } = momentoEdicion({ activo: ed.activo, fecha_inicio: ed.fecha_inicio, fechas: ((ed.clases ?? []) as { fecha: string }[]).map((c) => c.fecha), duracionSemanas: (ed.cursos as unknown as { duracion_semanas: number | null } | null)?.duracion_semanas }, hoyAR())
   if (momento !== 'en_curso' && momento !== 'proxima') notFound()
   const curso = ed.cursos as unknown as { nombre: string; tipo: string }
 
