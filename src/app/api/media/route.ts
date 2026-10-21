@@ -1,7 +1,7 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse, after, type NextRequest } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { usuarioApi } from '@/lib/auth'
-import { guardarArchivo, tipoMedia, urlPublica } from '@/lib/storage'
+import { guardarArchivo, reemplazarArchivo, tipoMedia, urlPublica } from '@/lib/storage'
 import { transcodeWithService } from '@/lib/transcode'
 
 const MAX = 25 * 1024 * 1024
@@ -40,14 +40,17 @@ export async function POST(req: NextRequest) {
   if (!datos.length) return NextResponse.json({ error: 'Archivo vacío.' }, { status: 400 })
   const tipo = tipoMedia(datos)
   if (!tipo) return NextResponse.json({ error: 'Formato no permitido.' }, { status: 415 })
-  let ext: string = tipo.ext
-  let contenido: Uint8Array = datos
-  // Videos: el servicio global los recomprime a MP4 (soft-fail: si no responde, queda el que mandó el navegador).
-  if (tipo.mime.startsWith('video/')) {
-    const comprimido = await transcodeWithService(Buffer.from(datos.buffer, datos.byteOffset, datos.length), 'web')
-    if (comprimido) { contenido = comprimido; ext = 'mp4' }
+  const nombre = `${randomUUID()}.${tipo.ext}`
+  await guardarArchivo('sitio', nombre, datos)
+  // Videos MP4: el servicio global los recomprime EN SEGUNDO PLANO (puede tardar minutos y el admin no tiene que
+  // esperar con el request abierto, que además puede cortar el proxy). La URL ya es válida con el original; cuando
+  // termina, el archivo se reemplaza en el mismo lugar (soft-fail: si el servicio no responde, queda el original).
+  // Solo MP4: la compresión devuelve MP4 y no se puede cambiar la extensión de una URL ya entregada.
+  if (tipo.ext === 'mp4') {
+    after(async () => {
+      const comprimido = await transcodeWithService(Buffer.from(datos.buffer, datos.byteOffset, datos.length), 'web')
+      if (comprimido) await reemplazarArchivo('sitio', nombre, comprimido).catch((e) => console.error('[transcode] no se pudo reemplazar el original:', e instanceof Error ? e.message : e))
+    })
   }
-  const nombre = `${randomUUID()}.${ext}`
-  await guardarArchivo('sitio', nombre, contenido)
   return NextResponse.json({ url: urlPublica(nombre) })
 }

@@ -1,5 +1,5 @@
 import 'server-only'
-import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { createReadStream } from 'node:fs'
 import { dirname, join, resolve, sep } from 'node:path'
 
@@ -26,6 +26,14 @@ export async function guardarArchivo(bucket: Bucket, path: string, datos: Uint8A
   const abs = ruta(bucket, path)
   await mkdir(dirname(abs), { recursive: true })
   await writeFile(abs, datos, { flag: 'wx' }) // wx: nunca pisa un archivo existente
+}
+
+/** Reemplaza el contenido de un archivo existente de forma atómica (se escribe aparte y se renombra): quien lo esté
+ *  descargando ve el contenido viejo completo o el nuevo completo, nunca uno a medias. */
+export async function reemplazarArchivo(bucket: Bucket, path: string, datos: Uint8Array | Buffer) {
+  const abs = ruta(bucket, path)
+  const tmp = `${abs}.reemplazo-${process.pid}-${Date.now()}`
+  try { await writeFile(tmp, datos, { flag: 'wx' }); await rename(tmp, abs) } catch (e) { await rm(tmp, { force: true }); throw e }
 }
 
 export async function leerArchivo(bucket: Bucket, path: string): Promise<Buffer | null> {
