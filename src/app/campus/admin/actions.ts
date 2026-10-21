@@ -35,6 +35,7 @@ function traducir(m: string) {
   if (/duplicate key|unique/.test(m)) return 'Ya existe un registro con esos datos.'
   if (/hora_fin|horarios_curso_check/.test(m)) return 'La hora de fin tiene que ser posterior a la de inicio.'
   if (/check constraint/.test(m)) return 'Algún valor está fuera de rango. Revisá los números ingresados.'
+  if (/Finalizado es un estado final/.test(m)) return 'Finalizado es un estado final.'
   if (/estado final/.test(m)) return 'Desertor es un estado final.'
   return 'No se pudo completar la operación.'
 }
@@ -445,9 +446,9 @@ export async function marcarDesertor(_: R, fd: FormData): Promise<R> {
   if (fecha > hoyAR()) return { error: 'La fecha de deserción no puede ser futura.' }
   const { data, error } = await sb.from('inscripciones')
     .update({ estado: 'desertor', fecha_desercion: fecha, motivo_desercion: motivo })
-    .eq('id', txt(fd, 'id')).neq('estado', 'desertor').select('id')
+    .eq('id', txt(fd, 'id')).eq('estado', 'activo').select('id')
   if (error) return { error: traducir(error.message) }
-  if (!data?.length) return { error: 'No se encontró la inscripción o el alumno ya figura como desertor.' }
+  if (!data?.length) return { error: 'No se encontró la inscripción, o el alumno ya figura como desertor o finalizado.' }
   revalidarCursos()
   return { ok: true }
 }
