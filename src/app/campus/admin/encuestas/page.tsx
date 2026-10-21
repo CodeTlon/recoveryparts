@@ -61,7 +61,8 @@ export default async function Encuestas() {
                   <div className="mt-3 max-w-2xl"><ActionForm action={guardarEncuesta} reset={false}>
                     <input type="hidden" name="id" value={e.id} />
                     <Field label="Título" name="titulo" placeholder="Ej: Encuesta de fin de curso" defaultValue={e.titulo} required />
-                    <Select name="edicion_id" label="Edición" defaultValue={e.edicion_id} empty="Seleccioná una edición" options={opts} />
+                    {/* La edición actual siempre se ofrece, aunque se haya dado de baja: si no, no se podría ni desactivar la encuesta. */}
+                    <Select name="edicion_id" label="Edición" defaultValue={e.edicion_id} empty="Seleccioná una edición" options={opts.some(([id]) => id === e.edicion_id) ? opts : [[e.edicion_id, etiqueta(eds.find((x) => x.id === e.edicion_id))], ...opts]} />
                     <Field label="Preguntas" name="preguntas" placeholder={'puntaje | ¿Cómo calificás al profesor?\ntexto | ¿Qué mejorarías?'} rows={5} defaultValue={(e.preguntas as Pregunta[]).map((p) => `${p.tipo} | ${p.texto}`).join('\n')} />
                     <Check name="activa" defaultChecked={e.activa}>Activa</Check>
                   </ActionForm></div>

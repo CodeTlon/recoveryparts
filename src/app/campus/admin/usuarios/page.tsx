@@ -75,7 +75,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                         </ActionForm>
                         <ActionForm action={cambiarEmail} reset={false} submit="Cambiar email">
                           <input type="hidden" name="id" value={u.id} />
-                          <Field label="Email nuevo" name="email" placeholder="nombre@ejemplo.com" type="email" defaultValue={u.email} required hint="Se reenvía la verificación al email nuevo." />
+                          <Field label="Email nuevo" name="email" placeholder="nombre@ejemplo.com" type="email" defaultValue={u.email} required hint="La persona entra con el email nuevo; no se envía ningún mail." />
                         </ActionForm>
                       </div>
                     </ModalButton>

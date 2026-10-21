@@ -109,7 +109,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       {tab === 'alumnos' && <section className={sec}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">Alumnos <span className="text-base font-normal text-on-surface-variant">({insc?.length ?? 0}/{ed.cupo})</span></h2>
-          {activos > 0 && <form action={finalizarEdicion}><input type="hidden" name="id" value={eid} /><Confirm message="Los alumnos activos pasarán a «Finalizado» y podrán descargar el ZIP de PDFs. ¿Continuar?">Finalizar edición</Confirm></form>}
+          {activos > 0 && <ActionForm action={finalizarEdicion} submit={null} reset={false}><input type="hidden" name="id" value={eid} /><Confirm message="Los alumnos activos pasarán a «Finalizado» y podrán descargar el ZIP de PDFs. ¿Continuar?">Finalizar edición</Confirm></ActionForm>}
         </div>
 
         <div className="card mb-6 max-w-3xl p-6">

@@ -106,8 +106,8 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
       {actual[0] === 'campus' && (
         <div className="space-y-6">
         <Setting clave="campus" title="Entrada directa al campus" hint="Cómo entra el alumno al campus.">
-          <p className="text-sm text-on-surface-variant">Con un solo curso activo, el alumno entra directo a ese curso. Escribí «false» para mostrar siempre «Mis cursos».</p>
-          <Field label="Entrada directa" name="entrada_directa" defaultValue={String(campus.entrada_directa ?? true)} />
+          <p className="text-sm text-on-surface-variant">Con un solo curso activo, el alumno entra directo a ese curso. Desactivala para mostrar siempre «Mis cursos».</p>
+          <Select name="entrada_directa" label="Entrada directa" defaultValue={String(campus.entrada_directa ?? true) === 'false' ? 'false' : 'true'} options={[['true', 'Activa'], ['false', 'Desactivada']]} />
         </Setting>
         </div>
       )}

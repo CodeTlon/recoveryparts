@@ -86,8 +86,12 @@ export async function buscarIdPorEmail(email: string): Promise<string | null> {
   const [u] = await sqlAdmin<{ id: string }>('select id from auth.users where email = $1', [email])
   return u?.id ?? null
 }
-export async function cambiarEmailUsuario(id: string, email: string) {
-  await sqlAdmin('update auth.users set email = $2 where id = $1', [id, email])
+// Cuenta de acceso y perfil en una sola sentencia (atómica). false si el usuario no existe.
+export async function cambiarEmailUsuario(id: string, email: string): Promise<boolean> {
+  const filas = await sqlAdmin(
+    `with u as (update auth.users set email = $2 where id = $1 returning id)
+     update public.profiles set email = $2 where id in (select id from u) returning id`, [id, email])
+  return filas.length > 0
 }
 export async function eliminarUsuario(id: string) {
   await sqlAdmin('delete from auth.users where id = $1', [id])
