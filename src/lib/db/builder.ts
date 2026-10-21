@@ -173,6 +173,7 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
   private filtros: Filtro[] = []
   private orden: Order[] = []
   private lim: number | null = null
+  private off = 0
   private modo: 'many' | 'single' | 'maybe' = 'many'
   private payload: any
   private conflicto?: string
@@ -203,6 +204,8 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
   not(col: string, op: 'is' | 'eq' | 'in', val: any) { this.filtros.push({ col, op: 'not', val: { op, val } }); return this }
   order(col: string, opts?: { ascending?: boolean }) { this.orden.push({ col, asc: opts?.ascending !== false }); return this }
   limit(n: number) { this.lim = n; return this }
+  /** Filas desde..hasta (ambas incluidas, base 0), como PostgREST. Sin `order` el resultado no es estable. */
+  range(desde: number, hasta: number) { this.off = Math.max(0, Math.trunc(desde)); this.lim = Math.max(0, Math.trunc(hasta) - this.off + 1); return this }
   single() { this.modo = 'single'; return this as unknown as QB<any> }
   maybeSingle() { this.modo = 'maybe'; return this as unknown as QB<any> }
   // Búsqueda sin distinguir mayúsculas en varias columnas (reemplaza or('a.ilike.%x%,b.ilike.%x%')).
@@ -245,7 +248,7 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
         const proy = proyeccion(t, a2, items, this.filtros, meta, ctx2)
         const w2 = this.where(a2, items, meta, ctx2)
         const ord = this.orden.length ? ` order by ${this.orden.map((o) => `${a2}.${q(o.col)} ${o.asc ? 'asc' : 'desc'}`).join(', ')}` : ''
-        const lim = this.lim !== null ? ` limit ${Number(this.lim)}` : this.modo !== 'many' ? ' limit 2' : ''
+        const lim = (this.lim !== null ? ` limit ${Number(this.lim)}` : this.modo !== 'many' ? ' limit 2' : '') + (this.off ? ` offset ${Number(this.off)}` : '')
         rows = (await this.run(`select ${proy} as r from ${T} ${a2}${w2}${ord}${lim}`, ctx2.params)).map((r) => r.r)
       } else {
         rows = await this.escribir(meta, ctx, T)

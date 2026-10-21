@@ -2,18 +2,23 @@ import Link from 'next/link'
 import Reveal from '@/components/ui/Reveal'
 import { requireRole } from '@/lib/auth'
 import { Mail, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
+import Paginacion, { POR_PAGINA, paginaDe } from '@/components/campus/Paginacion'
 import { ActionForm, Badge, Confirm, Empty, Field, ModalButton, PageHead, Select, SubmitButton } from '@/components/campus/ui'
 import { actualizarPerfil, cambiarEmail, crearUsuario, reenviarInvitacion, setEstadoCuenta } from '../actions'
 
 const ESTADO = { pendiente_activacion: ['warn', 'Pendiente'], activa: ['ok', 'Activa'], inactiva: ['bad', 'Inactiva'] } as const
 
-export default async function Usuarios({ searchParams }: { searchParams: Promise<{ rol?: string; q?: string }> }) {
-  const { rol, q } = await searchParams
+export default async function Usuarios({ searchParams }: { searchParams: Promise<{ rol?: string; q?: string; pagina?: string }> }) {
+  const { rol, q, pagina: pg } = await searchParams
+  const pagina = paginaDe(pg)
   const { sb, perfil } = await requireRole('admin')
-  let query = sb.from('profiles').select('*').order('apellido')
+  // Una página de POR_PAGINA (se pide una fila de más para saber si hay otra). Orden estable: apellido, nombre, id.
+  let query = sb.from('profiles').select('*').order('apellido').order('nombre').order('id').range((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
   if (rol) query = query.eq('rol', rol)
   if (q) query = query.buscar(['nombre', 'apellido', 'email'], q)
-  const { data: users } = await query
+  const { data: filas } = await query
+  const hayMas = (filas?.length ?? 0) > POR_PAGINA
+  const users = filas?.slice(0, POR_PAGINA)
 
   const tab = (v: string | undefined, l: string) => (
     <Link href={v ? `?rol=${v}` : '?'} className={`rounded-sm border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-surface' : 'border-outline text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
@@ -102,6 +107,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
           })}
         </ul>
       )}
+      <Paginacion pagina={pagina} hayMas={hayMas} params={{ rol, q }} />
     </>
   )
 }
