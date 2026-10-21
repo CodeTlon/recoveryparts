@@ -6,7 +6,7 @@ Navegador
   └─ Next.js 15 (App Router)
        ├─ Server Components: leen datos con la sesión del usuario (RLS aplica)
        ├─ Server Actions / Route Handlers: escrituras y archivos; validan rol con requireRole()
-       └─ middleware.ts: refresca sesión; en /campus/* exige sesión, cuenta activa y rol
+       └─ proxy.ts (antes middleware.ts): en /campus/* exige sesión, cuenta activa y rol; pone la CSP con nonce
             ├─ Auth propio (`lib/users.ts`): invitación, reset, sesiones en cookies httpOnly
             ├─ Postgres plano (`lib/db`): tablas + RLS + triggers + funciones SQL
             └─ Archivos en disco (`STORAGE_DIR`): `materiales` (privado, PDFs) · `sitio` (público, `/media/…`)
@@ -14,9 +14,9 @@ Navegador
 El acceso con rol `service_role` (`sqlAdmin()` / `clienteAdmin()`) se usa solo en el servidor, y siempre después de validar el rol: invitar usuarios, cambiar email, cerrar sesiones, servir PDFs y armar el ZIP.
 
 ## Autorización en tres capas
-1. **Middleware**: sin sesión → `/login`; cuenta no activa → fuera; cada rol solo entra a su `/campus/<rol>`.
+1. **Proxy** (`src/proxy.ts`): sin sesión → `/login`; cuenta no activa → fuera; cada rol solo entra a su `/campus/<rol>`. Además genera el nonce de la CSP de cada request (`script-src` sin `unsafe-inline`), por eso las páginas con scripts se renderizan siempre por request.
 2. **`requireRole(...roles)`** al inicio de cada página/acción del campus.
-3. **RLS** en todas las tablas (la defensa real). Helpers SQL: `es_admin()`, `es_profesor_de(curso)`, `alumno_activo_en(curso)`, todos `security definer`.
+3. **RLS** en todas las tablas (la defensa real). Helpers SQL `security definer`: `es_admin()`, `auth_rol()`, `es_profesor_de(edicion)`, `alumno_activo_en(edicion)`. En las políticas van como `(select …)` y, para profesor y alumno, como conjuntos por usuario (`mis_ediciones_profesor()`, `mis_cursos_alumno()`, …) comparados con `IN`: una función por fila no escala (0024, 0025). El rol `anon` solo tiene los permisos del sitio público (0028). `tests/db/reglas.sql` fija la visibilidad por rol en la CI.
 
 | Dato | Admin | Profesor | Alumno | Anónimo |
 |---|---|---|---|---|

@@ -1,17 +1,23 @@
 import type { Metadata } from 'next'
+import { metaPagina } from '@/lib/seo'
 import Link from 'next/link'
 import { ChevronDown } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import { query } from '@/lib/data'
+import JsonLd from '@/components/seo/JsonLd'
 
-export const metadata: Metadata = { title: 'Preguntas frecuentes', description: 'Respuestas a las dudas más comunes sobre cursos, talleres y el campus.' }
+export const metadata: Metadata = metaPagina({ titulo: 'Preguntas frecuentes', descripcion: 'Respuestas a las dudas más comunes sobre cursos, talleres y el campus.', ruta: '/preguntas-frecuentes' })
 export const dynamic = 'force-dynamic'
 
 export default async function FaqPage() {
-  const faq = await query<{ id: string; pregunta: string; respuesta: string }[]>((sb) => sb.from('cms_faq').select('id, pregunta, respuesta').order('orden'), [])
+  const faq = await query<{ id: string; pregunta: string; respuesta: string }[]>('faq-pagina', (sb) => sb.from('cms_faq').select('id, pregunta, respuesta').order('orden'), [])
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
+      {faq.length > 0 && <JsonLd datos={{
+        '@context': 'https://schema.org', '@type': 'FAQPage',
+        mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.pregunta, acceptedAnswer: { '@type': 'Answer', text: f.respuesta } })),
+      }} />}
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="grow pt-20 outline-hidden">
         <section className="grid-bg border-b border-outline-variant">

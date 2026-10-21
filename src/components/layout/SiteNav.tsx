@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -18,6 +18,7 @@ const LINKS = [
 export default function SiteNav() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const menuId = useId()
   const path = usePathname()
   const close = () => setOpen(false)
   const activo = (href: string) => !href.includes('#') && (href === '/' ? path === '/' : path.startsWith(href))
@@ -56,14 +57,14 @@ export default function SiteNav() {
 
         <Link href="/login" className="btn-primary hidden py-2! lg:inline-flex">Campus</Link>
 
-        <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open}
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls={open ? menuId : undefined}
           className="-mr-1.5 inline-flex h-11 w-11 items-center justify-center rounded-sm text-on-surface hover:text-secondary lg:hidden">
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-outline-variant bg-surface px-4 pb-4 pt-2 lg:hidden">
+        <div id={menuId} className="border-t border-outline-variant bg-surface px-4 pb-4 pt-2 lg:hidden">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} onClick={close} className={`block rounded-sm px-3 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-surface-container-low ${link}`}>{l.label}</Link>
           ))}

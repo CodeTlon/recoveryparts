@@ -6,7 +6,7 @@ import { Columns, Donut, Stat } from '@/components/campus/charts'
 import Reveal from '@/components/ui/Reveal'
 import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
 
-type Insc = { alumno_id: string; edicion_id: string; estado: string; n_clase_desercion: number | null; motivo_desercion: string | null; creado_en: string }
+type Insc = { alumno_id: string; edicion_id: string; estado: string; n_clase_desercion: number | null; motivo_desercion: string | null; creado_en: string; finalizado_el: string | null }
 // Una fila por edición; `nombre` = «Curso · mes año». `curso_id`/`curso` agrupan las ediciones de un mismo curso.
 type Curso = { id: string; curso_id: string; curso: string; nombre: string; cupo: number; creado_en: string; fecha_inicio: string | null; activo: boolean; horarios_curso: { dia_semana: number }[] }
 
@@ -24,7 +24,7 @@ export default async function ReportesPanel() {
   const { sb } = await requireRole('admin')
   const [{ data: eds }, { data: insc }, { data: demanda }] = await Promise.all([
     sb.from('ediciones').select('id, curso_id, cupo, creado_en, fecha_inicio, activo, cursos(nombre, activo), horarios_curso(dia_semana)'),
-    sb.from('inscripciones').select('alumno_id, edicion_id, estado, n_clase_desercion, motivo_desercion, creado_en'),
+    sb.from('inscripciones').select('alumno_id, edicion_id, estado, n_clase_desercion, motivo_desercion, creado_en, finalizado_el'),
     sb.from('demanda_cursos').select('interes'),
   ])
   const todas = ((eds ?? []) as unknown as (Omit<Curso, 'curso' | 'nombre'> & { cursos: { nombre: string; activo: boolean } | null })[])
@@ -37,36 +37,50 @@ export default async function ReportesPanel() {
   const I = ((insc ?? []) as Insc[]).filter((i) => idsC.has(i.edicion_id))
   const nombre = (cursoId: string) => nombreCurso.get(cursoId) ?? 'Curso dado de baja'
 
+  // Índices: se agrupa una vez en vez de filtrar todas las inscripciones por cada edición (era O(ediciones × inscripciones)).
+  const porEdicion = new Map<string, Insc[]>()
+  for (const i of I) { const l = porEdicion.get(i.edicion_id); if (l) l.push(i); else porEdicion.set(i.edicion_id, [i]) }
+  const inscDe = (edicionId: string) => porEdicion.get(edicionId) ?? []
+  const edicionPorId = new Map(C.map((c) => [c.id, c]))
+
   // RF-48 · ocupación = inscriptos / cupo
-  const ocup = C.map((c) => { const n = I.filter((i) => i.edicion_id === c.id).length; return { nombre: c.nombre, n, cupo: c.cupo, p: pct(n, c.cupo) } }).sort((a, b) => b.p - a.p)
+  const ocup = C.map((c) => { const n = inscDe(c.id).length; return { nombre: c.nombre, n, cupo: c.cupo, p: pct(n, c.cupo), fecha_inicio: c.fecha_inicio } }).sort((a, b) => b.p - a.p)
 
   const estados = { activo: I.filter((i) => i.estado === 'activo').length, finalizado: I.filter((i) => i.estado === 'finalizado').length, desertor: I.filter((i) => i.estado === 'desertor').length }
 
   // RF-48 · días con mayor deserción (día del curso donde hubo desertores)
   const diasDes = new Array(7).fill(0)
-  for (const i of I.filter((x) => x.estado === 'desertor')) C.find((c) => c.id === i.edicion_id)?.horarios_curso.forEach((h) => diasDes[h.dia_semana]++)
+  for (const i of I) if (i.estado === 'desertor') edicionPorId.get(i.edicion_id)?.horarios_curso.forEach((h) => diasDes[h.dia_semana]++)
 
   // RF-49 · deserción por curso y por N° de clase
   const des = C.map((c) => {
-    const todos = I.filter((i) => i.edicion_id === c.id), d = todos.filter((i) => i.estado === 'desertor')
+    const todos = inscDe(c.id), d = todos.filter((i) => i.estado === 'desertor')
     const porClase = new Map<number, number>(); d.forEach((i) => porClase.set(i.n_clase_desercion ?? 0, (porClase.get(i.n_clase_desercion ?? 0) ?? 0) + 1))
     return { nombre: c.nombre, total: todos.length, d: d.length, p: pct(d.length, todos.length), porClase: [...porClase.entries()].sort((a, b) => a[0] - b[0]), motivos: d.map((x) => x.motivo_desercion) }
   }).filter((x) => x.total > 0)
 
   // RF-50 · velocidad de llenado
   const llenos = C.map((c) => {
-    const ord = I.filter((i) => i.edicion_id === c.id).map((i) => i.creado_en).sort()
+    const ord = inscDe(c.id).map((i) => i.creado_en).sort()
     return ord.length >= c.cupo ? { nombre: c.nombre, dias: Math.max(0, Math.round((+new Date(ord[c.cupo - 1]) - +new Date(c.creado_en)) / 864e5)) } : null
   }).filter(Boolean).sort((a, b) => a!.dias - b!.dias) as { nombre: string; dias: number }[]
   const hoy = hoyAR()
-  const vacios = ocup.filter((o) => { const c = C.find((x) => x.nombre === o.nombre); return o.p < 50 && (!c?.fecha_inicio || c.fecha_inicio <= hoy) })
+  const vacios = ocup.filter((o) => o.p < 50 && (!o.fecha_inicio || o.fecha_inicio <= hoy))
 
   // RF-51 · qué curso eligen al terminar uno (otro curso, no otra edición del mismo)
   const sig = new Map<string, number>()
-  const todasInsc = (insc ?? []) as Insc[]
-  for (const f of todasInsc.filter((i) => i.estado === 'finalizado'))
-    for (const j of todasInsc.filter((i) => i.alumno_id === f.alumno_id && cursoDe.get(i.edicion_id) !== cursoDe.get(f.edicion_id) && i.creado_en > f.creado_en)) {
-      const k = cursoDe.get(j.edicion_id); if (k) sig.set(k, (sig.get(k) ?? 0) + 1)
+  // Una inscripción cuenta como «elegida al terminar» si se creó desde el día en que el alumno finalizó el otro curso
+  // (antes se comparaba contra la fecha de alta del otro curso, y quien cursaba dos a la vez quedaba mal contado).
+  const porAlumno = new Map<string, Insc[]>()
+  for (const i of (insc ?? []) as Insc[]) { const l = porAlumno.get(i.alumno_id); if (l) l.push(i); else porAlumno.set(i.alumno_id, [i]) }
+  for (const propias of porAlumno.values())
+    for (const f of propias) {
+      if (f.estado !== 'finalizado') continue
+      const desde = f.finalizado_el ?? f.creado_en.slice(0, 10)
+      for (const j of propias) {
+        if (cursoDe.get(j.edicion_id) === cursoDe.get(f.edicion_id) || j.creado_en.slice(0, 10) < desde) continue
+        const k = cursoDe.get(j.edicion_id); if (k) sig.set(k, (sig.get(k) ?? 0) + 1)
+      }
     }
   const siguientes = [...sig.entries()].sort((a, b) => b[1] - a[1])
 
@@ -88,13 +102,13 @@ export default async function ReportesPanel() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card title="Estado de las inscripciones">
             <Donut caption="Estado de las inscripciones" center={<div><p className="text-2xl font-bold tabular-nums">{I.length}</p><p className="text-[11px] text-on-surface-variant">inscripciones</p></div>}
-              data={[{ label: 'Activos', value: estados.activo, color: 'text-green-400' }, { label: 'Finalizados', value: estados.finalizado, color: 'text-sky-400' }, { label: 'Desertores', value: estados.desertor, color: 'text-red-400' }]} />
+              data={[{ label: 'Activos', value: estados.activo, color: 'text-success' }, { label: 'Finalizados', value: estados.finalizado, color: 'text-info' }, { label: 'Desertores', value: estados.desertor, color: 'text-danger' }]} />
           </Card>
           <Card title="Ocupación por edición">
             <ul className="space-y-3">{ocup.map((o) => <li key={o.nombre}><div className="mb-1 flex justify-between text-sm"><span>{o.nombre}</span><span className="text-on-surface-variant">{o.n}/{o.cupo} · {o.p}%</span></div><Bar v={o.p} max={100} /></li>)}</ul>
           </Card>
           <Card title="Días con mayor deserción" note="Desertores según el día de cursada.">
-            <Columns data={DIAS.map((d, i) => ({ label: d.slice(0, 3), value: diasDes[i] }))} color="bg-red-400" />
+            <Columns data={DIAS.map((d, i) => ({ label: d.slice(0, 3), value: diasDes[i] }))} color="bg-danger" />
           </Card>
           <Card title="Deserción por edición" note="Cantidad, % sobre el total y en qué N° de clase desertan." >
             {!des.length ? <p className="text-sm text-on-surface-variant">Sin inscripciones.</p> : <ul className="space-y-5">{des.map((x) => (

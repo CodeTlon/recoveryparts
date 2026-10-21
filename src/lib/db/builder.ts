@@ -107,7 +107,8 @@ function relacion(meta: Meta, padre: string, rel: string, hint?: string): { fk: 
 }
 
 function cond(alias: string, f: Filtro, ctx: Ctx): string {
-  const c = `${alias}.${q(f.col)}`
+  // `buscar` lleva varias columnas separadas por coma: cada una se valida y se cita en su propio caso.
+  const c = f.op === 'buscar' ? '' : `${alias}.${q(f.col)}`
   switch (f.op) {
     case 'eq': return f.val === null ? `${c} is null` : `${c} = ${ctx.add(f.val)}`
     case 'neq': return f.val === null ? `${c} is not null` : `${c} is distinct from ${ctx.add(f.val)}`
@@ -173,6 +174,7 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
   private filtros: Filtro[] = []
   private orden: Order[] = []
   private lim: number | null = null
+  private off = 0
   private modo: 'many' | 'single' | 'maybe' = 'many'
   private payload: any
   private conflicto?: string
@@ -203,6 +205,8 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
   not(col: string, op: 'is' | 'eq' | 'in', val: any) { this.filtros.push({ col, op: 'not', val: { op, val } }); return this }
   order(col: string, opts?: { ascending?: boolean }) { this.orden.push({ col, asc: opts?.ascending !== false }); return this }
   limit(n: number) { this.lim = n; return this }
+  /** Filas desde..hasta (ambas incluidas, base 0), como PostgREST. Sin `order` el resultado no es estable. */
+  range(desde: number, hasta: number) { this.off = Math.max(0, Math.trunc(desde)); this.lim = Math.max(0, Math.trunc(hasta) - this.off + 1); return this }
   single() { this.modo = 'single'; return this as unknown as QB<any> }
   maybeSingle() { this.modo = 'maybe'; return this as unknown as QB<any> }
   // Búsqueda sin distinguir mayúsculas en varias columnas (reemplaza or('a.ilike.%x%,b.ilike.%x%')).
@@ -245,7 +249,7 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
         const proy = proyeccion(t, a2, items, this.filtros, meta, ctx2)
         const w2 = this.where(a2, items, meta, ctx2)
         const ord = this.orden.length ? ` order by ${this.orden.map((o) => `${a2}.${q(o.col)} ${o.asc ? 'asc' : 'desc'}`).join(', ')}` : ''
-        const lim = this.lim !== null ? ` limit ${Number(this.lim)}` : this.modo !== 'many' ? ' limit 2' : ''
+        const lim = (this.lim !== null ? ` limit ${Number(this.lim)}` : this.modo !== 'many' ? ' limit 2' : '') + (this.off ? ` offset ${Number(this.off)}` : '')
         rows = (await this.run(`select ${proy} as r from ${T} ${a2}${w2}${ord}${lim}`, ctx2.params)).map((r) => r.r)
       } else {
         rows = await this.escribir(meta, ctx, T)
@@ -266,13 +270,19 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
       if (rows.length === 0 && this.modo === 'maybe') return { data: null, error: null, count }
       return { data: null, count: null, error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' } }
     } catch (e: any) {
+      // Los errores se devuelven (como PostgREST) y muchas pantallas solo miran `data`: sin este log un fallo del constructor
+      // o de la consulta queda invisible y la pantalla muestra «vacío». Solo el mensaje y el código: nunca parámetros ni datos.
+      console.error(`db: ${this.op} ${this.tabla} falló —`, String(e?.message ?? e).slice(0, 200), e?.code ?? '')
       return { data: null, count: null, error: { message: e.message, code: e.code, details: e.detail, hint: e.hint } }
     }
   }
 
   private async escribir(meta: Meta, ctx: Ctx, T: string): Promise<any[]> {
     const t = this.tabla
-    const ret = ` returning to_jsonb(${q('x')}) as r`
+    // Como PostgREST: solo se devuelven filas si se encadenó .select(). Un INSERT ... RETURNING exige además que la fila
+    // pase una política de SELECT: para el visitante anónimo (formularios de contacto y demanda, que solo pueden
+    // insertar) eso hacía fallar SIEMPRE el alta con «violates row-level security policy».
+    const ret = this.returning ? ` returning to_jsonb(${q('x')}) as r` : ''
     if (this.op === 'delete') {
       const w = this.where(q('x'), [], meta, ctx)
       const res = await this.run(`delete from ${T} as ${q('x')}${w}${ret}`, ctx.params)

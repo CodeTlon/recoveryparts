@@ -17,11 +17,16 @@ export type Rol = 'anon' | 'authenticated' | 'service_role'
 
 // Cada consulta corre en su transacción con el rol de Postgres y el usuario de la request:
 // RLS (auth.uid() lee app.user_id) sigue siendo la segunda barrera de autorización.
+// set_config y la consulta se mandan juntos (pipeline, sin esperar al primero): postgres.js los ejecuta en orden
+// sobre la misma conexión, así que la consulta ya corre con el rol; se ahorra un viaje a la base por consulta.
 function ejecutor(rol: Rol, userId?: string): Run {
   return (text, params) =>
     conexion().begin(async (tx) => {
-      await tx`select set_config('role', ${rol}, true), set_config('app.role', ${rol}, true), set_config('app.user_id', ${userId ?? ''}, true)`
-      return tx.unsafe(text, params)
+      const [, filas] = await Promise.all([
+        tx`select set_config('role', ${rol}, true), set_config('app.role', ${rol}, true), set_config('app.user_id', ${userId ?? ''}, true)`,
+        tx.unsafe(text, params),
+      ])
+      return filas
     }) as unknown as Promise<any[]>
 }
 

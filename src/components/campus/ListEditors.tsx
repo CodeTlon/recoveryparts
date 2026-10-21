@@ -30,7 +30,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
 function RemoveButton({ onClick, label, disabled }: { onClick: () => void; label: string; disabled?: string }) {
   return (
     <button type="button" onClick={onClick} aria-label={label} title={disabled || label} disabled={!!disabled}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-outline-variant text-on-surface-variant hover:border-red-400 hover:text-red-300 disabled:pointer-events-none disabled:opacity-30">
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-outline-variant text-on-surface-variant hover:border-danger hover:text-danger disabled:pointer-events-none disabled:opacity-30">
       <Trash2 size={15} aria-hidden />
     </button>
   )
@@ -59,7 +59,7 @@ export function HorariosEditor({ name, inicial, onChange }: { name: string; inic
           <RemoveButton onClick={() => set(rows.filter((_, j) => j !== i))} label="Quitar horario" />
         </div>
       ))}
-      {errH && <p role="alert" className="text-sm text-red-400">{errH}</p>}
+      {errH && <p role="alert" className="text-sm text-danger">{errH}</p>}
       <AddButton onClick={() => set([...rows, { dia: 1, ini: '18:00', fin: '20:00' }])}>Agregar día</AddButton>
     </div>
   )
@@ -79,7 +79,7 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
     <div className="space-y-4">
       <Serial name={name} value={txt} />
       <Guard error={errK} />
-      {errK && <p role="alert" className="text-sm text-red-400">{errK}</p>}
+      {errK && <p role="alert" className="text-sm text-danger">{errK}</p>}
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay ítems.</p>}
       {rows.map((r, i) => (
         <div key={i} className="rounded-sm border border-outline-variant p-4">
@@ -160,7 +160,7 @@ function MenuAcciones({ label, acciones }: { label: string; acciones: Accion[] }
           {acciones.map((a, i) => a === 'sep' ? <div key={i} role="separator" className="my-1 border-t border-outline-variant" /> : (
             <button key={i} type="button" role="menuitem" disabled={a.disabled}
               onClick={() => { setOpen(false); a.onClick() }}
-              className={`flex min-h-[44px] w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${a.danger ? 'text-red-300 hover:bg-red-500/10' : 'text-on-surface hover:bg-surface-container-highest'}`}>
+              className={`flex min-h-[44px] w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${a.danger ? 'text-danger hover:bg-danger/10' : 'text-on-surface hover:bg-surface-container-highest'}`}>
               <span className="w-4 shrink-0 text-on-surface-variant" aria-hidden>{a.icon}</span>
               <span className="min-w-0">
                 <span className="block">{a.label}</span>
@@ -307,11 +307,11 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
         </>
       )}
       {quitadasConMaterial.length > 0 && (
-        <p role="status" className="rounded-sm border border-amber-400/50 p-3 text-sm text-amber-300">
+        <p role="status" className="rounded-sm border border-warning/50 p-3 text-sm text-warning">
           Al guardar, el material de {quitadasConMaterial.map((c) => `«${c.titulo}» (${conMaterial[c.id]})`).join(', ')} va a quedar como <strong>material general</strong>. No se borra.
         </p>
       )}
-      {errE && <p role="alert" className="text-sm text-red-400">{errE}</p>}
+      {errE && <p role="alert" className="text-sm text-danger">{errE}</p>}
     </div>
   )
 }
@@ -396,7 +396,7 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
         </BloqueModulo>
       ))}
       {sinFecha > 0 && !errC && <p className="text-sm text-secondary">{sinFecha} clase{sinFecha === 1 ? '' : 's'} sin fecha: no se mostrarán en el calendario.</p>}
-      {errC && <p role="alert" className="text-sm text-red-400">{errC}</p>}
+      {errC && <p role="alert" className="text-sm text-danger">{errC}</p>}
       {avisar}
     </div>
   )

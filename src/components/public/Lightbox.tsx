@@ -33,15 +33,17 @@ export default function Galeria({ fotos }: { fotos: Foto[] }) {
       <div className="mb-8 flex flex-wrap gap-2">
         {cats.map((c) => (
           <button key={c} type="button" onClick={() => setCat(c)} aria-pressed={cat === c}
-            className={`rounded-sm border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${cat === c ? 'border-accent bg-accent text-surface' : 'border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary'}`}>
+            className={`rounded-sm border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${cat === c ? 'border-accent bg-accent text-surface' : 'border-outline text-on-surface-variant hover:border-secondary hover:text-secondary'}`}>
             {label[c] ?? c}
           </button>
         ))}
       </div>
-      <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 *:mb-4">
+      {/* Casillas de proporción fija (4:3): no se guardan las medidas de cada foto y, con tamaños supuestos, la página
+          saltaba al cargar cada imagen. El visor ampliado muestra la foto completa. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {lista.map((f, i) => (
-          <button key={f.id} type="button" onClick={() => setIdx(i)} className="group relative block w-full break-inside-avoid overflow-hidden rounded-sm border border-outline-variant">
-            <Image src={f.imagen_url} alt={f.alt} width={800} height={600} loading="lazy" sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="h-auto w-full transition-transform duration-500 group-hover:scale-105" />
+          <button key={f.id} type="button" onClick={() => setIdx(i)} className="group relative block aspect-4/3 w-full overflow-hidden rounded-sm border border-outline-variant">
+            <Image src={f.imagen_url} alt={f.alt} fill loading="lazy" sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           </button>
         ))}
       </div>

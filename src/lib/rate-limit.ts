@@ -7,7 +7,10 @@ const MAX_CLAVES = 5000
 function limpiar(now: number) {
   if (hits.size < MAX_CLAVES) return
   for (const [k, h] of hits) if (h.reset < now) hits.delete(k)
-  if (hits.size >= MAX_CLAVES) hits.clear()
+  // Sigue lleno: descarta las más viejas (el Map conserva el orden de inserción) en vez de borrar todo,
+  // para que inundar con claves nuevas no resetee los bloqueos vigentes.
+  let sobran = hits.size - MAX_CLAVES + 1
+  for (const k of hits.keys()) { if (sobran-- <= 0) break; hits.delete(k) }
 }
 
 /** Cuenta un intento y dice si ya superó el máximo. */

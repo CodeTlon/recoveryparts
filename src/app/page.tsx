@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Star, ChevronDown, Search } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
+import HeroVideo from '@/components/public/HeroVideo'
 import SiteFooter from '@/components/layout/SiteFooter'
 import CursoCard from '@/components/public/CursoCard'
 import AuroraBackground from '@/components/ui/AuroraBackground'
@@ -14,6 +15,9 @@ import CountUp from '@/components/ui/CountUp'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, type Area } from '@/lib/types'
+import { NOMBRE_SITIO } from '@/lib/seo'
+import { siteUrl } from '@/lib/env'
+import JsonLd from '@/components/seo/JsonLd'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,9 +28,9 @@ type Faq = { id: string; pregunta: string; respuesta: string }
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
-    query<Egresado[]>((sb) => sb.from('cms_egresados').select('*').order('orden').limit(10), []),
-    query<Testimonio[]>((sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
-    query<Faq[]>((sb) => sb.from('cms_faq').select('*').order('orden'), []),
+    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('orden').limit(10), []),
+    query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
+    query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
   ])
   const destacados = cursos.filter((c) => c.destacado).slice(0, 6)
   const wa = waLink(s.contacto.whatsapp)
@@ -43,14 +47,26 @@ export default async function Home() {
                 </figure>
   )
 
+  const base = siteUrl().replace(/\/$/, '')
+  const ig = s.contacto.instagram?.replace('@', '')
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'EducationalOrganization',
+    name: NOMBRE_SITIO, url: base, logo: `${base}/images/logo.png`, description: s.hero.subtitulo || undefined,
+    ...(s.contacto.direccion ? { address: { '@type': 'PostalAddress', streetAddress: s.contacto.direccion, addressLocality: 'Córdoba', addressCountry: 'AR' } } : {}),
+    ...(s.contacto.telefono ? { telephone: s.contacto.telefono } : {}),
+    ...(s.contacto.email ? { email: s.contacto.email } : {}),
+    ...(ig ? { sameAs: [`https://www.instagram.com/${ig}/`] } : {}),
+  }
+
   return (
     <div className="min-h-screen bg-surface text-on-surface">
+      <JsonLd datos={jsonLd} />
       <SiteNav />
       <main id="contenido" tabIndex={-1}>
         {/* 1 · Hero */}
         <section className="relative flex min-h-[85vh] items-center overflow-hidden pt-20">
           {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}
-          {hrefSeguro(s.hero.video_url) && <video src={hrefSeguro(s.hero.video_url)} poster={s.hero.imagen_url || undefined} autoPlay muted loop playsInline preload="metadata" aria-hidden className="absolute inset-0 h-full w-full object-cover" />}
+          {hrefSeguro(s.hero.video_url) && <HeroVideo src={hrefSeguro(s.hero.video_url)!} poster={s.hero.imagen_url || undefined} />}
           <div className="absolute inset-0 bg-linear-to-r from-surface via-surface/85 to-surface/40" />
           <div className="pointer-events-none absolute -bottom-1/4 -left-1/4 h-[500px] w-[500px] rounded-full bg-accent/20 blur-[130px]" />
           <div className="relative mx-auto w-full max-w-[1280px] px-4 py-20 md:px-12">
