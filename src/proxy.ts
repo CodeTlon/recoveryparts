@@ -33,8 +33,8 @@ async function autenticar(request: NextRequest): Promise<NextResponse> {
 }
 
 // runtime nodejs: el middleware consulta Postgres y firma con node:crypto.
-// /api/media queda fuera: valida sesión y rol por su cuenta, y con el middleware delante Next truncaba o rompía
+// /media (archivos públicos inmutables, con su propia cache y Range) y /api/media quedan fuera: /api/media valida sesión y rol por su cuenta, y con el middleware delante Next truncaba o rompía
 // ("Response body object should not be disturbed or locked") las subidas de más de 10MB.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|images|favicon.ico|api/media).*)']
+  matcher: ['/((?!_next/static|_next/image|images|media|favicon.ico|api/media).*)']
 }
