@@ -9,8 +9,9 @@ import { useModalClose } from './Modal'
 
 // Formulario con server action: muestra error/ok y se resetea al guardar.
 // `S` permite que la acción devuelva datos extra (ej. el id del curso creado) que recibe `onSuccess`.
-export function ActionForm<S extends R = R>({ action, children, submit = 'Guardar', className = '', reset = true, onSuccess }: {
+export function ActionForm<S extends R = R>({ action, children, submit = 'Guardar', className = '', reset = true, onSuccess, okLabel = 'Guardado', errLabel = 'No se pudo guardar' }: {
   action: (s: S, fd: FormData) => Promise<S>; children: React.ReactNode; submit?: string | null; className?: string; reset?: boolean; onSuccess?: (s: S) => void
+  okLabel?: string; errLabel?: string // texto del aviso (botones sueltos: «Hecho» / «No se pudo completar»)
 }) {
   const [s, run, pending] = useActionState<S, FormData>(action as unknown as (s: Awaited<S>, fd: FormData) => Promise<S>, {} as Awaited<S>)
   const closeModal = useModalClose()
@@ -28,22 +29,23 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
     const t = setTimeout(() => setToast(null), 3500)
     return () => clearTimeout(t)
   }, [s])
+  // Sin botón de envío propio (submit={null}) es un botón suelto dentro de una fila: sin separación vertical entre hijos.
   return (
-    <form ref={ref} action={run} className={`space-y-4 ${className}`}>
+    <form ref={ref} action={run} className={`${submit === null ? '' : 'space-y-4'} ${className}`}>
       {children}
-      {s.error && <p role="alert" className="text-sm text-red-400">{s.error}</p>}
+      {s.error && <p role="alert" className={`text-sm text-danger ${submit === null ? 'mt-2' : ''}`}>{s.error}</p>}
       {submit !== null && <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : submit}</button>}
       <AnimatePresence>
         {toast === 'ok' && (
           <motion.div role="status" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-pill border border-green-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-green-300 shadow-card-hover">
-            <CheckCircle2 size={18} aria-hidden /> Guardado
+            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-success/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-success shadow-card-hover">
+            <CheckCircle2 size={18} aria-hidden /> {okLabel}
           </motion.div>
         )}
         {toast === 'error' && (
           <motion.div aria-hidden initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-pill border border-red-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-red-300 shadow-card-hover">
-            <XCircle size={18} aria-hidden /> No se pudo guardar
+            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-danger/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-danger shadow-card-hover">
+            <XCircle size={18} aria-hidden /> {errLabel}
           </motion.div>
         )}
       </AnimatePresence>
@@ -71,7 +73,7 @@ export function Field({ label, name, type = 'text', defaultValue, required, plac
 }
 
 // Botón de envío para <form action={serverAction}> simples: se deshabilita mientras se envía.
-export function SubmitButton({ children, className = 'btn-ghost !px-3 !py-2' }: { children: React.ReactNode; className?: string }) {
+export function SubmitButton({ children, className = 'btn-ghost px-3! py-2!' }: { children: React.ReactNode; className?: string }) {
   const { pending } = useFormStatus()
   return <button disabled={pending} aria-busy={pending} className={className}>{children}</button>
 }
@@ -104,11 +106,11 @@ export function Select({ name, label, defaultValue, options, empty, grupos }: { 
 // Con mouse/touch hay que MANTENERLO apretado ~1 s (el relleno naranja indica el avance);
 // con teclado se abre un modal de confirmación propio, así sigue siendo accesible.
 // `modal`: el clic siempre abre el modal con el mensaje (para advertencias que hay que leer antes de confirmar).
-export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2', name, value, modal }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string; modal?: boolean }) {
+export function Confirm({ children, message, className = 'btn-ghost px-3! py-2!', name, value, modal }: { children: React.ReactNode; message?: string; className?: string; name?: string; value?: string; modal?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null)
   const dlg = useRef<HTMLDialogElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout>>()
-  const hintTimer = useRef<ReturnType<typeof setTimeout>>()
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [holding, setHolding] = useState(false)
   const [hint, setHint] = useState(false)
   const fired = useRef(false)
@@ -132,17 +134,17 @@ export function Confirm({ children, message, className = 'btn-ghost !px-3 !py-2'
         if (fired.current) { e.preventDefault(); return } // ya se envió al completar la pulsación
         if (e.isTrusted) { e.preventDefault(); setHint(true); clearTimeout(hintTimer.current); hintTimer.current = setTimeout(() => setHint(false), 2200) } // click corto
       }}>
-      <span aria-hidden className={`absolute inset-y-0 left-0 bg-red-500/40 ${holding ? 'w-full transition-[width] duration-1000 ease-linear' : 'w-0'}`} />
+      <span aria-hidden className={`absolute inset-y-0 left-0 bg-danger/40 ${holding ? 'w-full transition-[width] duration-1000 ease-linear' : 'w-0'}`} />
       <span className="relative inline-flex items-center gap-1">{hint ? 'Mantené apretado' : children}</span>
     </button>
     <dialog ref={dlg} aria-label="Confirmar acción" onClick={(e) => { if (e.target === dlg.current) dlg.current?.close() }}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-card border border-outline-variant bg-surface-container p-0 text-on-surface shadow-card-hover backdrop:bg-black/60 backdrop:backdrop-blur-sm">
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-card border border-outline-variant bg-surface-container p-0 text-on-surface shadow-card-hover backdrop:bg-black/60 backdrop:backdrop-blur-xs">
       <div className="p-6">
         <h2 className="text-lg font-semibold text-primary">¿Confirmás?</h2>
         <p className="mt-2 text-sm text-on-surface-variant">{message}</p>
         <div className="mt-6 flex justify-end gap-2">
-          <button type="button" autoFocus className="btn-ghost !px-4 !py-2" onClick={() => dlg.current?.close()}>Cancelar</button>
-          <button type="button" className="btn-primary !px-4 !py-2" onClick={() => { dlg.current?.close(); ref.current?.form?.requestSubmit(ref.current) }}>Confirmar</button>
+          <button type="button" autoFocus className="btn-ghost px-4! py-2!" onClick={() => dlg.current?.close()}>Cancelar</button>
+          <button type="button" className="btn-primary px-4! py-2!" onClick={() => { dlg.current?.close(); ref.current?.form?.requestSubmit(ref.current) }}>Confirmar</button>
         </div>
       </div>
     </dialog>

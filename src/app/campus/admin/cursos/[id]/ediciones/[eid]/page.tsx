@@ -6,6 +6,7 @@ import { RotateCcw } from 'lucide-react'
 import { ActionForm, Badge, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { agregarAlumno, corregirFechaDesercion, finalizarEdicion, guardarClases, guardarEstructuraEdicion, guardarHorarios, marcarDesertor, restablecerEstructura } from '../../../../actions'
 import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
+import AvisosPendientes from '@/components/campus/AvisosPendientes'
 import { ClasesEditor, EstructuraEditor, HorariosEditor } from '@/components/campus/ListEditors'
 
 const TABS = [['datos', 'Datos'], ['horarios', 'Horarios'], ['estructura', 'Estructura'], ['calendario', 'Calendario'], ['alumnos', 'Alumnos']] as const
@@ -18,6 +19,9 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
   const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, aula_id, profesor_id, cupo, activo, cursos(nombre, activo, tipo)').eq('id', eid).eq('curso_id', id).maybeSingle()
   if (!ed) notFound()
   const curso = ed.cursos as unknown as { nombre: string; activo: boolean; tipo: string }
+  // Versión del calendario que se muestra: el guardado la compara y no pisa lo que otra persona cargó mientras tanto.
+  const avisosPendientes = tab === 'calendario' ? ((await sb.from('clases').select('id', { count: 'exact', head: true }).eq('edicion_id', eid).eq('aviso_pendiente', true)).count ?? 0) : 0
+  const versionCalendario = tab === 'calendario' ? ((await sb.rpc('calendario_version', { p_edicion: eid })).data as string | null) ?? '' : ''
 
   const [{ data: aulas }, { data: profes }, { data: hs }, { data: est }, { data: clases }, { data: insc }, { data: mats }] = await Promise.all([
     sb.from('aulas').select('id, nombre, capacidad, activa').order('nombre'),
@@ -45,7 +49,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       <PageHead title={nombre} sub={!ed.activo ? 'Edición dada de baja: no se ve en el sitio ni en el panel del profesor.' : !curso.activo ? 'El curso está dado de baja.' : `Inicia el ${fechaAR(ed.fecha_inicio)}.`} />
 
       {sinFechas && tab !== 'calendario' && (
-        <p className="mb-6 rounded border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">
+        <p className="mb-6 rounded-sm border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">
           Esta edición todavía no tiene fechas de clase. <Link href={href('calendario')} className="font-semibold underline">Asignalas en Calendario</Link> (primero cargá los horarios).
         </p>
       )}
@@ -53,7 +57,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       <nav aria-label="Secciones de la edición" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
         {TABS.map(([k, l]) => (
           <Link key={k} href={href(k)} scroll={false} aria-current={tab === k ? 'page' : undefined}
-            className={`rounded px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
+            className={`rounded-sm px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
         ))}
       </nav>
 
@@ -88,7 +92,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
           {estructura.personalizada && (
             <ActionForm action={restablecerEstructura} submit={null} className="mt-4">
               <input type="hidden" name="edicion_id" value={eid} />
-              <Confirm modal className="btn-ghost !px-4 !py-2" message="Se van a perder los cambios hechos en la estructura de esta edición y va a volver a la guía general. El material que el profesor subió a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
+              <Confirm modal className="btn-ghost px-4! py-2!" message="Se van a perder los cambios hechos en la estructura de esta edición y va a volver a la guía general. El material que el profesor subió a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
                 <RotateCcw size={14} /> Volver a la guía general
               </Confirm>
             </ActionForm>
@@ -99,17 +103,19 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       {tab === 'calendario' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Las clases y sus títulos vienen de la estructura del curso; acá se asigna la fecha de cada una en esta edición (se puede adelantar o saltear una clase). Las suspendidas, reprogramadas y salteadas no cuentan para el N° de clase de deserción.</p>
+        <AvisosPendientes edicionId={eid} cantidad={avisosPendientes} />
         <div className="max-w-4xl"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="edicion_id" value={eid} />
+          <input type="hidden" name="version" value={versionCalendario} />
           <ClasesEditor name="clases" plan={plan.map((p) => ({ ...p, modulo: mods.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
-            avisar={<Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>} />
+            avisar={<Check name="avisar" defaultChecked>Avisar ahora por mail a los alumnos activos si hay clases suspendidas o reprogramadas (si no, el aviso queda pendiente)</Check>} />
         </ActionForm></div>
       </section>}
 
       {tab === 'alumnos' && <section className={sec}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">Alumnos <span className="text-base font-normal text-on-surface-variant">({insc?.length ?? 0}/{ed.cupo})</span></h2>
-          {activos > 0 && <form action={finalizarEdicion}><input type="hidden" name="id" value={eid} /><Confirm message="Los alumnos activos pasarán a «Finalizado» y podrán descargar el ZIP de PDFs. ¿Continuar?">Finalizar edición</Confirm></form>}
+          {activos > 0 && <ActionForm action={finalizarEdicion} submit={null} reset={false}><input type="hidden" name="id" value={eid} /><Confirm message="Los alumnos activos pasarán a «Finalizado» y podrán descargar el ZIP de PDFs. ¿Continuar?">Finalizar edición</Confirm></ActionForm>}
         </div>
 
         <div className="card mb-6 max-w-3xl p-6">
@@ -139,8 +145,8 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
                 </div>
 
                 {i.estado === 'desertor' && (
-                  <div className="mt-3 rounded border border-red-500/30 bg-red-500/10 p-3 text-sm">
-                    <p className="font-semibold text-red-200">Desertó en la clase {i.n_clase_desercion} de {totalClases} · {fechaAR(i.fecha_desercion)}</p>
+                  <div className="mt-3 rounded-sm border border-danger/30 bg-danger/10 p-3 text-sm">
+                    <p className="font-semibold text-danger">Desertó en la clase {i.n_clase_desercion} de {totalClases} · {fechaAR(i.fecha_desercion)}</p>
                     <p className="mt-1 text-on-surface-variant">Motivo: {i.motivo_desercion}</p>
                     <details className="mt-2"><summary className="cursor-pointer text-secondary">Corregir fecha</summary>
                       <div className="mt-2 max-w-xs"><ActionForm action={corregirFechaDesercion} reset={false} submit="Recalcular">

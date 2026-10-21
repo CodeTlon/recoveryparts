@@ -16,7 +16,7 @@ export default function ContactForm() {
       </div>
       <div><label className="label" htmlFor="c-msg">Consulta</label><textarea id="c-msg" name="mensaje" required rows={4} placeholder="Contanos qué te gustaría saber…" maxLength={4000} className="input" /></div>
       <p className="text-xs text-on-surface-variant">Usamos tus datos únicamente para responder tu consulta (Ley 25.326). Podés pedir acceso o rectificación escribiéndonos.</p>
-      {s.error && <p role="alert" className="text-sm text-red-400">{s.error}</p>}
+      {s.error && <p role="alert" className="text-sm text-danger">{s.error}</p>}
       <button disabled={pending} className="btn-primary w-full">{pending ? 'Enviando…' : 'Enviar consulta'}</button>
     </form>
   )

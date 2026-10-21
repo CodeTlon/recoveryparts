@@ -1,18 +1,28 @@
 import { requireRole } from '@/lib/auth'
 import { etiquetaEdicion } from '@/lib/fechas'
+import Paginacion, { paginaDe } from '@/components/campus/Paginacion'
 import { ActionForm, Badge, Empty, Field, PageHead, Select, Check } from '@/components/campus/ui'
 import { guardarEncuesta } from '../actions'
 
 type Pregunta = { tipo: 'puntaje' | 'texto'; texto: string }
 
-export default async function Encuestas() {
+const POR_PAGINA_ENCUESTAS = 10
+
+export default async function Encuestas({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
+  const pagina = paginaDe((await searchParams).pagina)
   const { sb } = await requireRole('admin')
-  const [{ data: encs }, { data: cursos }, { data: resp }, { data: comp }] = await Promise.all([
-    sb.from('encuestas').select('*').order('creado_en', { ascending: false }),
+  const [{ data: filas }, { data: cursos }] = await Promise.all([
+    sb.from('encuestas').select('*').order('creado_en', { ascending: false }).order('id').range((pagina - 1) * POR_PAGINA_ENCUESTAS, pagina * POR_PAGINA_ENCUESTAS),
     sb.from('ediciones').select('id, fecha_inicio, activo, cursos(nombre, activo)').order('fecha_inicio', { ascending: false }),
-    sb.from('encuesta_respuestas').select('encuesta_id, respuestas'),
-    sb.from('encuesta_completadas').select('encuesta_id'),
   ])
+  const hayMas = (filas?.length ?? 0) > POR_PAGINA_ENCUESTAS
+  const encs = filas?.slice(0, POR_PAGINA_ENCUESTAS)
+  // Respuestas solo de las encuestas que se muestran (antes se traían las de todas).
+  const ids = (encs ?? []).map((e) => e.id as string)
+  const [{ data: resp }, { data: comp }] = ids.length ? await Promise.all([
+    sb.from('encuesta_respuestas').select('encuesta_id, respuestas').in('encuesta_id', ids),
+    sb.from('encuesta_completadas').select('encuesta_id').in('encuesta_id', ids),
+  ]) : [{ data: [] }, { data: [] }]
   // La encuesta es por edición (D5): cada grupo responde la suya. Se ofrecen las ediciones activas de cursos activos.
   type Ed = { id: string; fecha_inicio: string | null; activo: boolean; cursos: { nombre: string; activo: boolean } | null }
   const eds = (cursos ?? []) as unknown as Ed[]
@@ -61,7 +71,8 @@ export default async function Encuestas() {
                   <div className="mt-3 max-w-2xl"><ActionForm action={guardarEncuesta} reset={false}>
                     <input type="hidden" name="id" value={e.id} />
                     <Field label="Título" name="titulo" placeholder="Ej: Encuesta de fin de curso" defaultValue={e.titulo} required />
-                    <Select name="edicion_id" label="Edición" defaultValue={e.edicion_id} empty="Seleccioná una edición" options={opts} />
+                    {/* La edición actual siempre se ofrece, aunque se haya dado de baja: si no, no se podría ni desactivar la encuesta. */}
+                    <Select name="edicion_id" label="Edición" defaultValue={e.edicion_id} empty="Seleccioná una edición" options={opts.some(([id]) => id === e.edicion_id) ? opts : [[e.edicion_id, etiqueta(eds.find((x) => x.id === e.edicion_id))], ...opts]} />
                     <Field label="Preguntas" name="preguntas" placeholder={'puntaje | ¿Cómo calificás al profesor?\ntexto | ¿Qué mejorarías?'} rows={5} defaultValue={(e.preguntas as Pregunta[]).map((p) => `${p.tipo} | ${p.texto}`).join('\n')} />
                     <Check name="activa" defaultChecked={e.activa}>Activa</Check>
                   </ActionForm></div>
@@ -71,6 +82,7 @@ export default async function Encuestas() {
           })}
         </div>
       )}
+      <Paginacion pagina={pagina} hayMas={hayMas} />
     </>
   )
 }

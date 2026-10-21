@@ -1,5 +1,6 @@
 import 'server-only'
-import type { Cliente } from '@/lib/db'
+import { cache } from 'react'
+import { clienteUsuario, type Cliente } from '@/lib/db'
 
 export type EncuestaPendiente = { id: string; titulo: string; edicion_id: string }
 
@@ -14,3 +15,6 @@ export async function encuestasPendientes(sb: Cliente, alumnoId: string): Promis
   const respondidas = new Set(((hechas ?? []) as { encuesta_id: string }[]).map((h) => h.encuesta_id))
   return ((encuestas ?? []) as EncuestaPendiente[]).filter((e) => !respondidas.has(e.id))
 }
+
+// Layout, página y curso del alumno la piden en la misma request: se consulta una sola vez (RLS corre con su id).
+export const encuestasPendientesDe = cache((alumnoId: string) => encuestasPendientes(clienteUsuario(alumnoId), alumnoId))

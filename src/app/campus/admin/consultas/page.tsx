@@ -1,10 +1,15 @@
 import { requireRole, fechaAR } from '@/lib/auth'
-import { Badge, Empty, PageHead, SubmitButton } from '@/components/campus/ui'
+import Paginacion, { POR_PAGINA, paginaDe } from '@/components/campus/Paginacion'
+import { ActionForm, Badge, Empty, PageHead, SubmitButton } from '@/components/campus/ui'
 import { marcarContactoLeido } from '../actions'
 
-export default async function Consultas() {
+export default async function Consultas({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
+  const pagina = paginaDe((await searchParams).pagina)
   const { sb } = await requireRole('admin')
-  const { data } = await sb.from('contactos').select('*').order('creado_en', { ascending: false }).limit(200)
+  // Antes: las 200 más nuevas y el resto inalcanzable. Ahora todas, de a POR_PAGINA.
+  const { data: filas } = await sb.from('contactos').select('*').order('creado_en', { ascending: false }).order('id').range((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
+  const hayMas = (filas?.length ?? 0) > POR_PAGINA
+  const data = filas?.slice(0, POR_PAGINA)
   return (
     <>
       <PageHead title="Consultas" sub="Mensajes enviados desde el formulario de contacto del sitio." />
@@ -20,14 +25,15 @@ export default async function Consultas() {
                 {!c.leido && <Badge tone="warn">Nueva</Badge>}
               </div>
               <p className="whitespace-pre-line text-sm text-on-surface-variant">{c.mensaje}</p>
-              <form action={marcarContactoLeido} className="mt-3">
+              <ActionForm action={marcarContactoLeido} submit={null} reset={false} okLabel="Hecho" className="mt-3">
                 <input type="hidden" name="id" value={c.id} /><input type="hidden" name="leido" value={c.leido ? '0' : '1'} />
                 <SubmitButton>{c.leido ? 'Marcar como no leída' : 'Marcar como leída'}</SubmitButton>
-              </form>
+              </ActionForm>
             </li>
           ))}
         </ul>
       )}
+      <Paginacion pagina={pagina} hayMas={hayMas} params={{}} />
     </>
   )
 }

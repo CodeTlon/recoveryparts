@@ -43,6 +43,7 @@ En *Environment Variables* del recurso cargá:
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://test.tu-dominio.com` (sin barra final) | sí |
 | `SESSION_SECRET` | el de `openssl rand -base64 48` (32+ caracteres) | sí |
+| `TRUSTED_IP_HEADER` | opcional: cabecera con la IP real que fija el proxy/CDN (ej. `cf-connecting-ip`). Vacía, el límite de intentos usa el **último** valor de `x-forwarded-for` (el que agrega Traefik). Si se pone un CDN delante, definirla: si no, todos los usuarios comparten la IP del CDN | no |
 | `POSTGRES_PASSWORD` | el de `openssl rand -base64 32` | sí |
 | `APP_ENV` | `test` (en producción: `production`) | sí |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | los de tu proveedor | sí para invitar |

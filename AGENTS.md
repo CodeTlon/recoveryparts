@@ -1,14 +1,16 @@
 # Recovery Parts — sitio web + campus virtual
 
-Academia de cursos y talleres técnicos (Córdoba). Next.js 15 (App Router) + Tailwind + Postgres plano con RLS; auth y archivos propios; se despliega con Docker en Coolify. Este archivo es lo único que se carga siempre; el detalle vive en `.ai/context/` (empezá por `00_INDEX.md` y leé solo lo que la tarea necesite) y en `docs/`.
+Academia de cursos y talleres técnicos (Córdoba). Next.js 16 (App Router) + React 19 + Tailwind 4 + Postgres plano con RLS; auth y archivos propios; se despliega con Docker en Coolify. Este archivo es lo único que se carga siempre; el detalle vive en `.ai/context/` (empezá por `00_INDEX.md` y leé solo lo que la tarea necesite) y en `docs/`.
 
 ## Comandos
 ```bash
+npm run setup:dev                                       # una vez: crea .env.development (NO se versiona) con un SESSION_SECRET propio
 npm run db:start && npm run db:migrate && npm run dev   # desarrollo: Postgres LOCAL (Docker) + app con .env.development
 npm run seed:dev                  # cuentas/datos de PRUEBA locales (imprime contraseñas)
 npm run db:reset                  # rehacer la base local desde las migraciones
 npm run db:migrate:test | db:migrate:production   # migraciones a mano (en Coolify corren solas al arrancar la app)
 npm run type-check && npm run build          # lo mismo que corre la CI
+npm run lint                                 # ESLint 10 (config plana); aun no esta en el CI
 ```
 Sin `DATABASE_URL` el sitio compila y muestra vacíos; el campus redirige a `/login`.
 
@@ -16,10 +18,10 @@ Sin `DATABASE_URL` el sitio compila y muestra vacíos; el campus redirige a `/lo
 **desarrollo** (local) → **homologación** (`test`, Coolify de pruebas) → **producción** (`main`). Ramas `feature/* → dev → test → main`: `feature → dev` y `dev → test` son **merge** directo; solo `test → main` es **PR**. Nunca commit directo a `dev`/`test`/`main`. Detalle: `docs/ENTORNOS.md`.
 
 ## Versiones que no hay que subir a ciegas
-Node 22 (Dockerfile y CI). `postgres` (postgres.js) está fijado en **3.4.5**. No hay ORM ni Supabase: el acceso a datos es `src/lib/db` (ver `.ai/context/ARCHITECTURE.md`).
+Node 22 (Dockerfile y CI). Versiones de la flota (Next 16.4.2, React 19.3.1, Tailwind 4.3.3, TS 6.0.3, ESLint 10.13.0): `codetlon-cloud/.claude/modules/stack-versions.md`. `postgres` (postgres.js) está fijado en **3.4.5**. No hay ORM ni Supabase: el acceso a datos es `src/lib/db` (ver `.ai/context/ARCHITECTURE.md`).
 
 ## Seguridad (inamovible)
-1. Autorización **en el servidor** y en la base: middleware + `requireRole()` + RLS en todas las tablas. Ocultar un botón no alcanza.
+1. Autorización **en el servidor** y en la base: `proxy.ts` (antes `middleware.ts`) + `requireRole()` + RLS en todas las tablas. Ocultar un botón no alcanza.
 2. `clienteAdmin()` / `sqlAdmin()` (rol `service_role`, se saltea RLS) solo en server actions/route handlers y **después** de validar el rol (`import 'server-only'`). Nunca al cliente.
 3. **No hay registro público.** Solo el admin crea usuarios, por invitación. El perfil y su rol se crean únicamente si `auth.users.invited_at` está seteado (migración 0006); no confiar en metadatos de un signUp.
 4. Datos personales del alumno: solo nombre, apellido, email, teléfono. Nada de datos personales en URLs ni logs. Los tokens nunca se loguean.
@@ -42,6 +44,8 @@ Node 22 (Dockerfile y CI). `postgres` (postgres.js) está fijado en **3.4.5**. N
 ## Convenciones mínimas
 - Español rioplatense en la UI (voseo). Comentarios con el ID del requisito (`RF-xx`) cuando implementan uno.
 - Server actions de admin en `src/app/campus/admin/actions.ts` (tipo `R` = `{ ok?, error? }`); formularios con `ActionForm`/`Field` de `src/components/campus/ui.tsx`.
+- Toda página que lea la sesión o cargue scripts es dinámica (`export const dynamic = 'force-dynamic'`): la CSP lleva un nonce por request y una página estática no puede llevarlo.
+- Una server action que cambie algo que el sitio público muestra llama a `invalidarPublico()` (el sitio cachea 60 s). Un botón suelto usa `ActionForm` con `submit={null}` para que el error se vea.
 - Más en `.ai/context/CONVENTIONS.md`.
 
 ## Flujo de trabajo

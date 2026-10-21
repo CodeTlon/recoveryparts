@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, ClipboardList } from 'lucide-react'
 import { requireRole } from '@/lib/auth'
-import { encuestasPendientes } from '@/lib/encuestas'
+import { encuestasPendientesDe } from '@/lib/encuestas'
 import { etiquetaEdicion } from '@/lib/fechas'
 import { PageHead, Empty } from '@/components/campus/ui'
 
@@ -11,7 +11,7 @@ type Insc = { edicion_id: string; ediciones: { curso_id: string; fecha_inicio: s
 export default async function Encuestas() {
   const { sb, perfil } = await requireRole('alumno')
   const [pendientes, { data: inscs }] = await Promise.all([
-    encuestasPendientes(sb, perfil.id),
+    encuestasPendientesDe(perfil.id),
     sb.from('inscripciones').select('edicion_id, ediciones(curso_id, fecha_inicio)').eq('alumno_id', perfil.id),
   ])
   const lista = (inscs ?? []) as unknown as Insc[]

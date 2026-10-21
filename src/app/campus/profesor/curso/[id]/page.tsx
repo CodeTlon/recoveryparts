@@ -1,3 +1,4 @@
+import AvisosPendientes from '@/components/campus/AvisosPendientes'
 import { ClasesEditor, EstructuraEditor } from '@/components/campus/ListEditors'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, Eye, EyeOff, Trash2, RotateCcw } from 'lucide-react'
@@ -13,12 +14,15 @@ import ArbolEstructura, { type ArbolClase, type ArbolModulo } from '@/components
 export default async function EdicionProfesor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { sb, perfil } = await requireRole('profesor')
-  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, activo, cursos(nombre, tipo), aulas(nombre), clases(fecha)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
+  const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, activo, cursos(nombre, tipo, duracion_semanas), aulas(nombre), clases(fecha)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
   if (!ed) notFound() // un profesor nunca ve ediciones ajenas (ni terminadas: RLS con edicion_vigente)
   // RF-04: una edición terminada o dada de baja no se abre (también lo impide la base).
-  const { momento } = momentoEdicion({ activo: ed.activo, fecha_inicio: ed.fecha_inicio, fechas: ((ed.clases ?? []) as { fecha: string }[]).map((c) => c.fecha) }, hoyAR())
+  const { momento } = momentoEdicion({ activo: ed.activo, fecha_inicio: ed.fecha_inicio, fechas: ((ed.clases ?? []) as { fecha: string }[]).map((c) => c.fecha), duracionSemanas: (ed.cursos as unknown as { duracion_semanas: number | null } | null)?.duracion_semanas }, hoyAR())
   if (momento !== 'en_curso' && momento !== 'proxima') notFound()
   const curso = ed.cursos as unknown as { nombre: string; tipo: string }
+  // Versión del calendario que se muestra: el guardado la compara y no pisa lo que otra persona cargó mientras tanto.
+  const avisosPendientes = (await sb.from('clases').select('id', { count: 'exact', head: true }).eq('edicion_id', id).eq('aviso_pendiente', true)).count ?? 0
+  const versionCalendario = ((await sb.rpc('calendario_version', { p_edicion: id })).data as string | null) ?? ''
 
   // RF-58: la estructura que vale en esta edición (la guía general o la propia, si el profesor la adaptó) y su
   // material (el base del curso y el que se subió para esta edición).
@@ -54,19 +58,19 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
         <span className="min-w-0 flex-1 font-medium">{m.titulo}</span>
         {m.base && <Badge>Material base</Badge>}
         <Badge tone={st.visible ? 'ok' : 'neutral'}>{st.label}</Badge>
-        {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-3 !py-2">Ver</a>}
+        {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost px-3! py-2!">Ver</a>}
         {(!st.visible || st.manual) && (
-          <form action={liberarMaterial}>
+          <ActionForm action={liberarMaterial} submit={null} reset={false} okLabel="Hecho">
             <input type="hidden" name="id" value={m.id} /><input type="hidden" name="edicion_id" value={id} /><input type="hidden" name="liberar" value={st.manual ? '0' : '1'} />
             <SubmitButton>{st.manual ? <><EyeOff size={14} /> Quitar liberación</> : <><Eye size={14} /> Liberar ahora</>}</SubmitButton>
-          </form>
+          </ActionForm>
         )}
         {/* El material base (de la academia) no se borra desde acá: solo el que subió el profesor. */}
         {m.propio && (
-          <form action={borrarMaterial}>
+          <ActionForm action={borrarMaterial} submit={null} reset={false} okLabel="Hecho">
             <input type="hidden" name="id" value={m.id} />
             <Confirm message="¿Eliminar este material? Tus alumnos dejan de verlo."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>
-          </form>
+          </ActionForm>
         )}
       </div>
     )
@@ -110,11 +114,13 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
       <section className="mb-12">
         <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase: podés adelantar una clase o saltearla, o marcarla suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
+        <AvisosPendientes edicionId={id} cantidad={avisosPendientes} />
         <div className="max-w-4xl">
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="edicion_id" value={id} />
+            <input type="hidden" name="version" value={versionCalendario} />
             <ClasesEditor name="clases" plan={clasesPlan.map((p) => ({ ...p, modulo: modulos.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={(clases ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]} inicio={ed.fecha_inicio} dias={[...new Set((hs ?? []).map((h) => h.dia_semana as number))]}
-              avisar={<Check name="avisar">Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check>} />
+              avisar={<Check name="avisar" defaultChecked>Avisar ahora por mail a los alumnos si hay clases suspendidas o reprogramadas (si no, el aviso queda pendiente)</Check>} />
           </ActionForm>
         </div>
       </section>
@@ -136,7 +142,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
           {estructura.personalizada && (
             <ActionForm action={restablecerEstructura} submit={null} className="mt-4">
               <input type="hidden" name="edicion_id" value={id} />
-              <Confirm modal className="btn-ghost !px-4 !py-2" message="Se van a perder los cambios que hiciste en la estructura de este curso y va a volver a la guía general. El material que subiste a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
+              <Confirm modal className="btn-ghost px-4! py-2!" message="Se van a perder los cambios que hiciste en la estructura de este curso y va a volver a la guía general. El material que subiste a clases que ya no existan queda como material general, y las fechas de esas clases se borran.">
                 <RotateCcw size={14} /> Volver a la guía general
               </Confirm>
             </ActionForm>

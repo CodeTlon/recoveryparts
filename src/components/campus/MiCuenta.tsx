@@ -20,7 +20,7 @@ export default async function MiCuenta({ sb, userId }: { sb: Cliente; userId: st
             {datos.map(([k, v]) => (
               <div key={k}>
                 <dt className="text-xs uppercase tracking-wider text-on-surface-variant">{k}</dt>
-                <dd className="break-words font-medium">{v}</dd>
+                <dd className="wrap-break-word font-medium">{v}</dd>
               </div>
             ))}
           </dl>

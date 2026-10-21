@@ -21,13 +21,13 @@ export default async function Encuesta({ params }: { params: Promise<{ id: strin
           <input type="hidden" name="encuesta_id" value={e.id} />
           {(e.preguntas as Pregunta[]).map((p, i) => (
             <fieldset key={i}>
-              <legend className="label !normal-case !tracking-normal text-sm text-on-surface">{p.texto}</legend>
+              <legend className="label normal-case! tracking-normal! text-sm text-on-surface">{p.texto}</legend>
               {p.tipo === 'puntaje' ? (
                 <div className="mt-2 flex gap-2">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <label key={n} className="cursor-pointer">
                       <input type="radio" name={`p_${i}`} value={n} className="peer sr-only" />
-                      <span className="flex h-11 w-11 items-center justify-center rounded border border-outline-variant text-sm font-semibold peer-checked:border-accent peer-checked:bg-accent peer-checked:text-surface peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent">{n}</span>
+                      <span className="flex h-11 w-11 items-center justify-center rounded-sm border border-outline-variant text-sm font-semibold peer-checked:border-accent peer-checked:bg-accent peer-checked:text-surface peer-focus-visible:outline-solid peer-focus-visible:outline-2 peer-focus-visible:outline-accent">{n}</span>
                     </label>
                   ))}
                 </div>

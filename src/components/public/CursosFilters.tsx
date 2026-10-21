@@ -42,7 +42,7 @@ export default function CursosFilters() {
     <div className="mt-10 space-y-4">
       <div className="relative max-w-md">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre o palabra clave…" aria-label="Buscar cursos" className="input !pl-11" />
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre o palabra clave…" aria-label="Buscar cursos" className="input pl-11!" />
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         {sel('area', 'Área', [['diseno', 'Creación y Diseño'], ['tecnico', 'Reparación y Tecnología']])}

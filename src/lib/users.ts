@@ -24,6 +24,11 @@ export async function establecerPassword(userId: string, password: string) {
     [userId, await hashPassword(password)])
 }
 
+// Deja sin efecto toda cookie emitida hasta ahora para la cuenta (logout, cambio de contraseña).
+export async function revocarSesiones(userId: string) {
+  await sqlAdmin('update auth.users set sesion_desde = now() where id = $1', [userId])
+}
+
 export type PerfilSesion = { id: string; rol: 'admin' | 'profesor' | 'alumno'; nombre: string; apellido: string; email: string; estado_cuenta: string }
 
 // Perfil de la sesión, o null si la cuenta no existe o la sesión se emitió antes de sesion_desde.
@@ -81,8 +86,12 @@ export async function buscarIdPorEmail(email: string): Promise<string | null> {
   const [u] = await sqlAdmin<{ id: string }>('select id from auth.users where email = $1', [email])
   return u?.id ?? null
 }
-export async function cambiarEmailUsuario(id: string, email: string) {
-  await sqlAdmin('update auth.users set email = $2 where id = $1', [id, email])
+// Cuenta de acceso y perfil en una sola sentencia (atómica). false si el usuario no existe.
+export async function cambiarEmailUsuario(id: string, email: string): Promise<boolean> {
+  const filas = await sqlAdmin(
+    `with u as (update auth.users set email = $2 where id = $1 returning id)
+     update public.profiles set email = $2 where id in (select id from u) returning id`, [id, email])
+  return filas.length > 0
 }
 export async function eliminarUsuario(id: string) {
   await sqlAdmin('delete from auth.users where id = $1', [id])

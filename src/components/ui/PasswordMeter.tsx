@@ -11,11 +11,11 @@ const REGLAS = [
   { id: 'sym', label: 'Un símbolo o 12+ caracteres', ok: (p: string) => /[^a-zA-Z0-9ñÑ]/.test(p) || p.length >= 12 },
 ]
 const NIVELES = [
-  { label: 'Muy débil', bar: 'bg-red-500' },
-  { label: 'Débil', bar: 'bg-red-400' },
+  { label: 'Muy débil', bar: 'bg-danger' },
+  { label: 'Débil', bar: 'bg-danger' },
   { label: 'Aceptable', bar: 'bg-accent' },
-  { label: 'Buena', bar: 'bg-green-500' },
-  { label: 'Excelente', bar: 'bg-green-400' },
+  { label: 'Buena', bar: 'bg-success' },
+  { label: 'Excelente', bar: 'bg-success' },
 ]
 
 export default function PasswordMeter({ value }: { value: string }) {
@@ -32,7 +32,7 @@ export default function PasswordMeter({ value }: { value: string }) {
       <p className="text-xs text-on-surface-variant">{value ? <>Fuerza: <span className="font-semibold text-on-surface">{nivel.label}</span></> : 'Elegí una contraseña segura.'}</p>
       <ul className="grid gap-1 text-xs sm:grid-cols-2">
         {res.map((r) => (
-          <li key={r.id} className={`flex items-center gap-1.5 ${r.met ? 'text-green-400' : 'text-on-surface-variant'}`}>
+          <li key={r.id} className={`flex items-center gap-1.5 ${r.met ? 'text-success' : 'text-on-surface-variant'}`}>
             {r.met ? <Check size={13} aria-hidden /> : <X size={13} aria-hidden className="opacity-50" />}{r.label}
           </li>
         ))}

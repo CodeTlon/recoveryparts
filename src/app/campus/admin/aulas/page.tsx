@@ -55,7 +55,7 @@ export default async function Aulas() {
                         </ActionForm>
                       </ModalButton>
                       {a.activa ? (
-                        <ModalButton label={<><ArchiveX size={14} aria-hidden /> Dar de baja</>} title={`Dar de baja ${a.nombre}`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300">
+                        <ModalButton label={<><ArchiveX size={14} aria-hidden /> Dar de baja</>} title={`Dar de baja ${a.nombre}`} className="btn-ghost px-3! py-2! hover:border-danger! hover:text-danger!">
                           <ActionForm action={setEstadoAula} submit="Dar de baja">
                             <input type="hidden" name="id" value={a.id} /><input type="hidden" name="activa" value="0" />
                             <p className="text-sm text-on-surface-variant">
@@ -66,7 +66,7 @@ export default async function Aulas() {
                           </ActionForm>
                         </ModalButton>
                       ) : (
-                        <ModalButton label={<><ArchiveRestore size={14} aria-hidden /> Reactivar</>} title={`Reactivar ${a.nombre}`} className="btn-ghost !px-3 !py-2 hover:!border-green-400 hover:!text-green-300">
+                        <ModalButton label={<><ArchiveRestore size={14} aria-hidden /> Reactivar</>} title={`Reactivar ${a.nombre}`} className="btn-ghost px-3! py-2! hover:border-success! hover:text-success!">
                           <ActionForm action={setEstadoAula} submit="Reactivar">
                             <input type="hidden" name="id" value={a.id} /><input type="hidden" name="activa" value="1" />
                             <p className="text-sm text-on-surface-variant">Vuelve a aparecer para elegir en los cursos.</p>
@@ -76,7 +76,7 @@ export default async function Aulas() {
                     </div>
                   </div>
                   {activos.length > 0 && (
-                    <ul className="mt-3 flex flex-wrap gap-1.5 sm:pl-[3.25rem]" aria-label={`Cursos activos en ${a.nombre}`}>
+                    <ul className="mt-3 flex flex-wrap gap-1.5 sm:pl-13" aria-label={`Cursos activos en ${a.nombre}`}>
                       {activos.map((c) => <li key={c.id} className="rounded-full border border-outline-variant px-2.5 py-0.5 text-xs text-on-surface-variant">{c.nombre} · cupo {c.cupo}</li>)}
                     </ul>
                   )}

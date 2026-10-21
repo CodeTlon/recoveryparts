@@ -2,26 +2,31 @@ import Link from 'next/link'
 import Reveal from '@/components/ui/Reveal'
 import { requireRole } from '@/lib/auth'
 import { Mail, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
+import Paginacion, { POR_PAGINA, paginaDe } from '@/components/campus/Paginacion'
 import { ActionForm, Badge, Confirm, Empty, Field, ModalButton, PageHead, Select, SubmitButton } from '@/components/campus/ui'
 import { actualizarPerfil, cambiarEmail, crearUsuario, reenviarInvitacion, setEstadoCuenta } from '../actions'
 
 const ESTADO = { pendiente_activacion: ['warn', 'Pendiente'], activa: ['ok', 'Activa'], inactiva: ['bad', 'Inactiva'] } as const
 
-export default async function Usuarios({ searchParams }: { searchParams: Promise<{ rol?: string; q?: string }> }) {
-  const { rol, q } = await searchParams
+export default async function Usuarios({ searchParams }: { searchParams: Promise<{ rol?: string; q?: string; pagina?: string }> }) {
+  const { rol, q, pagina: pg } = await searchParams
+  const pagina = paginaDe(pg)
   const { sb, perfil } = await requireRole('admin')
-  let query = sb.from('profiles').select('*').order('apellido')
+  // Una página de POR_PAGINA (se pide una fila de más para saber si hay otra). Orden estable: apellido, nombre, id.
+  let query = sb.from('profiles').select('*').order('apellido').order('nombre').order('id').range((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
   if (rol) query = query.eq('rol', rol)
   if (q) query = query.buscar(['nombre', 'apellido', 'email'], q)
-  const { data: users } = await query
+  const { data: filas } = await query
+  const hayMas = (filas?.length ?? 0) > POR_PAGINA
+  const users = filas?.slice(0, POR_PAGINA)
 
   const tab = (v: string | undefined, l: string) => (
-    <Link href={v ? `?rol=${v}` : '?'} className={`rounded border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-surface' : 'border-outline-variant text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
+    <Link href={v ? `?rol=${v}` : '?'} className={`rounded-sm border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-surface' : 'border-outline text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
   )
 
   return (
     <>
-      <PageHead title="Usuarios" sub="Solo vos podés crear usuarios. Cada uno recibe un mail para crear su propia contraseña (el link vence en 24 h)."
+      <PageHead title="Usuarios" sub="Solo vos podés crear usuarios. Cada uno recibe un mail para crear su propia contraseña (el link vence en 7 días)."
         action={
           <ModalButton label={<><UserPlus size={16} aria-hidden /> Crear usuario</>} title="Crear usuario" className="btn-primary whitespace-nowrap">
             <ActionForm action={crearUsuario} submit="Crear y enviar invitación">
@@ -41,7 +46,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {tab(undefined, 'Todos')}{tab('alumno', 'Alumnos')}{tab('profesor', 'Profesores')}{tab('admin', 'Admins')}
-        <form className="ml-auto"><input name="q" defaultValue={q} placeholder="Buscar…" aria-label="Buscar usuarios" className="input !py-2" />{rol && <input type="hidden" name="rol" value={rol} />}</form>
+        <form className="ml-auto"><input name="q" defaultValue={q} placeholder="Buscar…" aria-label="Buscar usuarios" className="input py-2!" />{rol && <input type="hidden" name="rol" value={rol} />}</form>
       </div>
 
       {!users?.length ? <Empty>No hay usuarios.</Empty> : (
@@ -52,7 +57,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
               <Reveal key={u.id} y={8}>
               <li className="card p-4 transition-colors hover:border-outline">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-light to-accent text-sm font-bold text-white">{`${u.nombre?.[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()}</span>
+                  <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-linear-to-br from-brand-light to-accent text-sm font-bold text-white">{`${u.nombre?.[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">{u.apellido}, {u.nombre} <span className="ml-2 text-xs font-normal uppercase text-on-surface-variant">{u.rol}</span></p>
                     <p className="truncate text-sm text-on-surface-variant">{u.email}{u.telefono ? ` · ${u.telefono}` : ''}</p>
@@ -75,24 +80,24 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                         </ActionForm>
                         <ActionForm action={cambiarEmail} reset={false} submit="Cambiar email">
                           <input type="hidden" name="id" value={u.id} />
-                          <Field label="Email nuevo" name="email" placeholder="nombre@ejemplo.com" type="email" defaultValue={u.email} required hint="Se reenvía la verificación al email nuevo." />
+                          <Field label="Email nuevo" name="email" placeholder="nombre@ejemplo.com" type="email" defaultValue={u.email} required hint="La persona entra con el email nuevo; no se envía ningún mail." />
                         </ActionForm>
                       </div>
                     </ModalButton>
                     {u.estado_cuenta === 'pendiente_activacion' && (
-                      <form action={reenviarInvitacion}><input type="hidden" name="id" value={u.id} /><SubmitButton><Mail size={14} aria-hidden /> Reenviar invitación</SubmitButton></form>
+                      <ActionForm action={reenviarInvitacion} submit={null} reset={false} okLabel="Hecho"><input type="hidden" name="id" value={u.id} /><SubmitButton><Mail size={14} aria-hidden /> Reenviar invitación</SubmitButton></ActionForm>
                     )}
                     {u.id !== perfil.id && u.estado_cuenta === 'activa' && (
-                      <form action={setEstadoCuenta}>
+                      <ActionForm action={setEstadoCuenta} submit={null} reset={false} okLabel="Hecho">
                         <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="inactiva" />
-                        <Confirm message={`¿Deshabilitar a ${u.nombre} ${u.apellido}? No podrá entrar al campus hasta que la reactives.`} className="btn-ghost !px-3 !py-2 hover:!border-red-400 hover:!text-red-300"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
-                      </form>
+                        <Confirm message={`¿Deshabilitar a ${u.nombre} ${u.apellido}? No podrá entrar al campus hasta que la reactives.`} className="btn-ghost px-3! py-2! hover:border-danger! hover:text-danger!"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
+                      </ActionForm>
                     )}
                     {u.id !== perfil.id && u.estado_cuenta === 'inactiva' && (
-                      <form action={setEstadoCuenta}>
+                      <ActionForm action={setEstadoCuenta} submit={null} reset={false} okLabel="Hecho">
                         <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="activa" />
-                        <SubmitButton className="btn-ghost !px-3 !py-2 hover:!border-green-400 hover:!text-green-300"><UserCheck size={14} aria-hidden /> Reactivar</SubmitButton>
-                      </form>
+                        <SubmitButton className="btn-ghost px-3! py-2! hover:border-success! hover:text-success!"><UserCheck size={14} aria-hidden /> Reactivar</SubmitButton>
+                      </ActionForm>
                     )}
                   </div>
                 </div>
@@ -102,6 +107,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
           })}
         </ul>
       )}
+      <Paginacion pagina={pagina} hayMas={hayMas} params={{ rol, q }} />
     </>
   )
 }

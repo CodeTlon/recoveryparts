@@ -402,7 +402,7 @@ sequenceDiagram
 >
 > Hola *{Nombre}*, fuiste inscripto en **{Curso}**, que empieza el *{fecha}* (*{días y horario}*, aula *{aula}*).
 > Para entrar al Campus, creá tu contraseña acá: **[Activar mi cuenta]**
-> *Este link vence en 24 horas y se puede usar una sola vez. Si venció, usá "¿Olvidaste tu contraseña?" en el login.*
+> *Este link vence en 7 días y se puede usar una sola vez. Si venció, usá "¿Olvidaste tu contraseña?" en el login.*
 > Si no esperabas este mail, ignoralo.
 
 - Al profesor se le envía un mail equivalente: "Te sumaron como profesor de…".
@@ -417,7 +417,7 @@ sequenceDiagram
 |---|---|
 | **Aleatoriedad** | Mínimo **32 bytes** de un generador criptográfico (`crypto.randomBytes`), codificados en base64url |
 | **Almacenamiento** | Se guarda **solo el hash** (SHA-256) del token, nunca el token en texto plano |
-| **Expiración** | Invitación: **24 h**. Reset de contraseña: **10 min**. Se configura en Supabase Auth. |
+| **Expiración** | Invitación: **7 días**. Reset de contraseña: **1 hora** (v0.15; antes 24 h y 10 min). Constantes `VIGENCIA` en `src/lib/users.ts`. |
 | **Uso único** | Se invalida al usarse. Generar uno nuevo invalida los anteriores del mismo usuario. |
 | **Propósito** | Cada token tiene un `tipo` (`invitation` / `password_reset`) y no sirve para otro fin |
 | **Comparación** | En tiempo constante (`timingSafeEqual`) |
@@ -669,6 +669,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.15 | 2026-10-21 | **Auditoría.** Tokens: invitación 7 días y reset 1 hora (los valores que ya aplicaba el código; 24 h y 10 min eran poco con mails demorados). Finalizado pasa a estado final como Desertor. RF-04: una edición sin calendario cargado termina en inicio + duración del curso (antes, en el inicio). El link del mail ya no se consume al abrirlo: hay un paso con botón. |
 | 0.14 | 2026-10-13 | **Campus del alumno.** RF-47: la encuesta pendiente se anuncia en el curso y hay una pantalla «Encuestas» con contador en el menú (antes, con un solo curso el alumno no llegaba a la encuesta). RF-34 / RF-35: el alumno que terminó sigue entrando a su curso y al ZIP durante 3 meses. **RF-59** (nuevo): «Mi cuenta» con los datos en solo lectura y cambio de contraseña con la sesión iniciada, para los tres roles. El alumno ya no ve la palabra «edición». |
 | 0.13 | 2026-10-11 | **Panel del profesor y estructura por edición.** RF-04: «Mis cursos» con estado (en curso / próximo), sin dictados terminados y sin el concepto de «edición» para el profesor. RF-58 / RF-31: guía general del curso (admin) + estructura propia de cada edición, que arranca de la guía y la puede modificar su profesor; «Volver a la guía general» con advertencia. RF-05: material base (admin) y material del profesor por edición; el profesor solo borra el suyo. El kit deja de verse en el campus del profesor. La deserción la marca solo el admin (sin cambios). |
 | 0.12 | 2026-10-06 | **Estructura del curso (RF-58)**: módulos → clases (teóricas o prácticas) → material, con la regla en la base; talleres sin módulos; el material sigue a su clase. Orden flexible por edición: adelantar o saltear clases (sin mail). **RF-32**: liberación siempre manual. **RF-26**: el sitio muestra solo los títulos de los módulos. **RF-37**: el alumno ve todos los módulos y solo las clases dictadas y la próxima. RF-55: la clase salteada no cuenta. |

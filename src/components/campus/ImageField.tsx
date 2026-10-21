@@ -29,19 +29,19 @@ export function ImageField({ label, name, defaultValue, hint }: { label: string;
       <span className="label">{label}</span>
       <input type="hidden" name={name} value={url} />
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded border border-outline-variant bg-surface-container-high">
+        <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-sm border border-outline-variant bg-surface-container-high">
           {url ? <Image src={url} alt="" fill sizes="160px" className="object-cover" unoptimized={url.startsWith('http://')} />
             : <span className="grid h-full place-items-center text-xs text-on-surface-variant">Sin imagen</span>}
         </div>
         <div className="space-y-2">
-          <label htmlFor={id} className="btn-ghost !px-3 !py-2 cursor-pointer">
+          <label htmlFor={id} className="btn-ghost px-3! py-2! cursor-pointer">
             {estado === 'subiendo' ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <ImagePlus size={14} aria-hidden />}
             {estado === 'subiendo' ? 'Subiendo…' : url ? 'Cambiar imagen' : 'Subir imagen'}
           </label>
           <input id={id} type="file" accept="image/webp,image/avif,image/jpeg,image/png" className="sr-only" onChange={elegir} disabled={estado === 'subiendo'} />
-          {url && <button type="button" onClick={() => setUrl('')} className="ml-2 inline-flex items-center gap-1 text-xs text-on-surface-variant hover:text-red-300"><X size={12} aria-hidden /> Quitar</button>}
+          {url && <button type="button" onClick={() => setUrl('')} className="ml-2 inline-flex items-center gap-1 text-xs text-on-surface-variant hover:text-danger"><X size={12} aria-hidden /> Quitar</button>}
           <p className="text-xs text-on-surface-variant">{hint ?? 'WebP, AVIF, JPG o PNG de hasta 8 MB.'}</p>
-          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         </div>
       </div>
     </div>

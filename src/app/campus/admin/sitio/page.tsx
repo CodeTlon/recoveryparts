@@ -25,7 +25,7 @@ function Item({ tipo, row, children }: { tipo: string; row?: S; children: React.
         {children}
         <Field label="Orden" name="orden" placeholder="Ej: 1" type="number" defaultValue={row?.orden ?? 0} />
       </ActionForm>
-      {row && <form action={borrarItemCms} className="mt-2"><input type="hidden" name="tipo" value={tipo} /><input type="hidden" name="id" value={row.id} /><Confirm message="¿Eliminar?">Eliminar</Confirm></form>}
+      {row && <ActionForm action={borrarItemCms} submit={null} reset={false} okLabel="Hecho" className="mt-2"><input type="hidden" name="tipo" value={tipo} /><input type="hidden" name="id" value={row.id} /><Confirm message="¿Eliminar?">Eliminar</Confirm></ActionForm>}
     </div>
   )
 }
@@ -66,7 +66,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
       <nav aria-label="Secciones del sitio" className="mb-4 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
         {tabs.map(([k, l]) => (
           <Link key={k} href={`/campus/admin/sitio?tab=${k}`} scroll={false} aria-current={actual[0] === k ? 'page' : undefined}
-            className={`rounded px-4 py-2 text-sm font-semibold transition-colors ${actual[0] === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
+            className={`rounded-sm px-4 py-2 text-sm font-semibold transition-colors ${actual[0] === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
         ))}
       </nav>
       <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-on-surface-variant">
@@ -106,8 +106,8 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
       {actual[0] === 'campus' && (
         <div className="space-y-6">
         <Setting clave="campus" title="Entrada directa al campus" hint="Cómo entra el alumno al campus.">
-          <p className="text-sm text-on-surface-variant">Con un solo curso activo, el alumno entra directo a ese curso. Escribí «false» para mostrar siempre «Mis cursos».</p>
-          <Field label="Entrada directa" name="entrada_directa" defaultValue={String(campus.entrada_directa ?? true)} />
+          <p className="text-sm text-on-surface-variant">Con un solo curso activo, el alumno entra directo a ese curso. Desactivala para mostrar siempre «Mis cursos».</p>
+          <Select name="entrada_directa" label="Entrada directa" defaultValue={String(campus.entrada_directa ?? true) === 'false' ? 'false' : 'true'} options={[['true', 'Activa'], ['false', 'Desactivada']]} />
         </Setting>
         </div>
       )}

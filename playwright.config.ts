@@ -28,12 +28,19 @@ export default defineConfig({
       name: 'desktop',
       use: { viewport: { width: 1280, height: 800 } },
     },
+    // Otros motores (Firefox y Safari): solo con E2E_NAVEGADORES=1 (los instala el job `navegadores` de la CI; en una
+    // máquina sin sus dependencias del sistema no arrancan). Verifican sobre todo la CSP con nonce y la hidratación.
+    ...(process.env.E2E_NAVEGADORES ? [
+      { name: 'firefox', use: { ...devices['Desktop Firefox'], launchOptions: {} } },
+      // WebKit no guarda cookies `Secure` sobre http://localhost (la app las marca Secure en producción): sin sesión.
+      { name: 'webkit', use: { ...devices['Desktop Safari'], launchOptions: {} }, testMatch: /(smoke|csp)\.spec\.ts/ },
+    ] : []),
   ],
   // Con BASE_URL (test/preview) se prueba contra ese ambiente y no se levanta servidor local.
   webServer: process.env.BASE_URL ? undefined : {
     command: 'npm run build && npm start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    timeout: 300 * 1000, // build + arranque (en CI el build tarda más de 2 minutos)
   },
 })
