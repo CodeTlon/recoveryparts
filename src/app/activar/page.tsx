@@ -2,14 +2,14 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import AuthShell from '@/components/auth/AuthShell'
 import { ActivarForm } from '@/components/auth/AuthForms'
-import { sesionActual } from '@/lib/session'
+import { sesionActivacion } from '@/lib/session'
 import { perfilDeSesion } from '@/lib/users'
 import { dbConfigured } from '@/lib/env'
 
 export const metadata: Metadata = { title: 'Creá tu contraseña', robots: { index: false } }
 
 export default async function ActivarPage() {
-  const ses = dbConfigured ? await sesionActual() : null
+  const ses = dbConfigured ? await sesionActivacion() : null
   const user = ses ? await perfilDeSesion(ses.sub, ses.iat) : null
 
   if (!user) {

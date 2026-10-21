@@ -2,8 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { clienteAdmin, dbConfigured } from '@/lib/db'
-import { iniciarSesion, cerrarSesion, sesionActual } from '@/lib/session'
-import { buscarIdPorEmail, enviarLinkAcceso, establecerPassword, perfilDeSesion, verificarCredenciales } from '@/lib/users'
+import { iniciarSesion, iniciarActivacion, cerrarSesion, sesionActual, sesionActivacion } from '@/lib/session'
+import { buscarIdPorEmail, consumirToken, enviarLinkAcceso, establecerPassword, perfilDeSesion, revocarSesiones, verificarCredenciales } from '@/lib/users'
 import { limited, bloqueado, registrar } from '@/lib/rate-limit'
 import { ipCliente } from '@/lib/ip'
 import { validarPassword } from '@/lib/password'
@@ -33,8 +33,24 @@ export async function login(_: AuthState, fd: FormData): Promise<AuthState> {
 }
 
 export async function logout() {
+  // El token es stateless: borrar la cookie no lo invalida. sesion_desde deja sin efecto toda cookie emitida antes
+  // (también en otros dispositivos), así que una cookie robada no sobrevive al cierre de sesión.
+  const ses = await sesionActual()
+  if (ses) await revocarSesiones(ses.sub).catch(() => {})
   await cerrarSesion()
   redirect('/login')
+}
+
+// Consume el token del link (un solo uso) con un POST, no con el GET que puede abrir un escáner de mail, y abre una
+// sesión de activación corta que solo permite definir la contraseña.
+export async function confirmarAcceso(fd: FormData) {
+  const token = String(fd.get('token') ?? ''), type = String(fd.get('type') ?? '')
+  if (!dbConfigured || !token || (type !== 'invite' && type !== 'recovery')) redirect('/activar?error=1')
+  if (limited(`confirm:ip:${await ip()}`, 20, 15 * 60_000)) redirect('/activar?error=1')
+  const userId = await consumirToken(token, type)
+  if (!userId) redirect('/activar?error=1')
+  await iniciarActivacion(userId)
+  redirect('/activar')
 }
 
 // Siempre responde lo mismo: no revela qué cuentas existen.
@@ -49,14 +65,15 @@ export async function olvideContrasena(_: AuthState, fd: FormData): Promise<Auth
   return { ok: true }
 }
 
-// Define la contraseña (invitación o recuperación). Requiere la sesión creada por /auth/confirm.
+// Define la contraseña (invitación o recuperación). Requiere la sesión de activación que abre confirmarAcceso:
+// una sesión normal robada no alcanza para cambiar la contraseña (para eso está cambiarContrasena, que pide la actual).
 export async function definirContrasena(_: AuthState, fd: FormData): Promise<AuthState> {
   const password = String(fd.get('password') ?? '')
   if (password !== String(fd.get('confirm') ?? '')) return { error: 'Las contraseñas no coinciden.' }
   const invalida = validarPassword(password)
   if (invalida) return { error: invalida }
 
-  const ses = await sesionActual()
+  const ses = await sesionActivacion()
   const perfilActual = ses ? await perfilDeSesion(ses.sub, ses.iat) : null
   if (!ses || !perfilActual) return { error: 'El link venció. Pedí uno nuevo desde "¿Olvidaste tu contraseña?".' }
 

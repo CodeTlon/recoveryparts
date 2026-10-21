@@ -24,6 +24,11 @@ export async function establecerPassword(userId: string, password: string) {
     [userId, await hashPassword(password)])
 }
 
+// Deja sin efecto toda cookie emitida hasta ahora para la cuenta (logout, cambio de contraseña).
+export async function revocarSesiones(userId: string) {
+  await sqlAdmin('update auth.users set sesion_desde = now() where id = $1', [userId])
+}
+
 export type PerfilSesion = { id: string; rol: 'admin' | 'profesor' | 'alumno'; nombre: string; apellido: string; email: string; estado_cuenta: string }
 
 // Perfil de la sesión, o null si la cuenta no existe o la sesión se emitió antes de sesion_desde.
