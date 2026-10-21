@@ -8,10 +8,12 @@ insert into auth.users (email, raw_user_meta_data, invited_at, email_confirmed_a
   ('t-prof@test.local',  '{"rol":"profesor","nombre":"Prof","apellido":"Test"}', now(), now()),
   ('t-alu1@test.local',  '{"rol":"alumno","nombre":"Uno","apellido":"Test"}', now(), now()),
   ('t-alu2@test.local',  '{"rol":"alumno","nombre":"Dos","apellido":"Test"}', now(), now()),
-  ('t-alu3@test.local',  '{"rol":"alumno","nombre":"Tres","apellido":"Test"}', now(), now());
+  ('t-alu3@test.local',  '{"rol":"alumno","nombre":"Tres","apellido":"Test"}', now(), now()),
+  ('t-prof2@test.local', '{"rol":"profesor","nombre":"Otro","apellido":"Profe"}', now(), now());
 
 create temp table ctx as
   select (select id from profiles where email = 't-prof@test.local') as prof,
+         (select id from profiles where email = 't-prof2@test.local') as prof2,
          (select id from profiles where email = 't-alu1@test.local') as a1,
          (select id from profiles where email = 't-alu2@test.local') as a2,
          (select id from profiles where email = 't-alu3@test.local') as a3,
@@ -22,9 +24,9 @@ insert into cursos (id, slug, nombre, area, tipo) select curso, 'taller-de-prueb
 insert into plan_clases (curso_id, numero, titulo) select curso, n, 'Clase ' || n from ctx, generate_series(1, 3) n;
 insert into ediciones (id, curso_id, cupo, fecha_inicio, profesor_id)
   select edicion, curso, 2, hoy_ar() - 30, prof from ctx;
--- Clases en el pasado: 1 hace 20 días, 2 hace 10 días, 3 hace 1 día.
+-- Clases: 1 hace 20 días, 2 hace 10 días y 3 dentro de 5 días (la edición sigue vigente: el profesor la ve).
 insert into clases (edicion_id, plan_clase_id, fecha)
-  select c.edicion, p.id, hoy_ar() - (case p.numero when 1 then 20 when 2 then 10 else 1 end)
+  select c.edicion, p.id, hoy_ar() + (case p.numero when 1 then -20 when 2 then -10 else 5 end)
   from ctx c join plan_clases p on p.curso_id = c.curso;
 
 -- ── 1. Cupo exacto: el tercero no entra ──────────────────────────────────────────────────────
@@ -159,6 +161,25 @@ do $$ declare t text; n int; begin
       if n <> 0 then raise exception 'FALLO: anon ve % filas de %', n, t; end if;
     exception when insufficient_privilege then null; end;
   end loop;
+end $$;
+reset role;
+
+-- Un profesor ve las inscripciones y los alumnos de SUS ediciones; otro profesor, nada.
+select set_config('app.user_id', (select prof::text from ctx), true);
+set local role authenticated;
+do $$ declare n int; begin
+  select count(*) into n from inscripciones where edicion_id = (select edicion from ctx);
+  if n <> 2 then raise exception 'FALLO: el profesor de la edición ve % inscripciones (esperaba 2)', n; end if;
+  if not exists (select 1 from profiles where email = 't-alu1@test.local') then raise exception 'FALLO: el profesor no ve a su alumno'; end if;
+  if exists (select 1 from profiles where email = 't-alu3@test.local') then raise exception 'FALLO: el profesor ve a un alumno de ninguna de sus ediciones'; end if;
+end $$;
+reset role;
+select set_config('app.user_id', (select prof2::text from ctx), true);
+set local role authenticated;
+do $$ begin
+  if exists (select 1 from inscripciones where edicion_id = (select edicion from ctx)) then raise exception 'FALLO: otro profesor ve inscripciones ajenas'; end if;
+  if exists (select 1 from clases where edicion_id = (select edicion from ctx)) then raise exception 'FALLO: otro profesor ve clases ajenas'; end if;
+  if exists (select 1 from profiles where email like 't-alu%@test.local') then raise exception 'FALLO: otro profesor ve alumnos ajenos'; end if;
 end $$;
 reset role;
 
