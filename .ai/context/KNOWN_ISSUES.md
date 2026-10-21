@@ -88,8 +88,10 @@ Cuatro revisiones de solo lectura (seguridad, lógica, estilos/SEO, rendimiento)
 
 **Resuelto:** `.env.development` estaba versionado con una `DATABASE_URL` con credenciales y un `SESSION_SECRET` de 55 caracteres (los valores no se leyeron). Se desversionó (`git rm --cached`, regla en `.gitignore`); queda `.env.development.example` y `npm run setup:dev` (crea el archivo con un secreto aleatorio). **El historial de git conserva el archivo viejo** (no se reescribe historia): si ese `SESSION_SECRET` se usó en algún entorno desplegado, hay que rotarlo; las credenciales de la base son las del compose de desarrollo.
 
+**Incidente de despliegue (2026-10-21):** el recurso de producción de Coolify apuntaba a `/docker-compose.yml` (compose de desarrollo, solo Postgres) en vez de `/docker-compose.coolify.yml`; al redesplegar solo arrancó la base, `app` no se construyó y el servicio perdió su dominio. Se corrigió en el panel. Si `test` se creó igual, revisar *Docker Compose Location*. Quedó advertido en `docs/DESPLIEGUE-COOLIFY.md`.
+
 **Pendiente / descartado con datos:**
-- *No verificable en esta máquina:* Firefox y Safari (faltan librerías del sistema y no hay `sudo`; el job `navegadores` de la CI los corre: CSP con nonce, acceso y smoke) y el Traefik real de Coolify (la cabecera de IP es configurable con `TRUSTED_IP_HEADER` y está probada con tests unitarios).
+- *Verificado luego:* Firefox y Safari (no corren en la VPS: faltan librerías y no hay `sudo`) pasaron en el job `navegadores` de la CI (CSP con nonce, acceso y smoke) y la producción se desplegó y funciona. *Sin verificar:* el recurso de `test` en Coolify y la cabecera de IP detrás del Traefik real (configurable con `TRUSTED_IP_HEADER`, probada con tests unitarios).
 - `LazyMotion`: probado y **empeora** (home 202 → 207 KB, login 149 → 196 KB de JS gzip): descartado.
 - `/_not-found` (404 de URLs que no existen) es estático y sus scripts no llevan nonce: no hidrata y la consola registra violaciones de CSP, pero solo contiene un enlace. Una ruta comodín dinámica lo arreglaba pero convertía el 404 en un 200 (soft-404): peor, descartado.
 - Las listas del CMS (FAQ, galería, testimonios, egresados) no se paginan: son curadas y chicas.

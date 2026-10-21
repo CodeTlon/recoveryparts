@@ -34,6 +34,7 @@ Guardalos en tu gestor de contraseñas. **Usá valores distintos en homologació
 1. *Projects › + Add* → nombre `Recovery Parts`. Dentro, usá un *Environment* para `test` y otro para `production`.
 2. En el entorno `test`: *+ New Resource › Docker Compose* (desde repositorio Git).
 3. Elegí el repo, **rama `test`**, *Base Directory* `/`, *Docker Compose Location* `/docker-compose.coolify.yml`.
+   > **Cuidado con el nombre del archivo.** `/docker-compose.yml` es el compose de DESARROLLO (solo Postgres, puerto 54322). Si el recurso apunta ahí, Coolify despliega únicamente la base: no se construye ni arranca `app` y el servicio pierde su dominio, pero el recurso figura «running (healthy)» (es la base). Pasó en producción el 2026-10-21: el recurso se había creado antes del renombre del 15/10 (v0.14.2) y recién falló al redesplegar. Arreglo: *Docker Compose Location* → `/docker-compose.coolify.yml`, *Save*, *Reload Compose File*, volver a cargar el dominio del servicio `app` (puerto 3000), revisar las variables (`SESSION_SECRET`, `NEXT_PUBLIC_SITE_URL` también como variable de build, `POSTGRES_PASSWORD`) y *Redeploy*. Los dos compose comparten el volumen `db_data`, así que los datos se conservan. Los campos *Pre/Post-deployment* tienen que estar vacíos.
 4. Guardá. Coolify lee el compose y muestra los servicios `db` y `app`.
 
 ## 4. Variables de entorno
