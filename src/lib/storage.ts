@@ -1,5 +1,5 @@
 import 'server-only'
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, open, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { createReadStream } from 'node:fs'
 import { dirname, join, resolve, sep } from 'node:path'
 
@@ -50,6 +50,13 @@ export async function infoArchivo(bucket: Bucket, path: string): Promise<{ size:
     const s = await stat(abs)
     return s.isFile() ? { size: s.size, abs } : null
   } catch { return null }
+}
+
+/** Tipo real de un archivo según sus primeros bytes (no según su extensión). */
+export async function mimeDeArchivo(abs: string): Promise<string | null> {
+  const f = await open(abs, 'r')
+  try { const b = Buffer.alloc(16); const { bytesRead } = await f.read(b, 0, 16, 0); return tipoMedia(b.subarray(0, bytesRead))?.mime ?? null }
+  finally { await f.close() }
 }
 
 export const streamArchivo = (abs: string, rango?: { start: number; end: number }) => createReadStream(abs, rango)

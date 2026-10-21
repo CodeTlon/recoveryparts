@@ -42,11 +42,11 @@ export async function POST(req: NextRequest) {
   if (!tipo) return NextResponse.json({ error: 'Formato no permitido.' }, { status: 415 })
   const nombre = `${randomUUID()}.${tipo.ext}`
   await guardarArchivo('sitio', nombre, datos)
-  // Videos MP4: el servicio global los recomprime EN SEGUNDO PLANO (puede tardar minutos y el admin no tiene que
-  // esperar con el request abierto, que además puede cortar el proxy). La URL ya es válida con el original; cuando
-  // termina, el archivo se reemplaza en el mismo lugar (soft-fail: si el servicio no responde, queda el original).
-  // Solo MP4: la compresión devuelve MP4 y no se puede cambiar la extensión de una URL ya entregada.
-  if (tipo.ext === 'mp4') {
+  // Videos: el servicio global los recomprime EN SEGUNDO PLANO (puede tardar minutos y el admin no tiene que esperar con
+  // el request abierto, que además puede cortar el proxy). La URL ya es válida con el original; cuando termina, el
+  // archivo se reemplaza en el mismo lugar (soft-fail: si el servicio no responde, queda el original). La compresión
+  // devuelve MP4: un .webm se reemplaza por MP4 manteniendo su nombre, y /media lo sirve como video/mp4 por sus bytes.
+  if (tipo.ext === 'mp4' || tipo.ext === 'webm') {
     after(async () => {
       const comprimido = await transcodeWithService(Buffer.from(datos.buffer, datos.byteOffset, datos.length), 'web')
       if (comprimido) await reemplazarArchivo('sitio', nombre, comprimido).catch((e) => console.error('[transcode] no se pudo reemplazar el original:', e instanceof Error ? e.message : e))
