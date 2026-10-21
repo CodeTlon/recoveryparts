@@ -4,7 +4,7 @@
 // Hacé un backup (pg_dump) antes. Los PDFs de demo en STORAGE_DIR/materiales se borran junto con sus filas.
 import postgres from 'postgres'
 import { readFileSync, rmSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 
 const ENV_FILE = process.env.ENV_FILE ?? '.env.development'
 if (!process.argv.includes('--purgar-demo') || process.env.ALLOW_DEMO_SEED !== '1') {
@@ -25,6 +25,13 @@ await pg.begin(async (tx) => {
   await tx`delete from auth.users where email like ${D}`
 })
 const dir = resolve(env.STORAGE_DIR ?? './storage')
-for (const m of mats) if (m.storage_path) rmSync(join(dir, 'materiales', m.storage_path), { force: true })
+// storage_path viene de la base y lo puede editar un profesor: solo se borra lo que quede DENTRO de materiales/ (sin `..`).
+const base = join(dir, 'materiales')
+for (const m of mats) {
+  if (!m.storage_path) continue
+  const destino = resolve(base, m.storage_path)
+  if (!destino.startsWith(base + sep)) { console.warn('Ruta fuera de materiales/, se omite:', m.storage_path); continue }
+  rmSync(destino, { force: true })
+}
 console.log('Demo purgado. OJO: el seed pisó site_settings (hero, areas, nosotros, stats, contacto) y capacidades de aulas: reeditalos desde el CMS del admin.')
 await pg.end()
