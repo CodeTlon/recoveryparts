@@ -13,7 +13,7 @@ import SectionTitle from '@/components/ui/SectionTitle'
 import Reveal from '@/components/ui/Reveal'
 import CountUp from '@/components/ui/CountUp'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
-import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
+import { getCursos, getHorarios, getSettings, hayAulasVisibles, query, waLink } from '@/lib/data'
 import { AREA_LABEL, type Area } from '@/lib/types'
 import { NOMBRE_SITIO } from '@/lib/seo'
 import { siteUrl } from '@/lib/env'
@@ -26,11 +26,12 @@ type Testimonio = { id: string; nombre: string; curso: string | null; texto: str
 type Faq = { id: string; pregunta: string; respuesta: string }
 
 export default async function Home() {
-  const [s, cursos, horarios, egresados, testimonios, faq] = await Promise.all([
+  const [s, cursos, horarios, egresados, testimonios, faq, conAulas] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
     query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('orden').limit(10), []),
     query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
+    hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
   ])
   const destacados = cursos.filter((c) => c.destacado).slice(0, 6)
   const wa = waLink(s.contacto.whatsapp)
@@ -148,6 +149,7 @@ export default async function Home() {
                 <span className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-accent">Nosotros</span>
                 <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">{s.nosotros.titulo}</h2>
                 <p className="whitespace-pre-line text-lg text-on-surface-variant">{s.nosotros.texto}</p>
+                {conAulas && <Link href="/aulas" className="mt-6 inline-flex items-center gap-1 font-semibold text-secondary hover:underline">Conocé nuestras aulas <ArrowRight size={16} aria-hidden /></Link>}
               </div>
               <dl className="grid grid-cols-3 gap-4 self-center text-center">
                 {([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const).map(([k, l]) => (
