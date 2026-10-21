@@ -212,6 +212,17 @@ do $$ declare v text; p1 uuid; filas jsonb; begin
   perform guardar_calendario((select edicion from ctx), filas);
 end $$;
 
+-- Horarios de una misma edición: no pueden pisarse el mismo día; los contiguos sí.
+insert into horarios_curso (edicion_id, dia_semana, hora_inicio, hora_fin) select edicion, 1, '18:00', '20:00' from ctx;
+insert into horarios_curso (edicion_id, dia_semana, hora_inicio, hora_fin) select edicion, 1, '20:00', '21:00' from ctx;   -- contiguo: ok
+insert into horarios_curso (edicion_id, dia_semana, hora_inicio, hora_fin) select edicion, 2, '18:00', '20:00' from ctx;   -- otro día: ok
+do $$ begin
+  begin
+    insert into horarios_curso (edicion_id, dia_semana, hora_inicio, hora_fin) select edicion, 1, '19:00', '21:00' from ctx;
+    raise exception 'FALLO: se guardaron dos horarios superpuestos en la misma edición';
+  exception when others then if sqlerrm not like '%horarios superpuestos%' then raise; end if; end;
+end $$;
+
 -- ── 9. El profesor de una edición tiene que ser un profesor ──────────────────────────────────
 do $$ begin
   begin
