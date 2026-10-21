@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 
 export const NOMBRE_SITIO = 'Recovery Parts'
+// Imagen social por defecto (src/app/opengraph-image.tsx). Con `openGraph` propio la página no hereda la de la raíz.
+const IMAGEN_SOCIAL = '/opengraph-image'
 
 /** Recorta a `max` caracteres en el último espacio y agrega «…» (colapsa saltos de línea y espacios). */
 export function recortar(texto: string | null | undefined, max = 160): string | undefined {
@@ -15,11 +17,12 @@ export function recortar(texto: string | null | undefined, max = 160): string | 
  *  Next no fusiona `openGraph` en profundidad: si la página no lo define, hereda el de la home. */
 export function metaPagina({ titulo, descripcion, ruta, imagen }: { titulo: string; descripcion?: string; ruta: string; imagen?: string | null }): Metadata {
   const tituloSocial = `${titulo} · ${NOMBRE_SITIO}`
+  const imagenes = [imagen || IMAGEN_SOCIAL]
   return {
     title: titulo,
     description: descripcion,
     alternates: { canonical: ruta },
-    openGraph: { type: 'website', locale: 'es_AR', siteName: NOMBRE_SITIO, title: tituloSocial, description: descripcion, url: ruta, ...(imagen ? { images: [imagen] } : {}) },
-    twitter: { card: 'summary_large_image', title: tituloSocial, description: descripcion, ...(imagen ? { images: [imagen] } : {}) },
+    openGraph: { type: 'website', locale: 'es_AR', siteName: NOMBRE_SITIO, title: tituloSocial, description: descripcion, url: ruta, images: imagenes },
+    twitter: { card: 'summary_large_image', title: tituloSocial, description: descripcion, images: imagenes },
   }
 }
