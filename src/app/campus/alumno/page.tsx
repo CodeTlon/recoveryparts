@@ -4,7 +4,7 @@ import { AlertTriangle, CalendarDays, Download, ClipboardList, ArrowRight, FileT
 import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { etiquetaEdicion, hoyAR } from '@/lib/fechas'
-import { encuestasPendientes } from '@/lib/encuestas'
+import { encuestasPendientesDe } from '@/lib/encuestas'
 import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import Reveal from '@/components/ui/Reveal'
@@ -42,7 +42,7 @@ export default async function AlumnoHome() {
   })))
 
   // RF-47: las encuestas tienen su pantalla; acá solo se avisa cuántas hay pendientes.
-  const pendientes = await encuestasPendientes(sb, perfil.id)
+  const pendientes = await encuestasPendientesDe(perfil.id)
 
   return (
     <>
