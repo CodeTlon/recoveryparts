@@ -183,6 +183,24 @@ do $$ begin
 end $$;
 reset role;
 
+-- El visitante anónimo puede ENVIAR los formularios públicos (insertar) pero no leerlos de vuelta.
+select set_config('app.user_id', '', true);
+set local role anon;
+insert into contactos (nombre, email, mensaje) values ('Visitante', 'visitante@test.local', 'Hola');
+insert into demanda_cursos (interes) values ('Curso de prueba');
+do $$ begin
+  begin
+    perform 1 from contactos limit 1;
+    raise exception 'FALLO: anon pudo leer contactos';
+  exception when insufficient_privilege then null; end;
+  -- INSERT ... RETURNING exige además poder leer la fila: por eso el constructor de consultas ya no lo agrega solo.
+  begin
+    execute 'insert into contactos (nombre, email, mensaje) values (''V'', ''v@test.local'', ''m'') returning id';
+    raise exception 'FALLO: anon pudo insertar con RETURNING (leyó una fila)';
+  exception when insufficient_privilege or others then if sqlerrm like 'FALLO%' then raise; end if; end;
+end $$;
+reset role;
+
 -- ── 8. Calendario atómico (guardar_calendario) ───────────────────────────────────────────────
 do $$ declare previas jsonb; p1 uuid; begin
   select p.id into p1 from plan_clases p, ctx where p.curso_id = ctx.curso and p.numero = 1;

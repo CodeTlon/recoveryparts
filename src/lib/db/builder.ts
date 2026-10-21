@@ -275,7 +275,10 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
 
   private async escribir(meta: Meta, ctx: Ctx, T: string): Promise<any[]> {
     const t = this.tabla
-    const ret = ` returning to_jsonb(${q('x')}) as r`
+    // Como PostgREST: solo se devuelven filas si se encadenó .select(). Un INSERT ... RETURNING exige además que la fila
+    // pase una política de SELECT: para el visitante anónimo (formularios de contacto y demanda, que solo pueden
+    // insertar) eso hacía fallar SIEMPRE el alta con «violates row-level security policy».
+    const ret = this.returning ? ` returning to_jsonb(${q('x')}) as r` : ''
     if (this.op === 'delete') {
       const w = this.where(q('x'), [], meta, ctx)
       const res = await this.run(`delete from ${T} as ${q('x')}${w}${ret}`, ctx.params)
