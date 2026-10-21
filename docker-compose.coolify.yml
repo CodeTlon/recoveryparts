@@ -31,6 +31,8 @@ services:
       APP_ENV: ${APP_ENV:-production}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-recoveryparts}
       SESSION_SECRET: ${SESSION_SECRET:-}
+      # Cabecera con la IP real que fija el proxy/CDN (ej. cf-connecting-ip). Vacía: se usa el último x-forwarded-for.
+      TRUSTED_IP_HEADER: ${TRUSTED_IP_HEADER:-}
       STORAGE_DIR: /data/storage
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
       SMTP_HOST: ${SMTP_HOST:-}

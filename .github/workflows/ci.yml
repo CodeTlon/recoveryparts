@@ -19,6 +19,7 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run type-check
+      - run: npm run test:unit
       # Solo errores bloquean; los avisos (any, etc.) son deuda conocida.
       - run: npm run lint
       # El build no necesita base de datos: sin DATABASE_URL compila y muestra vacíos.

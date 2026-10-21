@@ -18,6 +18,7 @@
     "seed:test": "ENV_FILE=.env.test tsx scripts/seed-pruebas.mts --confirmo-no-produccion",
     "seed:demo-cliente": "ENV_FILE=.env.production tsx scripts/seed-pruebas.mts --demo-cliente",
     "seed:demo-cliente:purge": "ENV_FILE=.env.production tsx scripts/purgar-demo.mts --purgar-demo",
+    "test:unit": "tsx --test tests/unit/*.test.ts",
     "test:e2e": "playwright test",
     "lint": "eslint ."
   },

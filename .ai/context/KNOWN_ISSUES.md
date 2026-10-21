@@ -35,7 +35,7 @@ Invitaciones, recuperación de contraseña y avisos salen por `src/lib/mail.ts`.
 La CSP ahora es con nonce (`src/proxy.ts`): se verificó en Chromium contra el sitio y el campus del admin (sin violaciones; modales y menú móvil andan). **Sin verificar:** el iframe/visor de PDF y el ZIP en homologación. La página `/_not-found` es estática y sus scripts no llevan nonce (queda sin hidratar; es solo un enlace).
 
 ## Rate limit en memoria
-`src/lib/rate-limit.ts` cuenta por instancia (mejor esfuerzo; ya no se resetea de golpe al llenarse: descarta las claves más viejas). La IP sale de `src/lib/ip.ts` (`x-real-ip`, o el último valor de `x-forwarded-for`): **confirmar en Coolify/Traefik que `x-real-ip` lo pisa el proxy**. Para un límite real entre réplicas hace falta un store compartido.
+`src/lib/rate-limit.ts` cuenta por instancia (mejor esfuerzo; ya no se resetea de golpe al llenarse: descarta las claves más viejas). La IP sale de `src/lib/ip-cabeceras.ts`: `TRUSTED_IP_HEADER` si está, si no el **último** valor de `x-forwarded-for` (el que agrega el proxy; el primero y `x-real-ip` los puede mandar el cliente). Probado con `tests/unit/ip.test.ts`. Con un CDN delante hay que definir `TRUSTED_IP_HEADER`. Para un límite real entre réplicas hace falta un store compartido.
 
 ## Respuestas de encuesta por número de pregunta
 Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las preguntas de una encuesta con respuestas. Un id estable por pregunta lo resolvería.
