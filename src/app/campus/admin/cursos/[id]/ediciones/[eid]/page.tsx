@@ -139,8 +139,8 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
                 </div>
 
                 {i.estado === 'desertor' && (
-                  <div className="mt-3 rounded-sm border border-red-500/30 bg-red-500/10 p-3 text-sm">
-                    <p className="font-semibold text-red-200">Desertó en la clase {i.n_clase_desercion} de {totalClases} · {fechaAR(i.fecha_desercion)}</p>
+                  <div className="mt-3 rounded-sm border border-danger/30 bg-danger/10 p-3 text-sm">
+                    <p className="font-semibold text-danger">Desertó en la clase {i.n_clase_desercion} de {totalClases} · {fechaAR(i.fecha_desercion)}</p>
                     <p className="mt-1 text-on-surface-variant">Motivo: {i.motivo_desercion}</p>
                     <details className="mt-2"><summary className="cursor-pointer text-secondary">Corregir fecha</summary>
                       <div className="mt-2 max-w-xs"><ActionForm action={corregirFechaDesercion} reset={false} submit="Recalcular">

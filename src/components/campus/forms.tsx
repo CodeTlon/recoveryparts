@@ -32,18 +32,18 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
   return (
     <form ref={ref} action={run} className={`space-y-4 ${className}`}>
       {children}
-      {s.error && <p role="alert" className="text-sm text-red-400">{s.error}</p>}
+      {s.error && <p role="alert" className="text-sm text-danger">{s.error}</p>}
       {submit !== null && <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : submit}</button>}
       <AnimatePresence>
         {toast === 'ok' && (
           <motion.div role="status" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-green-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-green-300 shadow-card-hover">
+            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-success/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-success shadow-card-hover">
             <CheckCircle2 size={18} aria-hidden /> {okLabel}
           </motion.div>
         )}
         {toast === 'error' && (
           <motion.div aria-hidden initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-red-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-red-300 shadow-card-hover">
+            className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-danger/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-danger shadow-card-hover">
             <XCircle size={18} aria-hidden /> {errLabel}
           </motion.div>
         )}
@@ -133,7 +133,7 @@ export function Confirm({ children, message, className = 'btn-ghost px-3! py-2!'
         if (fired.current) { e.preventDefault(); return } // ya se envió al completar la pulsación
         if (e.isTrusted) { e.preventDefault(); setHint(true); clearTimeout(hintTimer.current); hintTimer.current = setTimeout(() => setHint(false), 2200) } // click corto
       }}>
-      <span aria-hidden className={`absolute inset-y-0 left-0 bg-red-500/40 ${holding ? 'w-full transition-[width] duration-1000 ease-linear' : 'w-0'}`} />
+      <span aria-hidden className={`absolute inset-y-0 left-0 bg-danger/40 ${holding ? 'w-full transition-[width] duration-1000 ease-linear' : 'w-0'}`} />
       <span className="relative inline-flex items-center gap-1">{hint ? 'Mantené apretado' : children}</span>
     </button>
     <dialog ref={dlg} aria-label="Confirmar acción" onClick={(e) => { if (e.target === dlg.current) dlg.current?.close() }}

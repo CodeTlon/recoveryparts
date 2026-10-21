@@ -10,7 +10,7 @@ const field = 'flex items-center gap-3 rounded-sm border border-outline-variant 
 const inp = 'w-full bg-transparent text-sm text-on-surface outline-hidden placeholder:text-on-surface-variant/60'
 
 function Err({ s }: { s: AuthState }) {
-  return s.error ? <p role="alert" className="text-sm text-red-400">{s.error}</p> : null
+  return s.error ? <p role="alert" className="text-sm text-danger">{s.error}</p> : null
 }
 
 function PasswordField({ name, placeholder, label, autoComplete, minLength, value, onChange }: {
@@ -83,7 +83,7 @@ export function CambiarContrasenaForm() {
       <PasswordMeter value={pw} />
       <PasswordField name="confirm" placeholder="Repetí la contraseña nueva" label="Repetir contraseña nueva" autoComplete="new-password" minLength={8} />
       <Err s={s} />
-      {s.ok && <p role="status" className="text-sm text-green-300">Contraseña actualizada. Cerramos tus otras sesiones.</p>}
+      {s.ok && <p role="status" className="text-sm text-success">Contraseña actualizada. Cerramos tus otras sesiones.</p>}
       <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : 'Cambiar contraseña'}</button>
     </form>
   )

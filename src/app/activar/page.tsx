@@ -7,6 +7,9 @@ import { perfilDeSesion } from '@/lib/users'
 import { dbConfigured } from '@/lib/env'
 
 export const metadata: Metadata = { title: 'Creá tu contraseña', robots: { index: false } }
+// Depende de la cookie de activación. Sin esto, un build sin DATABASE_URL (no llama a cookies()) la prerenderiza estática
+// y siempre mostraría «El link venció».
+export const dynamic = 'force-dynamic'
 
 export default async function ActivarPage() {
   const ses = dbConfigured ? await sesionActivacion() : null

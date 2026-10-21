@@ -25,7 +25,7 @@ export function Empty({ children }: { children: React.ReactNode }) {
 }
 
 export function Badge({ tone = 'neutral', children }: { tone?: 'ok' | 'bad' | 'warn' | 'neutral'; children: React.ReactNode }) {
-  const t = { ok: 'bg-green-600/20 text-green-300', bad: 'bg-red-600/20 text-red-300', warn: 'bg-accent/20 text-secondary', neutral: 'bg-surface-container-high text-on-surface-variant' }[tone]
+  const t = { ok: 'bg-success/20 text-success', bad: 'bg-danger/20 text-danger', warn: 'bg-accent/20 text-secondary', neutral: 'bg-surface-container-high text-on-surface-variant' }[tone]
   return <span className={`badge ${t}`}>{children}</span>
 }
 

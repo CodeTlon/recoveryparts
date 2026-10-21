@@ -50,9 +50,9 @@ export function MediaField({ label, name, tipo, defaultValue, hint }: { label: s
             {ocupado ? estado : url ? `Cambiar ${tipo}` : `Subir ${tipo}`}
           </label>
           <input id={id} type="file" accept={esVideo ? 'video/*' : 'image/*'} className="sr-only" onChange={elegir} disabled={ocupado} />
-          {url && !ocupado && <button type="button" onClick={() => setUrl('')} className="ml-2 inline-flex items-center gap-1 text-xs text-on-surface-variant hover:text-red-300"><X size={12} aria-hidden /> Quitar</button>}
+          {url && !ocupado && <button type="button" onClick={() => setUrl('')} className="ml-2 inline-flex items-center gap-1 text-xs text-on-surface-variant hover:text-danger"><X size={12} aria-hidden /> Quitar</button>}
           <p className="text-xs text-on-surface-variant">{hint ?? (esVideo ? 'Hasta 60 s. Se comprime solo a 720p (~3 MB por cada 30 s). Dejá la pestaña abierta mientras comprime.' : 'Cualquier foto. Se achica sola a WebP, máx. 1920 px.')}</p>
-          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         </div>
       </div>
     </div>

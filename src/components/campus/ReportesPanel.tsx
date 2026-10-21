@@ -102,13 +102,13 @@ export default async function ReportesPanel() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card title="Estado de las inscripciones">
             <Donut caption="Estado de las inscripciones" center={<div><p className="text-2xl font-bold tabular-nums">{I.length}</p><p className="text-[11px] text-on-surface-variant">inscripciones</p></div>}
-              data={[{ label: 'Activos', value: estados.activo, color: 'text-green-400' }, { label: 'Finalizados', value: estados.finalizado, color: 'text-sky-400' }, { label: 'Desertores', value: estados.desertor, color: 'text-red-400' }]} />
+              data={[{ label: 'Activos', value: estados.activo, color: 'text-success' }, { label: 'Finalizados', value: estados.finalizado, color: 'text-info' }, { label: 'Desertores', value: estados.desertor, color: 'text-danger' }]} />
           </Card>
           <Card title="Ocupación por edición">
             <ul className="space-y-3">{ocup.map((o) => <li key={o.nombre}><div className="mb-1 flex justify-between text-sm"><span>{o.nombre}</span><span className="text-on-surface-variant">{o.n}/{o.cupo} · {o.p}%</span></div><Bar v={o.p} max={100} /></li>)}</ul>
           </Card>
           <Card title="Días con mayor deserción" note="Desertores según el día de cursada.">
-            <Columns data={DIAS.map((d, i) => ({ label: d.slice(0, 3), value: diasDes[i] }))} color="bg-red-400" />
+            <Columns data={DIAS.map((d, i) => ({ label: d.slice(0, 3), value: diasDes[i] }))} color="bg-danger" />
           </Card>
           <Card title="Deserción por edición" note="Cantidad, % sobre el total y en qué N° de clase desertan." >
             {!des.length ? <p className="text-sm text-on-surface-variant">Sin inscripciones.</p> : <ul className="space-y-5">{des.map((x) => (
