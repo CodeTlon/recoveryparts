@@ -4,6 +4,11 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-21 | `.env.development` deja de versionarse; queda `.env.development.example` y `npm run setup:dev` (genera un `SESSION_SECRET` aleatorio) | Un secreto no tiene que estar en el repo aunque sea «de desarrollo»; cada persona tiene el suyo. El historial no se reescribe |
+| 2026-10-21 | El aviso de clases suspendidas/reprogramadas es un estado por clase (`aviso_pendiente`, 0029) con banner y botón para reenviar | Si el mail fallaba el aviso se perdía para siempre; ahora se puede reintentar |
+| 2026-10-21 | Los videos WebM también se recomprimen: el archivo se reemplaza por MP4 con el mismo nombre y `/media` decide el tipo por los bytes | La URL entregada no puede cambiar de extensión |
+| 2026-10-21 | Se quita el `loading.tsx` raíz | Hacía empezar a enviar la página antes de `notFound()`: un curso inexistente respondía 200 (soft-404). El sitio público ya sale de la caché y es rápido |
+| 2026-10-21 | El constructor de consultas registra en el log el mensaje de error de cada consulta fallida | Devuelve el error como PostgREST y varias pantallas solo miran `data`: un fallo se veía como «vacío» (así pasó con la búsqueda de usuarios) |
 | 2026-10-21 | **RLS sin funciones por fila**: `(select es_admin())`, `(select auth_rol())` y, para el profesor y el alumno, conjuntos por usuario (`mis_ediciones_profesor()` etc.) comparados con `IN` (0024, 0025) | Con 40.000 inscripciones un `count(*)` tardaba 10 s (admin) y 23 s (profesor); ahora 13 ms y 34 ms. Mismas reglas, probadas con las mismas pruebas SQL sobre las políticas viejas y las nuevas |
 | 2026-10-21 | `anon` solo tiene SELECT sobre el CMS y las vistas públicas e INSERT en `contactos`/`demanda_cursos`; las tablas nuevas no le dan acceso por defecto (0028) | Además de RLS, que no tenga el privilegio. Una tabla nueva que el sitio público necesite lo declara en su migración |
 | 2026-10-21 | El constructor de consultas pide `RETURNING` solo si se encadena `.select()` (como PostgREST) | Con `INSERT … RETURNING` el visitante no podía enviar los formularios públicos (no puede leer la fila) |
