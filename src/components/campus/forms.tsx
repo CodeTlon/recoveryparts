@@ -29,10 +29,11 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
     const t = setTimeout(() => setToast(null), 3500)
     return () => clearTimeout(t)
   }, [s])
+  // Sin botón de envío propio (submit={null}) es un botón suelto dentro de una fila: sin separación vertical entre hijos.
   return (
-    <form ref={ref} action={run} className={`space-y-4 ${className}`}>
+    <form ref={ref} action={run} className={`${submit === null ? '' : 'space-y-4'} ${className}`}>
       {children}
-      {s.error && <p role="alert" className="text-sm text-danger">{s.error}</p>}
+      {s.error && <p role="alert" className={`text-sm text-danger ${submit === null ? 'mt-2' : ''}`}>{s.error}</p>}
       {submit !== null && <button disabled={pending} className="btn-primary">{pending ? 'Guardando…' : submit}</button>}
       <AnimatePresence>
         {toast === 'ok' && (
