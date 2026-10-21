@@ -21,7 +21,7 @@ function traducir(m: string) {
   if (/^(Cargá la capacidad|La capacidad del aula|No se puede dar de baja el aula|El aula .+ está dada de baja|El cupo \(\d+\) supera|Las aulas no se borran)/.test(m)) return m
   if (/aulas_nombre/.test(m)) return 'Ya existe un aula con ese nombre.'
   // Ediciones (0011): mensajes legibles de la base (superposición, fechas, plan de clases, curso de baja).
-  if (/^(Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
+  if (/^(El calendario cambió|Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
   if (/El profesor elegido no es un profesor/.test(m)) return 'Elegí un usuario con rol profesor.'
   if (/_no_vacio/.test(m)) return 'Completá los campos obligatorios.'
   if (/ediciones_cupo_check/.test(m)) return 'El cupo debe ser un número entero entre 1 y 500.'
@@ -381,7 +381,7 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   const dictadas = ok.filter((f) => f.estado !== 'salteada').map((f) => f.fecha)
   if (new Set(dictadas).size !== dictadas.length) return { error: 'Hay dos clases en la misma fecha.' }
   // Una sola transacción en la base (upsert + borrado de las que faltan, serializado por edición); devuelve cómo estaban.
-  const { data: previas, error } = await sb.rpc('guardar_calendario', { p_edicion: edicion_id, p_filas: ok })
+  const { data: previas, error } = await sb.rpc('guardar_calendario', { p_edicion: edicion_id, p_filas: ok, ...(txt(fd, 'version') ? { p_version: txt(fd, 'version') } : {}) })
   if (error) {
     const msg = traducir(error.message)
     // El profesor no maneja el concepto de «edición»: para él son otras fechas del mismo curso.

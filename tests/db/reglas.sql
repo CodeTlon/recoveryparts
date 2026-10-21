@@ -193,6 +193,25 @@ do $$ declare previas jsonb; p1 uuid; begin
     raise exception 'FALLO: debía quedar 1 clase tras reemplazar el calendario'; end if;
 end $$;
 
+-- Detección de calendario desactualizado: con la versión correcta guarda; con una vieja, no.
+do $$ declare v text; p1 uuid; filas jsonb; begin
+  select p.id into p1 from plan_clases p, ctx where p.curso_id = ctx.curso and p.numero = 1;
+  filas := jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 20, 'estado', 'programada'));
+  v := calendario_version((select edicion from ctx));
+  perform guardar_calendario((select edicion from ctx), filas, v);               -- versión vigente: guarda
+  begin
+    perform guardar_calendario((select edicion from ctx), filas, v);             -- ahora v quedó vieja si algo cambió...
+  exception when others then null; end;
+  -- Se cambia el calendario por otra vía y se intenta guardar con la versión anterior.
+  update clases set fecha = hoy_ar() - 19 where edicion_id = (select edicion from ctx);
+  begin
+    perform guardar_calendario((select edicion from ctx), filas, v);
+    raise exception 'FALLO: se guardó con un calendario desactualizado';
+  exception when others then if sqlerrm like 'FALLO%' or sqlerrm not like '%cambió mientras lo editabas%' then raise; end if; end;
+  -- Sin versión (clientes viejos) guarda igual.
+  perform guardar_calendario((select edicion from ctx), filas);
+end $$;
+
 -- ── 9. El profesor de una edición tiene que ser un profesor ──────────────────────────────────
 do $$ begin
   begin

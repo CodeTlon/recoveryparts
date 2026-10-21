@@ -19,6 +19,8 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
   const { momento } = momentoEdicion({ activo: ed.activo, fecha_inicio: ed.fecha_inicio, fechas: ((ed.clases ?? []) as { fecha: string }[]).map((c) => c.fecha), duracionSemanas: (ed.cursos as unknown as { duracion_semanas: number | null } | null)?.duracion_semanas }, hoyAR())
   if (momento !== 'en_curso' && momento !== 'proxima') notFound()
   const curso = ed.cursos as unknown as { nombre: string; tipo: string }
+  // Versión del calendario que se muestra: el guardado la compara y no pisa lo que otra persona cargó mientras tanto.
+  const versionCalendario = ((await sb.rpc('calendario_version', { p_edicion: id })).data as string | null) ?? ''
 
   // RF-58: la estructura que vale en esta edición (la guía general o la propia, si el profesor la adaptó) y su
   // material (el base del curso y el que se subió para esta edición).
@@ -113,6 +115,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
         <div className="max-w-4xl">
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="edicion_id" value={id} />
+            <input type="hidden" name="version" value={versionCalendario} />
             <ClasesEditor name="clases" plan={clasesPlan.map((p) => ({ ...p, modulo: modulos.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={(clases ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]} inicio={ed.fecha_inicio} dias={[...new Set((hs ?? []).map((h) => h.dia_semana as number))]}
               avisar={<><Check name="avisar" defaultChecked>Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check><Check name="avisar_todas" className="mt-1 text-on-surface-variant">Reenviar el aviso de todas las clases suspendidas o reprogramadas (si el mail anterior no llegó)</Check></>} />
           </ActionForm>

@@ -18,6 +18,8 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
   const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, aula_id, profesor_id, cupo, activo, cursos(nombre, activo, tipo)').eq('id', eid).eq('curso_id', id).maybeSingle()
   if (!ed) notFound()
   const curso = ed.cursos as unknown as { nombre: string; activo: boolean; tipo: string }
+  // Versión del calendario que se muestra: el guardado la compara y no pisa lo que otra persona cargó mientras tanto.
+  const versionCalendario = tab === 'calendario' ? ((await sb.rpc('calendario_version', { p_edicion: eid })).data as string | null) ?? '' : ''
 
   const [{ data: aulas }, { data: profes }, { data: hs }, { data: est }, { data: clases }, { data: insc }, { data: mats }] = await Promise.all([
     sb.from('aulas').select('id, nombre, capacidad, activa').order('nombre'),
@@ -101,6 +103,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
         <p className="mb-4 text-sm text-on-surface-variant">Las clases y sus títulos vienen de la estructura del curso; acá se asigna la fecha de cada una en esta edición (se puede adelantar o saltear una clase). Las suspendidas, reprogramadas y salteadas no cuentan para el N° de clase de deserción.</p>
         <div className="max-w-4xl"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="edicion_id" value={eid} />
+          <input type="hidden" name="version" value={versionCalendario} />
           <ClasesEditor name="clases" plan={plan.map((p) => ({ ...p, modulo: mods.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
             avisar={<><Check name="avisar" defaultChecked>Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check><Check name="avisar_todas" className="mt-1 text-on-surface-variant">Reenviar el aviso de todas las clases suspendidas o reprogramadas (si el mail anterior no llegó)</Check></>} />
         </ActionForm></div>
