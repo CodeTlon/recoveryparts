@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import { metaPagina } from '@/lib/seo'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import Reveal from '@/components/ui/Reveal'
@@ -8,7 +9,7 @@ import CursosFilters from '@/components/public/CursosFilters'
 import DemandaForm from '@/components/public/DemandaForm'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 
-export const metadata: Metadata = { title: 'Cursos y talleres' }
+export const metadata: Metadata = metaPagina({ titulo: 'Cursos y talleres', descripcion: 'Cursos y talleres presenciales en Córdoba: reparación y tecnología, y diseño. Fechas, horarios y cupos.', ruta: '/cursos' })
 export const dynamic = 'force-dynamic' // cupos en tiempo real
 
 type SP = Record<string, string | undefined>
@@ -17,7 +18,7 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
   const f = await searchParams
   const [cursos, horarios, settings, mods] = await Promise.all([
     getCursos(), getHorarios(), getSettings(),
-    query<{ curso_id: string; titulo: string }[]>((sb) => sb.from('modulos_publicos').select('curso_id, titulo').order('orden'), []),
+    query<{ curso_id: string; titulo: string }[]>('modulos-todos', (sb) => sb.from('modulos_publicos').select('curso_id, titulo').order('orden'), []),
   ])
 
   const q = f.q?.trim().toLowerCase()
@@ -57,6 +58,7 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <h2 className="sr-only">Resultados</h2>
               {lista.map((c, i) => <Reveal key={c.id} delay={Math.min(i, 8) * 0.05} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} modulos={mods.filter((m) => m.curso_id === c.id).map((m) => m.titulo)} /></Reveal>)}
             </div>
           )}

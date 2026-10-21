@@ -4,7 +4,7 @@ import { AlertTriangle, CalendarDays, Download, ClipboardList, ArrowRight, FileT
 import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { etiquetaEdicion, hoyAR } from '@/lib/fechas'
-import { encuestasPendientes } from '@/lib/encuestas'
+import { encuestasPendientesDe } from '@/lib/encuestas'
 import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import Reveal from '@/components/ui/Reveal'
@@ -42,7 +42,7 @@ export default async function AlumnoHome() {
   })))
 
   // RF-47: las encuestas tienen su pantalla; acá solo se avisa cuántas hay pendientes.
-  const pendientes = await encuestasPendientes(sb, perfil.id)
+  const pendientes = await encuestasPendientesDe(perfil.id)
 
   return (
     <>
@@ -73,10 +73,10 @@ export default async function AlumnoHome() {
               </div>
 
               {i.estado === 'desertor' && (
-                <div role="alert" className="mb-4 flex gap-3 rounded-sm border border-red-500/40 bg-red-500/10 p-4 text-sm">
-                  <AlertTriangle size={20} className="mt-0.5 shrink-0 text-red-300" />
+                <div role="alert" className="mb-4 flex gap-3 rounded-sm border border-danger/40 bg-danger/10 p-4 text-sm">
+                  <AlertTriangle size={20} className="mt-0.5 shrink-0 text-danger" />
                   <div>
-                    <p className="font-semibold text-red-200">Fuiste dado de baja de este curso el {fechaAR(i.fecha_desercion)}{i.n_clase_desercion != null ? ` (clase ${i.n_clase_desercion})` : ''}.</p>
+                    <p className="font-semibold text-danger">Fuiste dado de baja de este curso el {fechaAR(i.fecha_desercion)}{i.n_clase_desercion != null ? ` (clase ${i.n_clase_desercion})` : ''}.</p>
                     <p className="mt-1 text-on-surface-variant">Motivo: {i.motivo_desercion}</p>
                     <p className="mt-1 text-on-surface-variant">Ya no tenés acceso al material de este curso. Si querés retomarlo, consultá por las próximas fechas.</p>
                   </div>

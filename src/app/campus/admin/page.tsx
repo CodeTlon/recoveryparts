@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { BookOpen, CalendarDays, GraduationCap, Inbox, Users, ArrowUpRight } from 'lucide-react'
 import { fechaAR, requireRole } from '@/lib/auth'
@@ -6,6 +7,7 @@ import SpotlightCard from '@/components/ui/SpotlightCard'
 import CountUp from '@/components/ui/CountUp'
 import Reveal from '@/components/ui/Reveal'
 import ReportesPanel from '@/components/campus/ReportesPanel'
+import Skeleton from '@/components/ui/Skeleton'
 import { hoyAR } from '@/lib/fechas'
 
 // Resumen del administrador: lo que requiere atención hoy + los reportes de la academia (antes en /reportes).
@@ -97,7 +99,10 @@ export default async function AdminHome() {
       </div>
 
       <h2 className="mb-4 mt-12 text-2xl font-semibold">Reportes</h2>
-      <ReportesPanel />
+      {/* Los reportes agregan varias tablas: con Suspense el resumen de arriba se ve sin esperarlos. */}
+      <Suspense fallback={<div role="status" aria-label="Cargando reportes" className="grid gap-6 lg:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-56" />)}</div>}>
+        <ReportesPanel />
+      </Suspense>
     </>
   )
 }

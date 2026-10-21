@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { FileText, Link2, ExternalLink, CalendarDays, ClipboardList, Download } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
 import { etiquetaEdicion, hoyAR } from '@/lib/fechas'
-import { encuestasPendientes } from '@/lib/encuestas'
+import { encuestasPendientesDe } from '@/lib/encuestas'
 import { hrefSeguro } from '@/lib/validar'
 import { PageHead, Empty, BackLink, Badge } from '@/components/campus/ui'
 import { TIPO_CLASE } from '@/components/campus/ArbolEstructura'
@@ -38,7 +38,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
   const materiales = (mats ?? []) as Mat[]
   const siguiente = (prox as Prox[] | null)?.[0]
   // RF-47: la encuesta de ESTE curso se anuncia acá (con un solo curso el alumno entra directo y no pasa por «Mis cursos»).
-  const encuestas = (await encuestasPendientes(sb, perfil.id)).filter((e) => e.edicion_id === id)
+  const encuestas = (await encuestasPendientesDe(perfil.id)).filter((e) => e.edicion_id === id)
   const generales = materiales.filter((m) => !m.plan_clase_id)
 
   // Bloques en orden: un bloque por módulo (talleres: un bloque sin título con sus clases).

@@ -41,6 +41,11 @@ test.describe('Infra y SEO', () => {
     expect((await request.get('/sitemap.xml')).status()).toBe(200)
   })
 
+  test('un curso inexistente da 404 real (no un 200 con noindex)', async ({ request }) => {
+    const res = await request.get('/cursos/este-curso-no-existe-seguro')
+    expect(res.status()).toBe(404)
+  })
+
   test('una ruta inexistente da 404', async ({ page }) => {
     const res = await page.goto('/esta-ruta-no-existe')
     expect(res?.status()).toBe(404)

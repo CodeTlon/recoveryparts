@@ -5,6 +5,10 @@ on:
   push:
     branches: [dev]
 
+# Mínimo privilegio: la CI solo lee el repo (no necesita escribir ni abrir PRs).
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -19,22 +23,77 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run type-check
+      - run: npm run test:unit
+      # Solo errores bloquean; los avisos (any, etc.) son deuda conocida.
+      - run: npm run lint
       # El build no necesita base de datos: sin DATABASE_URL compila y muestra vacíos.
       - run: npm run build
 
   e2e:
-    name: E2E (3 viewports)
+    name: E2E (3 viewports, con base de datos)
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: recoveryparts }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      # La app (npm start) y los tests de acceso comparten esta base. SESSION_SECRET es solo de CI.
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/recoveryparts
+      SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      - run: node scripts/migrate.mjs
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
       - if: failure()
         uses: actions/upload-artifact@v4
-        with: { name: playwright-report, path: 'playwright-report\ntest-results', if-no-files-found: ignore, retention-days: 7 }
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  navegadores:
+    name: E2E en Firefox y Safari (CSP con nonce, acceso y smoke)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: recoveryparts }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/recoveryparts
+      SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      E2E_NAVEGADORES: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: node scripts/migrate.mjs
+      - run: npx playwright install --with-deps firefox webkit
+      - run: npx playwright test --project=firefox --project=webkit
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-navegadores
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7
 
   base-de-datos:
     name: Migraciones desde cero + reglas
@@ -71,6 +130,8 @@ jobs:
           end $$;
           rollback;
           SQL
+      - name: Reglas de negocio de la base (estados, cupo, N° de clase, encuestas anónimas, RLS)
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/db/reglas.sql
       - name: anon y authenticated no leen credenciales
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -At <<'SQL'

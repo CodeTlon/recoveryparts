@@ -13,12 +13,17 @@ export const etiquetaEdicion = (inicio: string | null | undefined) =>
   inicio && /^\d{4}-\d{2}/.test(inicio) ? `${MESES[Number(inicio.slice(5, 7)) - 1]} ${inicio.slice(0, 4)}` : 'sin fecha'
 
 export type MomentoEdicion = 'baja' | 'proxima' | 'en_curso' | 'terminada'
+/** AAAA-MM-DD más `dias` días (sin zona horaria: son fechas de calendario). */
+const sumarDias = (f: string, dias: number) => new Date(Date.parse(f + 'T00:00:00Z') + dias * 86_400_000).toISOString().slice(0, 10)
+
 /**
  * Estado temporal de una edición (RF-04). Misma regla que `fin_edicion()` / `edicion_vigente()` en la base:
- * el fin es la última fecha del calendario (o el inicio si no hay clases); terminada si el fin ya pasó.
+ * el fin es la última fecha del calendario; si todavía no hay clases cargadas, el inicio más la duración del curso
+ * (o el inicio, si el curso no tiene duración). Terminada si el fin ya pasó.
  */
-export function momentoEdicion(e: { activo: boolean; fecha_inicio: string | null; fechas: string[] }, hoy: string): { momento: MomentoEdicion; fin: string } {
-  const fin = e.fechas.reduce((m, f) => (f > m ? f : m), e.fecha_inicio ?? '')
+export function momentoEdicion(e: { activo: boolean; fecha_inicio: string | null; fechas: string[]; duracionSemanas?: number | null }, hoy: string): { momento: MomentoEdicion; fin: string } {
+  let fin = e.fechas.reduce((m, f) => (f > m ? f : m), e.fecha_inicio ?? '')
+  if (!e.fechas.length && e.fecha_inicio && e.duracionSemanas) fin = sumarDias(e.fecha_inicio, e.duracionSemanas * 7 - 1)
   if (!e.activo) return { momento: 'baja', fin }
   if (e.fecha_inicio && e.fecha_inicio > hoy) return { momento: 'proxima', fin }
   if (fin && fin < hoy) return { momento: 'terminada', fin }

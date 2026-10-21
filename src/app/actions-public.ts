@@ -1,16 +1,13 @@
 'use server'
 
 import { clienteAnon } from '@/lib/db'
-import { headers } from 'next/headers'
+import { ipCliente } from '@/lib/ip'
 import { dbConfigured } from '@/lib/env'
 import { limited } from '@/lib/rate-limit'
 
 export type FormState = { ok?: boolean; error?: string }
 
-async function ip() {
-  const h = await headers()
-  return h.get('x-real-ip') ?? h.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
-}
+const ip = ipCliente
 const DEMASIADOS = 'Enviaste muchas consultas seguidas. Probá de nuevo en unos minutos.'
 
 // RF-42: guarda la consulta en la bandeja interna. (Todavía no avisa por mail.)

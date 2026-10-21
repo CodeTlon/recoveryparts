@@ -27,6 +27,9 @@ if (!url) {
 const sql = postgres(url, { max: 1, onnotice: () => {} })
 
 try {
+  // Un solo migrador a la vez: si Coolify levanta dos réplicas, la segunda espera a que la primera termine (y entonces
+  // no encuentra nada pendiente) en vez de chocar con ella. Lock de sesión: el pool es de 1 conexión (max: 1).
+  await sql`select pg_advisory_lock(hashtextextended('recoveryparts:migrar', 0))`
   await sql.file(join(raiz, 'db/bootstrap.sql'))
   await sql`create table if not exists schema_migrations (nombre text primary key, aplicada_en timestamptz not null default now())`
   // Registro interno: sin acceso para los roles de la app y con RLS (la CI exige RLS en todo public).
@@ -51,5 +54,6 @@ try {
   console.error('Error aplicando migraciones:', e.message)
   process.exitCode = 1
 } finally {
+  await sql`select pg_advisory_unlock(hashtextextended('recoveryparts:migrar', 0))`.catch(() => {})
   await sql.end()
 }

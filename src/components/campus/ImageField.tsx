@@ -39,9 +39,9 @@ export function ImageField({ label, name, defaultValue, hint }: { label: string;
             {estado === 'subiendo' ? 'Subiendo…' : url ? 'Cambiar imagen' : 'Subir imagen'}
           </label>
           <input id={id} type="file" accept="image/webp,image/avif,image/jpeg,image/png" className="sr-only" onChange={elegir} disabled={estado === 'subiendo'} />
-          {url && <button type="button" onClick={() => setUrl('')} className="ml-2 inline-flex items-center gap-1 text-xs text-on-surface-variant hover:text-red-300"><X size={12} aria-hidden /> Quitar</button>}
+          {url && <button type="button" onClick={() => setUrl('')} className="ml-2 inline-flex items-center gap-1 text-xs text-on-surface-variant hover:text-danger"><X size={12} aria-hidden /> Quitar</button>}
           <p className="text-xs text-on-surface-variant">{hint ?? 'WebP, AVIF, JPG o PNG de hasta 8 MB.'}</p>
-          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         </div>
       </div>
     </div>

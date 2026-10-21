@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
+import { metaPagina } from '@/lib/seo'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import Galeria, { type Foto } from '@/components/public/Lightbox'
 import { query } from '@/lib/data'
 
-export const metadata: Metadata = { title: 'Galería' }
+export const metadata: Metadata = metaPagina({ titulo: 'Galería', descripcion: 'Fotos de la academia: cursos, talleres y trabajos de los alumnos.', ruta: '/galeria' })
 export const dynamic = 'force-dynamic'
 
 export default async function GaleriaPage() {
-  const fotos = await query<Foto[]>((sb) => sb.from('cms_galeria').select('id, imagen_url, alt, descripcion, categoria, area').order('orden'), [])
+  const fotos = await query<Foto[]>('galeria', (sb) => sb.from('cms_galeria').select('id, imagen_url, alt, descripcion, categoria, area').order('orden'), [])
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />

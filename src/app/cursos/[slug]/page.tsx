@@ -11,6 +11,9 @@ import { Cupos, Precio, horarioTexto } from '@/components/public/CursoCard'
 import { getCursos, getEdiciones, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, TIPO_LABEL, formatPrecio, fechaCorta } from '@/lib/types'
 import { hrefSeguro, esMundoParts, MUNDO_PARTS_URL } from '@/lib/validar'
+import { metaPagina, recortar, NOMBRE_SITIO } from '@/lib/seo'
+import { siteUrl } from '@/lib/env'
+import JsonLd from '@/components/seo/JsonLd'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,8 +23,10 @@ async function load(slug: string) {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const c = await load((await params).slug)
-  return { title: c?.nombre ?? 'Curso', description: c?.descripcion?.slice(0, 150) }
+  const slug = (await params).slug
+  const c = await load(slug)
+  if (!c) return { title: 'Curso no encontrado', robots: { index: false } }
+  return metaPagina({ titulo: c.nombre, descripcion: recortar(c.descripcion) ?? `${TIPO_LABEL[c.tipo]} presencial en Córdoba.`, ruta: `/cursos/${c.slug}`, imagen: imagenCurso(c) })
 }
 
 export default async function CursoPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -34,18 +39,32 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
     getHorarios().then((h) => h.filter((x) => x.curso_id === c.id)),
     getSettings(),
     // RF-26: solo los títulos de los módulos (nunca clases ni material). Los talleres no tienen módulos.
-    query<{ id: string; titulo: string }[]>((sb) => sb.from('modulos_publicos').select('id, titulo').eq('curso_id', c.id).order('orden'), []),
-    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo, requerido').eq('curso_id', c.id).order('orden'), []),
-    query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>((sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; titulo: string }[]>(`modulos:${c.id}`, (sb) => sb.from('modulos_publicos').select('id, titulo').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>(`kit:${c.id}`, (sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo, requerido').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>(`testimonios:${c.id}`, (sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
   ])
 
   const foto = imagenCurso(c)
   const wa = waLink(settings.contacto.whatsapp, `Hola! Quiero info del curso ${c.nombre}`)
   const totalKit = kit.filter((k) => k.requerido !== false).reduce((s, k) => s + (k.precio ?? 0), 0)
   const row = 'flex items-start gap-3 text-sm text-on-surface-variant'
+  const base = siteUrl().replace(/\/$/, '')
+  // Datos estructurados del curso (sin `offers`: la academia no vende desde el sitio, el precio es de referencia).
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'Course',
+    name: c.nombre, description: recortar(c.descripcion, 500), url: `${base}/cursos/${c.slug}`, inLanguage: 'es-AR',
+    ...(foto ? { image: foto.startsWith('/') ? `${base}${foto}` : foto } : {}),
+    ...(c.nivel ? { educationalLevel: c.nivel } : {}),
+    provider: { '@type': 'EducationalOrganization', name: NOMBRE_SITIO, url: base },
+    hasCourseInstance: ediciones.map((e) => ({
+      '@type': 'CourseInstance', courseMode: 'onsite', startDate: e.fecha_inicio, ...(e.fecha_fin ? { endDate: e.fecha_fin } : {}),
+      location: { '@type': 'Place', name: e.aula ?? NOMBRE_SITIO, ...(settings.contacto.direccion ? { address: settings.contacto.direccion } : {}) },
+    })),
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
+      <JsonLd datos={jsonLd} />
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] grow px-4 pb-12 pt-28 md:px-12 md:pb-20">
         <section className="mb-16 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">

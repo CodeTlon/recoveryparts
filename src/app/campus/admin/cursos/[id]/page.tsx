@@ -20,8 +20,8 @@ type Ed = { id: string; fecha_inicio: string | null; cupo: number; activo: boole
 
 // Estado temporal de una edición según sus fechas (en curso / próxima / terminada).
 const MOMENTO = { baja: ['De baja', 'neutral'], proxima: ['Próxima', 'warn'], terminada: ['Terminada', 'neutral'], en_curso: ['En curso', 'ok'] } as const
-function momento(e: Ed, hoy: string) {
-  const { momento: m, fin } = momentoEdicion({ activo: e.activo, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha) }, hoy)
+function momento(e: Ed, hoy: string, duracionSemanas: number | null) {
+  const { momento: m, fin } = momentoEdicion({ activo: e.activo, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha), duracionSemanas }, hoy)
   return { fin, label: MOMENTO[m][0], tone: MOMENTO[m][1] }
 }
 
@@ -83,7 +83,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
         {!ediciones.length ? <Empty>Este curso todavía no tiene ediciones. Creá la primera con «Nueva edición».</Empty> : (
           <ul className="space-y-3">
             {ediciones.map((e) => {
-              const m = momento(e, hoy)
+              const m = momento(e, hoy, curso.duracion_semanas)
               return (
                 <li key={e.id} className={`card p-4 ${e.activo ? '' : 'opacity-70'}`}>
                   <div className="flex flex-wrap items-center gap-3">
@@ -102,14 +102,14 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
                         <DuplicarEdicion cursoId={id} edicionId={e.id} />
                       </ModalButton>
                       {e.activo ? (
-                        <ModalButton label={<><ArchiveX size={14} aria-hidden /> Baja</>} title={`Dar de baja la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost px-3! py-2! hover:border-red-400! hover:text-red-300!">
+                        <ModalButton label={<><ArchiveX size={14} aria-hidden /> Baja</>} title={`Dar de baja la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost px-3! py-2! hover:border-danger! hover:text-danger!">
                           <ActionForm action={setEstadoEdicion} submit="Dar de baja">
                             <input type="hidden" name="id" value={e.id} /><input type="hidden" name="activo" value="0" />
                             <p className="text-sm text-on-surface-variant">Deja de verse en el sitio y en el panel del profesor. No afecta al curso ni a las otras ediciones; los alumnos y su historial se conservan.</p>
                           </ActionForm>
                         </ModalButton>
                       ) : (
-                        <ModalButton label={<><ArchiveRestore size={14} aria-hidden /> Reactivar</>} title={`Reactivar la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost px-3! py-2! hover:border-green-400! hover:text-green-300!">
+                        <ModalButton label={<><ArchiveRestore size={14} aria-hidden /> Reactivar</>} title={`Reactivar la edición de ${etiquetaEdicion(e.fecha_inicio)}`} className="btn-ghost px-3! py-2! hover:border-success! hover:text-success!">
                           <ActionForm action={setEstadoEdicion} submit="Reactivar">
                             <input type="hidden" name="id" value={e.id} /><input type="hidden" name="activo" value="1" />
                             <p className="text-sm text-on-surface-variant">Se valida que no se superponga con otra edición activa, que su aula siga activa y con capacidad para el cupo, y que no choque con otros cursos.</p>
@@ -163,10 +163,10 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
             {m.tipo === 'pdf' ? <FileText size={16} className="text-primary" /> : <Link2 size={16} className="text-primary" />}
             <span className="min-w-0 flex-1 font-medium">{m.titulo}</span>
             {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost px-3! py-2!">Ver</a>}
-            <form action={borrarMaterial}>
+            <ActionForm action={borrarMaterial} submit={null} reset={false} okLabel="Hecho">
               <input type="hidden" name="id" value={m.id} />
               <Confirm message="¿Eliminar este material base? Deja de verse en todas las ediciones del curso."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>
-            </form>
+            </ActionForm>
           </div>
         )} /></div>
         <MaterialForms cursoId={id} modulos={modulos} clases={clases} />

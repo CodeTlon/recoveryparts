@@ -20,10 +20,10 @@ El rate limit de login/reset (`src/lib/rate-limit.ts`) vive en memoria del proce
 `DATABASE_URL` es el dueño de la base (superusuario en el contenedor oficial) y cambia de rol con `SET LOCAL ROLE`. RLS sigue vigente, pero un usuario de conexión sin superusuario sería más seguro (pendiente).
 
 ## Las sesiones son cookies firmadas sin tabla
-No hay revocación individual: se invalidan todas las de un usuario con `auth.users.sesion_desde` (se actualiza al cambiar la contraseña) o desactivando la cuenta. Cambiar `SESSION_SECRET` cierra todas.
+No hay revocación individual: se invalidan todas las de un usuario con `auth.users.sesion_desde` (se actualiza al cambiar la contraseña, **al cerrar sesión** y al desactivar la cuenta). Cerrar sesión en un dispositivo la cierra en todos. Cambiar `SESSION_SECRET` cierra todas. Tras abrir un link de invitación/recuperación hay una sesión de **activación** (claim `act`, 15 min) que no entra al campus.
 
 ## Sin tests automáticos de UI ni de políticas RLS
-La CI verifica tipos, build, migraciones, RLS activo en todas las tablas y que un alta sin invitación no cree perfil. No prueba las políticas por rol ni las pantallas.
+La CI verifica tipos, lint, build, migraciones, RLS activo en todas las tablas, que un alta sin invitación no cree perfil, **las reglas de negocio de la base** (`tests/db/reglas.sql`: cupo, estados finales, N° de clase, encuesta anónima, RLS por rol) y **E2E con base** (`tests/e2e/auth.spec.ts`: invitación, activación, rol, logout; `csp.spec.ts`). No cubre las pantallas del campus por rol ni las acciones del admin.
 
 ## El mail depende de SMTP
 Invitaciones, recuperación de contraseña y avisos salen por `src/lib/mail.ts`. Sin `SMTP_HOST`/`MAIL_FROM` no se envía nada (el alta del usuario queda hecha, pero nadie recibe el link): configurarlo antes de invitar en cada entorno.
@@ -32,16 +32,16 @@ Invitaciones, recuperación de contraseña y avisos salen por `src/lib/mail.ts`.
 `docs/CUENTAS-HOMOLOGACION.md`, `.env.test` y `.env.production` están gitignored. Nunca pegar claves en el chat ni en commits.
 
 ## Sin verificar en navegador tras la auditoría
-La CSP (`next.config.js`) y la reactivación de cuentas (`ban_duration: 'none'` en `setEstadoCuenta`) se probaron solo por código y headers. Revisar en homologación que no bloqueen imágenes ni el iframe del PDF, y que un usuario reactivado pueda entrar.
+La CSP ahora es con nonce (`src/proxy.ts`): se verificó en Chromium contra el sitio y el campus del admin (sin violaciones; modales y menú móvil andan). **Sin verificar:** el iframe/visor de PDF y el ZIP en homologación. La página `/_not-found` es estática y sus scripts no llevan nonce (queda sin hidratar; es solo un enlace).
 
 ## Rate limit en memoria
-`src/lib/rate-limit.ts` cuenta por instancia serverless (mejor esfuerzo). Para un límite real hace falta un store compartido (tabla en Postgres o Upstash).
+`src/lib/rate-limit.ts` cuenta por instancia (mejor esfuerzo; ya no se resetea de golpe al llenarse: descarta las claves más viejas). La IP sale de `src/lib/ip-cabeceras.ts`: `TRUSTED_IP_HEADER` si está, si no el **último** valor de `x-forwarded-for` (el que agrega el proxy; el primero y `x-real-ip` los puede mandar el cliente). Probado con `tests/unit/ip.test.ts`. Con un CDN delante hay que definir `TRUSTED_IP_HEADER`. Para un límite real entre réplicas hace falta un store compartido.
 
 ## Respuestas de encuesta por número de pregunta
 Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las preguntas de una encuesta con respuestas. Un id estable por pregunta lo resolvería.
 
 ## Sin hacer de la auditoría
-`ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP se arma en memoria.
+`ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP y los PDF ya van por streaming.
 
 ## Abiertos tras la sesión 2026-10-13
 - **RF-39 figura 🟢 y no está en el código**: al finalizar una edición no se envía ningún mensaje recomendando el siguiente nivel. Quedó fuera a propósito; falta decidir si se implementa o se corrige el estado en la spec.
@@ -52,7 +52,7 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 ## Abiertos tras la sesión 2026-10-11
 - **Scripts `npm run db:*` / `seed:*` en Windows**: usan `ENV_FILE=… comando`, que `cmd` no entiende, y `scripts/migrate.mjs` no carga un `.env` con fin de línea CRLF («Falta DATABASE_URL»). Rodeo en Git Bash: exportar las variables (`set -a; . <(tr -d '\r' < .env.development); set +a`) y correr `node scripts/migrate.mjs` / `npx tsx scripts/seed-pruebas.mts --confirmo-no-produccion`.
 - **Guardar la estructura de una edición sin cambios la deja «personalizada»** (se copia la guía igual). No rompe nada; «Volver a la guía general» la devuelve.
-- **La regla de «edición terminada» está en dos lugares**: `momentoEdicion()` (`src/lib/fechas.ts`) y `edicion_vigente()` (0017). Si cambia una, cambiar la otra.
+- **La regla de «edición terminada» está en dos lugares**: `momentoEdicion()` (`src/lib/fechas.ts`) y `fin_edicion()`/`edicion_vigente()` (0017, `fin_edicion` redefinida en la 0020). Si cambia una, cambiar la otra.
 - **Borrar físicamente una edición** borra en cascada las filas de su material propio pero no los archivos del disco. Hoy las ediciones solo se dan de baja.
 
 ## Abiertos tras la sesión 2026-10-05
@@ -74,3 +74,25 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 
 ## Auditoría de dependencias (2026-10-15)
 `npm audit --omit=dev --audit-level=high` en 0 (Next 15.5.28, `overrides.next.postcss` 8.5.30, `@playwright/test` 1.64.1, sharp actualizado). Si se actualiza Next y reaparece el `postcss` viejo, borrar `node_modules/next/node_modules/postcss` del `package-lock.json` y reinstalar. Las entradas sobre «Migraciones a Supabase» y `db:push:*` de arriba son históricas (ya no hay Supabase).
+
+## Auditoría 2026-10-21 (rama `fix/auditoria-seguridad-logica`)
+Cuatro revisiones de solo lectura (seguridad, lógica, estilos/SEO, rendimiento) y las correcciones, incluidos los cambios de más riesgo (no hay producción) y todo lo que había quedado pendiente. Probado en una base descartable con 40.000 inscripciones y en Chromium.
+
+**Hecho:** rate limit e IP configurable, sesión de activación y logout con revocación, finalizado como estado final (0019), fin de edición con duración (0020), índices (0021), calendario atómico, con detección de versión y con avisos pendientes con reintento (0022, 0026, 0029), validaciones de datos (0023), **RLS sin funciones por fila (0024, 0025: admin 10 s → 13 ms, profesor 23 s → 34 ms)**, locks de agenda y horarios solapados (0027), **`anon` con permisos mínimos (0028)**, CSP con nonce, caché del sitio público, ZIP/PDF por streaming, video (MP4 y WebM) recomprimido en segundo plano, pool SMTP, volumen para `.next/cache`, paginación del admin, SEO, tokens de estado y contrastes, `.env.development` desversionado, CI con lint, unitarios, E2E con base, pruebas SQL y un job de Firefox y Safari.
+
+**Fallas que ya existían en `dev` y se corrigieron** (las destapó probar de verdad): `/activar` salía estática en el build y siempre decía «El link venció»; los **formularios públicos de contacto y de demanda fallaban siempre** (el builder agregaba `RETURNING`); la **búsqueda de usuarios del admin no devolvía nada con ningún término** (`cond` validaba la lista de columnas como un identificador y el error quedaba invisible: ahora el builder lo registra en el log); un **curso inexistente respondía 200** (el `loading.tsx` raíz hacía empezar a enviar la página antes de `notFound()`: se quitó, no volver a ponerlo).
+
+**Falsos positivos de los agentes (verificados):** `audit_insert` abierto y PII en `audit_log` (ya resuelto en la 0007), «assets muertos» de `public/images` (los usan los seeds y el contenido demo), íconos sin `aria-hidden` (lucide los marca solos), `scrypt` sincrónico (es asíncrono), drawer del campus sin trampa de foco (ya tiene `useModalFocus`).
+
+**Verificado además:** visor de PDF del alumno bajo la CSP en Chromium completo; 61 mails con 3 conexiones SMTP; dos migradores simultáneos; alta simultánea de ediciones solapadas; envío de avisos pendientes con el SMTP caído y luego levantado; imagen Docker (construye, arranca, healthcheck, optimizador y caché persistente); la imagen no contiene ningún `.env`; los workflows pasan las entradas por `env`.
+
+**Resuelto:** `.env.development` estaba versionado con una `DATABASE_URL` con credenciales y un `SESSION_SECRET` de 55 caracteres (los valores no se leyeron). Se desversionó (`git rm --cached`, regla en `.gitignore`); queda `.env.development.example` y `npm run setup:dev` (crea el archivo con un secreto aleatorio). **El historial de git conserva el archivo viejo** (no se reescribe historia): si ese `SESSION_SECRET` se usó en algún entorno desplegado, hay que rotarlo; las credenciales de la base son las del compose de desarrollo.
+
+**Pendiente / descartado con datos:**
+- *No verificable en esta máquina:* Firefox y Safari (faltan librerías del sistema y no hay `sudo`; el job `navegadores` de la CI los corre: CSP con nonce, acceso y smoke) y el Traefik real de Coolify (la cabecera de IP es configurable con `TRUSTED_IP_HEADER` y está probada con tests unitarios).
+- `LazyMotion`: probado y **empeora** (home 202 → 207 KB, login 149 → 196 KB de JS gzip): descartado.
+- `/_not-found` (404 de URLs que no existen) es estático y sus scripts no llevan nonce: no hidrata y la consola registra violaciones de CSP, pero solo contiene un enlace. Una ruta comodín dinámica lo arreglaba pero convertía el 404 en un 200 (soft-404): peor, descartado.
+- Las listas del CMS (FAQ, galería, testimonios, egresados) no se paginan: son curadas y chicas.
+- El logo en paleta (PNG indexado) pesa 45 KB pero degrada la imagen (diferencia medida alta): se queda en 512 px / 123 KB.
+- Al reenviar avisos de clases tras una falla parcial, quienes ya lo recibieron lo reciben de nuevo (no se guarda el estado por destinatario).
+- `ListEditors` y `CursoForm` (componentes cliente del campus) no se revisaron por tamaño.

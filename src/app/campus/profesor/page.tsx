@@ -5,17 +5,17 @@ import { DIAS } from '@/lib/types'
 import { etiquetaEdicion, hoyAR, momentoEdicion } from '@/lib/fechas'
 import { PageHead, Empty, Badge } from '@/components/campus/ui'
 
-type Ed = { id: string; fecha_inicio: string | null; cursos: { nombre: string; activo: boolean } | null; aulas: { nombre: string } | null; horarios_curso: { dia_semana: number; hora_inicio: string; hora_fin: string }[]; inscripciones: { estado: string }[]; clases: { fecha: string }[] }
+type Ed = { id: string; fecha_inicio: string | null; cursos: { nombre: string; activo: boolean; duracion_semanas: number | null } | null; aulas: { nombre: string } | null; horarios_curso: { dia_semana: number; hora_inicio: string; hora_fin: string }[]; inscripciones: { estado: string }[]; clases: { fecha: string }[] }
 
 export default async function ProfesorHome() {
   const { sb, perfil } = await requireRole('profesor')
   // RLS: solo las ediciones que dicta. RF-04: solo las en curso y las próximas (las terminadas no se muestran),
   // primero las en curso y después las próximas, cada grupo por fecha de inicio.
-  const { data } = await sb.from('ediciones').select('id, fecha_inicio, cursos(nombre, activo), aulas(nombre), horarios_curso(dia_semana, hora_inicio, hora_fin), inscripciones(estado), clases(fecha)')
+  const { data } = await sb.from('ediciones').select('id, fecha_inicio, cursos(nombre, activo, duracion_semanas), aulas(nombre), horarios_curso(dia_semana, hora_inicio, hora_fin), inscripciones(estado), clases(fecha)')
     .eq('profesor_id', perfil.id).eq('activo', true).order('fecha_inicio')
   const hoy = hoyAR()
   const eds = ((data ?? []) as unknown as Ed[]).filter((e) => e.cursos?.activo)
-    .map((e) => ({ ...e, momento: momentoEdicion({ activo: true, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha) }, hoy).momento }))
+    .map((e) => ({ ...e, momento: momentoEdicion({ activo: true, fecha_inicio: e.fecha_inicio, fechas: e.clases.map((c) => c.fecha), duracionSemanas: e.cursos?.duracion_semanas }, hoy).momento }))
     .filter((e) => e.momento === 'en_curso' || e.momento === 'proxima')
     .sort((a, b) => Number(a.momento === 'proxima') - Number(b.momento === 'proxima') || (a.fecha_inicio ?? '').localeCompare(b.fecha_inicio ?? ''))
 

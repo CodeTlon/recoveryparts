@@ -5,11 +5,14 @@ import type { NextResponse } from 'next/server'
 // Puestos en runtime no pasan por esa validación; se conservó así.
 const isDev = process.env.NODE_ENV !== 'production'
 
-// CSP sin nonce: Next inyecta scripts inline, así que script-src necesita 'unsafe-inline'.
-// Lo que sí cierra: plugins, <base>, formularios hacia afuera y embebido en otros sitios.
-const csp = [
+// CSP con nonce por request: solo corren los scripts que Next marca con el nonce (y los que ellos carguen,
+// 'strict-dynamic'); un script inyectado en la página no se ejecuta. Requiere que las páginas se rendericen en cada
+// request (una página estática no puede llevar un nonce distinto por visita): ver `dynamic = 'force-dynamic'`.
+// style-src conserva 'unsafe-inline' (estilos en línea de React y de las animaciones).
+export function construirCsp(nonce: string) {
+  return [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https:${isDev ? ' http://127.0.0.1:*' : ''}`,
   `media-src 'self' blob: https:${isDev ? ' http://127.0.0.1:*' : ''}`,
@@ -20,7 +23,8 @@ const csp = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'self'",
-].join('; ')
+  ].join('; ')
+}
 
 const HEADERS: Record<string, string> = {
   'Referrer-Policy': 'no-referrer',
@@ -28,10 +32,10 @@ const HEADERS: Record<string, string> = {
   'X-Frame-Options': 'SAMEORIGIN',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Content-Security-Policy': csp,
 }
 
-export function withSecurityHeaders(res: NextResponse): NextResponse {
+export function withSecurityHeaders(res: NextResponse, csp: string): NextResponse {
   for (const [k, v] of Object.entries(HEADERS)) res.headers.set(k, v)
+  res.headers.set('Content-Security-Policy', csp)
   return res
 }

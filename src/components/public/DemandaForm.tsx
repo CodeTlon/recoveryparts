@@ -10,7 +10,7 @@ export default function DemandaForm() {
     <form action={action} className="space-y-3 text-left">
       <input name="interes" required maxLength={200} placeholder="¿Qué curso te gustaría que dictemos?" aria-label="Curso de interés" className="input" />
       <input name="contacto" maxLength={120} placeholder="Email o teléfono (opcional)" aria-label="Contacto" className="input" />
-      {s.error && <p role="alert" className="text-sm text-red-400">{s.error}</p>}
+      {s.error && <p role="alert" className="text-sm text-danger">{s.error}</p>}
       <button disabled={pending} className="btn-primary w-full">{pending ? 'Enviando…' : 'Avisarme'}</button>
     </form>
   )
