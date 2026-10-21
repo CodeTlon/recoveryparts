@@ -8,7 +8,7 @@ import { enviarMail } from '@/lib/mail'
 import { mailCambiosClases, mailAgregadoCurso } from '@/lib/mail-templates'
 import { DIAS } from '@/lib/types'
 import { urlOpcional, imagenOpcional, extensionImagen, esUrlHttp } from '@/lib/validar'
-import { hoyAR } from '@/lib/fechas'
+import { hoyAR, momentoEdicion } from '@/lib/fechas'
 import { guardarArchivo, urlPublica } from '@/lib/storage'
 
 export type R = { ok?: boolean; error?: string }
@@ -402,16 +402,20 @@ export async function agregarAlumno(_: R, fd: FormData): Promise<R> {
   const { sb, perfil: yo } = await requireRole('admin')
   const edicion_id = txt(fd, 'edicion_id')
   const email = txt(fd, 'email').toLowerCase()
-  const { data: ed } = await sb.from('ediciones').select('cupo, activo, fecha_inicio, cursos(nombre, activo)').eq('id', edicion_id).single()
+  const { data: ed } = await sb.from('ediciones').select('cupo, activo, fecha_inicio, cursos(nombre, activo), clases(fecha)').eq('id', edicion_id).single()
   const curso = uno(ed?.cursos as unknown as { nombre: string; activo: boolean } | { nombre: string; activo: boolean }[] | null)
   if (!ed || !ed.activo || !curso?.activo) return { error: 'La edición no existe o está dada de baja.' }
+  const fechas = ((ed.clases ?? []) as { fecha: string }[]).map((c) => c.fecha)
+  if (momentoEdicion({ activo: true, fecha_inicio: ed.fecha_inicio, fechas }, hoyAR()).momento === 'terminada')
+    return { error: 'La edición ya terminó: no se pueden agregar alumnos.' }
   // Se valida antes de invitar: si no, el alumno recibe un mail de una cuenta que se borra enseguida.
   const { count: ocupados } = await sb.from('inscripciones').select('id', { count: 'exact', head: true }).eq('edicion_id', edicion_id)
   if ((ocupados ?? 0) >= ed.cupo) return { error: 'La edición no tiene cupos disponibles.' }
 
-  let { data: alumno } = await sb.from('profiles').select('id, rol, nombre').eq('email', email).maybeSingle()
+  let { data: alumno } = await sb.from('profiles').select('id, rol, nombre, estado_cuenta').eq('email', email).maybeSingle()
   let nuevo = false
   if (alumno && alumno.rol !== 'alumno') return { error: 'Ese email pertenece a un profesor o admin.' }
+  if (alumno?.estado_cuenta === 'inactiva') return { error: 'La cuenta de ese alumno está inactiva. Reactivala desde Usuarios antes de agregarlo.' }
 
   let mailPendiente = false
   if (!alumno) {
