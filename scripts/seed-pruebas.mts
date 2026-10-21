@@ -397,6 +397,30 @@ const G = [
 ]
 ok(await sb.from('cms_galeria').insert(G.map(([categoria, area, imagen_url, alt], i) => ({ categoria, area, imagen_url, alt, descripcion: alt, orden: i + 1 }))), 'galeria')
 
+// RF-60: sección «Aulas» del sitio. Aula 1 y Aula 2 visibles con su ficha; Aula 3 cargada pero oculta.
+// Sin video general (el repo no trae uno liviano): se prueba subiendo uno desde Campus › Sitio web › Aulas.
+// En el demo para el cliente no se cargan: las fichas las arma el admin con fotos reales.
+if (!DEMO_CLIENTE) {
+  await set('aulas', { texto: 'Cursás en aulas-taller pensadas para practicar: mesas de trabajo individuales, herramientas profesionales y grupos reducidos. (texto de prueba)' })
+  ok(await sb.from('cms_aulas').delete().not('aula_id', 'is', null), 'limpiar fichas de aulas') // borra destacados y fotos en cascada
+  const FICHAS = [
+    ['Aula 1', true, 'Aula técnica para reparación de celulares, notebooks y electrónica. Cada puesto tiene su mesa y su equipo. (texto de prueba)',
+      [['mesas', 'Mesas antiestáticas individuales con lupa y luz LED'], ['equipamiento', 'Estaciones de soldadura y aire caliente en cada puesto'], ['herramientas', 'Kits de destornilladores de precisión y multímetros'], ['seguridad', 'Extractores de humo y matafuegos'], ['comodidades', 'Aire acondicionado']],
+      [['/images/curso-iphone.jpg', 'Puesto de trabajo con un celular abierto'], ['/images/curso-notebooks.jpg', 'Mesa con una notebook desarmada'], ['/images/cursos/microsoldadura.jpg', 'Detalle de una placa bajo la lupa']]],
+    ['Aula 2', true, 'Aula de diseño y producción: estampado, cartelería y carteles de neón. (texto de prueba)',
+      [['mesas', 'Mesas amplias para cortar y armar piezas grandes'], ['equipamiento', 'Plancha de sublimación e impresora de vinilo'], ['comodidades', 'Luz natural y espacio para guardar los trabajos']],
+      [['/images/curso-neon.jpg', 'Cartel de neón terminado en el aula'], ['/images/curso-estampados.jpg', 'Remeras estampadas por alumnos']]],
+    ['Aula 3', false, 'Aula para talleres cortos. (oculta en el sitio: prueba)', [['otro', 'Proyector']], []],
+  ]
+  for (const [i, [nombre, visible, descripcion, destacados, fotos]] of FICHAS.entries()) {
+    const aula_id = aulas[nombre]
+    if (!aula_id) continue
+    ok(await sb.from('cms_aulas').insert({ aula_id, visible, descripcion, orden: i + 1 }), `ficha ${nombre}`)
+    if (destacados.length) ok(await sb.from('cms_aula_destacados').insert(destacados.map(([tipo, texto], orden) => ({ aula_id, tipo, texto, orden }))), `destacados ${nombre}`)
+    if (fotos.length) ok(await sb.from('cms_aula_fotos').insert(fotos.map(([imagen_url, alt], orden) => ({ aula_id, imagen_url, alt, orden }))), `fotos ${nombre}`)
+  }
+}
+
 // ── Salida ─────────────────────────────────────────────────
 const tabla = USUARIOS.map((u) => `${u.rol.padEnd(9)} ${u.email.padEnd(32)} ${u.password}`).join('\n')
 console.log(`\nCUENTAS DE PRUEBA (${env.APP_ENV})\n` + tabla)
