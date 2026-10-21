@@ -17,13 +17,17 @@ Resumen del dominio. El esquema real está en `db/migrations/0001_schema.sql`; l
 | Regla | RF | Dónde se aplica |
 |---|---|---|
 | Desertor es final; motivo obligatorio; no se vuelve a activo | RF-55 | trigger |
+| **Finalizado también es final**: no pasa a desertor ni vuelve a activo | RF-14 | trigger (0019) |
+| Las clases suspendidas/reprogramadas quedan con `aviso_pendiente` hasta que el mail sale bien; el banner del calendario permite reenviar | RF-38 | `guardar_calendario` (0029), `enviarAvisosPendientes` |
+| Una inscripción nueva no entra a una edición terminada ni a una cuenta inactiva | RF-12 | `agregarAlumno` |
+| La encuesta no cambia de edición si ya tiene respuestas | RF-47 | `guardarEncuesta` |
 | N° de clase de deserción = clases programadas con fecha ≤ la de deserción (las suspendidas, reprogramadas y salteadas no cuentan) | RF-55 | trigger |
 | Cursos: toda clase en un módulo, ningún módulo vacío, clases de un módulo juntas; talleres sin módulos | RF-58 | constraint trigger `validar_estructura` |
 | El material y el calendario siguen a la clase (por id); clase borrada → su material queda general; no se borra una clase con fechas | RF-58 | FK + `guardar_estructura` |
 | Orden flexible por edición: adelantar (fecha antes que otras) o saltear una clase; no avisa por mail | RF-58 | `guardarClases` |
 | Guía general (admin) + estructura propia por edición: copy-on-write al primer guardado; nueva edición = guía; «Volver a la guía general» devuelve calendario y material propio a la clase de origen (sin origen: se pierde la fecha / queda general) | RF-58 | `guardar_estructura` (solo admin), `guardar_estructura_edicion`, `restablecer_estructura`, `estructura_edicion` |
 | Calendario, material y liberación usan la estructura efectiva de la edición | RF-58 | triggers `clases_before_write`, `materiales_integridad`, `materiales_liberados_integridad` |
-| El profesor solo accede a ediciones vigentes (activas y cuya última clase no pasó); misma regla en `momentoEdicion()` (TS) y `edicion_vigente()` (SQL) | RF-04 | `es_profesor_de`, RLS `ediciones_profesor` |
+| El profesor solo accede a ediciones vigentes (activas y cuyo fin no pasó; el fin es la última clase, o inicio + duración del curso si todavía no hay calendario); misma regla en `momentoEdicion()` (TS) y `fin_edicion()`/`edicion_vigente()` (SQL, 0020) | RF-04 | `es_profesor_de`, RLS `ediciones_profesor` |
 | El profesor borra solo el material que subió para su edición; el base no. No lee el kit en el campus | RF-05 | RLS `mat_profesor_*`; sin `kit_profesor` |
 | No superar el cupo ni bajarlo de los inscriptos | — | trigger |
 | No superponer aula ni profesor en mismo día y horario | — | trigger |

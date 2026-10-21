@@ -4,6 +4,8 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-21 | Los recursos de Coolify usan `/docker-compose.coolify.yml` como *Docker Compose Location*; `/docker-compose.yml` es solo desarrollo | Con el equivocado Coolify despliega solo la base y `app` no existe; pasó en producción tras el renombre del 15/10 |
+| 2026-10-21 | La auditoría se promovió `dev → test → main` el mismo día (PR #22) con la CI completa en verde | No hay producción con datos reales y la CI ya probaba migraciones desde cero, E2E con base y Firefox/Safari |
 | 2026-10-21 | `.env.development` deja de versionarse; queda `.env.development.example` y `npm run setup:dev` (genera un `SESSION_SECRET` aleatorio) | Un secreto no tiene que estar en el repo aunque sea «de desarrollo»; cada persona tiene el suyo. El historial no se reescribe |
 | 2026-10-21 | El aviso de clases suspendidas/reprogramadas es un estado por clase (`aviso_pendiente`, 0029) con banner y botón para reenviar | Si el mail fallaba el aviso se perdía para siempre; ahora se puede reintentar |
 | 2026-10-21 | Los videos WebM también se recomprimen: el archivo se reemplaza por MP4 con el mismo nombre y `/media` decide el tipo por los bytes | La URL entregada no puede cambiar de extensión |
