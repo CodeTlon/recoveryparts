@@ -4,6 +4,14 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-21 | **RLS sin funciones por fila**: `(select es_admin())`, `(select auth_rol())` y, para el profesor y el alumno, conjuntos por usuario (`mis_ediciones_profesor()` etc.) comparados con `IN` (0024, 0025) | Con 40.000 inscripciones un `count(*)` tardaba 10 s (admin) y 23 s (profesor); ahora 13 ms y 34 ms. Mismas reglas, probadas con las mismas pruebas SQL sobre las políticas viejas y las nuevas |
+| 2026-10-21 | `anon` solo tiene SELECT sobre el CMS y las vistas públicas e INSERT en `contactos`/`demanda_cursos`; las tablas nuevas no le dan acceso por defecto (0028) | Además de RLS, que no tenga el privilegio. Una tabla nueva que el sitio público necesite lo declara en su migración |
+| 2026-10-21 | El constructor de consultas pide `RETURNING` solo si se encadena `.select()` (como PostgREST) | Con `INSERT … RETURNING` el visitante no podía enviar los formularios públicos (no puede leer la fila) |
+| 2026-10-21 | El calendario lleva una versión (`calendario_version`) y el guardado la compara dentro del lock | Quien tenía la pantalla vieja pisaba lo cargado por otra persona |
+| 2026-10-21 | La agenda toma locks por curso/aula/profesor (en orden fijo) y los horarios de una edición no pueden solaparse (0027); el migrador toma un advisory lock | Dos altas simultáneas dejaban ediciones superpuestas; dos réplicas migrando chocaban |
+| 2026-10-21 | Los videos MP4 se recomprimen en segundo plano (`after`) y se reemplazan en el mismo archivo; el resto se guarda como llega | El request de subida esperaba hasta 10 min; la URL entregada no puede cambiar de extensión |
+| 2026-10-21 | La IP del límite de intentos es el último `x-forwarded-for` (o `TRUSTED_IP_HEADER`) | El primer valor y `x-real-ip` los puede mandar el cliente; con un CDN delante hay que definir la cabecera |
+| 2026-10-21 | `LazyMotion` descartado tras medirlo | Empeoraba el JS inicial (home +2%, login +32%) |
 | 2026-10-21 | **CSP con nonce por request** en `proxy.ts` (sin `unsafe-inline` en `script-src`) y páginas con scripts siempre dinámicas | Un script inyectado ya no corre; el costo es que no puede haber páginas estáticas con JavaScript |
 | 2026-10-21 | **Caché de datos del sitio público**: 60 s con tag `publico`, invalidado por las server actions que cambian datos públicos | Cada visita a la home hacía 6 consultas de 4 viajes; el contenido casi no cambia |
 | 2026-10-21 | `set_config` y la consulta de cada transacción se mandan en pipeline | Un viaje menos por consulta, el orden se conserva en la misma conexión |
