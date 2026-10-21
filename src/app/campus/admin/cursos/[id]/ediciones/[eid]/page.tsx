@@ -102,7 +102,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
         <div className="max-w-4xl"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="edicion_id" value={eid} />
           <ClasesEditor name="clases" plan={plan.map((p) => ({ ...p, modulo: mods.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
-            avisar={<Check name="avisar">Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check>} />
+            avisar={<><Check name="avisar" defaultChecked>Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check><Check name="avisar_todas" className="mt-1 text-on-surface-variant">Reenviar el aviso de todas las clases suspendidas o reprogramadas (si el mail anterior no llegó)</Check></>} />
         </ActionForm></div>
       </section>}
 

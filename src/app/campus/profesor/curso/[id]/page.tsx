@@ -114,7 +114,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="edicion_id" value={id} />
             <ClasesEditor name="clases" plan={clasesPlan.map((p) => ({ ...p, modulo: modulos.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={(clases ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]} inicio={ed.fecha_inicio} dias={[...new Set((hs ?? []).map((h) => h.dia_semana as number))]}
-              avisar={<Check name="avisar">Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check>} />
+              avisar={<><Check name="avisar" defaultChecked>Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check><Check name="avisar_todas" className="mt-1 text-on-surface-variant">Reenviar el aviso de todas las clases suspendidas o reprogramadas (si el mail anterior no llegó)</Check></>} />
           </ActionForm>
         </div>
       </section>

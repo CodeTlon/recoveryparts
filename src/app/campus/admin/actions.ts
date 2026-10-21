@@ -359,26 +359,20 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   // dicta, así que su fecha puede quedar ocupada por otra clase.
   const dictadas = ok.filter((f) => f.estado !== 'salteada').map((f) => f.fecha)
   if (new Set(dictadas).size !== dictadas.length) return { error: 'Hay dos clases en la misma fecha.' }
-  const ids = ok.map((f) => f.plan_clase_id)
-
-  const { data: previas } = await sb.from('clases').select('id, plan_clase_id, fecha, estado').eq('edicion_id', edicion_id)
-  const { error } = await sb.from('clases').upsert(ok as any[], { onConflict: 'edicion_id,plan_clase_id' })
+  // Una sola transacción en la base (upsert + borrado de las que faltan, serializado por edición); devuelve cómo estaban.
+  const { data: previas, error } = await sb.rpc('guardar_calendario', { p_edicion: edicion_id, p_filas: ok })
   if (error) {
     const msg = traducir(error.message)
     // El profesor no maneja el concepto de «edición»: para él son otras fechas del mismo curso.
     return { error: perfil.rol === 'profesor' ? msg.replace(/^Se superpone con la edición del (\S+) de este curso\./, 'Las fechas se superponen con otro dictado de este curso, que empieza el $1.') : msg }
   }
-  const aBorrar = (previas ?? []).filter((c: any) => !ids.includes(c.plan_clase_id))
-  if (aBorrar.length) {
-    const { error: eDel } = await sb.from('clases').delete().in('id', aBorrar.map((c: any) => c.id))
-    if (eDel) return { error: 'Se guardó el calendario, pero no se pudieron quitar las clases que faltaban.' }
-  }
-
   // RF-38 (por mail): avisar a los alumnos activos de clases suspendidas/reprogramadas (solo lo que cambió).
   // Saltear o adelantar una clase NO avisa: el día de cursada no cambia y el profesor lo dice en clase.
-  const previa = new Map((previas ?? []).map((c: any) => [c.plan_clase_id, c]))
-  const aviso = ok.filter((f) => ['suspendida', 'reprogramada'].includes(f.estado) && (() => { const a: any = previa.get(f.plan_clase_id); return !a || a.estado !== f.estado || a.fecha !== f.fecha })())
-  if (aviso.length && fd.get('avisar') === 'on') {
+  // «Reenviar» avisa de todas las suspendidas/reprogramadas del calendario (para reintentar si el mail falló).
+  const previa = new Map(((previas ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]).map((c) => [c.plan_clase_id, c]))
+  const reenviar = fd.get('avisar_todas') === 'on'
+  const aviso = ok.filter((f) => ['suspendida', 'reprogramada'].includes(f.estado) && (reenviar || (() => { const a = previa.get(f.plan_clase_id); return !a || a.estado !== f.estado || a.fecha !== f.fecha })()))
+  if (aviso.length && (fd.get('avisar') === 'on' || reenviar)) {
     const { data: ins } = await sb.from('inscripciones').select('profiles!inscripciones_alumno_id_fkey(email)').eq('edicion_id', edicion_id).eq('estado', 'activo')
     const { data: e } = await sb.from('ediciones').select('cursos(nombre)').eq('id', edicion_id).single()
     const { data: pcs } = await sb.from('plan_clases').select('id, titulo').in('id', aviso.map((a) => a.plan_clase_id))
