@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { Readable } from 'node:stream'
 import JSZip from 'jszip'
 import { usuarioApi } from '@/lib/auth'
 import { clienteAdmin } from '@/lib/db'
 import { dbConfigured } from '@/lib/env'
-import { leerArchivo } from '@/lib/storage'
+import { infoArchivo, streamArchivo } from '@/lib/storage'
 import { hoyAR } from '@/lib/fechas'
 
 // RF-35: ZIP con los PDFs ya liberados EN ESA EDICIÓN (mismo criterio que material_visible), solo para alumnos
@@ -35,12 +36,14 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   let i = 1
   for (const m of mats ?? []) {
     if (!m.storage_path?.startsWith(`${ed.curso_id}/`)) continue
-    const data = await leerArchivo('materiales', m.storage_path)
-    if (!data) return new NextResponse('No se pudo armar el ZIP. Probá de nuevo.', { status: 502 })
-    zip.file(`${String(i++).padStart(2, '0')} - ${m.titulo.replace(/[\\/:*?"<>|]/g, '_')}.pdf`, data)
+    // Se comprueba que el archivo exista ANTES de empezar: una vez enviada la cabecera ya no se puede cambiar el estado.
+    const info = await infoArchivo('materiales', m.storage_path)
+    if (!info) return new NextResponse('No se pudo armar el ZIP. Probá de nuevo.', { status: 502 })
+    zip.file(`${String(i++).padStart(2, '0')} - ${m.titulo.replace(/[\\/:*?"<>|]/g, '_')}.pdf`, streamArchivo(info.abs), { binary: true })
   }
-  const buf = await zip.generateAsync({ type: 'uint8array' })
-  return new NextResponse(Buffer.from(buf), {
+  // Streaming: los PDF van del disco al cliente por tramos, sin armar el ZIP entero en memoria. STORE: ya vienen comprimidos.
+  const flujo = zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true, compression: 'STORE' })
+  return new NextResponse(Readable.toWeb(flujo as unknown as Readable) as ReadableStream, {
     headers: {
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename="${curso.nombre.replace(/[^\w-]+/g, '_')}.zip"`,
