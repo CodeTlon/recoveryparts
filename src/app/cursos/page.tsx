@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import { metaPagina } from '@/lib/seo'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import Reveal from '@/components/ui/Reveal'
@@ -8,7 +9,7 @@ import CursosFilters from '@/components/public/CursosFilters'
 import DemandaForm from '@/components/public/DemandaForm'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 
-export const metadata: Metadata = { title: 'Cursos y talleres' }
+export const metadata: Metadata = metaPagina({ titulo: 'Cursos y talleres', descripcion: 'Cursos y talleres presenciales en Córdoba: reparación y tecnología, y diseño. Fechas, horarios y cupos.', ruta: '/cursos' })
 export const dynamic = 'force-dynamic' // cupos en tiempo real
 
 type SP = Record<string, string | undefined>

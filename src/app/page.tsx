@@ -14,6 +14,9 @@ import CountUp from '@/components/ui/CountUp'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import { AREA_LABEL, type Area } from '@/lib/types'
+import { NOMBRE_SITIO } from '@/lib/seo'
+import { siteUrl } from '@/lib/env'
+import JsonLd from '@/components/seo/JsonLd'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,8 +46,20 @@ export default async function Home() {
                 </figure>
   )
 
+  const base = siteUrl().replace(/\/$/, '')
+  const ig = s.contacto.instagram?.replace('@', '')
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'EducationalOrganization',
+    name: NOMBRE_SITIO, url: base, logo: `${base}/images/logo.png`, description: s.hero.subtitulo || undefined,
+    ...(s.contacto.direccion ? { address: { '@type': 'PostalAddress', streetAddress: s.contacto.direccion, addressLocality: 'Córdoba', addressCountry: 'AR' } } : {}),
+    ...(s.contacto.telefono ? { telephone: s.contacto.telefono } : {}),
+    ...(s.contacto.email ? { email: s.contacto.email } : {}),
+    ...(ig ? { sameAs: [`https://www.instagram.com/${ig}/`] } : {}),
+  }
+
   return (
     <div className="min-h-screen bg-surface text-on-surface">
+      <JsonLd datos={jsonLd} />
       <SiteNav />
       <main id="contenido" tabIndex={-1}>
         {/* 1 · Hero */}

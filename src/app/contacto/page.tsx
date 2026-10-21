@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { metaPagina } from '@/lib/seo'
 import Link from 'next/link'
 import { Clock, Mail, MapPin, Phone } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
@@ -7,7 +8,7 @@ import ContactForm from '@/components/public/ContactForm'
 import { WhatsAppIcon, InstagramIcon } from '@/components/layout/SocialIcons'
 import { getSettings, waLink } from '@/lib/data'
 
-export const metadata: Metadata = { title: 'Contacto', description: 'Escribinos o visitanos: dirección, horarios y formulario de consulta.' }
+export const metadata: Metadata = metaPagina({ titulo: 'Contacto', descripcion: 'Escribinos o visitanos: dirección, horarios y formulario de consulta.', ruta: '/contacto' })
 export const dynamic = 'force-dynamic'
 
 export default async function ContactoPage() {

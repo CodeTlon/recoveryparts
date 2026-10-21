@@ -3,7 +3,7 @@ import AuthShell from '@/components/auth/AuthShell'
 import { LoginForm } from '@/components/auth/AuthForms'
 import { dbConfigured } from '@/lib/env'
 
-export const metadata: Metadata = { title: 'Campus', robots: { index: false } }
+export const metadata: Metadata = { title: 'Ingresar al campus', robots: { index: false } }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams
