@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { consumirToken, type TipoToken } from '@/lib/users'
 import { firmarSesion, COOKIE, opcionesCookie } from '@/lib/session'
 import { limited } from '@/lib/rate-limit'
+import { ipDeCabeceras } from '@/lib/ip'
 import { urlPublica } from '@/lib/env'
 
 // Link de invitación / recuperación: valida el token (un solo uso, vence), abre la sesión y
@@ -11,8 +12,7 @@ export async function GET(request: NextRequest) {
   const type = request.nextUrl.searchParams.get('type')
   const falla = () => NextResponse.redirect(urlPublica('/activar?error=1'))
   if (!token || (type !== 'invite' && type !== 'recovery')) return falla()
-  const ip = request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
-  if (limited(`confirm:ip:${ip}`, 20, 15 * 60_000)) return falla()
+  if (limited(`confirm:ip:${ipDeCabeceras(request.headers)}`, 20, 15 * 60_000)) return falla()
 
   const userId = await consumirToken(token, type as TipoToken)
   if (!userId) return falla()

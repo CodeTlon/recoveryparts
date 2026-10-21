@@ -1,20 +1,16 @@
 'use server'
 
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { clienteAdmin, dbConfigured } from '@/lib/db'
 import { iniciarSesion, cerrarSesion, sesionActual } from '@/lib/session'
 import { buscarIdPorEmail, enviarLinkAcceso, establecerPassword, perfilDeSesion, verificarCredenciales } from '@/lib/users'
 import { limited, bloqueado, registrar } from '@/lib/rate-limit'
+import { ipCliente } from '@/lib/ip'
 import { validarPassword } from '@/lib/password'
 
 export type AuthState = { error?: string; ok?: boolean }
 
-async function ip() {
-  const h = await headers()
-  // x-real-ip lo fija el proxy de la plataforma; x-forwarded-for puede traer valores del cliente.
-  return h.get('x-real-ip') ?? h.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
-}
+const ip = ipCliente
 
 export async function login(_: AuthState, fd: FormData): Promise<AuthState> {
   if (!dbConfigured) return { error: 'El campus todavía no está configurado.' }
@@ -45,9 +41,10 @@ export async function logout() {
 export async function olvideContrasena(_: AuthState, fd: FormData): Promise<AuthState> {
   if (!dbConfigured) return { error: 'No disponible por el momento.' }
   const email = String(fd.get('email') ?? '').trim().toLowerCase()
-  if (!limited(`reset:ip:${await ip()}`, 5, 15 * 60_000) && !limited(`reset:em:${email}`, 5, 15 * 60_000) && email) {
+  if (!limited(`reset:ip:${await ip()}`, 5, 15 * 60_000) && !limited(`reset:em:${email.slice(0, 254)}`, 5, 15 * 60_000) && email) {
     const id = await buscarIdPorEmail(email)
-    if (id) await enviarLinkAcceso(email, id, 'recovery').catch(() => {})
+    // Sin await: el envío por SMTP tarda y, si solo se esperara para cuentas existentes, la demora delataría cuáles existen.
+    if (id) void enviarLinkAcceso(email, id, 'recovery').catch(() => {})
   }
   return { ok: true }
 }
@@ -64,7 +61,7 @@ export async function definirContrasena(_: AuthState, fd: FormData): Promise<Aut
   if (!ses || !perfilActual) return { error: 'El link venció. Pedí uno nuevo desde "¿Olvidaste tu contraseña?".' }
 
   // Fija la contraseña, activa la cuenta pendiente (trigger al confirmar el email) y cierra las demás sesiones.
-  await establecerPassword(ses.sub, password).catch(() => { throw new Error('No pudimos guardar la contraseña.') })
+  try { await establecerPassword(ses.sub, password) } catch { return { error: 'No pudimos guardar la contraseña. Probá de nuevo.' } }
   await iniciarSesion(ses.sub)
   redirect(`/campus/${perfilActual.rol}`)
 }
