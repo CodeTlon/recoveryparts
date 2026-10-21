@@ -24,9 +24,9 @@ type Faq = { id: string; pregunta: string; respuesta: string }
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
-    query<Egresado[]>((sb) => sb.from('cms_egresados').select('*').order('orden').limit(10), []),
-    query<Testimonio[]>((sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
-    query<Faq[]>((sb) => sb.from('cms_faq').select('*').order('orden'), []),
+    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('orden').limit(10), []),
+    query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
+    query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
   ])
   const destacados = cursos.filter((c) => c.destacado).slice(0, 6)
   const wa = waLink(s.contacto.whatsapp)

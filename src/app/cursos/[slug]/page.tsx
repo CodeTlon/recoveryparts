@@ -34,9 +34,9 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
     getHorarios().then((h) => h.filter((x) => x.curso_id === c.id)),
     getSettings(),
     // RF-26: solo los títulos de los módulos (nunca clases ni material). Los talleres no tienen módulos.
-    query<{ id: string; titulo: string }[]>((sb) => sb.from('modulos_publicos').select('id, titulo').eq('curso_id', c.id).order('orden'), []),
-    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>((sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo, requerido').eq('curso_id', c.id).order('orden'), []),
-    query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>((sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; titulo: string }[]>(`modulos:${c.id}`, (sb) => sb.from('modulos_publicos').select('id, titulo').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; descripcion: string | null; precio: number | null; link_externo: string | null; requerido?: boolean }[]>(`kit:${c.id}`, (sb) => sb.from('kit_publico').select('id, nombre, descripcion, precio, link_externo, requerido').eq('curso_id', c.id).order('orden'), []),
+    query<{ id: string; nombre: string; texto: string; puntaje: number; foto_url: string | null }[]>(`testimonios:${c.id}`, (sb) => sb.from('cms_testimonios').select('id, nombre, texto, puntaje, foto_url').eq('curso_id', c.id).order('orden'), []),
   ])
 
   const foto = imagenCurso(c)

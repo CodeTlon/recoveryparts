@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'Preguntas frecuentes', description: 
 export const dynamic = 'force-dynamic'
 
 export default async function FaqPage() {
-  const faq = await query<{ id: string; pregunta: string; respuesta: string }[]>((sb) => sb.from('cms_faq').select('id, pregunta, respuesta').order('orden'), [])
+  const faq = await query<{ id: string; pregunta: string; respuesta: string }[]>('faq-pagina', (sb) => sb.from('cms_faq').select('id, pregunta, respuesta').order('orden'), [])
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />

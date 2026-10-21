@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'Galería' }
 export const dynamic = 'force-dynamic'
 
 export default async function GaleriaPage() {
-  const fotos = await query<Foto[]>((sb) => sb.from('cms_galeria').select('id, imagen_url, alt, descripcion, categoria, area').order('orden'), [])
+  const fotos = await query<Foto[]>('galeria', (sb) => sb.from('cms_galeria').select('id, imagen_url, alt, descripcion, categoria, area').order('orden'), [])
   return (
     <div className="flex min-h-screen flex-col bg-surface text-on-surface">
       <SiteNav />

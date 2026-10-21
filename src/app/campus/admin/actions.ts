@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { invalidarPublico } from '@/lib/cache-publico'
 import { requireRole } from '@/lib/auth'
 import { enviarLinkAcceso, invitarUsuario, cambiarEmailUsuario, eliminarUsuario } from '@/lib/users'
 import { clienteAdmin } from '@/lib/db'
@@ -101,7 +102,7 @@ export async function actualizarPerfil(_: R, fd: FormData): Promise<R> {
     experiencia: txt(fd, 'experiencia') || null, certificaciones: txt(fd, 'certificaciones') || null,
     foto_url: foto,
   }).eq('id', txt(fd, 'id'))
-  revalidatePath('/campus/admin/usuarios')
+  revalidatePath('/campus/admin/usuarios'); invalidarPublico() // el nombre del profesor se ve en las fechas
   return fail(error) ?? { ok: true }
 }
 
@@ -112,7 +113,7 @@ const FECHA = /^\d{4}-\d{2}-\d{2}$/
 const fechaValida = (f: string) => FECHA.test(f) && !Number.isNaN(Date.parse(`${f}T12:00:00Z`)) && new Date(`${f}T12:00:00Z`).toISOString().slice(0, 10) === f
 // Las relaciones muchos-a-uno (edición → curso) llegan como objeto; el tipo inferido es una lista.
 const uno = <T,>(x: T | T[] | null | undefined): T | null => (Array.isArray(x) ? x[0] ?? null : x ?? null)
-const revalidarCursos = () => { revalidatePath('/campus', 'layout'); revalidatePath('/cursos', 'layout'); revalidatePath('/') }
+const revalidarCursos = () => { revalidatePath('/campus', 'layout'); revalidatePath('/cursos', 'layout'); revalidatePath('/'); invalidarPublico() }
 
 export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: string }> {
   const { sb } = await requireRole('admin')
@@ -254,7 +255,7 @@ export async function guardarAula(_: R, fd: FormData): Promise<R> {
   const { error } = id ? await sb.from('aulas').update(row).eq('id', id) : await sb.from('aulas').insert(row)
   if (error) return { error: traducir(error.message) }
   // El nombre del aula se muestra en el campus y en la ficha pública de los cursos.
-  revalidatePath('/campus/admin', 'layout'); revalidatePath('/cursos', 'layout')
+  revalidatePath('/campus/admin', 'layout'); revalidatePath('/cursos', 'layout'); invalidarPublico()
   return { ok: true }
 }
 
@@ -262,7 +263,7 @@ export async function setEstadoAula(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
   const { error } = await sb.from('aulas').update({ activa: txt(fd, 'activa') === '1' }).eq('id', txt(fd, 'id'))
   if (error) return { error: traducir(error.message) }
-  revalidatePath('/campus/admin', 'layout')
+  revalidatePath('/campus/admin', 'layout'); invalidarPublico()
   return { ok: true }
 }
 
@@ -525,7 +526,7 @@ export async function guardarSetting(_: R, fd: FormData): Promise<R> {
     ? Object.fromEntries([...new Set([...Object.keys(a), ...Object.keys(b)])].map((k) => [k, k in b ? mezclar(a[k], b[k]) : a[k]]))
     : b
   const { error } = await sb.from('site_settings').upsert({ clave, valor: mezclar(actual?.valor ?? {}, valor) })
-  revalidatePath('/', 'layout')
+  revalidatePath('/', 'layout'); invalidarPublico()
   return fail(error) ?? { ok: true }
 }
 
@@ -546,7 +547,7 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   }[tipo]
   const id = txt(fd, 'id')
   const { error } = id ? await sb.from(tabla).update(rows).eq('id', id) : await sb.from(tabla).insert(rows)
-  revalidatePath('/', 'layout')
+  revalidatePath('/', 'layout'); invalidarPublico()
   return fail(error) ?? { ok: true }
 }
 
@@ -554,7 +555,7 @@ export async function borrarItemCms(fd: FormData) {
   const { sb } = await requireRole('admin')
   const tabla = TABLAS_CMS[txt(fd, 'tipo') as keyof typeof TABLAS_CMS]
   if (tabla) await sb.from(tabla).delete().eq('id', txt(fd, 'id'))
-  revalidatePath('/', 'layout')
+  revalidatePath('/', 'layout'); invalidarPublico()
 }
 
 export async function marcarContactoLeido(fd: FormData) {

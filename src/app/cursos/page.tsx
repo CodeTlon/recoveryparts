@@ -17,7 +17,7 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
   const f = await searchParams
   const [cursos, horarios, settings, mods] = await Promise.all([
     getCursos(), getHorarios(), getSettings(),
-    query<{ curso_id: string; titulo: string }[]>((sb) => sb.from('modulos_publicos').select('curso_id, titulo').order('orden'), []),
+    query<{ curso_id: string; titulo: string }[]>('modulos-todos', (sb) => sb.from('modulos_publicos').select('curso_id, titulo').order('orden'), []),
   ])
 
   const q = f.q?.trim().toLowerCase()

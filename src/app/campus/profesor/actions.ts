@@ -1,13 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { invalidarPublico } from '@/lib/cache-publico'
 import { requireRole } from '@/lib/auth'
 import { guardarArchivo, borrarArchivo } from '@/lib/storage'
 import type { R } from '../admin/actions'
 
 const txt = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim()
 const MAX_PDF = 25 * 1024 * 1024
-const revalidar = () => { revalidatePath('/campus', 'layout') }
+const revalidar = () => { revalidatePath('/campus', 'layout'); invalidarPublico() }
 
 // RF-05 / RF-58: hay dos clases de material.
 //  - BASE: lo carga el admin en una clase de la guía general del curso; se ve en todas las ediciones que conservan
