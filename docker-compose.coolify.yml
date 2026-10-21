@@ -43,6 +43,8 @@ services:
       TRANSCODE_API_KEY: ${TRANSCODE_API_KEY:-}
     volumes:
       - storage:/data/storage
+      # Caché de /_next/image: sin volumen se pierde en cada deploy y las primeras visitas regeneran todo (AVIF cuesta CPU).
+      - next_cache:/app/.next/cache
     expose:
       - '3000'
     healthcheck:
@@ -55,3 +57,4 @@ services:
 volumes:
   db_data:
   storage:
+  next_cache:
