@@ -20,6 +20,9 @@ function traducir(m: string) {
   // Reglas de aulas (0010): los mensajes de la base ya son legibles y nombran los cursos afectados.
   if (/^(Cargá la capacidad|La capacidad del aula|No se puede dar de baja el aula|El aula .+ está dada de baja|El cupo \(\d+\) supera|Las aulas no se borran)/.test(m)) return m
   if (/aulas_nombre/.test(m)) return 'Ya existe un aula con ese nombre.'
+  // Aulas del sitio (0030).
+  if (/^(Cada aula admite|Solo la administración edita las aulas|El aula no existe)/.test(m)) return m
+  if (/cms_aula_fotos_alt_check/.test(m)) return 'Cada foto necesita su texto alternativo (describí qué se ve).'
   // Ediciones (0011): mensajes legibles de la base (superposición, fechas, plan de clases, curso de baja).
   if (/^(El calendario cambió|Se superpone con la edición|El curso está dado de baja|Cargá la fecha de inicio|La clase |El material no pertenece|El aula .+ de la edición)/.test(m)) return m
   if (/El profesor elegido no es un profesor/.test(m)) return 'Elegí un usuario con rol profesor.'
@@ -547,7 +550,7 @@ export async function guardarEncuesta(_: R, fd: FormData): Promise<R> {
 
 // ── CMS del sitio (RF-53) ────────────────────────────────
 // Los campos llegan como rutas "grupo.campo" (ej. areas.diseno.titulo) y se anidan en el JSON.
-const CLAVES_SETTINGS = ['contacto', 'hero', 'stats', 'nosotros', 'areas', 'campus']
+const CLAVES_SETTINGS = ['contacto', 'hero', 'stats', 'nosotros', 'areas', 'campus', 'aulas'] // aulas: presentación de la sección (RF-60)
 // Formato de los campos del CMS que se usan como link, imagen, email o interruptor (el resto es texto libre).
 function campoSettingInvalido(campo: string, val: string): string | null {
   if (!val) return null
@@ -629,6 +632,47 @@ export async function borrarItemCms(_: R, fd: FormData): Promise<R> {
   const tabla = TABLAS_CMS[txt(fd, 'tipo') as keyof typeof TABLAS_CMS]
   if (!tabla) return { error: 'Tipo inválido.' }
   const { error } = await sb.from(tabla).delete().eq('id', txt(fd, 'id'))
+  if (error) return { error: traducir(error.message) }
+  revalidatePath('/', 'layout'); invalidarPublico()
+  return { ok: true }
+}
+
+// ── Aulas del sitio (RF-60) ──────────────────────────────
+// Ficha pública de un aula operativa: descripción, visibilidad, orden, video, destacados y fotos. Los destacados y
+// las fotos llegan como campos indexados (destacado_tipo_N, foto_url_N…) en el orden en que se ven en el editor.
+const TIPOS_DESTACADO = ['mesas', 'equipamiento', 'herramientas', 'comodidades', 'seguridad', 'otro']
+export async function guardarFichaAula(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin')
+  const aula = txt(fd, 'aula_id')
+  if (!UUID.test(aula)) return { error: 'Aula inválida.' }
+  const descripcion = txt(fd, 'descripcion')
+  if (descripcion.length > 1500) return { error: 'La descripción admite hasta 1500 caracteres.' }
+  const orden = num(fd, 'orden') ?? 0
+  if (!Number.isInteger(orden) || orden < 0 || orden > 9999) return { error: 'El orden debe ser un número entero entre 0 y 9999.' }
+  const video = imagenOpcional(txt(fd, 'video_url'))
+  if (video === undefined) return { error: 'Subí el video desde el campo de video.' }
+
+  const indices = (prefijo: string) => [...new Set([...fd.keys()].filter((k) => k.startsWith(prefijo)).map((k) => Number(k.slice(prefijo.length))))]
+    .filter((n) => Number.isInteger(n) && n >= 0).sort((a, b) => a - b)
+  const destacados = indices('destacado_texto_').map((i) => ({ tipo: txt(fd, `destacado_tipo_${i}`), texto: txt(fd, `destacado_texto_${i}`) }))
+    .filter((d) => d.texto)
+  if (destacados.length > 12) return { error: 'Cada aula admite hasta 12 destacados.' }
+  if (destacados.some((d) => !TIPOS_DESTACADO.includes(d.tipo))) return { error: 'Elegí el tipo de cada destacado.' }
+  if (destacados.some((d) => d.texto.length > 120)) return { error: 'Cada destacado admite hasta 120 caracteres.' }
+  const fotos = indices('foto_url_').map((i) => ({ imagen_url: txt(fd, `foto_url_${i}`), alt: txt(fd, `foto_alt_${i}`) }))
+    .filter((f) => f.imagen_url || f.alt)
+  if (fotos.length > 20) return { error: 'Cada aula admite hasta 20 fotos.' }
+  if (fotos.some((f) => !f.imagen_url)) return { error: 'Hay una foto sin imagen: subila o quitá la fila.' }
+  if (fotos.some((f) => imagenOpcional(f.imagen_url) === undefined)) return { error: 'Subí las fotos desde el campo de imagen.' }
+  if (fotos.some((f) => !f.alt)) return { error: 'Cada foto necesita su texto alternativo (describí qué se ve).' }
+  if (fotos.some((f) => f.alt.length > 200)) return { error: 'El texto alternativo admite hasta 200 caracteres.' }
+
+  const { error } = await sb.rpc('guardar_ficha_aula', {
+    p_aula: aula,
+    p_ficha: { descripcion, visible: fd.get('visible') === 'on', orden, video_url: video },
+    p_destacados: destacados,
+    p_fotos: fotos,
+  })
   if (error) return { error: traducir(error.message) }
   revalidatePath('/', 'layout'); invalidarPublico()
   return { ok: true }

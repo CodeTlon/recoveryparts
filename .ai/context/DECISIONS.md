@@ -4,6 +4,11 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-21 | Sección pública «Aulas» (RF-60) con las aulas operativas de Campus › Aulas; la ficha pública (descripción, destacados, fotos, video, visibilidad) se edita en Campus › Sitio web | Las aulas son un diferencial; una lista aparte se desincronizaría y la parte pública es contenido del sitio |
+| 2026-10-21 | No se muestra la capacidad ni los cursos de cada aula; una sola página con índice, sin páginas por aula | Decisión del cliente; los cursos cambian con cada edición |
+| 2026-10-21 | La ficha pública va en tablas propias del CMS y el visitante lee vistas filtradas, nunca `aulas` | No abrir al visitante la tabla operativa ni exponer la capacidad |
+| 2026-10-21 | Destacados con tipo de una lista fija (define el ícono); videos con controles, los inicia el visitante | Decisión del cliente; misma paleta y estilo del sitio |
+| 2026-10-21 | El menú del sitio se parte en `SiteNav` (servidor: decide los links) y `SiteNavCliente` (interactivo) | «Aulas» depende de la base y así no hay que tocar cada página |
 | 2026-10-21 | Los recursos de Coolify usan `/docker-compose.coolify.yml` como *Docker Compose Location*; `/docker-compose.yml` es solo desarrollo | Con el equivocado Coolify despliega solo la base y `app` no existe; pasó en producción tras el renombre del 15/10 |
 | 2026-10-21 | La auditoría se promovió `dev → test → main` el mismo día (PR #22) con la CI completa en verde | No hay producción con datos reales y la CI ya probaba migraciones desde cero, E2E con base y Firefox/Safari |
 | 2026-10-21 | `.env.development` deja de versionarse; queda `.env.development.example` y `npm run setup:dev` (genera un `SESSION_SECRET` aleatorio) | Un secreto no tiene que estar en el repo aunque sea «de desarrollo»; cada persona tiene el suyo. El historial no se reescribe |
