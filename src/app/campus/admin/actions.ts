@@ -381,34 +381,50 @@ export async function guardarClases(_: R, fd: FormData): Promise<R> {
   const dictadas = ok.filter((f) => f.estado !== 'salteada').map((f) => f.fecha)
   if (new Set(dictadas).size !== dictadas.length) return { error: 'Hay dos clases en la misma fecha.' }
   // Una sola transacción en la base (upsert + borrado de las que faltan, serializado por edición); devuelve cómo estaban.
-  const { data: previas, error } = await sb.rpc('guardar_calendario', { p_edicion: edicion_id, p_filas: ok, ...(txt(fd, 'version') ? { p_version: txt(fd, 'version') } : {}) })
+  const { error } = await sb.rpc('guardar_calendario', { p_edicion: edicion_id, p_filas: ok, ...(txt(fd, 'version') ? { p_version: txt(fd, 'version') } : {}) })
   if (error) {
     const msg = traducir(error.message)
     // El profesor no maneja el concepto de «edición»: para él son otras fechas del mismo curso.
     return { error: perfil.rol === 'profesor' ? msg.replace(/^Se superpone con la edición del (\S+) de este curso\./, 'Las fechas se superponen con otro dictado de este curso, que empieza el $1.') : msg }
   }
-  // RF-38 (por mail): avisar a los alumnos activos de clases suspendidas/reprogramadas (solo lo que cambió).
+  // RF-38 (por mail): las clases suspendidas/reprogramadas que cambiaron quedaron marcadas `aviso_pendiente` en la base.
   // Saltear o adelantar una clase NO avisa: el día de cursada no cambia y el profesor lo dice en clase.
-  // «Reenviar» avisa de todas las suspendidas/reprogramadas del calendario (para reintentar si el mail falló).
-  const previa = new Map(((previas ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]).map((c) => [c.plan_clase_id, c]))
-  const reenviar = fd.get('avisar_todas') === 'on'
-  const aviso = ok.filter((f) => ['suspendida', 'reprogramada'].includes(f.estado) && (reenviar || (() => { const a = previa.get(f.plan_clase_id); return !a || a.estado !== f.estado || a.fecha !== f.fecha })()))
-  if (aviso.length && (fd.get('avisar') === 'on' || reenviar)) {
-    const { data: ins } = await sb.from('inscripciones').select('profiles!inscripciones_alumno_id_fkey(email)').eq('edicion_id', edicion_id).eq('estado', 'activo')
-    const { data: e } = await sb.from('ediciones').select('cursos(nombre)').eq('id', edicion_id).single()
-    const { data: pcs } = await sb.from('plan_clases').select('id, titulo').in('id', aviso.map((a) => a.plan_clase_id))
-    const nombre = uno(e?.cursos as unknown as { nombre?: string } | { nombre?: string }[] | null)?.nombre ?? 'tu curso'
-    const to: string[] = (ins ?? []).map((i: any) => i.profiles?.email).filter(Boolean)
-    // Un mail por alumno: en un único `to` cada uno vería el email de sus compañeros.
-    const mail = mailCambiosClases(nombre, aviso.map((a) => ({ clase: pcs?.find((p) => p.id === a.plan_clase_id)?.titulo ?? 'Clase', fecha: a.fecha, estado: a.estado })))
-    const envios = await Promise.all(to.map((t) => enviarMail(t, mail)))
-    if (to.length && envios.some((x) => !x)) {
-      revalidarCursos()
-      return { error: 'El calendario se guardó, pero no se pudo enviar el aviso por mail a todos los alumnos.' }
-    }
+  // Si no se tildó «avisar ahora» las marcas quedan y la pantalla ofrece enviarlas cuando se quiera.
+  revalidarCursos()
+  if (fd.get('avisar') === 'on') return await enviarAvisosClases(sb, edicion_id, 'El calendario se guardó, pero')
+  return { ok: true }
+}
+
+/** Manda por mail a los alumnos activos las clases con `aviso_pendiente` y, si salió bien, baja la marca. Si algún mail
+ *  falla la marca queda: se puede reintentar sin perder el aviso. */
+async function enviarAvisosClases(sb: Awaited<ReturnType<typeof requireRole>>['sb'], edicion_id: string, prefijo = ''): Promise<R> {
+  const { data: pend } = await sb.from('clases').select('plan_clase_id, fecha, estado').eq('edicion_id', edicion_id).eq('aviso_pendiente', true).order('fecha')
+  const aviso = (pend ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]
+  if (!aviso.length) return { ok: true }
+  const { data: ins } = await sb.from('inscripciones').select('profiles!inscripciones_alumno_id_fkey(email)').eq('edicion_id', edicion_id).eq('estado', 'activo')
+  const { data: e } = await sb.from('ediciones').select('cursos(nombre)').eq('id', edicion_id).single()
+  const { data: pcs } = await sb.from('plan_clases').select('id, titulo').in('id', aviso.map((a) => a.plan_clase_id))
+  const nombre = uno(e?.cursos as unknown as { nombre?: string } | { nombre?: string }[] | null)?.nombre ?? 'tu curso'
+  const to: string[] = (ins ?? []).map((i: any) => i.profiles?.email).filter(Boolean)
+  // Un mail por alumno: en un único `to` cada uno vería el email de sus compañeros.
+  const mail = mailCambiosClases(nombre, aviso.map((a) => ({ clase: pcs?.find((p) => p.id === a.plan_clase_id)?.titulo ?? 'Clase', fecha: a.fecha, estado: a.estado })))
+  const envios = await Promise.all(to.map((t) => enviarMail(t, mail)))
+  const fallaron = envios.filter((x) => !x).length
+  if (fallaron) {
+    revalidarCursos()
+    return { error: `${prefijo ? prefijo + ' ' : ''}no se pudo enviar el aviso a ${fallaron} de ${to.length} alumnos. Los avisos quedan pendientes: reintentá desde el calendario (los que ya lo recibieron lo recibirán de nuevo).` }
   }
+  await sb.from('clases').update({ aviso_pendiente: false }).eq('edicion_id', edicion_id).eq('aviso_pendiente', true)
   revalidarCursos()
   return { ok: true }
+}
+
+// Envía los avisos de clases suspendidas/reprogramadas que quedaron pendientes (admin y profesor de la edición, por RLS).
+export async function enviarAvisosPendientes(_: R, fd: FormData): Promise<R> {
+  const { sb } = await requireRole('admin', 'profesor')
+  const edicion_id = txt(fd, 'edicion_id')
+  if (!UUID.test(edicion_id)) return { error: 'Edición inválida.' }
+  return await enviarAvisosClases(sb, edicion_id)
 }
 
 // ── Alumnos en la edición ────────────────────────────────

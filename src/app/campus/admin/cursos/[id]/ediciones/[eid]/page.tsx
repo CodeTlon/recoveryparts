@@ -6,6 +6,7 @@ import { RotateCcw } from 'lucide-react'
 import { ActionForm, Badge, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
 import { agregarAlumno, corregirFechaDesercion, finalizarEdicion, guardarClases, guardarEstructuraEdicion, guardarHorarios, marcarDesertor, restablecerEstructura } from '../../../../actions'
 import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
+import AvisosPendientes from '@/components/campus/AvisosPendientes'
 import { ClasesEditor, EstructuraEditor, HorariosEditor } from '@/components/campus/ListEditors'
 
 const TABS = [['datos', 'Datos'], ['horarios', 'Horarios'], ['estructura', 'Estructura'], ['calendario', 'Calendario'], ['alumnos', 'Alumnos']] as const
@@ -19,6 +20,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
   if (!ed) notFound()
   const curso = ed.cursos as unknown as { nombre: string; activo: boolean; tipo: string }
   // Versión del calendario que se muestra: el guardado la compara y no pisa lo que otra persona cargó mientras tanto.
+  const avisosPendientes = tab === 'calendario' ? ((await sb.from('clases').select('id', { count: 'exact', head: true }).eq('edicion_id', eid).eq('aviso_pendiente', true)).count ?? 0) : 0
   const versionCalendario = tab === 'calendario' ? ((await sb.rpc('calendario_version', { p_edicion: eid })).data as string | null) ?? '' : ''
 
   const [{ data: aulas }, { data: profes }, { data: hs }, { data: est }, { data: clases }, { data: insc }, { data: mats }] = await Promise.all([
@@ -101,11 +103,12 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
       {tab === 'calendario' && <section className={sec}>
         <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Las clases y sus títulos vienen de la estructura del curso; acá se asigna la fecha de cada una en esta edición (se puede adelantar o saltear una clase). Las suspendidas, reprogramadas y salteadas no cuentan para el N° de clase de deserción.</p>
+        <AvisosPendientes edicionId={eid} cantidad={avisosPendientes} />
         <div className="max-w-4xl"><ActionForm action={guardarClases} reset={false}>
           <input type="hidden" name="edicion_id" value={eid} />
           <input type="hidden" name="version" value={versionCalendario} />
           <ClasesEditor name="clases" plan={plan.map((p) => ({ ...p, modulo: mods.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={clases ?? []} inicio={ed.fecha_inicio} dias={[...new Set(hIni.map((h) => h.dia))]}
-            avisar={<><Check name="avisar" defaultChecked>Avisar por mail a los alumnos activos si hay clases suspendidas o reprogramadas</Check><Check name="avisar_todas" className="mt-1 text-on-surface-variant">Reenviar el aviso de todas las clases suspendidas o reprogramadas (si el mail anterior no llegó)</Check></>} />
+            avisar={<Check name="avisar" defaultChecked>Avisar ahora por mail a los alumnos activos si hay clases suspendidas o reprogramadas (si no, el aviso queda pendiente)</Check>} />
         </ActionForm></div>
       </section>}
 

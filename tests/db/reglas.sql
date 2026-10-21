@@ -241,6 +241,29 @@ do $$ begin
   exception when others then if sqlerrm not like '%horarios superpuestos%' then raise; end if; end;
 end $$;
 
+-- Aviso pendiente (RF-38): se marca al suspender/reprogramar, se conserva si no hay cambios y se limpia al volver a programada.
+do $$ declare p1 uuid; e uuid; function_ok boolean; begin
+  select ctx.edicion into e from ctx;
+  select p.id into p1 from plan_clases p, ctx where p.curso_id = ctx.curso and p.numero = 1;
+  perform guardar_calendario(e, jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 20, 'estado', 'programada')));
+  if (select aviso_pendiente from clases where edicion_id = e) then raise exception 'FALLO: una clase programada quedó con aviso pendiente'; end if;
+  perform guardar_calendario(e, jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 20, 'estado', 'suspendida')));
+  if not (select aviso_pendiente from clases where edicion_id = e) then raise exception 'FALLO: al suspender no quedó el aviso pendiente'; end if;
+  -- Guardar otra vez lo mismo no pierde la marca (el mail todavía no salió).
+  perform guardar_calendario(e, jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 20, 'estado', 'suspendida')));
+  if not (select aviso_pendiente from clases where edicion_id = e) then raise exception 'FALLO: guardar sin cambios perdió el aviso pendiente'; end if;
+  -- Enviado (la app baja la marca) y sin cambios: no vuelve a marcarse.
+  update clases set aviso_pendiente = false where edicion_id = e;
+  perform guardar_calendario(e, jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 20, 'estado', 'suspendida')));
+  if (select aviso_pendiente from clases where edicion_id = e) then raise exception 'FALLO: sin cambios se volvió a marcar un aviso ya enviado'; end if;
+  -- Reprogramarla (cambia la fecha) sí vuelve a marcar.
+  perform guardar_calendario(e, jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 18, 'estado', 'reprogramada')));
+  if not (select aviso_pendiente from clases where edicion_id = e) then raise exception 'FALLO: reprogramar no dejó el aviso pendiente'; end if;
+  -- Volver a programada limpia la marca.
+  perform guardar_calendario(e, jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 18, 'estado', 'programada')));
+  if (select aviso_pendiente from clases where edicion_id = e) then raise exception 'FALLO: una clase programada conserva el aviso pendiente'; end if;
+end $$;
+
 -- ── 9. El profesor de una edición tiene que ser un profesor ──────────────────────────────────
 do $$ begin
   begin

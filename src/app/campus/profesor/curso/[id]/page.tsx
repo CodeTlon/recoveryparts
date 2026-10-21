@@ -1,3 +1,4 @@
+import AvisosPendientes from '@/components/campus/AvisosPendientes'
 import { ClasesEditor, EstructuraEditor } from '@/components/campus/ListEditors'
 import { notFound } from 'next/navigation'
 import { FileText, Link2, Eye, EyeOff, Trash2, RotateCcw } from 'lucide-react'
@@ -20,6 +21,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
   if (momento !== 'en_curso' && momento !== 'proxima') notFound()
   const curso = ed.cursos as unknown as { nombre: string; tipo: string }
   // Versión del calendario que se muestra: el guardado la compara y no pisa lo que otra persona cargó mientras tanto.
+  const avisosPendientes = (await sb.from('clases').select('id', { count: 'exact', head: true }).eq('edicion_id', id).eq('aviso_pendiente', true)).count ?? 0
   const versionCalendario = ((await sb.rpc('calendario_version', { p_edicion: id })).data as string | null) ?? ''
 
   // RF-58: la estructura que vale en esta edición (la guía general o la propia, si el profesor la adaptó) y su
@@ -112,12 +114,13 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
       <section className="mb-12">
         <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
         <p className="mb-4 text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase: podés adelantar una clase o saltearla, o marcarla suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
+        <AvisosPendientes edicionId={id} cantidad={avisosPendientes} />
         <div className="max-w-4xl">
           <ActionForm action={guardarClases} reset={false}>
             <input type="hidden" name="edicion_id" value={id} />
             <input type="hidden" name="version" value={versionCalendario} />
             <ClasesEditor name="clases" plan={clasesPlan.map((p) => ({ ...p, modulo: modulos.find((m) => m.id === p.modulo_id)?.titulo }))} inicial={(clases ?? []) as { plan_clase_id: string; fecha: string; estado: string }[]} inicio={ed.fecha_inicio} dias={[...new Set((hs ?? []).map((h) => h.dia_semana as number))]}
-              avisar={<><Check name="avisar" defaultChecked>Avisar por mail a los alumnos si hay clases suspendidas o reprogramadas</Check><Check name="avisar_todas" className="mt-1 text-on-surface-variant">Reenviar el aviso de todas las clases suspendidas o reprogramadas (si el mail anterior no llegó)</Check></>} />
+              avisar={<Check name="avisar" defaultChecked>Avisar ahora por mail a los alumnos si hay clases suspendidas o reprogramadas (si no, el aviso queda pendiente)</Check>} />
           </ActionForm>
         </div>
       </section>
