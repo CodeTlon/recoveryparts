@@ -95,7 +95,7 @@ export async function cambiarEmail(_: R, fd: FormData): Promise<R> {
 export async function actualizarPerfil(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
   const foto = imagenOpcional(txt(fd, 'foto_url'))
-  if (foto === undefined) return { error: 'La foto debe ser una URL http(s) o una ruta del sitio (/images/…).' }
+  if (foto === undefined) return { error: 'Subí la foto desde el campo de imagen (la ruta debe ser del sitio, ej. /media/… o /images/…).' }
   const { error } = await sb.from('profiles').update({
     nombre: txt(fd, 'nombre'), apellido: txt(fd, 'apellido'), telefono: txt(fd, 'telefono') || null,
     experiencia: txt(fd, 'experiencia') || null, certificaciones: txt(fd, 'certificaciones') || null,
@@ -127,7 +127,7 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
   if (!(Number.isInteger(orden) && orden >= 0 && orden <= 9999)) return { error: 'El orden debe ser un número entero entre 0 y 9999.' }
   if (!['diseno', 'tecnico'].includes(txt(fd, 'area')) || !['curso', 'taller'].includes(txt(fd, 'tipo'))) return { error: 'Área o tipo inválidos.' }
   const imagen = imagenOpcional(txt(fd, 'imagen_url')), video = urlOpcional(txt(fd, 'video_url'))
-  if (imagen === undefined) return { error: 'La imagen debe ser una URL http(s) o una ruta del sitio (/images/…).' }
+  if (imagen === undefined) return { error: 'Subí la imagen desde el campo de imagen (la ruta debe ser del sitio, ej. /media/… o /images/…).' }
   if (video === undefined) return { error: 'El video debe ser un link http(s).' }
   const row = {
     nombre, slug: slugify(txt(fd, 'slug') || nombre),
@@ -537,7 +537,7 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   if (!tabla) return { error: 'Tipo inválido.' }
   const orden = num(fd, 'orden') ?? 0
   const foto = imagenOpcional(txt(fd, 'foto_url')), imagen = imagenOpcional(txt(fd, 'imagen_url'))
-  if (foto === undefined || imagen === undefined) return { error: 'Las imágenes deben ser URLs http(s) o rutas del sitio (/images/…).' }
+  if (foto === undefined || imagen === undefined) return { error: 'Subí las imágenes desde el campo de imagen (las rutas deben ser del sitio, ej. /media/… o /images/…).' }
   const rows: Record<string, unknown> = {
     egresado: { nombre: txt(fd, 'nombre'), especialidad: txt(fd, 'especialidad'), foto_url: foto, destacado: fd.get('destacado') === 'on', orden },
     testimonio: { nombre: txt(fd, 'nombre'), curso: txt(fd, 'curso') || null, texto: txt(fd, 'texto'), puntaje: num(fd, 'puntaje') ?? 5, foto_url: foto, curso_id: txt(fd, 'curso_id') || null, orden },
