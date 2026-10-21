@@ -62,6 +62,39 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  navegadores:
+    name: E2E en Firefox y Safari (CSP con nonce, acceso y smoke)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: recoveryparts }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/recoveryparts
+      SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      E2E_NAVEGADORES: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: node scripts/migrate.mjs
+      - run: npx playwright install --with-deps firefox webkit
+      - run: npx playwright test --project=firefox --project=webkit
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-navegadores
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
   base-de-datos:
     name: Migraciones desde cero + reglas
     runs-on: ubuntu-24.04
