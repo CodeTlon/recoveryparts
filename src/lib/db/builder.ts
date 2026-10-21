@@ -107,7 +107,8 @@ function relacion(meta: Meta, padre: string, rel: string, hint?: string): { fk: 
 }
 
 function cond(alias: string, f: Filtro, ctx: Ctx): string {
-  const c = `${alias}.${q(f.col)}`
+  // `buscar` lleva varias columnas separadas por coma: cada una se valida y se cita en su propio caso.
+  const c = f.op === 'buscar' ? '' : `${alias}.${q(f.col)}`
   switch (f.op) {
     case 'eq': return f.val === null ? `${c} is null` : `${c} = ${ctx.add(f.val)}`
     case 'neq': return f.val === null ? `${c} is not null` : `${c} is distinct from ${ctx.add(f.val)}`
@@ -269,6 +270,9 @@ export class QB<T = any[]> implements PromiseLike<Result<T>> {
       if (rows.length === 0 && this.modo === 'maybe') return { data: null, error: null, count }
       return { data: null, count: null, error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' } }
     } catch (e: any) {
+      // Los errores se devuelven (como PostgREST) y muchas pantallas solo miran `data`: sin este log un fallo del constructor
+      // o de la consulta queda invisible y la pantalla muestra «vacío». Solo el mensaje y el código: nunca parámetros ni datos.
+      console.error(`db: ${this.op} ${this.tabla} falló —`, String(e?.message ?? e).slice(0, 200), e?.code ?? '')
       return { data: null, count: null, error: { message: e.message, code: e.code, details: e.detail, hint: e.hint } }
     }
   }
