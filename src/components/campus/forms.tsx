@@ -9,8 +9,9 @@ import { useModalClose } from './Modal'
 
 // Formulario con server action: muestra error/ok y se resetea al guardar.
 // `S` permite que la acción devuelva datos extra (ej. el id del curso creado) que recibe `onSuccess`.
-export function ActionForm<S extends R = R>({ action, children, submit = 'Guardar', className = '', reset = true, onSuccess }: {
+export function ActionForm<S extends R = R>({ action, children, submit = 'Guardar', className = '', reset = true, onSuccess, okLabel = 'Guardado', errLabel = 'No se pudo guardar' }: {
   action: (s: S, fd: FormData) => Promise<S>; children: React.ReactNode; submit?: string | null; className?: string; reset?: boolean; onSuccess?: (s: S) => void
+  okLabel?: string; errLabel?: string // texto del aviso (botones sueltos: «Hecho» / «No se pudo completar»)
 }) {
   const [s, run, pending] = useActionState<S, FormData>(action as unknown as (s: Awaited<S>, fd: FormData) => Promise<S>, {} as Awaited<S>)
   const closeModal = useModalClose()
@@ -37,13 +38,13 @@ export function ActionForm<S extends R = R>({ action, children, submit = 'Guarda
         {toast === 'ok' && (
           <motion.div role="status" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
             className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-green-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-green-300 shadow-card-hover">
-            <CheckCircle2 size={18} aria-hidden /> Guardado
+            <CheckCircle2 size={18} aria-hidden /> {okLabel}
           </motion.div>
         )}
         {toast === 'error' && (
           <motion.div aria-hidden initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
             className="fixed bottom-6 left-1/2 z-60 flex -translate-x-1/2 items-center gap-2 rounded-pill border border-red-500/40 bg-surface-container-high px-5 py-3 text-sm font-semibold text-red-300 shadow-card-hover">
-            <XCircle size={18} aria-hidden /> No se pudo guardar
+            <XCircle size={18} aria-hidden /> {errLabel}
           </motion.div>
         )}
       </AnimatePresence>

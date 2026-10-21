@@ -83,20 +83,26 @@ export async function agregarLink(_: R, fd: FormData): Promise<R> {
 }
 
 // RF-07 / RF-32: liberar antes de tiempo en MI edición, o quitar esa liberación manual.
-export async function liberarMaterial(fd: FormData) {
+export async function liberarMaterial(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('profesor', 'admin')
   const edicion_id = txt(fd, 'edicion_id'), material_id = txt(fd, 'id')
-  if (fd.get('liberar') === '1') await sb.from('materiales_liberados').upsert({ edicion_id, material_id }, { onConflict: 'edicion_id,material_id' })
-  else await sb.from('materiales_liberados').delete().eq('edicion_id', edicion_id).eq('material_id', material_id)
+  const { error } = fd.get('liberar') === '1'
+    ? await sb.from('materiales_liberados').upsert({ edicion_id, material_id }, { onConflict: 'edicion_id,material_id' })
+    : await sb.from('materiales_liberados').delete().eq('edicion_id', edicion_id).eq('material_id', material_id)
+  if (error) return { error: 'No se pudo cambiar la liberación del material.' }
   revalidar()
+  return { ok: true }
 }
 
 // Borra un material. RLS decide: el profesor solo borra el que subió él para su edición (el base no); el admin, cualquiera.
 // El archivo se borra del disco solo si la base aceptó borrar la fila.
-export async function borrarMaterial(fd: FormData) {
+export async function borrarMaterial(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('profesor', 'admin')
-  const { data } = await sb.from('materiales').delete().eq('id', txt(fd, 'id')).select('storage_path')
-  const path = (data as { storage_path: string | null }[] | null)?.[0]?.storage_path
-  if (path) await borrarArchivo('materiales', path)
+  const { data, error } = await sb.from('materiales').delete().eq('id', txt(fd, 'id')).select('storage_path')
+  if (error) return { error: 'No se pudo borrar el material.' }
+  const filas = (data as { storage_path: string | null }[] | null) ?? []
+  if (!filas.length) return { error: 'No tenés permiso para borrar ese material, o ya no existe.' } // RLS: el profesor solo borra el suyo
+  if (filas[0].storage_path) await borrarArchivo('materiales', filas[0].storage_path)
   revalidar()
+  return { ok: true }
 }

@@ -25,7 +25,7 @@ function Item({ tipo, row, children }: { tipo: string; row?: S; children: React.
         {children}
         <Field label="Orden" name="orden" placeholder="Ej: 1" type="number" defaultValue={row?.orden ?? 0} />
       </ActionForm>
-      {row && <form action={borrarItemCms} className="mt-2"><input type="hidden" name="tipo" value={tipo} /><input type="hidden" name="id" value={row.id} /><Confirm message="¿Eliminar?">Eliminar</Confirm></form>}
+      {row && <ActionForm action={borrarItemCms} submit={null} reset={false} okLabel="Hecho" className="mt-2"><input type="hidden" name="tipo" value={tipo} /><input type="hidden" name="id" value={row.id} /><Confirm message="¿Eliminar?">Eliminar</Confirm></ActionForm>}
     </div>
   )
 }

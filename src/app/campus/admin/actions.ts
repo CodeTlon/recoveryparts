@@ -65,23 +65,27 @@ export async function crearUsuario(_: R, fd: FormData): Promise<R> {
   return { ok: true }
 }
 
-export async function reenviarInvitacion(fd: FormData) {
+export async function reenviarInvitacion(_: R, fd: FormData): Promise<R> {
   const { sb, perfil: yo } = await requireRole('admin')
   const { data: p } = await sb.from('profiles').select('email, estado_cuenta').eq('id', txt(fd, 'id')).single()
-  if (!p || p.estado_cuenta !== 'pendiente_activacion') return
+  if (!p || p.estado_cuenta !== 'pendiente_activacion') return { error: 'Esa cuenta ya no está pendiente de activación.' }
   // Un token nuevo invalida el anterior.
-  await enviarLinkAcceso(p.email, txt(fd, 'id'), 'invite')
+  if (!(await enviarLinkAcceso(p.email, txt(fd, 'id'), 'invite'))) return { error: 'No se pudo enviar el mail. Probá de nuevo en unos minutos.' }
   await sb.from('audit_log').insert({ actor_id: yo.id, accion: 'reenviar_invitacion', entidad: 'profiles', entidad_id: txt(fd, 'id') })
+  return { ok: true }
 }
 
-export async function setEstadoCuenta(fd: FormData) {
+export async function setEstadoCuenta(_: R, fd: FormData): Promise<R> {
   const { sb, perfil: yo } = await requireRole('admin')
   const id = txt(fd, 'id'), estado = txt(fd, 'estado')
-  if (id === yo.id || !['activa', 'inactiva'].includes(estado)) return // el admin no se deshabilita a sí mismo
-  const { error } = await sb.from('profiles').update({ estado_cuenta: estado }).eq('id', id)
-  if (error) return
-  // Inactiva: requireRole y el middleware miran estado_cuenta en cada request, así que corta la sesión al instante.
+  if (id === yo.id) return { error: 'No podés deshabilitar tu propia cuenta.' }
+  if (!['activa', 'inactiva'].includes(estado)) return { error: 'Estado inválido.' }
+  const { data, error } = await sb.from('profiles').update({ estado_cuenta: estado }).eq('id', id).select('id')
+  if (error) return { error: traducir(error.message) }
+  if (!data?.length) return { error: 'No se encontró el usuario.' }
+  // Inactiva: requireRole y el proxy miran estado_cuenta en cada request, así que corta la sesión al instante.
   revalidatePath('/campus/admin/usuarios')
+  return { ok: true }
 }
 
 export async function cambiarEmail(_: R, fd: FormData): Promise<R> {
@@ -167,10 +171,13 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
   return { ok: true, id: data.id }
 }
 
-export async function bajaCurso(fd: FormData) {
+export async function bajaCurso(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
-  await sb.from('cursos').update({ activo: false }).eq('id', txt(fd, 'id'))
+  const { data, error } = await sb.from('cursos').update({ activo: false }).eq('id', txt(fd, 'id')).select('id')
+  if (error) return { error: traducir(error.message) }
+  if (!data?.length) return { error: 'No se encontró el curso.' }
   revalidarCursos()
+  return { ok: true }
 }
 
 // Volver a publicar un curso dado de baja. La base revalida sus ediciones activas (aula activa, cupo ≤ capacidad,
@@ -601,17 +608,22 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   return fail(error) ?? { ok: true }
 }
 
-export async function borrarItemCms(fd: FormData) {
+export async function borrarItemCms(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
   const tabla = TABLAS_CMS[txt(fd, 'tipo') as keyof typeof TABLAS_CMS]
-  if (tabla) await sb.from(tabla).delete().eq('id', txt(fd, 'id'))
+  if (!tabla) return { error: 'Tipo inválido.' }
+  const { error } = await sb.from(tabla).delete().eq('id', txt(fd, 'id'))
+  if (error) return { error: traducir(error.message) }
   revalidatePath('/', 'layout'); invalidarPublico()
+  return { ok: true }
 }
 
-export async function marcarContactoLeido(fd: FormData) {
+export async function marcarContactoLeido(_: R, fd: FormData): Promise<R> {
   const { sb } = await requireRole('admin')
-  await sb.from('contactos').update({ leido: fd.get('leido') === '1' }).eq('id', txt(fd, 'id'))
+  const { error } = await sb.from('contactos').update({ leido: fd.get('leido') === '1' }).eq('id', txt(fd, 'id'))
+  if (error) return { error: traducir(error.message) }
   revalidatePath('/campus/admin/consultas')
+  return { ok: true }
 }
 
 // Sube una imagen del CMS y devuelve la URL (para pegar en los campos de imagen).

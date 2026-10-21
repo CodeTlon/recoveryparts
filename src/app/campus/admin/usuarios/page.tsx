@@ -80,19 +80,19 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                       </div>
                     </ModalButton>
                     {u.estado_cuenta === 'pendiente_activacion' && (
-                      <form action={reenviarInvitacion}><input type="hidden" name="id" value={u.id} /><SubmitButton><Mail size={14} aria-hidden /> Reenviar invitación</SubmitButton></form>
+                      <ActionForm action={reenviarInvitacion} submit={null} reset={false} okLabel="Hecho"><input type="hidden" name="id" value={u.id} /><SubmitButton><Mail size={14} aria-hidden /> Reenviar invitación</SubmitButton></ActionForm>
                     )}
                     {u.id !== perfil.id && u.estado_cuenta === 'activa' && (
-                      <form action={setEstadoCuenta}>
+                      <ActionForm action={setEstadoCuenta} submit={null} reset={false} okLabel="Hecho">
                         <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="inactiva" />
                         <Confirm message={`¿Deshabilitar a ${u.nombre} ${u.apellido}? No podrá entrar al campus hasta que la reactives.`} className="btn-ghost px-3! py-2! hover:border-red-400! hover:text-red-300!"><UserX size={14} aria-hidden /> Deshabilitar</Confirm>
-                      </form>
+                      </ActionForm>
                     )}
                     {u.id !== perfil.id && u.estado_cuenta === 'inactiva' && (
-                      <form action={setEstadoCuenta}>
+                      <ActionForm action={setEstadoCuenta} submit={null} reset={false} okLabel="Hecho">
                         <input type="hidden" name="id" value={u.id} /><input type="hidden" name="estado" value="activa" />
                         <SubmitButton className="btn-ghost px-3! py-2! hover:border-green-400! hover:text-green-300!"><UserCheck size={14} aria-hidden /> Reactivar</SubmitButton>
-                      </form>
+                      </ActionForm>
                     )}
                   </div>
                 </div>

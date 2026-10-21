@@ -163,10 +163,10 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
             {m.tipo === 'pdf' ? <FileText size={16} className="text-primary" /> : <Link2 size={16} className="text-primary" />}
             <span className="min-w-0 flex-1 font-medium">{m.titulo}</span>
             {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost px-3! py-2!">Ver</a>}
-            <form action={borrarMaterial}>
+            <ActionForm action={borrarMaterial} submit={null} reset={false} okLabel="Hecho">
               <input type="hidden" name="id" value={m.id} />
               <Confirm message="¿Eliminar este material base? Deja de verse en todas las ediciones del curso."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>
-            </form>
+            </ActionForm>
           </div>
         )} /></div>
         <MaterialForms cursoId={id} modulos={modulos} clases={clases} />

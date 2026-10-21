@@ -29,7 +29,7 @@ export default async function Cursos() {
                   <td className="px-4 py-3 text-right">
                     <Link href={`/campus/admin/cursos/${c.id}`} className="btn-ghost px-3! py-2!">Gestionar</Link>
                     {c.activo
-                      ? <form action={bajaCurso} className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><Confirm message="¿Dar de baja este curso? Dejará de verse en el sitio con todas sus ediciones.">Baja</Confirm></form>
+                      ? <ActionForm action={bajaCurso} submit={null} reset={false} okLabel="Hecho" className="ml-2 inline"><input type="hidden" name="id" value={c.id} /><Confirm message="¿Dar de baja este curso? Dejará de verse en el sitio con todas sus ediciones.">Baja</Confirm></ActionForm>
                       : <span className="ml-2 inline-block">
                           <ModalButton label="Reactivar" title={`Reactivar ${c.nombre}`}>
                             <ActionForm action={reactivarCurso} submit="Reactivar" className="text-left">

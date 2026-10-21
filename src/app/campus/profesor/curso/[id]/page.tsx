@@ -56,17 +56,17 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
         <Badge tone={st.visible ? 'ok' : 'neutral'}>{st.label}</Badge>
         {m.tipo === 'pdf' && <a href={`/api/material/${m.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost px-3! py-2!">Ver</a>}
         {(!st.visible || st.manual) && (
-          <form action={liberarMaterial}>
+          <ActionForm action={liberarMaterial} submit={null} reset={false} okLabel="Hecho">
             <input type="hidden" name="id" value={m.id} /><input type="hidden" name="edicion_id" value={id} /><input type="hidden" name="liberar" value={st.manual ? '0' : '1'} />
             <SubmitButton>{st.manual ? <><EyeOff size={14} /> Quitar liberación</> : <><Eye size={14} /> Liberar ahora</>}</SubmitButton>
-          </form>
+          </ActionForm>
         )}
         {/* El material base (de la academia) no se borra desde acá: solo el que subió el profesor. */}
         {m.propio && (
-          <form action={borrarMaterial}>
+          <ActionForm action={borrarMaterial} submit={null} reset={false} okLabel="Hecho">
             <input type="hidden" name="id" value={m.id} />
             <Confirm message="¿Eliminar este material? Tus alumnos dejan de verlo."><Trash2 size={14} /><span className="sr-only">Eliminar</span></Confirm>
-          </form>
+          </ActionForm>
         )}
       </div>
     )
