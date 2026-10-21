@@ -82,7 +82,7 @@ Cuatro revisiones de solo lectura (seguridad, lógica, estilos/SEO, rendimiento)
 
 **Verificado además:** visor de PDF del alumno en Chromium completo bajo la CSP (renderiza, 0 violaciones); 61 mails a 61 destinatarios con solo 3 conexiones SMTP; dos migradores simultáneos (uno espera al otro); alta simultánea de ediciones solapadas (la segunda falla); imagen Docker (construye, arranca, healthcheck, optimizador y caché persistente en el volumen); la imagen no contiene ningún `.env`. Los workflows pasan las entradas por `env` (sin interpolación); `ci.yml` ahora tiene permisos mínimos.
 
-**Decisión tuya, pendiente:** `.env.development` está versionado y trae una `DATABASE_URL` con credenciales y un `SESSION_SECRET` de 55 caracteres (no se leyeron los valores). No llega a la imagen de producción. Si ese `SESSION_SECRET` es el de algún entorno desplegado, rotarlo; lo más prolijo es desversionar el archivo y dejar un `.env.development.example`.
+**Resuelto:** `.env.development` estaba versionado con una `DATABASE_URL` con credenciales y un `SESSION_SECRET` de 55 caracteres (los valores no se leyeron). Se desversionó (`git rm --cached`, regla en `.gitignore`); queda `.env.development.example` y `npm run setup:dev`, que lo crea con un secreto aleatorio. **El historial de git conserva el archivo viejo** (no se reescribe historia): si ese `SESSION_SECRET` se usó en algún entorno desplegado, hay que rotarlo; las credenciales de la base son las del compose de desarrollo.
 
 **Pendiente / descartado con datos:**
 - `LazyMotion` se probó y **empeora** (JS gzip de la home 202 → 207 KB y del login 149 → 196 KB, porque el proveedor del layout raíz baja las funciones también donde no se anima): descartado.

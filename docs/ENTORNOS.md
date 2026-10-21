@@ -2,7 +2,7 @@
 
 | Entorno | Rama | App | Base de datos |
 |---|---|---|---|
-| **Desarrollo** | `feature/*` → `dev` | `npm run dev` en tu máquina (`.env.development`) | Postgres en Docker (`npm run db:start`) |
+| **Desarrollo** | `feature/*` → `dev` | `npm run dev` en tu máquina (`.env.development`, que se crea con `npm run setup:dev`) | Postgres en Docker (`npm run db:start`) |
 | **Homologación** | `test` | Coolify (recurso Docker Compose) | Postgres del mismo recurso, volumen propio |
 | **Producción** | `main` | Coolify (otro recurso) | Postgres del mismo recurso, volumen propio |
 

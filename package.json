@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "type-check": "tsc --noEmit",
+    "setup:dev": "node scripts/crear-env-dev.mjs",
     "db:start": "docker compose up -d db",
     "db:stop": "docker compose stop db",
     "db:migrate": "ENV_FILE=.env.development node scripts/migrate.mjs",

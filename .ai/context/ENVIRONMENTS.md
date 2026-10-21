@@ -4,7 +4,7 @@ Detalle y flujo de ramas: `docs/ENTORNOS.md`. Despliegue: `docs/DESPLIEGUE-COOLI
 
 | Entorno | Rama | Postgres | Variables |
 |---|---|---|---|
-| Desarrollo | `feature/*` → `dev` | local (Docker, `docker-compose.yml`, puerto 54322) | `.env.development` (versionado, sin secretos) |
+| Desarrollo | `feature/*` → `dev` | local (Docker, `docker-compose.yml`, puerto 54322) | `.env.development` (**no se versiona**: se crea con `npm run setup:dev` desde `.env.development.example`) |
 | Homologación | `test` | Coolify (recurso Docker Compose, volumen propio) | variables del panel de Coolify; `.env.test` (gitignored) para correr scripts a mano |
 | Producción | `main` | Coolify (recurso aparte) | variables del panel de Coolify; `.env.production` (gitignored) |
 

@@ -4,6 +4,7 @@ Academia de cursos y talleres técnicos (Córdoba). Next.js 16 (App Router) + Re
 
 ## Comandos
 ```bash
+npm run setup:dev                                       # una vez: crea .env.development (NO se versiona) con un SESSION_SECRET propio
 npm run db:start && npm run db:migrate && npm run dev   # desarrollo: Postgres LOCAL (Docker) + app con .env.development
 npm run seed:dev                  # cuentas/datos de PRUEBA locales (imprime contraseñas)
 npm run db:reset                  # rehacer la base local desde las migraciones

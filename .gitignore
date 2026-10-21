@@ -16,12 +16,18 @@ next-env.d.ts
 .env*.local
 docs/CUENTAS-HOMOLOGACION.md
 
-# Entornos con secretos reales (no se commitean). .env.development es solo local y sí se versiona.
+# Ningún .env se versiona (cada persona/entorno tiene el suyo); solo los ejemplos sin secretos.
 .env.test
 .env.production
 
+!.env.example
+!.env.development.example
+.env.development
+
 .vercel
 .env*
+!.env.example
+!.env.development.example
 /storage
 
 # Playwright

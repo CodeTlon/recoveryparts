@@ -9,6 +9,7 @@ Academia de cursos y talleres técnicos. Next.js 16.4.2 + React 19 + Tailwind 4 
 ## Desarrollo
 ```bash
 npm install
+npm run setup:dev   # crea .env.development (no se versiona) con un SESSION_SECRET propio
 npm run db:start    # Postgres local en Docker (docker-compose.yml, solo la base, puerto 54322)
 npm run db:migrate  # aplica db/migrations
 npm run seed:dev    # cuentas y cursos de prueba (opcional)
