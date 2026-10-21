@@ -7,10 +7,11 @@ import { useModalFocus } from '@/lib/useModalFocus'
 
 export type Foto = { id: string; imagen_url: string; alt: string; descripcion: string | null; categoria: string; area: string | null }
 
-export default function Galeria({ fotos }: { fotos: Foto[] }) {
-  const [cat, setCat] = useState('todas')
-  const [idx, setIdx] = useState<number | null>(null)
+// `filtros`: chips de categoría (en las fotos de un aula sobran). `inicial`: categoría con la que arranca (?categoria=).
+export default function Galeria({ fotos, filtros = true, inicial = 'todas', vacio = 'Pronto vamos a sumar fotos de la academia.' }: { fotos: Foto[]; filtros?: boolean; inicial?: string; vacio?: string }) {
   const cats = ['todas', ...Array.from(new Set(fotos.map((f) => f.categoria)))]
+  const [cat, setCat] = useState(cats.includes(inicial) ? inicial : 'todas')
+  const [idx, setIdx] = useState<number | null>(null)
   const label: Record<string, string> = { todas: 'Todas', aulas: 'Aulas', clases: 'Clases en acción', trabajos: 'Trabajos de alumnos', egresados: 'Egresados', eventos: 'Eventos' }
   const lista = cat === 'todas' ? fotos : fotos.filter((f) => f.categoria === cat)
 
@@ -25,19 +26,19 @@ export default function Galeria({ fotos }: { fotos: Foto[] }) {
     return () => { window.removeEventListener('keydown', k); document.body.style.overflow = '' }
   }, [idx, go])
 
-  if (!fotos.length) return <p className="card p-10 text-center text-on-surface-variant">Pronto vamos a sumar fotos de la academia.</p>
+  if (!fotos.length) return <p className="card p-10 text-center text-on-surface-variant">{vacio}</p>
   const actual = idx !== null ? lista[idx] : null
 
   return (
     <>
-      <div className="mb-8 flex flex-wrap gap-2">
+      {filtros && <div className="mb-8 flex flex-wrap gap-2">
         {cats.map((c) => (
           <button key={c} type="button" onClick={() => setCat(c)} aria-pressed={cat === c}
             className={`rounded-sm border px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${cat === c ? 'border-accent bg-accent text-surface' : 'border-outline text-on-surface-variant hover:border-secondary hover:text-secondary'}`}>
             {label[c] ?? c}
           </button>
         ))}
-      </div>
+      </div>}
       {/* Casillas de proporción fija (4:3): no se guardan las medidas de cada foto y, con tamaños supuestos, la página
           saltaba al cargar cada imagen. El visor ampliado muestra la foto completa. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

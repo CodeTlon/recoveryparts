@@ -27,6 +27,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-21 | feat/aulas-sitio | Sección pública «Aulas» (RF-60): `/aulas` con video general y fichas por aula (destacados con ícono, fotos, video), pestaña en Campus › Sitio web, link en menú/«Nosotros»/sitemap; migración 0030 (revoca a mano los permisos de anon: ver KNOWN_ISSUES). Sin mergear. |
 | 2026-10-21 | fix/auditoria-seguridad-logica | v0.16.0 — auditoría completa de seguridad, lógica, estilos/accesibilidad, SEO y rendimiento con sus correcciones (migraciones 0019-0029: RLS por conjuntos, anon mínimo, calendario atómico/versionado/avisos pendientes, locks de agenda; CSP con nonce, caché público, streaming, video en segundo plano, `.env.development` fuera del repo, E2E de campus por rol, job de navegadores). Mergeada a `dev`, `test` y `main` (PR #22) y desplegada en producción. Pendientes en KNOWN_ISSUES. |
 | 2026-10-16 | feature/dev2-estandar-2026 | v0.15.0 — estandar de versiones de la flota (Next 16, React 19, Tailwind 4, ESLint 10 nuevo, `proxy.ts`). 36 E2E verdes, audit de runtime en 0. |
 | 2026-10-15 | dev/test | v0.14.x — estandar de Coolify (Node 22, health con `started_at`, E2E, workflows, compose, fuentes autoalojadas, transcode). |

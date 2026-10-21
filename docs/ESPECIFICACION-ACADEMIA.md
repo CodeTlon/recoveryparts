@@ -5,7 +5,7 @@
 ### Sitio web + Campus Virtual para Academia de Cursos Técnicos
 
 ![Estado](https://img.shields.io/badge/estado-borrador-orange?style=for-the-badge)
-![Versión](https://img.shields.io/badge/versión-0.14-blue?style=for-the-badge)
+![Versión](https://img.shields.io/badge/versión-0.16-blue?style=for-the-badge)
 ![Cliente](https://img.shields.io/badge/cliente-Recovery_Parts-1e3a8a?style=for-the-badge)
 ![Tipo](https://img.shields.io/badge/proyecto-real-success?style=for-the-badge)
 
@@ -170,7 +170,7 @@ stateDiagram-v2
 - 🟢 **RNF-03**: distinguir visualmente **Creación y Diseño** de **Reparación y Tecnología** sin perder consistencia de marca.
 
 **Elementos globales (todas las páginas):**
-- Navbar con logo, links (Inicio, Cursos, Galería, Contacto) y botón **"Campus"** que lleva al login.
+- Navbar con logo, links (Inicio, Cursos, Aulas, Galería, Preguntas, Contacto) y botón **"Campus"** que lleva al login. «Aulas» aparece solo si hay aulas visibles (RF-60).
 - 🔴 **RF-41**: botón flotante de **WhatsApp** — cancelado en v0.6 (no se implementa).
 - Footer con dirección, redes sociales, contacto y links.
 
@@ -236,6 +236,31 @@ stateDiagram-v2
 
 > [!CAUTION]
 > Las fotos de **alumnos o egresados** requieren **consentimiento de uso de imagen**. Los datos de la demo (nombres y caras) son ficticios y deben reemplazarse.
+
+---
+
+### A2b. Aulas
+
+> Ruta: `/aulas` · 🟢 **RF-60** (v0.16)
+
+Las aulas son un diferencial de la academia. La sección arranca con un **video general** de todas las aulas (con controles, lo inicia el visitante) y un texto de presentación, y después presenta **cada aula, una por una**, en una sola página con un índice arriba.
+
+| Elemento | Detalle |
+|---|---|
+| **De dónde salen** | Las aulas operativas de Campus › Aulas (RF-03). Su ficha pública la carga el admin en **Campus › Sitio web › Aulas**. |
+| **Qué muestra cada aula** | Nombre, descripción, **destacados** con ícono según su tipo (Mesas de trabajo, Equipamiento, Herramientas, Comodidades, Seguridad, Otro), fotos que se amplían y un video corto opcional. |
+| **Qué no muestra** | La capacidad ni los cursos que se dictan en cada aula. |
+| **Visibilidad** | Solo aulas activas y marcadas «Mostrar en el sitio», en el orden que elige el admin. Sin aulas visibles, la sección sale del menú y la página muestra un mensaje. |
+| **Enlaces** | «Ver más fotos en la galería» (abre la galería filtrada por «Aulas») y «Conocé nuestras aulas» en el bloque «Nosotros» de la portada. |
+| **Estilo** | Los colores, tipografías y componentes del resto del sitio. |
+
+<details>
+<summary><b>✏️ Campos editables por el Admin</b></summary>
+
+- Texto de presentación, video general e imagen de portada del video
+- Por aula: mostrar u ocultar, orden, descripción, destacados (tipo y texto), fotos (con texto alternativo obligatorio) y video corto
+
+</details>
 
 ---
 
@@ -454,7 +479,7 @@ sequenceDiagram
 |---|---|:-:|:-:|
 | RF-01 | El administrador crea y da de baja cursos y talleres. | 🟢 | 🛡️ |
 | RF-02 | El administrador asigna un profesor a cada curso o taller. | 🟢 | 🛡️ |
-| RF-03 | El administrador gestiona aulas, cupos, insumos y precios de cada curso. **Aulas**: módulo propio (Campus › Aulas) con capacidad, baja lógica y sin borrado. **Cupo y precio**: en el curso; el cupo nunca supera la capacidad del aula. **Insumos**: solo el kit informativo (RF-45/46); el stock lo maneja el software externo. | 🟢 | 🛡️ |
+| RF-03 | El administrador gestiona aulas, cupos, insumos y precios de cada curso. **Aulas**: módulo propio (Campus › Aulas) con capacidad, baja lógica y sin borrado. **Cupo y precio**: en el curso; el cupo nunca supera la capacidad del aula. **Insumos**: solo el kit informativo (RF-45/46); el stock lo maneja el software externo. **Desde v0.16:** cada aula tiene además una ficha pública para el sitio (RF-60), que se edita en Sitio web. | 🟢 | 🛡️ |
 | RF-04 | El profesor ve sus cursos asignados, con horario, aula y listado de alumnos. **Desde v0.13:** «Mis cursos» muestra solo los dictados **en curso** y **próximos**, con su estado; los terminados (su última clase ya pasó) y los dados de baja no aparecen ni se pueden abrir. El profesor no ve la palabra «edición». | 🟢 | 👨‍🏫 |
 | RF-05 | El profesor carga material teórico (PDFs). **Desde v0.13:** el material que sube el profesor vale solo para su edición y solo él lo borra; el **material base** lo carga el admin sobre la guía general, aparece en todas las ediciones que conservan esa clase y el profesor lo libera pero no lo borra. | 🟢 | 👨‍🏫 🛡️ |
 | RF-06 | El profesor toma o carga asistencia. | 🔴 | 👨‍🏫 |
@@ -485,6 +510,7 @@ sequenceDiagram
 | RF-54 | El admin puede marcar a un alumno como **Desertor** dentro de un curso. El alumno **no se elimina** del curso: queda vinculado con ese estado. | 🟢 | 🛡️ |
 | RF-56 | El admin puede poner una **cuenta en Inactivo** (no entra al campus) y reactivarla. No borra datos. | 🟢 | 🛡️ |
 | RF-57 | Datos personales del alumno: **solo nombre, apellido, email y teléfono**. No se piden otros datos. | 🟢 | 🛡️ |
+| RF-60 | **Sección pública «Aulas»** (A2b): video general y cada aula visible con descripción, destacados con ícono, fotos y video; administrable desde Campus › Sitio web › Aulas. Sin capacidad ni cursos. *Nuevo en v0.16.* | 🟢 | 🛡️ 🌐 |
 | RF-59 | **Mi cuenta** (alumno, profesor y admin): cada usuario ve sus datos en **solo lectura** (los corrige el admin) y puede **cambiar su contraseña** con la sesión iniciada. Pide la contraseña actual, limita los intentos fallidos como el login y cierra las demás sesiones abiertas. *Nuevo en v0.14.* | 🟢 | 🎓 👨‍🏫 🛡️ |
 | RF-55 | Al marcar Desertor se guarda la **fecha**, y el sistema calcula el **N° de clase** correspondiente según el calendario del curso (ej. clase 3 de 12). Motivo en texto libre **obligatorio**, visible para el alumno como aviso. | 🟢 | 🛡️ ⚙️ |
 
@@ -669,6 +695,7 @@ sequenceDiagram
 
 | Versión | Fecha | Cambio |
 |---|---|---|
+| 0.16 | 2026-10-21 | **Sección «Aulas» del sitio (RF-60).** Página `/aulas` con video general y cada aula (descripción, destacados con ícono, fotos y video), solo las activas y visibles; ficha editable en Campus › Sitio web › Aulas; «Aulas» en el menú, link en «Nosotros» y en el sitemap; la galería se puede abrir filtrada por «Aulas». Sin capacidad ni cursos. RF-03: las aulas suman su ficha pública. |
 | 0.15 | 2026-10-21 | **Auditoría.** Tokens: invitación 7 días y reset 1 hora (los valores que ya aplicaba el código; 24 h y 10 min eran poco con mails demorados). Finalizado pasa a estado final como Desertor. RF-04: una edición sin calendario cargado termina en inicio + duración del curso (antes, en el inicio). El link del mail ya no se consume al abrirlo: hay un paso con botón. |
 | 0.14 | 2026-10-13 | **Campus del alumno.** RF-47: la encuesta pendiente se anuncia en el curso y hay una pantalla «Encuestas» con contador en el menú (antes, con un solo curso el alumno no llegaba a la encuesta). RF-34 / RF-35: el alumno que terminó sigue entrando a su curso y al ZIP durante 3 meses. **RF-59** (nuevo): «Mi cuenta» con los datos en solo lectura y cambio de contraseña con la sesión iniciada, para los tres roles. El alumno ya no ve la palabra «edición». |
 | 0.13 | 2026-10-11 | **Panel del profesor y estructura por edición.** RF-04: «Mis cursos» con estado (en curso / próximo), sin dictados terminados y sin el concepto de «edición» para el profesor. RF-58 / RF-31: guía general del curso (admin) + estructura propia de cada edición, que arranca de la guía y la puede modificar su profesor; «Volver a la guía general» con advertencia. RF-05: material base (admin) y material del profesor por edición; el profesor solo borra el suyo. El kit deja de verse en el campus del profesor. La deserción la marca solo el admin (sin cambios). |

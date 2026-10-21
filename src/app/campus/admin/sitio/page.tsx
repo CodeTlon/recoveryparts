@@ -2,8 +2,9 @@ import { MediaField } from '@/components/campus/MediaField'
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth'
 import ImageUploader from '@/components/campus/ImageUploader'
-import { ActionForm, Confirm, Field, PageHead, Select, Check } from '@/components/campus/ui'
-import { borrarItemCms, guardarItemCms, guardarSetting } from '../actions'
+import { ActionForm, Badge, Confirm, Field, PageHead, Select, Check } from '@/components/campus/ui'
+import { borrarItemCms, guardarFichaAula, guardarItemCms, guardarSetting } from '../actions'
+import { DestacadosEditor, FotosEditor } from '@/components/campus/ListEditors'
 
 type S = Record<string, any>
 
@@ -36,17 +37,28 @@ const AREAS: [string, string][] = [['diseno', 'Creación y Diseño'], ['tecnico'
 export default async function Sitio({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { sb } = await requireRole('admin')
   const { tab } = await searchParams
-  const [{ data: st }, { data: egr }, { data: tes }, { data: faq }, { data: gal }, { data: cursos }] = await Promise.all([
+  const [{ data: st }, { data: egr }, { data: tes }, { data: faq }, { data: gal }, { data: cursos }, { data: aulas }, { data: fichas }, { data: dest }, { data: fotos }] = await Promise.all([
     sb.from('site_settings').select('clave, valor'),
     sb.from('cms_egresados').select('*').order('orden'),
     sb.from('cms_testimonios').select('*').order('orden'),
     sb.from('cms_faq').select('*').order('orden'),
     sb.from('cms_galeria').select('*').order('orden'),
     sb.from('cursos').select('id, nombre').eq('activo', true).order('nombre'),
+    // RF-60: aulas activas y su ficha pública (las dadas de baja no se muestran en el sitio).
+    sb.from('aulas').select('id, nombre').eq('activa', true).order('nombre'),
+    sb.from('cms_aulas').select('aula_id, descripcion, visible, orden, video_url'),
+    sb.from('cms_aula_destacados').select('aula_id, tipo, texto').order('orden'),
+    sb.from('cms_aula_fotos').select('aula_id, imagen_url, alt').order('orden'),
   ])
   const v = (k: string): S => (st?.find((s) => s.clave === k)?.valor as S) ?? {}
   const h = v('hero'), c = v('contacto'), s = v('stats'), n = v('nosotros'), a = v('areas'), campus = v('campus')
   const h2 = 'mb-4 mt-12 text-2xl font-semibold'
+  type Ficha = { aula_id: string; descripcion: string | null; visible: boolean; orden: number; video_url: string | null }
+  const ficha = (id: string) => ((fichas ?? []) as Ficha[]).find((f) => f.aula_id === id)
+  const aulasActivas = ((aulas ?? []) as { id: string; nombre: string }[])
+    .sort((x, y) => (ficha(x.id)?.orden ?? 9999) - (ficha(y.id)?.orden ?? 9999) || x.nombre.localeCompare(y.nombre))
+  const visibles = aulasActivas.filter((x) => ficha(x.id)?.visible).length
+  const presentacion = v('aulas')
 
   const tabs: [string, string, string, string][] = [
     ['inicio', 'Inicio', 'Portada, áreas, «Nosotros» y números', '/'],
@@ -54,6 +66,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
     ['egresados', `Egresados (${egr?.length ?? 0})`, 'Mosaico de egresados del inicio', '/'],
     ['testimonios', `Testimonios (${tes?.length ?? 0})`, 'Opiniones del inicio y de la ficha de cada curso', '/'],
     ['faq', `Preguntas (${faq?.length ?? 0})`, 'Preguntas frecuentes', '/preguntas-frecuentes'],
+    ['aulas', `Aulas (${visibles})`, 'Video general y ficha de cada aula (el número son las visibles en el sitio)', '/aulas'],
     ['galeria', `Galería (${gal?.length ?? 0})`, 'Fotos de aulas, clases, trabajos y eventos', '/galeria'],
     ['imagenes', 'Imágenes', 'Subir una imagen y copiar su link', '/'],
     ['campus', 'Campus', 'Cómo entra el alumno al campus', '/login'],
@@ -146,6 +159,46 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
       <div className="grid gap-4 md:grid-cols-2">
         {[...(faq ?? []), null].map((r) => <Item key={r?.id ?? 'nuevo'} tipo="faq" row={r ?? undefined}>{!r && <p className="font-semibold">Nueva pregunta</p>}<Field label="Pregunta" name="pregunta" placeholder="Ej: ¿Cómo me inscribo?" defaultValue={r?.pregunta} required /><Field label="Respuesta" name="respuesta" placeholder="Escribí la respuesta…" rows={3} defaultValue={r?.respuesta} required /></Item>)}
       </div>
+        </div>
+      )}
+      {actual[0] === 'aulas' && (
+        <div className="space-y-6">
+          <Setting clave="aulas" title="Presentación" hint="Lo primero que se ve en la sección «Aulas»: un texto corto y, si querés, un video general de todas las aulas.">
+            <Field label="Texto de presentación" name="texto" rows={3} placeholder="Ej: Cursás en aulas-taller pensadas para practicar…" defaultValue={presentacion.texto} />
+            <MediaField tipo="video" label="Video general (opcional)" name="video_url" defaultValue={presentacion.video_url} hint="Un recorrido por todas las aulas, de 1 a 2 minutos. Se ve con controles: el visitante decide cuándo darle play. Se comprime solo." />
+            <MediaField tipo="imagen" label="Imagen de portada del video (opcional)" name="imagen_url" defaultValue={presentacion.imagen_url} hint="La que se ve antes de darle play. Si no cargás una, se usa el primer cuadro del video." />
+          </Setting>
+          <p className="text-sm text-on-surface-variant">
+            Cada aula de la academia tiene su ficha para el sitio. El nombre y la capacidad se cambian en{' '}
+            <Link href="/campus/admin/aulas" className="font-semibold text-secondary hover:underline">Campus › Aulas</Link>; la capacidad no se muestra en el sitio. Las aulas dadas de baja no aparecen acá ni en el sitio.
+          </p>
+          {!aulasActivas.length && <p className="card p-6 text-on-surface-variant">No hay aulas activas. Cargalas en Campus › Aulas.</p>}
+          {aulasActivas.map((x) => {
+            const f = ficha(x.id)
+            return (
+              <section key={x.id} className="card p-6">
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <h2 className="text-lg font-semibold">{x.nombre}</h2>
+                  {f?.visible ? <Badge tone="ok">Visible en el sitio</Badge> : <Badge>Oculta</Badge>}
+                </div>
+                <div className="max-w-3xl">
+                  <ActionForm action={guardarFichaAula} reset={false}>
+                    <input type="hidden" name="aula_id" value={x.id} />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Check name="visible" defaultChecked={!!f?.visible}>Mostrar en el sitio</Check>
+                      <Field label="Orden" name="orden" type="number" min={0} max={9999} placeholder="Ej: 1" defaultValue={f?.orden ?? 0} />
+                    </div>
+                    <Field label="Descripción" name="descripcion" rows={3} placeholder="Ej: Aula técnica para reparación de celulares, con un puesto completo por alumno." defaultValue={f?.descripcion} />
+                    <div><span className="label">Destacados</span><p className="mb-2 text-xs text-on-surface-variant">Lo que tiene de bueno el aula: mesas de trabajo, equipamiento, comodidades… El tipo define el ícono.</p>
+                      <DestacadosEditor inicial={((dest ?? []) as { aula_id: string; tipo: string; texto: string }[]).filter((d) => d.aula_id === x.id)} /></div>
+                    <div><span className="label">Fotos</span>
+                      <FotosEditor inicial={((fotos ?? []) as { aula_id: string; imagen_url: string; alt: string }[]).filter((d) => d.aula_id === x.id)} /></div>
+                    <MediaField tipo="video" label="Video corto del aula (opcional)" name="video_url" defaultValue={f?.video_url} hint="Hasta 1 minuto. Se ve con controles." />
+                  </ActionForm>
+                </div>
+              </section>
+            )
+          })}
         </div>
       )}
       {actual[0] === 'galeria' && (

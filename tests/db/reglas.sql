@@ -272,5 +272,40 @@ do $$ begin
   exception when others then if sqlerrm not like '%no es un profesor%' then raise; end if; end;
 end $$;
 
+-- ── 10. Aulas del sitio (RF-60): el visitante ve solo la ficha pública de las aulas activas y visibles ──
+-- Dos aulas de prueba con ficha visible: una activa y otra dada de baja (sin ediciones, así se puede dar de baja).
+insert into aulas (nombre, capacidad) values ('Aula de prueba visible', 7), ('Aula de prueba de baja', 7);
+do $$ declare v uuid := (select id from aulas where nombre = 'Aula de prueba visible');
+                     b uuid := (select id from aulas where nombre = 'Aula de prueba de baja');
+begin
+  insert into cms_aulas (aula_id, descripcion, visible) values (v, 'Visible', true), (b, 'De baja', true);
+  insert into cms_aula_fotos (aula_id, imagen_url, alt) values (v, '/images/about.jpg', 'Foto'), (b, '/images/about.jpg', 'Foto');
+  update aulas set activa = false where id = b;
+  -- La foto sin texto alternativo no se guarda.
+  begin
+    insert into cms_aula_fotos (aula_id, imagen_url, alt) values (v, '/images/about.jpg', '  ');
+    raise exception 'FALLO: se guardó una foto de aula sin texto alternativo';
+  exception when check_violation then null; end;
+end $$;
+select set_config('app.user_id', '', true);
+set local role anon;
+do $$ declare n int; begin
+  select count(*) into n from aulas_publicas where nombre like 'Aula de prueba%';
+  if n <> 1 then raise exception 'FALLO: anon ve % aulas de prueba (esperaba solo la activa y visible)', n; end if;
+  select count(*) into n from aula_fotos_publicas f join aulas_publicas a on a.id = f.aula_id where a.nombre like 'Aula de prueba%';
+  if n <> 1 then raise exception 'FALLO: anon ve % fotos de aulas de prueba (esperaba 1)', n; end if;
+  -- La capacidad y el uso interno no son públicos: ni la tabla de aulas ni las fichas se leen directo.
+  begin perform 1 from aulas limit 1; raise exception 'FALLO: anon pudo leer aulas'; exception when insufficient_privilege then null; end;
+  begin perform 1 from cms_aulas limit 1; raise exception 'FALLO: anon pudo leer cms_aulas'; exception when insufficient_privilege then null; end;
+  begin perform 1 from cms_aula_fotos limit 1; raise exception 'FALLO: anon pudo leer cms_aula_fotos'; exception when insufficient_privilege then null; end;
+  if has_table_privilege('anon', 'aulas_publicas', 'insert') or has_table_privilege('anon', 'cms_aulas', 'select') then
+    raise exception 'FALLO: anon tiene permisos de más sobre las aulas del sitio';
+  end if;
+  if exists (select 1 from information_schema.columns where table_name = 'aulas_publicas' and column_name = 'capacidad') then
+    raise exception 'FALLO: aulas_publicas expone la capacidad';
+  end if;
+end $$;
+reset role;
+
 \echo 'Reglas de negocio: OK'
 rollback;

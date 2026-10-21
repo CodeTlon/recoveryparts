@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ArrowDown, ArrowUp, CornerDownRight, FileText, MoreHorizontal, Plus, Trash2, Wand2 } from 'lucide-react'
 import { DIAS } from '@/lib/types'
 import { MUNDO_PARTS_URL } from '@/lib/validar'
+import { MediaField } from './MediaField'
 
 // Editores por filas para lo que antes era un textarea con formato "a | b | c".
 // Cada uno serializa al MISMO texto que ya entienden las server actions (guardarHorarios,
@@ -401,3 +402,72 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
     </div>
   )
 }
+
+// ── Aulas del sitio (RF-60): destacados y fotos de la ficha de un aula ───────────────────────
+// Los campos van indexados por posición (destacado_tipo_0, foto_url_0…): el orden en pantalla es el que se guarda.
+export const TIPOS_DESTACADO: [string, string][] = [['mesas', 'Mesas de trabajo'], ['equipamiento', 'Equipamiento'], ['herramientas', 'Herramientas'], ['comodidades', 'Comodidades'], ['seguridad', 'Seguridad'], ['otro', 'Otro']]
+const nuevaKey = () => Math.random().toString(36).slice(2)
+function Mover({ i, total, onMover }: { i: number; total: number; onMover: (d: number) => void }) {
+  return (
+    <div className="flex gap-1">
+      <button type="button" onClick={() => onMover(-1)} disabled={i === 0} aria-label="Subir" className="btn-ghost px-2! py-2! disabled:opacity-40"><ArrowUp size={14} aria-hidden /></button>
+      <button type="button" onClick={() => onMover(1)} disabled={i === total - 1} aria-label="Bajar" className="btn-ghost px-2! py-2! disabled:opacity-40"><ArrowDown size={14} aria-hidden /></button>
+    </div>
+  )
+}
+const moverFila = <T,>(arr: T[], i: number, d: number) => { const a = [...arr]; const [x] = a.splice(i, 1); a.splice(i + d, 0, x); return a }
+
+type DestacadoFila = { key: string; tipo: string; texto: string }
+export function DestacadosEditor({ inicial }: { inicial: { tipo: string; texto: string }[] }) {
+  const [rows, setRows] = useState<DestacadoFila[]>(() => inicial.map((d) => ({ key: nuevaKey(), ...d })))
+  const upd = (i: number, p: Partial<DestacadoFila>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  const err = rows.some((r) => !limpiar(r.texto)) ? 'Completá el texto de cada destacado o quitá el que sobra.' : rows.length > 12 ? 'Cada aula admite hasta 12 destacados.' : ''
+  return (
+    <div className="space-y-3">
+      <Guard error={err} />
+      {err && <p role="alert" className="text-sm text-danger">{err}</p>}
+      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay destacados.</p>}
+      {rows.map((r, i) => (
+        <div key={r.key} className="flex flex-wrap items-end gap-2 rounded-sm border border-outline-variant p-3">
+          <div className="w-full sm:w-44"><label className="label">Tipo</label>
+            <select name={`destacado_tipo_${i}`} className="input" value={r.tipo} onChange={(e) => upd(i, { tipo: e.target.value })}>
+              {TIPOS_DESTACADO.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select></div>
+          <div className="min-w-0 flex-1"><label className="label">Destacado</label>
+            <input name={`destacado_texto_${i}`} className="input" maxLength={120} placeholder="Ej: Mesas antiestáticas con lupa y luz LED" value={r.texto} onChange={(e) => upd(i, { texto: e.target.value })} /></div>
+          <Mover i={i} total={rows.length} onMover={(d) => setRows(moverFila(rows, i, d))} />
+          <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar destacado" />
+        </div>
+      ))}
+      {rows.length < 12 && <AddButton onClick={() => setRows([...rows, { key: nuevaKey(), tipo: 'mesas', texto: '' }])}>Agregar destacado</AddButton>}
+    </div>
+  )
+}
+
+type FotoFila = { key: string; imagen_url: string; alt: string }
+export function FotosEditor({ inicial }: { inicial: { imagen_url: string; alt: string }[] }) {
+  const [rows, setRows] = useState<FotoFila[]>(() => inicial.map((f) => ({ key: nuevaKey(), ...f })))
+  const upd = (i: number, p: Partial<FotoFila>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)))
+  const err = rows.some((r) => !limpiar(r.alt)) ? 'Cada foto necesita su texto alternativo (describí qué se ve).' : rows.length > 20 ? 'Cada aula admite hasta 20 fotos.' : ''
+  return (
+    <div className="space-y-3">
+      <Guard error={err} />
+      {err && <p role="alert" className="text-sm text-danger">{err}</p>}
+      {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay fotos.</p>}
+      {rows.map((r, i) => (
+        <div key={r.key} className="grid gap-3 rounded-sm border border-outline-variant p-3 sm:grid-cols-2">
+          {/* La key de la fila mantiene el estado del campo de imagen al reordenar. */}
+          <MediaField tipo="imagen" label={`Foto ${i + 1}`} name={`foto_url_${i}`} defaultValue={r.imagen_url} />
+          <div className="sm:col-span-2"><label className="label">Texto alternativo (accesibilidad)</label>
+            <input name={`foto_alt_${i}`} className="input" maxLength={200} placeholder="Ej: Mesas de trabajo con lupas y estaciones de soldadura" value={r.alt} onChange={(e) => upd(i, { alt: e.target.value })} /></div>
+          <div className="flex justify-end gap-2 sm:col-span-2">
+            <Mover i={i} total={rows.length} onMover={(d) => setRows(moverFila(rows, i, d))} />
+            <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar foto" />
+          </div>
+        </div>
+      ))}
+      {rows.length < 20 && <AddButton onClick={() => setRows([...rows, { key: nuevaKey(), imagen_url: '', alt: '' }])}>Agregar foto</AddButton>}
+    </div>
+  )
+}
+
