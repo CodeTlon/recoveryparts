@@ -3,7 +3,7 @@
 Preguntas sin resolver. Marcá **UNKNOWN** lo que no se pudo confirmar, y no lo asumas. Cuando se resuelva: pasalo a `DECISIONS.md` y borralo de acá.
 
 - **RF-12 / RF-13** — ¿Cómo se crea un alumno con curso asignado y cómo se vincula uno existente a otro curso? (🟡)
-- **RF-14** — Al finalizar el curso, ¿el alumno queda sin curso de forma automática o la marca el admin? (🟡)
+- **RF-14** — Al finalizar el curso, ¿el alumno queda sin curso de forma automática o la marca el admin? (🟡) Hoy el código da 3 meses de acceso al material tras finalizar; figura como `gap` en REQ-INS-006 (`specs/inscripciones/spec.md`).
 - **RF-40** — ¿Se cancela el recordatorio masivo por WhatsApp (como RF-41) o se define un canal? Hoy los avisos van solo por mail. (🟡)
 - **Producción** — ¿Dominio definitivo, proveedor SMTP y fecha de pase? UNKNOWN.
 - **`feat/unificacion` (remota)**: ¿borrarla? Quedó descartada; `dev` supera todo lo que traía. Si se borra, hacerlo a mano en GitHub.

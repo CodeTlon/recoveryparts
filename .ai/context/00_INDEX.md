@@ -11,8 +11,9 @@ Qué leer según el tipo de tarea. Leé solo lo que necesites; no cargues todo e
 | Migraciones, seed, Postgres local, cuentas de prueba | `ENVIRONMENTS.md` |
 | Pantallas, estilos, formularios del campus | `CONVENTIONS.md` |
 | Implementar o cerrar un 🟡 de la spec | `OPEN_QUESTIONS.md` + `DOMAIN.md` |
+| Tocar inscripciones, calendario/avisos o acceso/roles, o agregar una feature | `specs/README.md` + la `specs/<capacidad>/spec.md` que corresponda (SDD) |
 | Entender por qué algo se hizo así | `DECISIONS.md` |
 | Antes de asumir que algo funciona de cierta forma | `KNOWN_ISSUES.md` + `OPEN_QUESTIONS.md` |
 | Desplegar en Coolify / variables / SMTP / primer admin | `docs/DESPLIEGUE-COOLIFY.md` |
 
-Fuente de verdad funcional: `docs/ESPECIFICACION-ACADEMIA.md` (RF-xx). Cuentas de prueba de homologación: `docs/CUENTAS-HOMOLOGACION.md` (gitignored). Lo de `docs/` no se duplica acá: se enlaza.
+Fuente de verdad funcional (detalle de negocio): `docs/ESPECIFICACION-ACADEMIA.md` (RF-xx); contrato verificable de lo crítico: `specs/` (REQ-XXX-NNN). Cuentas de prueba de homologación: `docs/CUENTAS-HOMOLOGACION.md` (gitignored). Lo de `docs/` no se duplica acá: se enlaza.
