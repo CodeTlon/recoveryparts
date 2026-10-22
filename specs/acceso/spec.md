@@ -23,7 +23,7 @@ El sistema NO DEBE mostrar a un alumno el curso de otra persona, ni listándolo 
 
 ### REQ-ACC-003 [must] El profesor ve solo lo que dicta
 El sistema DEBE mostrar al profesor únicamente los cursos que dicta (RF-04).
-- Escenario: Dado un profesor con una edición asignada, Cuando abre su panel, Entonces ve esa edición y ninguna ajena.
+- Escenario: Dado un profesor con una edición asignada, Cuando abre su panel, Entonces ve esa edición y ninguna ajena, tampoco pidiendo `/campus/profesor/curso/<edición ajena>` por URL.
 - verify: e2e tests/e2e/campus.spec.ts
 - confianza: confirmado
 
@@ -44,6 +44,7 @@ El sistema DEBE dejar de aceptar la cookie de sesión anterior después de cerra
 - Escenario: Dado un usuario que cerró sesión, Cuando se reinyecta su cookie vieja y abre el campus, Entonces redirige a `/login`.
 - verify: e2e tests/e2e/auth.spec.ts
 - confianza: confirmado
+<!-- El test corre solo en escritorio (el botón de salir está en el menú lateral); en tablet y móvil no hay evidencia automática. -->
 
 ### REQ-ACC-007 [must] Error de login genérico
 El sistema NO DEBE revelar si un email existe: ante credenciales inválidas DEBE mostrar "Email o contraseña incorrectos".
@@ -58,8 +59,8 @@ El sistema DEBE cortar al instante la sesión de un alumno cuando el admin lo de
 - confianza: confirmado
 
 ### REQ-ACC-009 [must] Alta de usuarios desde el formulario del admin
-El sistema DEBE permitir al admin crear un usuario desde el formulario de Usuarios, que queda invitado.
-- Escenario: Dado el admin en Usuarios, Cuando completa el formulario de alta, Entonces el usuario queda creado con su invitación.
+El sistema DEBE permitir al admin crear un usuario desde el formulario de Usuarios, que queda en estado `pendiente_activacion`.
+- Escenario: Dado el admin en Usuarios, Cuando completa el formulario de alta, Entonces el perfil existe en `pendiente_activacion` (el envío del mail depende de SMTP y no está cubierto por este test).
 - verify: e2e tests/e2e/campus.spec.ts
 - confianza: confirmado
 

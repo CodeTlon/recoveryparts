@@ -12,6 +12,11 @@ Método: SDD CodeTlon (`sdd: v1`), retrofit mínimo sobre un proyecto en producc
 | CAL calendario y avisos | `calendario/spec.md` | 5 | semilla |
 | ACC acceso, roles e invitaciones | `acceso/spec.md` | 10 | semilla |
 
+## Próximas semillas (hoy con tests en `tests/db/reglas.sql` pero sin REQ)
+- Encuestas anónimas: guarda quién respondió, nunca qué respondió; un voto por alumno; bloqueo al desertor.
+- Profesor de una edición con rol profesor; visibilidad pública de aulas (RF-60).
+Se suman con su propio `/cambio`, no en bloque.
+
 ## Cambios abiertos
 Ver `changes/`. Cerrados: `_archive/`.
 
