@@ -29,7 +29,7 @@ insert into clases (edicion_id, plan_clase_id, fecha)
   select c.edicion, p.id, hoy_ar() + (case p.numero when 1 then -20 when 2 then -10 else 5 end)
   from ctx c join plan_clases p on p.curso_id = c.curso;
 
--- ── 1. Cupo exacto: el tercero no entra ──────────────────────────────────────────────────────
+-- ── 1. [REQ-INS-001] Cupo exacto: el tercero no entra ──────────────────────────────────────────────────────
 insert into inscripciones (alumno_id, edicion_id) select a1, edicion from ctx;
 insert into inscripciones (alumno_id, edicion_id) select a2, edicion from ctx;
 do $$ begin
@@ -41,7 +41,7 @@ do $$ begin
   end;
 end $$;
 
--- ── 2. El desertor sigue ocupando cupo ───────────────────────────────────────────────────────
+-- ── 2. [REQ-INS-002] El desertor sigue ocupando cupo ───────────────────────────────────────────────────────
 update inscripciones set estado = 'desertor', fecha_desercion = hoy_ar() - 5, motivo_desercion = 'Prueba'
   where alumno_id = (select a2 from ctx);
 do $$ begin
@@ -53,7 +53,7 @@ do $$ begin
   end;
 end $$;
 
--- ── 3. N° de clase de la deserción (RF-55) lo calcula la base ────────────────────────────────
+-- ── 3. [REQ-INS-003] N° de clase de la deserción (RF-55) lo calcula la base ────────────────────────────────
 -- Desertó hace 5 días: ya se habían dictado las clases 1 y 2.
 do $$ declare n int; begin
   select n_clase_desercion into n from inscripciones where alumno_id = (select a2 from ctx);
@@ -67,7 +67,7 @@ do $$ declare n int; begin
   if n is distinct from 1 then raise exception 'FALLO: con la clase 2 suspendida se esperaba n_clase_desercion 1, fue %', n; end if;
 end $$;
 
--- ── 4. Desertor y Finalizado son estados finales ─────────────────────────────────────────────
+-- ── 4. [REQ-INS-004] Desertor y Finalizado son estados finales ─────────────────────────────────────────────
 do $$ begin
   begin
     update inscripciones set estado = 'activo' where alumno_id = (select a2 from ctx);
@@ -90,7 +90,7 @@ do $$ begin
   then raise exception 'FALLO: finalizado_el no se anotó'; end if;
 end $$;
 
--- ── 5. La inscripción nunca se borra ─────────────────────────────────────────────────────────
+-- ── 5. [REQ-INS-005] La inscripción nunca se borra ─────────────────────────────────────────────────────────
 do $$ begin
   begin
     delete from inscripciones where alumno_id = (select a2 from ctx);
@@ -201,7 +201,7 @@ do $$ begin
 end $$;
 reset role;
 
--- ── 8. Calendario atómico (guardar_calendario) ───────────────────────────────────────────────
+-- ── 8. [REQ-CAL-001] Calendario atómico (guardar_calendario) ───────────────────────────────────────────────
 do $$ declare previas jsonb; p1 uuid; begin
   select p.id into p1 from plan_clases p, ctx where p.curso_id = ctx.curso and p.numero = 1;
   previas := guardar_calendario((select edicion from ctx),
@@ -211,7 +211,7 @@ do $$ declare previas jsonb; p1 uuid; begin
     raise exception 'FALLO: debía quedar 1 clase tras reemplazar el calendario'; end if;
 end $$;
 
--- Detección de calendario desactualizado: con la versión correcta guarda; con una vieja, no.
+-- [REQ-CAL-002] Detección de calendario desactualizado: con la versión correcta guarda; con una vieja, no.
 do $$ declare v text; p1 uuid; filas jsonb; begin
   select p.id into p1 from plan_clases p, ctx where p.curso_id = ctx.curso and p.numero = 1;
   filas := jsonb_build_array(jsonb_build_object('plan_clase_id', p1, 'fecha', hoy_ar() - 20, 'estado', 'programada'));
@@ -230,7 +230,7 @@ do $$ declare v text; p1 uuid; filas jsonb; begin
   perform guardar_calendario((select edicion from ctx), filas);
 end $$;
 
--- Horarios de una misma edición: no pueden pisarse el mismo día; los contiguos sí.
+-- [REQ-CAL-003] Horarios de una misma edición: no pueden pisarse el mismo día; los contiguos sí.
 insert into horarios_curso (edicion_id, dia_semana, hora_inicio, hora_fin) select edicion, 1, '18:00', '20:00' from ctx;
 insert into horarios_curso (edicion_id, dia_semana, hora_inicio, hora_fin) select edicion, 1, '20:00', '21:00' from ctx;   -- contiguo: ok
 insert into horarios_curso (edicion_id, dia_semana, hora_inicio, hora_fin) select edicion, 2, '18:00', '20:00' from ctx;   -- otro día: ok
@@ -241,7 +241,7 @@ do $$ begin
   exception when others then if sqlerrm not like '%horarios superpuestos%' then raise; end if; end;
 end $$;
 
--- Aviso pendiente (RF-38): se marca al suspender/reprogramar, se conserva si no hay cambios y se limpia al volver a programada.
+-- [REQ-CAL-004] Aviso pendiente (RF-38): se marca al suspender/reprogramar, se conserva si no hay cambios y se limpia al volver a programada.
 do $$ declare p1 uuid; e uuid; function_ok boolean; begin
   select ctx.edicion into e from ctx;
   select p.id into p1 from plan_clases p, ctx where p.curso_id = ctx.curso and p.numero = 1;
@@ -271,6 +271,41 @@ do $$ begin
     raise exception 'FALLO: se asignó a un alumno como profesor';
   exception when others then if sqlerrm not like '%no es un profesor%' then raise; end if; end;
 end $$;
+
+-- ── 10. Aulas del sitio (RF-60): el visitante ve solo la ficha pública de las aulas activas y visibles ──
+-- Dos aulas de prueba con ficha visible: una activa y otra dada de baja (sin ediciones, así se puede dar de baja).
+insert into aulas (nombre, capacidad) values ('Aula de prueba visible', 7), ('Aula de prueba de baja', 7);
+do $$ declare v uuid := (select id from aulas where nombre = 'Aula de prueba visible');
+                     b uuid := (select id from aulas where nombre = 'Aula de prueba de baja');
+begin
+  insert into cms_aulas (aula_id, descripcion, visible) values (v, 'Visible', true), (b, 'De baja', true);
+  insert into cms_aula_fotos (aula_id, imagen_url, alt) values (v, '/images/about.jpg', 'Foto'), (b, '/images/about.jpg', 'Foto');
+  update aulas set activa = false where id = b;
+  -- La foto sin texto alternativo no se guarda.
+  begin
+    insert into cms_aula_fotos (aula_id, imagen_url, alt) values (v, '/images/about.jpg', '  ');
+    raise exception 'FALLO: se guardó una foto de aula sin texto alternativo';
+  exception when check_violation then null; end;
+end $$;
+select set_config('app.user_id', '', true);
+set local role anon;
+do $$ declare n int; begin
+  select count(*) into n from aulas_publicas where nombre like 'Aula de prueba%';
+  if n <> 1 then raise exception 'FALLO: anon ve % aulas de prueba (esperaba solo la activa y visible)', n; end if;
+  select count(*) into n from aula_fotos_publicas f join aulas_publicas a on a.id = f.aula_id where a.nombre like 'Aula de prueba%';
+  if n <> 1 then raise exception 'FALLO: anon ve % fotos de aulas de prueba (esperaba 1)', n; end if;
+  -- La capacidad y el uso interno no son públicos: ni la tabla de aulas ni las fichas se leen directo.
+  begin perform 1 from aulas limit 1; raise exception 'FALLO: anon pudo leer aulas'; exception when insufficient_privilege then null; end;
+  begin perform 1 from cms_aulas limit 1; raise exception 'FALLO: anon pudo leer cms_aulas'; exception when insufficient_privilege then null; end;
+  begin perform 1 from cms_aula_fotos limit 1; raise exception 'FALLO: anon pudo leer cms_aula_fotos'; exception when insufficient_privilege then null; end;
+  if has_table_privilege('anon', 'aulas_publicas', 'insert') or has_table_privilege('anon', 'cms_aulas', 'select') then
+    raise exception 'FALLO: anon tiene permisos de más sobre las aulas del sitio';
+  end if;
+  if exists (select 1 from information_schema.columns where table_name = 'aulas_publicas' and column_name = 'capacidad') then
+    raise exception 'FALLO: aulas_publicas expone la capacidad';
+  end if;
+end $$;
+reset role;
 
 \echo 'Reglas de negocio: OK'
 rollback;

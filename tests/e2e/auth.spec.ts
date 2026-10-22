@@ -33,7 +33,7 @@ async function invitar(project: string) {
 const usadoEn = async (token: string) =>
   (await sql<{ usado_en: string | null }[]>`select usado_en from auth.tokens where token_hash = ${createHash('sha256').update(token).digest('hex')}`)[0]?.usado_en
 
-test('invitación: el link no se consume al abrirlo y la sesión de activación no entra al campus', async ({ page }, info) => {
+test('[REQ-ACC-004] invitación: el link no se consume al abrirlo y la sesión de activación no entra al campus', async ({ page }, info) => {
   const { token } = await invitar(info.project.name)
 
   await page.goto(`/auth/confirm?token=${token}&type=invite`)
@@ -50,7 +50,7 @@ test('invitación: el link no se consume al abrirlo y la sesión de activación 
   await expect(page).toHaveURL(/\/login/)
 })
 
-test('invitación completa: define la contraseña, entra a su sección y el link no se reutiliza', async ({ page }, info) => {
+test('[REQ-ACC-005] invitación completa: define la contraseña, entra a su sección y el link no se reutiliza', async ({ page }, info) => {
   const { token } = await invitar(info.project.name)
   await page.goto(`/auth/confirm?token=${token}&type=invite`)
   await page.getByRole('button', { name: 'Continuar' }).click()
@@ -73,7 +73,7 @@ test('invitación completa: define la contraseña, entra a su sección y el link
   await expect(page.getByRole('heading', { name: 'El link venció' })).toBeVisible()
 })
 
-test('logout: la cookie anterior deja de valer', async ({ page, context }, info) => {
+test('[REQ-ACC-006] logout: la cookie anterior deja de valer', async ({ page, context }, info) => {
   test.skip(info.project.name !== 'desktop', 'El botón de salir está en el menú lateral (solo escritorio)')
   const { token } = await invitar(info.project.name)
   await page.goto(`/auth/confirm?token=${token}&type=invite`)
@@ -95,7 +95,7 @@ test('logout: la cookie anterior deja de valer', async ({ page, context }, info)
   await expect(page).toHaveURL(/\/login/)
 })
 
-test('login con contraseña incorrecta muestra un error genérico', async ({ page }) => {
+test('[REQ-ACC-007] login con contraseña incorrecta muestra un error genérico', async ({ page }) => {
   await page.goto('/login')
   await page.getByLabel('Email').fill('no-existe@example.test')
   await page.getByLabel('Contraseña', { exact: true }).fill('Incorrecta-123')

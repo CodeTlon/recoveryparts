@@ -43,6 +43,11 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 ## Sin hacer de la auditoría
 `ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP y los PDF ya van por streaming.
 
+## Abiertos tras la sesión 2026-10-21 (aulas)
+- **Los permisos por defecto de `anon` vuelven en cada migración.** `scripts/migrate.mjs` corre `db/bootstrap.sql` siempre, y ese archivo hace `alter default privileges … grant all on tables to anon`, que deshace el `revoke` por defecto de la 0028. Toda tabla o vista creada después de la 0028 queda con todos los permisos para `anon`; hoy no se filtra nada porque sin política para `anon` RLS devuelve 0 filas, pero la protección queda en una sola capa. La 0030 lo revoca a mano en sus objetos. Arreglo de fondo: que el bootstrap no vuelva a dar permisos por defecto a `anon` (o que la 0028 se reaplique al final).
+- **Tope de 25 MB para el video general de «Aulas»** (el de subida del sitio, después de comprimir): un recorrido largo puede no entrar. El campo pide 1–2 minutos.
+- **Las anclas del índice de «Aulas» salen del nombre del aula**: si se renombra en Campus › Aulas, cambian.
+
 ## Abiertos tras la sesión 2026-10-13
 - **RF-39 figura 🟢 y no está en el código**: al finalizar una edición no se envía ningún mensaje recomendando el siguiente nivel. Quedó fuera a propósito; falta decidir si se implementa o se corrige el estado en la spec.
 - **Sesión cerrada por cambio de contraseña → «Tu cuenta no está activa»**: la otra sesión cae en `/login?error=cuenta`, cuyo mensaje habla de cuenta inactiva. Pasa igual al recuperar la contraseña por mail; convendría un mensaje propio («Tu sesión venció»).
