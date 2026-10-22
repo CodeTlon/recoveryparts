@@ -21,7 +21,8 @@
     "seed:demo-cliente:purge": "ENV_FILE=.env.production tsx scripts/purgar-demo.mts --purgar-demo",
     "test:unit": "tsx --test tests/unit/*.test.ts",
     "test:e2e": "playwright test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "spec:lint": "node scripts/spec-lint.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.0",
