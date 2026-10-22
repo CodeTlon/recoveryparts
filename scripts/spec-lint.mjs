@@ -7,6 +7,9 @@ import { join, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+// Normaliza CRLF: en Windows git entrega los archivos con \r\n y los parsers por línea dejaban de ver los REQ.
+const readText = (p) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
+
 export const VERIFY_TYPES = ['e2e', 'unit', 'contract', 'eval', 'manual'];
 export const CONFIDENCE = ['confirmado', 'inferido', 'gap'];
 export const MAX_SPEC_LINES = 150;
@@ -124,11 +127,11 @@ export function lintTree(root, opts = {}) {
   }
 
   const specIds = new Map();
-  const manual = existsSync(join(root, 'MANUAL-PRUEBAS.md')) ? readFileSync(join(root, 'MANUAL-PRUEBAS.md'), 'utf8') : '';
+  const manual = existsSync(join(root, 'MANUAL-PRUEBAS.md')) ? readText(join(root, 'MANUAL-PRUEBAS.md')) : '';
   const specInfos = [];
 
   const lintFile = (file, kind) => {
-    const text = readFileSync(file, 'utf8');
+    const text = readText(file);
     const lineCount = text.split('\n').length;
     const max = kind === 'delta' ? MAX_DELTA_LINES : MAX_SPEC_LINES;
     if (lineCount > max) push(file, 0, 'error', `${lineCount} líneas, tope ${max} (partir la capacidad)`);
@@ -157,7 +160,7 @@ export function lintTree(root, opts = {}) {
           const p = join(root, refFile);
           if (relative(root, p).startsWith('..')) push(file, req.line, 'error', `${req.id}: ruta de test fuera del workspace ("${refFile}")`);
           else if (!existsSync(p)) push(file, req.line, soft, `${req.id}: el test "${refFile}" no existe`);
-          else if (!readFileSync(p, 'utf8').includes(req.id)) push(file, req.line, soft, `${req.id}: "${refFile}" no referencia el ID (tag del test)`);
+          else if (!readText(p).includes(req.id)) push(file, req.line, soft, `${req.id}: "${refFile}" no referencia el ID (tag del test)`);
         }
       }
     }
@@ -188,7 +191,7 @@ export function lintTree(root, opts = {}) {
 function readProfile(root) {
   const p = join(root, 'specs', 'README.md');
   if (!existsSync(p)) return null;
-  const m = parseFrontmatter(readFileSync(p, 'utf8')).meta.perfil;
+  const m = parseFrontmatter(readText(p)).meta.perfil;
   return m || null;
 }
 
