@@ -8,9 +8,9 @@ Método: SDD CodeTlon (`sdd: v1`), retrofit mínimo sobre un proyecto en producc
 
 | Capacidad | Archivo | REQ | Estado |
 |-----------|---------|-----|--------|
-| INS inscripciones y estados | `inscripciones/spec.md` | 6 | semilla (1 gap) |
+| INS inscripciones y estados | `inscripciones/spec.md` | 6 | semilla (1 gap, RF-14 en OPEN_QUESTIONS) |
 | CAL calendario y avisos | `calendario/spec.md` | 5 | semilla |
-| ACC acceso, roles e invitaciones | `acceso/spec.md` | 9 | semilla |
+| ACC acceso, roles e invitaciones | `acceso/spec.md` | 10 | semilla |
 
 ## Cambios abiertos
 Ver `changes/`. Cerrados: `_archive/`.

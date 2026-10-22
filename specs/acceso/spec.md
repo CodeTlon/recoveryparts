@@ -57,8 +57,14 @@ El sistema DEBE cortar al instante la sesión de un alumno cuando el admin lo de
 - verify: e2e tests/e2e/campus.spec.ts
 - confianza: confirmado
 
-### REQ-ACC-009 [must] Alta de usuarios solo por el admin
-El sistema DEBE permitir crear usuarios solo al admin, por invitación; NO DEBE existir registro público.
+### REQ-ACC-009 [must] Alta de usuarios desde el formulario del admin
+El sistema DEBE permitir al admin crear un usuario desde el formulario de Usuarios, que queda invitado.
 - Escenario: Dado el admin en Usuarios, Cuando completa el formulario de alta, Entonces el usuario queda creado con su invitación.
 - verify: e2e tests/e2e/campus.spec.ts
+- confianza: confirmado
+
+### REQ-ACC-010 [must] Sin registro público
+El sistema NO DEBE ofrecer registro público: el perfil y su rol solo se crean para usuarios invitados (`AGENTS.md › Seguridad`, punto 3).
+- Escenario: Dado un visitante sin cuenta, Cuando recorre el sitio y `/login`, Entonces no encuentra ninguna ruta ni formulario de alta propia.
+- verify: manual MANUAL-PRUEBAS.md#REQ-ACC-010
 - confianza: inferido
