@@ -14,7 +14,7 @@ async function entrarComo(context: BrowserContext, baseURL: string | undefined, 
   await context.addCookies([{ name: 'rp_session', value: cookieDeSesion(userId), url: baseURL! }])
 }
 
-test('cada rol entra solo a su sección', async ({ browser, baseURL }) => {
+test('[REQ-ACC-001] cada rol entra solo a su sección', async ({ browser, baseURL }) => {
   const casos: [string, string, string, RegExp][] = [
     ['alumno', e.alumno, '/campus/admin', /\/campus\/alumno/],
     ['profesor', e.profesor, '/campus/admin', /\/campus\/profesor/],
@@ -30,7 +30,7 @@ test('cada rol entra solo a su sección', async ({ browser, baseURL }) => {
   }
 })
 
-test('el alumno ve su curso y no el de otra persona', async ({ browser, baseURL }) => {
+test('[REQ-ACC-002] el alumno ve su curso y no el de otra persona', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.alumno)
   const page = await ctx.newPage()
   await page.goto('/campus/alumno')
@@ -42,7 +42,7 @@ test('el alumno ve su curso y no el de otra persona', async ({ browser, baseURL 
   await ctx.close()
 })
 
-test('el profesor ve solo los cursos que dicta', async ({ browser, baseURL }) => {
+test('[REQ-ACC-003] el profesor ve solo los cursos que dicta', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.profesor)
   const page = await ctx.newPage()
   await page.goto('/campus/profesor')
@@ -53,7 +53,7 @@ test('el profesor ve solo los cursos que dicta', async ({ browser, baseURL }) =>
   await ctx.close()
 })
 
-test('el admin guarda el calendario sin avisar: la clase queda con aviso pendiente y el banner lo ofrece', async ({ browser, baseURL }) => {
+test('[REQ-CAL-005] el admin guarda el calendario sin avisar: la clase queda con aviso pendiente y el banner lo ofrece', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } }); await entrarComo(ctx, baseURL, e.admin)
   const page = await ctx.newPage()
   await page.goto(`/campus/admin/cursos/${e.curso}/ediciones/${e.edicion}?tab=calendario`)
@@ -67,7 +67,7 @@ test('el admin guarda el calendario sin avisar: la clase queda con aviso pendien
   await ctx.close()
 })
 
-test('el admin crea un usuario desde el formulario', async ({ browser, baseURL }) => {
+test('[REQ-ACC-009] el admin crea un usuario desde el formulario', async ({ browser, baseURL }) => {
   const email = `e2e-nuevo-${e.sufijo}@example.test`
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } }); await entrarComo(ctx, baseURL, e.admin)
   const page = await ctx.newPage()
@@ -88,7 +88,7 @@ test('el admin crea un usuario desde el formulario', async ({ browser, baseURL }
   }
 })
 
-test('el admin deshabilita a un alumno y su sesión se corta al instante', async ({ browser, baseURL }) => {
+test('[REQ-ACC-008] el admin deshabilita a un alumno y su sesión se corta al instante', async ({ browser, baseURL }) => {
   const ctxAlumno = await browser.newContext(); await entrarComo(ctxAlumno, baseURL, e.alumnoAjeno)
   const pageAlumno = await ctxAlumno.newPage()
   await pageAlumno.goto('/campus/alumno')

@@ -24,6 +24,8 @@ jobs:
       - run: npm ci
       - run: npm run type-check
       - run: npm run test:unit
+      # SDD: formato de specs y trazabilidad REQ -> test (perfil Retrofit; ver specs/README.md).
+      - run: npm run spec:lint
       # Solo errores bloquean; los avisos (any, etc.) son deuda conocida.
       - run: npm run lint
       # El build no necesita base de datos: sin DATABASE_URL compila y muestra vacíos.
