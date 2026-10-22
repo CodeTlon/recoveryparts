@@ -53,3 +53,4 @@ Node 22 (Dockerfile y CI). Versiones de la flota (Next 16.4.2, React 19.3.1, Tai
 - Al terminar: `/cerrar` (type-check + build, actualiza `.ai/context/`, spec y changelog, commit). No hace push ni PR sin pedido explícito.
 - Un 🟡 de la spec **se pregunta antes de implementar**; al cerrarlo pasa a 🟢/🔴 y se registra en `.ai/context/DECISIONS.md`.
 - Si editás código sin actualizar `.ai/context/` en el mismo cambio, el contexto se desincroniza (ver `KNOWN_ISSUES.md`).
+- **SDD (retrofit, desde 2026-10-21):** `specs/` tiene el contrato verificable de inscripciones (INS), calendario (CAL) y acceso (ACC); `specs/README.md` explica el método. Un `feat` o cambio de comportamiento abre un delta con `/spec`; bugfix, contenido y deps no llevan spec. `npm run spec:lint` corre en la CI. Los tests llevan `[REQ-XXX-NNN]` en el nombre. El detalle funcional sigue en `docs/ESPECIFICACION-ACADEMIA.md`.
