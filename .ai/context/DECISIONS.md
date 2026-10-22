@@ -4,6 +4,8 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-10-22 | SDD en modo retrofit (`specs/`, perfil Retrofit): 3 capacidades semilla (inscripciones, calendario, acceso) con REQ verificables; el resto del negocio sigue en `docs/ESPECIFICACION-ACADEMIA.md` | Proyecto en producción: una spec global retroactiva diverge del código; se especifica lo que cuesta caro si se rompe y se suma por `/cambio` |
+| 2026-10-22 | Los tests llevan `[REQ-XXX-NNN]` en el nombre (o en un comentario en SQL) y `spec:lint` corre en la CI | Trazabilidad REQ → test comprobada por el validador, no por convención |
 | 2026-10-21 | Sección pública «Aulas» (RF-60) con las aulas operativas de Campus › Aulas; la ficha pública (descripción, destacados, fotos, video, visibilidad) se edita en Campus › Sitio web | Las aulas son un diferencial; una lista aparte se desincronizaría y la parte pública es contenido del sitio |
 | 2026-10-21 | No se muestra la capacidad ni los cursos de cada aula; una sola página con índice, sin páginas por aula | Decisión del cliente; los cursos cambian con cada edición |
 | 2026-10-21 | La ficha pública va en tablas propias del CMS y el visitante lee vistas filtradas, nunca `aulas` | No abrir al visitante la tabla operativa ni exponer la capacidad |

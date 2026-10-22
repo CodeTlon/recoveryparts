@@ -1,3 +1,5 @@
+**Actualización 2026-10-22 (SDD y Aulas en producción):** `dev`, `test` y `main` quedaron iguales con el PR #24 (CI verde, incluido Firefox/Safari): SDD retrofit (`specs/` con INS, CAL y ACC, 21 REQ; `scripts/spec-lint.mjs`; `npm run spec:lint` en la CI; `MANUAL-PRUEBAS.md`) y la sección pública «Aulas» (RF-60, migración que corre sola al arrancar). **Sin verificar:** el deploy de `main` en Coolify (que el sitio responda y la migración de Aulas haya corrido). Pendiente: REQ-INS-006 (gap, ver `OPEN_QUESTIONS.md` RF-14) y las próximas semillas de `specs/README.md` (encuestas anónimas, profesor válido, aulas).
+
 # CURRENT_STATE — Recovery Parts
 
 **Actualización 2026-10-21 (sección «Aulas»):** la rama `feat/aulas-sitio` (desde `dev`, **sin mergear ni pushear**) suma la sección pública «Aulas» (RF-60): página `/aulas`, pestaña «Aulas» en Campus › Sitio web, link en el menú, en «Nosotros» y en el sitemap. Migración **0030** (`db/migrations/0030_aulas_sitio.sql`). Verificada en local por HTTP, SQL y Chrome real. Las fotos de prueba del seed son los flyers viejos de `public/images`: en la demo las tiene que cargar el admin con fotos reales.
