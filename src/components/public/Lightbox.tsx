@@ -41,10 +41,11 @@ export default function Galeria({ fotos, filtros = true, inicial = 'todas', vaci
       </div>}
       {/* Casillas de proporción fija (4:3): no se guardan las medidas de cada foto y, con tamaños supuestos, la página
           saltaba al cargar cada imagen. El visor ampliado muestra la foto completa. */}
+      {/* Las 3 primeras (la primera fila) se cargan con prioridad: son el LCP de la página. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {lista.map((f, i) => (
           <button key={f.id} type="button" onClick={() => setIdx(i)} className="group relative block aspect-4/3 w-full overflow-hidden rounded-sm border border-outline-variant">
-            <Image src={f.imagen_url} alt={f.alt} fill loading="lazy" sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={f.imagen_url} alt={f.alt} fill {...(i < 3 ? { priority: true } : { loading: 'lazy' as const })} sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           </button>
         ))}
       </div>
