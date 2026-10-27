@@ -36,8 +36,7 @@ export default async function Aulas() {
             const activos = a.ediciones.filter((e) => e.activo && e.cursos?.activo)
               .map((e) => ({ id: e.id, cupo: e.cupo, nombre: `${e.cursos!.nombre} · ${etiquetaEdicion(e.fecha_inicio)}` }))
             return (
-              <Reveal key={a.id} y={8}>
-                <li className={`card p-4 transition-colors hover:border-outline ${a.activa ? '' : 'opacity-70'}`}>
+              <Reveal as="li" key={a.id} y={8} className={`card p-4 transition-colors hover:border-outline ${a.activa ? '' : 'opacity-70'}`}>
                   <div className="flex flex-wrap items-center gap-3">
                     <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface-container-high text-secondary"><DoorOpen size={20} /></span>
                     <div className="min-w-0 flex-1">
@@ -85,7 +84,6 @@ export default async function Aulas() {
                       {activos.map((c) => <li key={c.id} className="rounded-full border border-outline-variant px-2.5 py-0.5 text-xs text-on-surface-variant">{c.nombre} · cupo {c.cupo}</li>)}
                     </ul>
                   )}
-                </li>
               </Reveal>
             )
           })}
