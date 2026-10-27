@@ -143,7 +143,7 @@ test('regresión: Campus › Aulas lista las aulas cargadas', async ({ browser, 
   const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
   const page = await ctx.newPage()
   await page.goto('/campus/admin/aulas')
-  await expect(page.getByText(nombre)).toBeVisible()
+  await expect(page.getByText(nombre, { exact: true })).toBeVisible()
   await expect(page.getByText('Todavía no hay aulas cargadas.')).toHaveCount(0)
   await ctx.close()
   await e.sql.begin(async (tx) => { await tx`set local session_replication_role = replica`; await tx`delete from aulas where nombre = ${nombre}` })
