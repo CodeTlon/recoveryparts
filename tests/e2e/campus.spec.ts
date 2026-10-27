@@ -108,3 +108,43 @@ test('[REQ-ACC-008] el admin deshabilita a un alumno y su sesión se corta al in
   await expect(pageAlumno).toHaveURL(/\/login/)
   await ctxAlumno.close(); await ctxAdmin.close()
 })
+
+// Regresión (ERRORES.md, 2026-10-27): el proxy cortaba el cuerpo en 10 MB y todo PDF de más de 10 MB daba un 500.
+test('regresión: el profesor sube un PDF de 12 MB y uno de más de 25 MB recibe el aviso', async ({ browser, baseURL }) => {
+  test.setTimeout(90_000)
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } }); await entrarComo(ctx, baseURL, e.profesor)
+  const page = await ctx.newPage()
+  const pdf = (mb: number) => { const b = Buffer.alloc(Math.round(mb * 1048576), 48); b.write('%PDF-1.4\n'); return b }
+  const subir = async (titulo: string, mb: number) => {
+    await page.goto(`/campus/profesor/curso/${e.edicion}`)
+    const form = page.locator('form', { has: page.getByRole('button', { name: 'Subir PDF' }) })
+    await form.getByLabel('Título').fill(titulo)
+    await form.locator('input[type=file]').setInputFiles({ name: `${titulo}.pdf`, mimeType: 'application/pdf', buffer: pdf(mb) })
+    return form
+  }
+  const chico = await subir(`E2E 12MB ${e.sufijo}`, 12)
+  await chico.getByRole('button', { name: 'Subir PDF' }).click()
+  await expect(page.getByText(`E2E 12MB ${e.sufijo}`).first()).toBeVisible({ timeout: 30_000 })
+  // El navegador frena el envío de un archivo de más de 25 MB…
+  const grande = await subir(`E2E 26MB ${e.sufijo}`, 26)
+  expect(await grande.locator('input[type=file]').evaluate((i: HTMLInputElement) => i.validationMessage)).toContain('25 MB')
+  // …y si igual llega (sin la validación del navegador), el servidor contesta con el mensaje, no con un 500.
+  await grande.evaluate((f: HTMLFormElement) => { f.noValidate = true; (f.querySelector('input[type=file]') as HTMLInputElement).setCustomValidity(''); f.requestSubmit() })
+  await expect(grande.getByRole('alert')).toHaveText('El PDF supera los 25 MB.', { timeout: 30_000 })
+  await e.sql`delete from materiales where edicion_id = ${e.edicion}`
+  await ctx.close()
+})
+
+// Regresión (ERRORES.md, 2026-10-27): la consulta pedía aulas → cursos, que ya no existe (el aula está en la edición),
+// y la pantalla decía «Todavía no hay aulas cargadas» aunque hubiera aulas.
+test('regresión: Campus › Aulas lista las aulas cargadas', async ({ browser, baseURL }) => {
+  const nombre = `Aula E2E ${e.sufijo}`
+  await e.sql`insert into aulas (nombre, capacidad) values (${nombre}, 8)`
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/aulas')
+  await expect(page.getByText(nombre, { exact: true })).toBeVisible()
+  await expect(page.getByText('Todavía no hay aulas cargadas.')).toHaveCount(0)
+  await ctx.close()
+  await e.sql.begin(async (tx) => { await tx`set local session_replication_role = replica`; await tx`delete from aulas where nombre = ${nombre}` })
+})

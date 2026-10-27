@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: 'Cursos y talleres presenciales de diseño y tecnología en Córdoba.',
   referrer: 'no-referrer',
   metadataBase: new URL(siteUrl()),
-  alternates: { canonical: '/' },
+  // Sin canonical acá: lo heredaba toda página que no declara el suyo (/login, /activar…) y apuntaba a la portada.
   openGraph: { type: 'website', locale: 'es_AR', siteName: 'Recovery Parts', title: 'Recovery Parts — Academia de cursos técnicos', description: 'Cursos y talleres presenciales de diseño y tecnología en Córdoba.' },
   twitter: { card: 'summary_large_image' },
 }

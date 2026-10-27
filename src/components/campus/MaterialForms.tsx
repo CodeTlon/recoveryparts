@@ -1,6 +1,7 @@
 import { ActionForm, Check, Field, FileField, Select } from '@/components/campus/ui'
 import { agregarLink, subirPdf } from '@/app/campus/profesor/actions'
 import { TIPO_CLASE, type ArbolClase, type ArbolModulo } from '@/components/campus/ArbolEstructura'
+import { MAX_SUBIDA } from '@/lib/media'
 
 // Formularios para cargar material (RF-05, RF-36): PDF o link, asociado a una clase o «general».
 // Con `edicionId` (profesor) el material es de esa edición y se puede liberar en el momento; sin él (admin) es
@@ -27,7 +28,7 @@ export default function MaterialForms({ cursoId, edicionId, modulos, clases }: {
         <ActionForm action={subirPdf} submit="Subir PDF">
           {comunes}
           <Field label="Título" name="titulo" placeholder="Ej: Apunte de la clase 1" required />
-          <FileField label="Archivo (PDF, máx. 25 MB)" name="archivo" accept="application/pdf" required />
+          <FileField label="Archivo (PDF, máx. 25 MB)" name="archivo" accept="application/pdf" required maxBytes={MAX_SUBIDA} />
           {clase}
           {liberar}
         </ActionForm>

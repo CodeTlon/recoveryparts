@@ -198,3 +198,14 @@
     }
   }
 }
+
+/* Reveal (components/ui/Reveal.tsx): solo se oculta lo que el JS marcó como fuera de pantalla al cargar. */
+.reveal[data-reveal] { transition: opacity 0.5s ease-out var(--reveal-delay, 0s), translate 0.5s ease-out var(--reveal-delay, 0s); }
+.reveal[data-reveal='oculto'] { opacity: 0; translate: 0 var(--reveal-y, 16px); }
+
+/* BlurText (components/ui/BlurText.tsx): cada palabra se enfoca y sube; el retraso va en línea por palabra. */
+@keyframes blur-text-entrada { from { filter: blur(10px); translate: 0 14px; } }
+@media (prefers-reduced-motion: no-preference) {
+  .blur-text { animation: blur-text-entrada 0.6s ease-out both; }
+}
+

@@ -54,8 +54,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
           {users.map((u) => {
             const [tone, label] = ESTADO[u.estado_cuenta as keyof typeof ESTADO]
             return (
-              <Reveal key={u.id} y={8}>
-              <li className="card p-4 transition-colors hover:border-outline">
+              <Reveal as="li" key={u.id} y={8} className="card p-4 transition-colors hover:border-outline">
                 <div className="flex flex-wrap items-center gap-3">
                   <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-linear-to-br from-brand-light to-accent text-sm font-bold text-white">{`${u.nombre?.[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()}</span>
                   <div className="min-w-0 flex-1">
@@ -101,7 +100,6 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                     )}
                   </div>
                 </div>
-              </li>
               </Reveal>
             )
           })}

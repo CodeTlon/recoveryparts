@@ -53,10 +53,10 @@ export function HorariosEditor({ name, inicial, onChange }: { name: string; inic
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay días cargados.</p>}
       {rows.map((r, i) => (
         <div key={i} className="flex flex-wrap items-end gap-2">
-          <div className="min-w-32 flex-1"><label className="label">Día</label>
-            <select className="input" value={r.dia} onChange={(e) => upd(i, { dia: Number(e.target.value) })}>{DIAS.map((d, n) => <option key={d} value={n}>{d}</option>)}</select></div>
-          <div><label className="label">Desde</label><input type="time" required className="input" value={r.ini} onChange={(e) => upd(i, { ini: e.target.value })} /></div>
-          <div><label className="label">Hasta</label><input type="time" required className="input" value={r.fin} onChange={(e) => upd(i, { fin: e.target.value })} /></div>
+          <label className="min-w-32 flex-1"><span className="label">Día</span>
+            <select className="input" value={r.dia} onChange={(e) => upd(i, { dia: Number(e.target.value) })}>{DIAS.map((d, n) => <option key={d} value={n}>{d}</option>)}</select></label>
+          <label className="block"><span className="label">Desde</span><input type="time" required className="input" value={r.ini} onChange={(e) => upd(i, { ini: e.target.value })} /></label>
+          <label className="block"><span className="label">Hasta</span><input type="time" required className="input" value={r.fin} onChange={(e) => upd(i, { fin: e.target.value })} /></label>
           <RemoveButton onClick={() => set(rows.filter((_, j) => j !== i))} label="Quitar horario" />
         </div>
       ))}
@@ -85,15 +85,15 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
       {rows.map((r, i) => (
         <div key={i} className="rounded-sm border border-outline-variant p-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div><label className="label">Ítem</label><input className="input" placeholder="Ej: Multímetro" value={r.nombre} onChange={(e) => upd(i, { nombre: e.target.value })} /></div>
-            <div><label className="label">Tipo</label>
+            <label className="block"><span className="label">Ítem</span><input className="input" placeholder="Ej: Multímetro" value={r.nombre} onChange={(e) => upd(i, { nombre: e.target.value })} /></label>
+            <label className="block"><span className="label">Tipo</span>
               <select className="input" value={r.requerido ? 'necesario' : 'recomendado'} onChange={(e) => upd(i, { requerido: e.target.value === 'necesario' })}>
                 <option value="necesario">Necesario para cursar</option><option value="recomendado">Recomendado (opcional)</option>
-              </select></div>
-            <div><label className="label">Descripción</label><input className="input" placeholder="Ej: Para medir tensión y continuidad" value={r.descripcion} onChange={(e) => upd(i, { descripcion: e.target.value })} /></div>
-            <div><label className="label">Precio de referencia (ARS)</label><input type="number" min={0} className="input" placeholder="Ej: 15000" value={r.precio} onChange={(e) => upd(i, { precio: e.target.value })} /></div>
-            <div className="sm:col-span-2"><label className="label">Link de compra (opcional)</label>
-              <input type="url" className="input" placeholder="https://www.mundopartsrepuestos.com/…" value={r.link} onChange={(e) => upd(i, { link: e.target.value })} />
+              </select></label>
+            <label className="block"><span className="label">Descripción</span><input className="input" placeholder="Ej: Para medir tensión y continuidad" value={r.descripcion} onChange={(e) => upd(i, { descripcion: e.target.value })} /></label>
+            <label className="block"><span className="label">Precio de referencia (ARS)</span><input type="number" min={0} className="input" placeholder="Ej: 15000" value={r.precio} onChange={(e) => upd(i, { precio: e.target.value })} /></label>
+            <div className="sm:col-span-2"><span className="label">Link de compra (opcional)</span>
+              <input type="url" aria-label="Link de compra (opcional)" className="input" placeholder="https://www.mundopartsrepuestos.com/…" value={r.link} onChange={(e) => upd(i, { link: e.target.value })} />
               <button type="button" onClick={() => upd(i, { link: MUNDO_PARTS_URL })} className="mt-1 text-xs text-secondary hover:underline">Usar la tienda de Mundo Parts</button></div>
           </div>
           <div className="mt-3 flex justify-end"><RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar ítem" /></div>
@@ -429,12 +429,12 @@ export function DestacadosEditor({ inicial }: { inicial: { tipo: string; texto: 
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay destacados.</p>}
       {rows.map((r, i) => (
         <div key={r.key} className="flex flex-wrap items-end gap-2 rounded-sm border border-outline-variant p-3">
-          <div className="w-full sm:w-44"><label className="label">Tipo</label>
+          <label className="block w-full sm:w-44"><span className="label">Tipo</span>
             <select name={`destacado_tipo_${i}`} className="input" value={r.tipo} onChange={(e) => upd(i, { tipo: e.target.value })}>
               {TIPOS_DESTACADO.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select></div>
-          <div className="min-w-0 flex-1"><label className="label">Destacado</label>
-            <input name={`destacado_texto_${i}`} className="input" maxLength={120} placeholder="Ej: Mesas antiestáticas con lupa y luz LED" value={r.texto} onChange={(e) => upd(i, { texto: e.target.value })} /></div>
+            </select></label>
+          <label className="min-w-0 flex-1"><span className="label">Destacado</span>
+            <input name={`destacado_texto_${i}`} className="input" maxLength={120} placeholder="Ej: Mesas antiestáticas con lupa y luz LED" value={r.texto} onChange={(e) => upd(i, { texto: e.target.value })} /></label>
           <Mover i={i} total={rows.length} onMover={(d) => setRows(moverFila(rows, i, d))} />
           <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar destacado" />
         </div>
@@ -458,8 +458,8 @@ export function FotosEditor({ inicial }: { inicial: { imagen_url: string; alt: s
         <div key={r.key} className="grid gap-3 rounded-sm border border-outline-variant p-3 sm:grid-cols-2">
           {/* La key de la fila mantiene el estado del campo de imagen al reordenar. */}
           <MediaField tipo="imagen" label={`Foto ${i + 1}`} name={`foto_url_${i}`} defaultValue={r.imagen_url} />
-          <div className="sm:col-span-2"><label className="label">Texto alternativo (accesibilidad)</label>
-            <input name={`foto_alt_${i}`} className="input" maxLength={200} placeholder="Ej: Mesas de trabajo con lupas y estaciones de soldadura" value={r.alt} onChange={(e) => upd(i, { alt: e.target.value })} /></div>
+          <label className="block sm:col-span-2"><span className="label">Texto alternativo (accesibilidad)</span>
+            <input name={`foto_alt_${i}`} className="input" maxLength={200} placeholder="Ej: Mesas de trabajo con lupas y estaciones de soldadura" value={r.alt} onChange={(e) => upd(i, { alt: e.target.value })} /></label>
           <div className="flex justify-end gap-2 sm:col-span-2">
             <Mover i={i} total={rows.length} onMover={(d) => setRows(moverFila(rows, i, d))} />
             <RemoveButton onClick={() => setRows(rows.filter((_, j) => j !== i))} label="Quitar foto" />
