@@ -23,10 +23,15 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 - `npm audit` completo muestra `braces` (cadena de `eslint-config-next`): es de lint y no tiene parche; el gate es `npm audit --omit=dev` en 0.
 - Tailwind 4: sin clases pegadas a `${}` y sin utilidades propias llamadas `delay-`, `duration-`, etc.
 - `useRef` en React 19 exige valor inicial.
+- `proxy.ts` corre delante de las server actions: Next le limita el cuerpo a 10 MB (`proxyClientMaxBodySize`). Toda subida por server action necesita ese tope en `next.config.js`, no solo `serverActions.bodySizeLimit`.
+- `db/bootstrap.sql` corre en CADA arranque (Coolify migra al iniciar): nada de `grant` amplios ahí, se reaplican siempre.
+- `npm run db:migrate` no corre `db/seed.sql` (solo con `--seed`); el seed de pruebas crea sus aulas.
+- Los textos con `uppercase` de CSS salen en mayúsculas en `innerText` (Playwright): comparar sin distinguir mayúsculas.
 
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-27 | feature/dev2-qa-campus | v0.16.1 — QA de los 102 casos del campus (en `dev`: 100 OK, 2 fallas) y auditoría. Arregla subida de PDF > 10 MB, Campus › Aulas vacía, `anon` en el bootstrap, nodemailer, seed sin aulas, login de cuenta deshabilitada, `motion` fuera del sitio, ficha del curso en el celular, a11y y canonical. Informe en `docs/AUDITORIA-2026-10-27.md`. |
 | 2026-10-21 | feat/aulas-sitio | Sección pública «Aulas» (RF-60): `/aulas` con video general y fichas por aula (destacados con ícono, fotos, video), pestaña en Campus › Sitio web, link en menú/«Nosotros»/sitemap; migración 0030 (revoca a mano los permisos de anon: ver KNOWN_ISSUES). Sin mergear. |
 | 2026-10-21 | fix/auditoria-seguridad-logica | v0.16.0 — auditoría completa de seguridad, lógica, estilos/accesibilidad, SEO y rendimiento con sus correcciones (migraciones 0019-0029: RLS por conjuntos, anon mínimo, calendario atómico/versionado/avisos pendientes, locks de agenda; CSP con nonce, caché público, streaming, video en segundo plano, `.env.development` fuera del repo, E2E de campus por rol, job de navegadores). Mergeada a `dev`, `test` y `main` (PR #22) y desplegada en producción. Pendientes en KNOWN_ISSUES. |
 | 2026-10-16 | feature/dev2-estandar-2026 | v0.15.0 — estandar de versiones de la flota (Next 16, React 19, Tailwind 4, ESLint 10 nuevo, `proxy.ts`). 36 E2E verdes, audit de runtime en 0. |
