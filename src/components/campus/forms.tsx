@@ -79,10 +79,17 @@ export function SubmitButton({ children, className = 'btn-ghost px-3! py-2!' }: 
 }
 
 // Campo de archivo. Vive acá (cliente) porque Field recibe una función como hijo y una página de servidor no puede pasarla.
-export function FileField({ label, name, accept, required, hint }: { label: string; name: string; accept: string; required?: boolean; hint?: string }) {
+// `maxBytes`: un archivo más pesado se marca inválido al elegirlo y el formulario no se envía (el servidor lo vuelve
+// a validar; esto evita mandar decenas de MB para recibir un error).
+export function FileField({ label, name, accept, required, hint, maxBytes }: { label: string; name: string; accept: string; required?: boolean; hint?: string; maxBytes?: number }) {
+  const revisar = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.currentTarget.files?.[0]
+    e.currentTarget.setCustomValidity(maxBytes && f && f.size > maxBytes ? `El archivo supera los ${Math.round(maxBytes / 1048576)} MB.` : '')
+    e.currentTarget.reportValidity()
+  }
   return (
     <Field label={label} name={name} required={required} hint={hint}>
-      {(p) => <input {...p} name={name} type="file" accept={accept} required={required} className="input" />}
+      {(p) => <input {...p} name={name} type="file" accept={accept} required={required} onChange={maxBytes ? revisar : undefined} className="input" />}
     </Field>
   )
 }
