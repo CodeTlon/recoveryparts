@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { hrefSeguro } from '@/lib/validar'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -18,6 +19,8 @@ import { AREA_LABEL, type Area } from '@/lib/types'
 import { NOMBRE_SITIO } from '@/lib/seo'
 import { siteUrl } from '@/lib/env'
 import JsonLd from '@/components/seo/JsonLd'
+
+export const metadata: Metadata = { alternates: { canonical: '/' } }
 
 export const dynamic = 'force-dynamic'
 
@@ -151,11 +154,12 @@ export default async function Home() {
                 <p className="whitespace-pre-line text-lg text-on-surface-variant">{s.nosotros.texto}</p>
                 {conAulas && <Link href="/aulas" className="mt-6 inline-flex items-center gap-1 font-semibold text-secondary hover:underline">Conocé nuestras aulas <ArrowRight size={16} aria-hidden /></Link>}
               </div>
-              <dl className="grid grid-cols-3 gap-4 self-center text-center">
+              {/* Cada cifra es un grupo <div><dt><dd> (lo único que admite un <dl>); flex-col-reverse muestra el número arriba. */}
+              <Reveal className="self-center"><dl className="grid grid-cols-3 gap-4 text-center">
                 {([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const).map(([k, l]) => (
-                  s.stats[k] != null && <Reveal key={k}><div className="rounded-card border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><dd className="text-4xl font-bold text-accent md:text-5xl"><CountUp to={Number(s.stats[k])} /></dd><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt></div></Reveal>
+                  s.stats[k] != null && <div key={k} className="flex flex-col-reverse rounded-card border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt><dd className="text-4xl font-bold text-accent md:text-5xl"><CountUp to={Number(s.stats[k])} /></dd></div>
                 ))}
-              </dl>
+              </dl></Reveal>
             </div>
           </section>
         )}

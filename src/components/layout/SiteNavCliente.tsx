@@ -4,7 +4,6 @@ import { useEffect, useId, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { motion } from 'motion/react'
 import { Menu, X } from 'lucide-react'
 
 const LINKS = [
@@ -52,7 +51,7 @@ export default function SiteNavCliente({ conAulas = false }: { conAulas?: boolea
           {links.map((l) => (
             <Link key={l.href} href={l.href} aria-current={activo(l.href) ? 'page' : undefined} className={`relative py-2 ${activo(l.href) ? 'text-on-surface' : link}`}>
               {l.label}
-              {activo(l.href) && <motion.span layoutId="site-nav-activo" transition={{ type: 'spring', stiffness: 400, damping: 34 }} className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-accent" />}
+              {activo(l.href) && <span aria-hidden className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-accent" />}
             </Link>
           ))}
         </div>

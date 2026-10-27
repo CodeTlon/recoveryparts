@@ -94,8 +94,7 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
 
       <ol className="relative space-y-8 border-l border-outline-variant pl-6 md:pl-8">
         {bloques.map((b, idx) => (
-          <Reveal key={b.id} delay={Math.min(idx, 6) * 0.05}>
-          <li className="relative">
+          <Reveal as="li" key={b.id} delay={Math.min(idx, 6) * 0.05} className="relative">
             <span aria-hidden className={`absolute left-[-31px] top-1 h-3 w-3 rounded-full ring-4 ring-surface md:left-[-39px] ${b.clases.length ? 'bg-accent shadow-glow' : 'bg-outline-variant'}`} />
             {b.titulo && <h2 className="mb-3 text-lg font-semibold">Módulo {++nMod} · {b.titulo}</h2>}
             {!b.clases.length ? <p className="text-sm text-on-surface-variant">Próximamente.</p> : (
@@ -116,7 +115,6 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
                 })}
               </div>
             )}
-          </li>
           </Reveal>
         ))}
         {generales.length > 0 && (
