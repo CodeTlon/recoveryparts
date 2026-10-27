@@ -26,10 +26,13 @@ export async function login(_: AuthState, fd: FormData): Promise<AuthState> {
     registrar(kIp, 15 * 60_000); registrar(kEm, 15 * 60_000)
     return { error: 'Email o contraseña incorrectos.' } // mensaje genérico
   }
+  // Una cuenta deshabilitada no abre sesión: antes entraba, el proxy la rebotaba y la barra quedaba en /campus/<rol>
+  // mostrando el login. Recién acá se dice que no está activa (ya se validó la contraseña: no revela qué emails existen).
+  const { data: perfil } = await clienteAdmin().from('profiles').select('rol, estado_cuenta').eq('id', userId).maybeSingle()
+  if (!perfil || perfil.estado_cuenta !== 'activa') return { error: 'Tu cuenta no está activa. Contactá a la academia.' }
   await iniciarSesion(userId)
-  // Directo al panel de su rol (el middleware vuelve a validar rol y cuenta activa).
-  const { data: perfil } = await clienteAdmin().from('profiles').select('rol').eq('id', userId).maybeSingle()
-  redirect(perfil ? `/campus/${perfil.rol}` : '/login?error=cuenta')
+  // Directo al panel de su rol (el proxy vuelve a validar rol y cuenta activa).
+  redirect(`/campus/${perfil.rol}`)
 }
 
 export async function logout() {

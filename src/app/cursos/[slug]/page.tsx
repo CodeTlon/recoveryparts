@@ -113,7 +113,9 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <h2 className="mb-4 text-2xl font-semibold">Tu profesor</h2>
                 <div className="card flex flex-col gap-5 p-6 sm:flex-row">
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-outline-variant bg-surface-container-high">
-                    {c.profesor_foto && <Image src={c.profesor_foto} alt={c.profesor_nombre} fill sizes="96px" className="object-cover" />}
+                    {c.profesor_foto
+                      ? <Image src={c.profesor_foto} alt={c.profesor_nombre} fill sizes="96px" className="object-cover" />
+                      : <span aria-hidden className="grid h-full w-full place-items-center text-2xl font-bold text-on-surface-variant">{c.profesor_nombre.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}</span>}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold">{c.profesor_nombre}</h3>
@@ -176,7 +178,8 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
             )}
           </div>
 
-          <aside className="lg:col-span-4">
+          {/* En el celular el precio, las fechas y la consulta van primero (antes quedaban al final, después del kit). */}
+          <aside className="order-first lg:order-none lg:col-span-4">
             <div className="flex flex-col gap-6 lg:sticky lg:top-[100px]">
               <div className="card flex flex-col gap-5 bg-surface-container p-6 shadow-lg shadow-black/40">
                 <h2 className="text-2xl font-semibold">Inversión</h2>

@@ -55,8 +55,13 @@ alter table storage.objects enable row level security;
 create or replace function storage.foldername(name text) returns text[]
 language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
 
--- Como en Supabase: los roles de la API acceden a todo lo que se crea en public y RLS decide.
-alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
-alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+-- Como en Supabase: los roles de la API acceden a todo lo que se crea en public y RLS decide. `anon` NO recibe
+-- permisos por defecto sobre tablas ni secuencias (0028): este archivo corre en cada arranque y, si se los diera,
+-- toda tabla creada en una migración posterior quedaría con todos los permisos para `anon` (RLS como única capa).
+-- Lo que el visitante puede leer o escribir se otorga a mano, objeto por objeto, en la migración que lo crea.
+alter default privileges in schema public grant all on tables to authenticated, service_role;
+alter default privileges in schema public grant all on sequences to authenticated, service_role;
+alter default privileges in schema public revoke all on tables from anon;
+alter default privileges in schema public revoke all on sequences from anon;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;

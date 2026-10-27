@@ -3,7 +3,7 @@
 ## Vigente (2026-10-16)
 - `npm audit` completo conserva 5 altas de herramientas de desarrollo: `braces` <= 3.0.3 via `eslint-config-next` -> `fast-glob` -> `micromatch`. Sin version corregida publicada; no entra al runtime (`npm audit --omit=dev` = 0). El override `next.postcss` se retiro (Next 16.4.2 ya trae un `postcss` corregido).
 - ESLint se incorporo el 2026-10-16: 66 avisos, 0 errores. 58 son `@typescript-eslint/no-explicit-any` (el acceso a datos con `postgres.js` usa `any`), 2 `react-hooks/refs`, el resto reglas de React nuevas. Deuda; todavia no esta en el CI.
-- `npm run seed:dev` fallo en esta maquina (no se investigo); los E2E no dependen de el.
+- ~~`npm run seed:dev` fallo en esta maquina~~: resuelto el 2026-10-27. En una base nueva dejaba todo sin aula (las aulas base solo las carga `db/seed.sql`); ahora el seed las crea (`ERRORES.md`).
 
 Restricciones y riesgos a tener en cuenta (no son bugs para arreglar ya).
 
@@ -41,10 +41,13 @@ La CSP ahora es con nonce (`src/proxy.ts`): se verificó en Chromium contra el s
 Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las preguntas de una encuesta con respuestas. Un id estable por pregunta lo resolvería.
 
 ## Sin hacer de la auditoría
-`ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` de 26 MB sigue global (los PDFs lo necesitan). El ZIP y los PDF ya van por streaming.
+`ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` (30 MB desde el 2026-10-27, junto con `proxyClientMaxBodySize`) sigue global: los PDFs lo necesitan. Un archivo de más de 30 MB que esquive el aviso del navegador vuelve a dar 500. El ZIP y los PDF ya van por streaming.
+
+## Abiertos tras la QA del campus (2026-10-27)
+Detalle y propuestas en `docs/AUDITORIA-2026-10-27.md`. Resumen: confirmación de «mantener apretado» poco descubrible; un aula no se puede dar de baja si la usa una edición ya terminada (siguen `activo`); el «no encontrado» del campus responde HTTP 200; galería pública, CMS y el selector de ediciones de Encuestas sin límite; portada pesada en el celular (medir en producción); página del curso del profesor muy larga; sin promedio de las preguntas de puntaje; aviso de Turbopack por acceso dinámico al disco en `storage.ts`.
 
 ## Abiertos tras la sesión 2026-10-21 (aulas)
-- **Los permisos por defecto de `anon` vuelven en cada migración.** `scripts/migrate.mjs` corre `db/bootstrap.sql` siempre, y ese archivo hace `alter default privileges … grant all on tables to anon`, que deshace el `revoke` por defecto de la 0028. Toda tabla o vista creada después de la 0028 queda con todos los permisos para `anon`; hoy no se filtra nada porque sin política para `anon` RLS devuelve 0 filas, pero la protección queda en una sola capa. La 0030 lo revoca a mano en sus objetos. Arreglo de fondo: que el bootstrap no vuelva a dar permisos por defecto a `anon` (o que la 0028 se reaplique al final).
+- ~~**Los permisos por defecto de `anon` vuelven en cada migración.**~~ Resuelto el 2026-10-27: el bootstrap ya no se los da (`ERRORES.md`). `scripts/migrate.mjs` corre `db/bootstrap.sql` siempre, y ese archivo hace `alter default privileges … grant all on tables to anon`, que deshace el `revoke` por defecto de la 0028. Toda tabla o vista creada después de la 0028 queda con todos los permisos para `anon`; hoy no se filtra nada porque sin política para `anon` RLS devuelve 0 filas, pero la protección queda en una sola capa. La 0030 lo revoca a mano en sus objetos. Arreglo de fondo: que el bootstrap no vuelva a dar permisos por defecto a `anon` (o que la 0028 se reaplique al final).
 - **Tope de 25 MB para el video general de «Aulas»** (el de subida del sitio, después de comprimir): un recorrido largo puede no entrar. El campo pide 1–2 minutos.
 - **Las anclas del índice de «Aulas» salen del nombre del aula**: si se renombra en Campus › Aulas, cambian.
 

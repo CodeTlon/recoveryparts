@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, Phone, Mail, Clock } from 'lucide-react'
-import { getSettings, waLink } from '@/lib/data'
+import { getSettings, hayAulasVisibles, waLink } from '@/lib/data'
 import { WhatsAppIcon, InstagramIcon } from './SocialIcons'
 
 export default async function SiteFooter() {
-  const { contacto: c } = await getSettings()
+  const [{ contacto: c }, conAulas] = await Promise.all([getSettings(), hayAulasVisibles()])
   const wa = waLink(c.whatsapp)
   const ig = c.instagram?.replace('@', '')
   const item = 'flex items-start gap-2 text-on-surface-variant'
@@ -29,6 +29,7 @@ export default async function SiteFooter() {
         <div className="col-span-2 flex flex-col gap-3 md:col-span-3">
           <span className="mb-1 text-xs uppercase tracking-widest text-on-surface-variant">Navegación</span>
           <Link href="/cursos" className={lnk}>Cursos y talleres</Link>
+          {conAulas && <Link href="/aulas" className={lnk}>Aulas</Link>}{/* RF-60: igual que el menú, solo con aulas visibles */}
           <Link href="/galeria" className={lnk}>Galería</Link>
           <Link href="/preguntas-frecuentes" className={lnk}>Preguntas frecuentes</Link>
           <Link href="/contacto" className={lnk}>Contacto</Link>
