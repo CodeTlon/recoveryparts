@@ -30,7 +30,7 @@ export default async function Encuestas() {
         <ul className="max-w-3xl space-y-2">
           {pendientes.map((e) => { const c = curso(e.edicion_id); return (
             <li key={e.id}>
-              <Link href={`/campus/alumno/encuesta/${e.id}`} className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary">
+              <Link href={`/campus/alumno/encuesta/${e.id}`} className="card flex items-center gap-3 p-4 transition-colors hover:border-outline">
                 <ClipboardList size={20} className="shrink-0 text-primary" />
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{e.titulo}</span>

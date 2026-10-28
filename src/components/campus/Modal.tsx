@@ -21,8 +21,8 @@ export function ModalButton({ label, title, className = 'btn-ghost px-3! py-2!',
         className={`m-auto w-[calc(100%-2rem)] rounded-card border border-outline-variant bg-surface-container p-0 text-on-surface shadow-card-hover backdrop:bg-black/60 backdrop:backdrop-blur-xs ${wide ? 'max-w-3xl' : 'max-w-xl'}`}>
         <div className="max-h-[85vh] overflow-y-auto p-6">
           <div className="mb-5 flex items-start justify-between gap-4">
-            <h2 className="text-xl font-semibold text-primary">{title}</h2>
-            <button type="button" onClick={close} aria-label="Cerrar" className="text-on-surface-variant hover:text-secondary"><X size={20} aria-hidden /></button>
+            <h2 className="display text-xl [font-stretch:105%]">{title}</h2>
+            <button type="button" onClick={close} aria-label="Cerrar" className="text-on-surface-variant hover:text-accent"><X size={20} aria-hidden /></button>
           </div>
           <CloseCtx.Provider value={close}>{children}</CloseCtx.Provider>
         </div>

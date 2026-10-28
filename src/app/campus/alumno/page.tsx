@@ -6,7 +6,6 @@ import { requireRole, fechaAR } from '@/lib/auth'
 import { etiquetaEdicion, hoyAR } from '@/lib/fechas'
 import { encuestasPendientesDe } from '@/lib/encuestas'
 import { PageHead, Empty, EstadoBadge } from '@/components/campus/ui'
-import SpotlightCard from '@/components/ui/SpotlightCard'
 import Reveal from '@/components/ui/Reveal'
 
 type Insc = { id: string; edicion_id: string; estado: 'activo' | 'desertor' | 'finalizado'; motivo_desercion: string | null; fecha_desercion: string | null; n_clase_desercion: number | null; acceso_hasta: string | null; ediciones: { curso_id: string; fecha_inicio: string | null } | null }
@@ -49,7 +48,7 @@ export default async function AlumnoHome() {
       <PageHead title={`Hola, ${perfil.nombre}`} sub="Tus cursos y el material liberado." />
 
       {pendientes.length > 0 && (
-        <Link href="/campus/alumno/encuestas" className="card mb-6 flex flex-wrap items-center gap-3 border-accent/40 p-4 text-sm transition-colors hover:border-secondary">
+        <Link href="/campus/alumno/encuestas" className="card mb-6 flex flex-wrap items-center gap-3 border-accent/40 p-4 text-sm transition-colors hover:border-outline">
           <ClipboardList size={18} className="text-accent" />
           <span className="min-w-0 flex-1">Tenés <strong>{pendientes.length}</strong> encuesta{pendientes.length === 1 ? '' : 's'} para responder.</span>
           <span className="inline-flex items-center gap-1 font-semibold text-secondary">Ver encuestas <ArrowRight size={16} /></span>
@@ -64,8 +63,7 @@ export default async function AlumnoHome() {
           const prox = proximas.find((p) => p.edicion_id === i.edicion_id)?.clase
           return (
             <Reveal key={i.id} delay={idx * 0.07} className="h-full">
-            <SpotlightCard className="h-full">
-            <article className="flex h-full flex-col p-6">
+            <article className="card flex h-full flex-col p-6 shadow-card transition-[border-color,box-shadow] duration-300 hover:border-outline hover:shadow-card-hover">
               <span aria-hidden className="mb-4 grid h-11 w-11 place-items-center rounded-lg bg-accent/15 text-accent"><GraduationCap size={22} /></span>
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-semibold">{c?.nombre ?? 'Curso'} <span className="text-base font-normal capitalize text-on-surface-variant">· {etiquetaEdicion(i.ediciones?.fecha_inicio)}</span></h2>
@@ -73,7 +71,7 @@ export default async function AlumnoHome() {
               </div>
 
               {i.estado === 'desertor' && (
-                <div role="alert" className="mb-4 flex gap-3 rounded-sm border border-danger/40 bg-danger/10 p-4 text-sm">
+                <div role="alert" className="mb-4 flex gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm">
                   <AlertTriangle size={20} className="mt-0.5 shrink-0 text-danger" />
                   <div>
                     <p className="font-semibold text-danger">Fuiste dado de baja de este curso el {fechaAR(i.fecha_desercion)}{i.n_clase_desercion != null ? ` (clase ${i.n_clase_desercion})` : ''}.</p>
@@ -100,7 +98,6 @@ export default async function AlumnoHome() {
                 {conAcceso(i) && <a href={`/api/curso/${i.edicion_id}/zip`} className="btn-ghost"><Download size={16} /> Descargar todos los PDFs (ZIP)</a>}
               </div>
             </article>
-            </SpotlightCard>
             </Reveal>
           )
         })}

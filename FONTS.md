@@ -2,7 +2,7 @@
 
 Las fuentes están **en el repo** (`src/app/fonts/`, archivos `woff2` del subset latin) y se cargan con `next/font/local`. El build no depende de Google Fonts: antes `next/font/google` bajaba las fuentes en cada build y fallaba de forma intermitente en el CI y en el build de la imagen Docker.
 
-- **En uso:** Montserrat (variable, `src/app/layout.tsx`).
+- **En uso:** Montserrat (variable, texto) y **Archivo** (variable con ejes de peso y ancho, `archivo-latin-standard-normal.woff2` de `@fontsource-variable/archivo` 5.3.0, títulos; v0.17.0). Archivo declara `font-stretch: 62% 125%` en `localFont` para que `font-stretch` funcione. Ver `design.md`.
 - **Origen:** paquetes `@fontsource` / `@fontsource-variable` de npm (versión 5.3.0), que redistribuyen las fuentes de Google Fonts.
 - **Licencia:** SIL Open Font License 1.1 (permite uso comercial y redistribución con el proyecto). Cada familia pertenece a sus autores; los textos de licencia están en los paquetes de origen.
 - **Para agregar o cambiar una fuente:** bajar el `woff2` latin del paquete correspondiente, copiarlo a `src/app/fonts/`, declararlo con `localFont` (rango de pesos para las variables, un `path` por peso para las estáticas) y mantener el mismo `variable` CSS para no tocar Tailwind. No volver a `next/font/google`.
