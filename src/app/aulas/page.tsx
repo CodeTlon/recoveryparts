@@ -90,7 +90,7 @@ export default async function AulasPage() {
                       </div>
                       <div className="space-y-6">
                         {a.fotos.length > 0 && (
-                          <Galeria filtros={false} fotos={a.fotos.map((f) => ({ ...f, descripcion: null, categoria: 'aulas', area: null }))} />
+                          <Galeria fotos={a.fotos.map((f) => ({ ...f, descripcion: null, categoria: 'aulas', area: null }))} />
                         )}
                         {v && (
                           <div className="overflow-hidden rounded-card border border-outline-variant">

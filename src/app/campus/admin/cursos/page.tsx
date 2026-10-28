@@ -4,24 +4,29 @@ import { requireRole, fechaAR } from '@/lib/auth'
 import { hoyAR } from '@/lib/fechas'
 import { AREA_LABEL, TIPO_LABEL } from '@/lib/types'
 import { ActionForm, Badge, Confirm, Empty, ModalButton, PageHead } from '@/components/campus/ui'
+import Paginacion, { POR_PAGINA, paginaDe } from '@/components/campus/Paginacion'
 import { bajaCurso, reactivarCurso } from '../actions'
 
-export default async function Cursos() {
+export default async function Cursos({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
+  const pagina = paginaDe((await searchParams).pagina)
   const { sb } = await requireRole('admin')
   const hoy = hoyAR()
-  const { data: cursos } = await sb.from('cursos').select('id, nombre, slug, area, tipo, activo, destacado, ediciones(id, fecha_inicio, activo, inscripciones(id))').order('activo', { ascending: false }).order('nombre')
+  const { data: filas } = await sb.from('cursos').select('id, nombre, slug, area, tipo, activo, destacado, ediciones(id, fecha_inicio, activo, inscripciones(id))').order('activo', { ascending: false }).order('nombre').order('id').range((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
+  // Se pide una fila de más para saber si hay página siguiente.
+  const hayMas = (filas?.length ?? 0) > POR_PAGINA
+  const cursos = filas?.slice(0, POR_PAGINA)
 
   return (
     <>
       <PageHead title="Cursos y talleres" action={<Link href="/campus/admin/cursos/nuevo" className="btn-primary"><Plus size={16} /> Crear curso</Link>} />
-      {!cursos?.length ? <Empty>Todavía no hay cursos. Creá el primero.</Empty> : (
+      {!cursos?.length ? <Empty>{pagina > 1 ? 'No hay más cursos.' : 'Todavía no hay cursos. Creá el primero.'}</Empty> : (
         <div className="card max-h-[70vh] overflow-auto">
           <table className="tabla w-full min-w-[720px] text-sm">
-            <thead><tr className="text-left text-xs uppercase tracking-wider text-on-surface-variant"><th className="px-4 py-3">Curso</th><th className="px-4 py-3">Área</th><th className="px-4 py-3">Ediciones</th><th className="px-4 py-3">Próxima</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3" /></tr></thead>
+            <thead><tr className="text-left text-xs text-on-surface-variant"><th className="px-4 py-3">Curso</th><th className="px-4 py-3">Área</th><th className="px-4 py-3">Ediciones</th><th className="px-4 py-3">Próxima</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3" /></tr></thead>
             <tbody>
               {cursos.map((c: any) => (
                 <tr key={c.id} className="border-t border-outline-variant">
-                  <td className="px-4 py-3 font-medium"><Link href={`/campus/admin/cursos/${c.id}`} className="hover:text-secondary">{c.nombre}</Link> <span className="ml-1 text-xs text-on-surface-variant">{TIPO_LABEL[c.tipo as 'curso']}</span></td>
+                  <td className="px-4 py-3 font-medium"><Link href={`/campus/admin/cursos/${c.id}`} className="hover:text-accent">{c.nombre}</Link> <span className="ml-1 text-xs text-on-surface-variant">{TIPO_LABEL[c.tipo as 'curso']}</span></td>
                   <td className="px-4 py-3 text-on-surface-variant">{AREA_LABEL[c.area as 'diseno']}</td>
                   <td className="px-4 py-3 text-on-surface-variant">{(() => { const n = c.ediciones.filter((e: any) => e.activo).length, a = c.ediciones.reduce((k: number, e: any) => k + e.inscripciones.length, 0); return `${n} ${n === 1 ? 'activa' : 'activas'} · ${a} ${a === 1 ? 'alumno' : 'alumnos'}` })()}</td>
                   <td className="px-4 py-3 text-on-surface-variant">{(() => { const p = c.ediciones.filter((e: any) => e.activo && e.fecha_inicio >= hoy).sort((a: any, b: any) => a.fecha_inicio.localeCompare(b.fecha_inicio))[0]; return p ? fechaAR(p.fecha_inicio) : '—' })()}</td>
@@ -45,6 +50,7 @@ export default async function Cursos() {
           </table>
         </div>
       )}
+      <Paginacion pagina={pagina} hayMas={hayMas} />
     </>
   )
 }

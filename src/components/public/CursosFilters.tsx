@@ -19,6 +19,7 @@ export default function CursosFilters() {
   const set = (k: string, v: string) => {
     const p = new URLSearchParams(spRef.current.toString())
     v ? p.set(k, v) : p.delete(k)
+    p.delete('pagina') // otro filtro, otra lista: se vuelve a la primera página
     start(() => router.replace(`${path}?${p.toString()}`, { scroll: false }))
   }
 
