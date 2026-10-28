@@ -55,7 +55,7 @@ export default function SiteNavCliente({ conAulas = false }: { conAulas?: boolea
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-6">
-      <nav aria-label="Principal" className={`relative mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-4 rounded-2xl border px-3 transition-[background-color,border-color,box-shadow,max-width] duration-500 ease-(--ease-out) md:px-5 ${scrolled || open ? 'max-w-[1120px] border-outline-variant/70 bg-surface-container-lowest/75 shadow-card backdrop-blur-xl' : 'border-transparent bg-transparent'}`}>
+      <nav aria-label="Principal" className={`relative mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-4 rounded-2xl border px-3 transition-[background-color,border-color,box-shadow] duration-500 ease-(--ease-out) md:px-5 ${scrolled || open ? 'border-outline-variant/70 bg-surface-container-lowest/75 shadow-card backdrop-blur-xl' : 'border-transparent bg-transparent'}`}>
         <Link href="/" onClick={close} className="group flex shrink-0 items-center gap-2.5 text-on-surface">
           <Image src="/images/logo.png" alt="" width={36} height={36} priority className="h-8 w-8 transition-transform duration-500 ease-(--ease-out) group-hover:rotate-[-8deg] group-hover:scale-110" />
           <span className="display text-lg leading-none md:text-xl">Recovery Parts</span>

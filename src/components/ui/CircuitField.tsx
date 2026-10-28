@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 // Fondo vivo del sitio público: pistas de circuito (como el hemisferio naranja del logo) por las que corren pulsos todo
 // el tiempo. El puntero las enciende y atrae pulsos; un clic o un toque suelta una ráfaga desde las pistas cercanas.
 // Canvas 2D sin librerías. Se pausa con la pestaña oculta o fuera de pantalla; con prefers-reduced-motion se dibuja
-// una sola vez, quieto. Es decorativo: aria-hidden y sin eventos propios (escucha el puntero en window).
+// una sola vez, quieto. Sin botón de pausa en la página: decisión de producto (ver DECISIONS.md). Es decorativo: aria-hidden y sin eventos propios (escucha el puntero en window).
 //
 // `modo="fondo"`: capa fija detrás de todo el sitio, tenue. `modo="hero"`: dentro de un contenedor relative, más denso.
 

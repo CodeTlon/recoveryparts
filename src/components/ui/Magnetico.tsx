@@ -2,8 +2,8 @@
 
 import { useRef } from 'react'
 
-// Envoltorio «magnético»: el botón se corre unos píxeles hacia el puntero cuando pasa cerca y vuelve con un resorte
-// al salir. Solo mouse/lápiz y sin reduced-motion. No cambia el foco ni el área clicable del hijo.
+// Envoltorio «magnético»: el botón se corre unos píxeles hacia el puntero cuando pasa cerca y vuelve suave al salir
+// (sin rebote: en un control, el sobrepaso se lee como error). Solo mouse/lápiz y sin reduced-motion. No cambia el foco ni el área clicable del hijo.
 export default function Magnetico({ children, fuerza = 0.28, className = '' }: { children: React.ReactNode; fuerza?: number; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null)
   const mover = (e: React.PointerEvent<HTMLSpanElement>) => {
@@ -16,7 +16,7 @@ export default function Magnetico({ children, fuerza = 0.28, className = '' }: {
   const salir = () => {
     const el = ref.current
     if (!el) return
-    el.style.transition = 'translate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
+    el.style.transition = 'translate 0.6s var(--ease-out)'
     el.style.translate = '0 0'
   }
   return <span ref={ref} onPointerMove={mover} onPointerLeave={salir} className={`inline-flex ${className}`}>{children}</span>
