@@ -1,10 +1,8 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { BookOpen, CalendarDays, GraduationCap, Inbox, Users, ArrowUpRight } from 'lucide-react'
+import { BookOpen, CalendarDays, GraduationCap, Inbox, Users } from 'lucide-react'
 import { fechaAR, requireRole } from '@/lib/auth'
-import { PageHead } from '@/components/campus/ui'
-import SpotlightCard from '@/components/ui/SpotlightCard'
-import CountUp from '@/components/ui/CountUp'
+import { PageHead, StatTile } from '@/components/campus/ui'
 import Reveal from '@/components/ui/Reveal'
 import ReportesPanel from '@/components/campus/ReportesPanel'
 import Skeleton from '@/components/ui/Skeleton'
@@ -42,12 +40,8 @@ export default async function AdminHome() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map(({ Icon, v, l, href, alert }, i) => (
           <Reveal key={l} delay={i * 0.05} className="h-full">
-            <Link href={href} className="block h-full">
-              <SpotlightCard className={`relative h-full p-5 ${alert ? 'ring-1 ring-accent/60' : ''}`}>
-                <div className="flex items-center justify-between"><Icon size={20} className="text-secondary" aria-hidden /><ArrowUpRight size={16} className="text-on-surface-variant" aria-hidden /></div>
-                <p className="mt-3 text-3xl font-bold tabular-nums text-primary"><CountUp to={v} /></p>
-                <p className="text-sm text-on-surface-variant">{l}</p>
-              </SpotlightCard>
+            <Link href={href} className="group block h-full rounded-card">
+              <StatTile Icon={Icon} valor={v} etiqueta={l} alerta={alert} />
             </Link>
           </Reveal>
         ))}
