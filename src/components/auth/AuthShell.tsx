@@ -1,30 +1,32 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft } from 'lucide-react'
-import AuroraBackground from '@/components/ui/AuroraBackground'
+import CircuitField from '@/components/ui/CircuitField'
+import TituloExpandido from '@/components/ui/TituloExpandido'
 
+// Pantallas de acceso (login, activar, olvidé): panel de marca con el circuito vivo a la izquierda (solo en pantallas
+// grandes) y el formulario a la derecha. `eyebrow` es el contexto chico arriba del título (p. ej. «Campus»).
 export default function AuthShell({ eyebrow, title, subtitle, children }: { eyebrow: string; title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <main id="contenido" tabIndex={-1} className="grid min-h-screen bg-surface text-on-surface lg:grid-cols-[1.1fr_1fr]">
-      {/* Panel de marca: solo en pantallas grandes */}
-      <aside className="relative hidden overflow-hidden border-r border-outline-variant lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <AuroraBackground />
-        <Link href="/" className="relative flex items-center gap-3 text-sm font-bold uppercase tracking-tighter">
-          <Image src="/images/logo.png" alt="" width={36} height={36} /> Recovery Parts
+      <aside className="relative hidden overflow-hidden border-r border-outline-variant bg-surface-container-lowest lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <CircuitField modo="hero" />
+        <Link href="/" className="relative flex w-fit items-center gap-3">
+          <Image src="/images/logo.png" alt="" width={40} height={40} /> <span className="display text-xl">Recovery Parts</span>
         </Link>
-        <div className="relative max-w-md">
-          <p className="text-4xl font-bold leading-tight tracking-tight">Aprendé un oficio con <span className="bg-linear-to-r from-accent to-secondary bg-clip-text text-transparent">equipos reales</span>.</p>
-          <p className="mt-4 text-on-surface-variant">Tu campus: clases, material y seguimiento de tus cursos en un solo lugar.</p>
+        <div className="relative max-w-lg">
+          <TituloExpandido as="h2" texto="Aprendé un oficio con equipos reales." className="text-5xl" />
+          <p className="mt-5 text-lg text-on-surface-variant">Tu campus: clases, material y seguimiento de tus cursos en un solo lugar.</p>
         </div>
       </aside>
 
-      <div className="grid-bg flex items-center justify-center p-6 lg:bg-none">
-        <div className="w-full max-w-sm animate-fade-up">
-          <Link href="/" className="mb-8 flex w-fit items-center gap-2 text-sm text-on-surface-variant hover:text-secondary"><ArrowLeft size={16} /> Volver al sitio</Link>
-          <Image src="/images/logo.png" alt="Recovery Parts" width={64} height={64} priority className="mb-6 h-16 w-16 lg:hidden" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-accent">{eyebrow}</span>
-          <h1 className="mt-1 text-2xl font-bold">{title}</h1>
-          {subtitle && <p className="mb-8 mt-1 text-sm text-on-surface-variant">{subtitle}</p>}
+      <div className="flex items-center justify-center p-6">
+        <div className="w-full max-w-sm motion-safe:animate-[menu-entra_0.6s_var(--ease-out)_both]">
+          <Link href="/" className="mb-10 flex w-fit items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface"><ArrowLeft size={16} aria-hidden /> Volver al sitio</Link>
+          <Image src="/images/logo.png" alt="Recovery Parts" width={64} height={64} priority className="mb-6 h-14 w-14 lg:hidden" />
+          <span className="dato text-accent">{eyebrow}</span>
+          <h1 className="display mt-2 text-3xl [font-stretch:108%]">{title}</h1>
+          {subtitle && <p className="mb-8 mt-2 text-sm text-on-surface-variant">{subtitle}</p>}
           {!subtitle && <div className="mb-8" />}
           {children}
         </div>

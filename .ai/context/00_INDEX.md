@@ -9,7 +9,7 @@ Qué leer según el tipo de tarea. Leé solo lo que necesites; no cargues todo e
 | Tocar auth, roles, RLS, `proxy.ts` (antes middleware), invitaciones | `ARCHITECTURE.md` (Autorización) + `docs/ARQUITECTURA.md` |
 | Tocar cursos, inscripciones, deserción, cupos, material, encuestas | `DOMAIN.md` + `docs/ESPECIFICACION-ACADEMIA.md` (RF correspondiente) |
 | Migraciones, seed, Postgres local, cuentas de prueba | `ENVIRONMENTS.md` |
-| Pantallas, estilos, formularios del campus | `CONVENTIONS.md` |
+| Pantallas, estilos, formularios del campus | `design.md` (raíz: sistema visual fijado) + `CONVENTIONS.md` |
 | Implementar o cerrar un 🟡 de la spec | `OPEN_QUESTIONS.md` + `DOMAIN.md` |
 | Tocar inscripciones, calendario/avisos o acceso/roles, o agregar una feature | `specs/README.md` + la `specs/<capacidad>/spec.md` que corresponda (SDD) |
 | Entender por qué algo se hizo así | `DECISIONS.md` |

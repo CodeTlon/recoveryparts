@@ -3,10 +3,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export const POR_PAGINA = 25
 
-/** Número de página (1, 2, …) desde el parámetro `pagina` de la URL; cualquier valor raro es la página 1. */
-export const paginaDe = (v: string | undefined) => { const n = Number(v); return Number.isInteger(n) && n >= 1 && n <= 10_000 ? n : 1 }
+// La regla de la página vive en lib/paginar.ts (compartida con el sitio público y testeada); se re-exporta acá para
+// no cambiar los imports del campus.
+export { paginaDe } from '@/lib/paginar'
 
-/** Anterior / Siguiente conservando el resto de los parámetros de la URL. `hayMas` sale de pedir una fila de más. */
+/** Anterior / Siguiente conservando el resto de los parámetros de la URL. `hayMas` sale de pedir una fila de más.
+ *  (Con total conocido, el sitio público usa la paginación numerada de components/ui/Paginas.tsx.) */
 export default function Paginacion({ pagina, hayMas, params = {} }: { pagina: number; hayMas: boolean; params?: Record<string, string | undefined> }) {
   if (pagina === 1 && !hayMas) return null
   const href = (p: number) => {
@@ -16,12 +18,12 @@ export default function Paginacion({ pagina, hayMas, params = {} }: { pagina: nu
     const s = sp.toString()
     return s ? `?${s}` : '?'
   }
-  const clase = 'btn-ghost px-3! py-2!'
+  const clase = 'btn-ghost h-11 px-3!'
   return (
-    <nav aria-label="Paginación" className="mt-6 flex items-center justify-between gap-3">
-      {pagina > 1 ? <Link href={href(pagina - 1)} className={clase}><ChevronLeft size={16} aria-hidden /> Anterior</Link> : <span />}
-      <span className="text-sm text-on-surface-variant">Página {pagina}</span>
-      {hayMas ? <Link href={href(pagina + 1)} className={clase}>Siguiente <ChevronRight size={16} aria-hidden /></Link> : <span />}
+    <nav aria-label="Paginación" className="mt-6 flex items-center justify-between gap-3 border-t border-outline-variant pt-4">
+      {pagina > 1 ? <Link href={href(pagina - 1)} className={clase} aria-label="Página anterior"><ChevronLeft size={16} aria-hidden /> Anterior</Link> : <span />}
+      <span className="dato rounded-pill border border-outline-variant px-3 py-1">Página {pagina}</span>
+      {hayMas ? <Link href={href(pagina + 1)} className={clase} aria-label="Página siguiente">Siguiente <ChevronRight size={16} aria-hidden /></Link> : <span />}
     </nav>
   )
 }

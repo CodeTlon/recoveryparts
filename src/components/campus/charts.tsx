@@ -55,8 +55,8 @@ export function Columns({ data, unit = '', color = 'bg-accent' }: { data: { labe
 export function Stat({ label, value, note }: { label: string; value: React.ReactNode; note?: string }) {
   return (
     <div className="card p-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">{label}</p>
-      <p className="mt-1 text-3xl font-bold tabular-nums text-primary">{value}</p>
+      <p className="text-xs font-semibold text-on-surface-variant">{label}</p>
+      <p className="mt-1 display text-3xl tabular-nums">{value}</p>
       {note && <p className="mt-1 text-xs text-on-surface-variant">{note}</p>}
     </div>
   )

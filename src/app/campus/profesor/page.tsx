@@ -25,7 +25,7 @@ export default async function ProfesorHome() {
       {!eds.length && <Empty>Todavía no tenés cursos asignados.</Empty>}
       <div className="grid gap-4 md:grid-cols-2">
         {eds.map((e) => (
-          <Link key={e.id} href={`/campus/profesor/curso/${e.id}`} className="card p-6 transition-colors hover:border-secondary">
+          <Link key={e.id} href={`/campus/profesor/curso/${e.id}`} className="card p-6 transition-colors hover:border-outline">
             <div className="mb-1 flex items-start justify-between gap-3">
               <h2 className="text-xl font-semibold">{e.cursos?.nombre}</h2>
               {e.momento === 'en_curso' ? <Badge tone="ok">En curso</Badge> : <Badge tone="warn">Próximo</Badge>}

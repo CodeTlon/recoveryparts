@@ -5,9 +5,9 @@ import { enviarContacto, type FormState } from '@/app/actions-public'
 
 export default function ContactForm() {
   const [s, action, pending] = useActionState<FormState, FormData>(enviarContacto, {})
-  if (s.ok) return <p role="status" className="card p-6 font-semibold text-secondary">¡Gracias! Recibimos tu consulta y te vamos a responder a la brevedad.</p>
+  if (s.ok) return <p role="status" className="font-semibold text-secondary">¡Gracias! Recibimos tu consulta y te vamos a responder a la brevedad.</p>
   return (
-    <form action={action} className="card space-y-4 p-6">
+    <form action={action} className="space-y-5">
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
       <div><label className="label" htmlFor="c-nombre">Nombre</label><input id="c-nombre" name="nombre" required maxLength={120} placeholder="Tu nombre" className="input" /></div>
       <div className="grid gap-4 sm:grid-cols-2">

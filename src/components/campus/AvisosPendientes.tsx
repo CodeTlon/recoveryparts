@@ -5,7 +5,7 @@ import { enviarAvisosPendientes } from '@/app/campus/admin/actions'
 export default function AvisosPendientes({ edicionId, cantidad }: { edicionId: string; cantidad: number }) {
   if (cantidad <= 0) return null
   return (
-    <div role="status" className="mb-4 max-w-4xl rounded-sm border border-warning/50 bg-warning/10 p-4">
+    <div role="status" className="mb-4 max-w-4xl rounded-lg border border-warning/50 bg-warning/10 p-4">
       <p className="text-sm font-semibold text-warning">
         {cantidad === 1 ? 'Hay 1 clase suspendida o reprogramada' : `Hay ${cantidad} clases suspendidas o reprogramadas`} sin avisar a los alumnos.
       </p>

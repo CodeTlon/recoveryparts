@@ -31,7 +31,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
 function RemoveButton({ onClick, label, disabled }: { onClick: () => void; label: string; disabled?: string }) {
   return (
     <button type="button" onClick={onClick} aria-label={label} title={disabled || label} disabled={!!disabled}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-outline-variant text-on-surface-variant hover:border-danger hover:text-danger disabled:pointer-events-none disabled:opacity-30">
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-outline-variant text-on-surface-variant hover:border-danger hover:text-danger disabled:pointer-events-none disabled:opacity-30">
       <Trash2 size={15} aria-hidden />
     </button>
   )
@@ -83,7 +83,7 @@ export function KitEditor({ name, inicial }: { name: string; inicial: K[] }) {
       {errK && <p role="alert" className="text-sm text-danger">{errK}</p>}
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay ítems.</p>}
       {rows.map((r, i) => (
-        <div key={i} className="rounded-sm border border-outline-variant p-4">
+        <div key={i} className="rounded-lg border border-outline-variant p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block"><span className="label">Ítem</span><input className="input" placeholder="Ej: Multímetro" value={r.nombre} onChange={(e) => upd(i, { nombre: e.target.value })} /></label>
             <label className="block"><span className="label">Tipo</span>
@@ -114,7 +114,7 @@ function Num({ n }: { n: number }) {
 function AgregarFila({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border border-dashed border-outline-variant px-3 text-sm font-semibold text-on-surface-variant transition-colors hover:border-secondary hover:text-secondary">
+      className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border border-dashed border-outline-variant px-3 text-sm font-semibold text-on-surface-variant transition-colors hover:border-outline hover:text-accent">
       <Plus size={15} aria-hidden /> {children}
     </button>
   )
@@ -287,7 +287,7 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
             <BloqueModulo key={m.key} cabecera={
               <div className="flex items-end gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-secondary">
+                  <p className="mb-1 text-[11px] font-semibold text-secondary">
                     Módulo {i + 1} <span className="font-normal normal-case tracking-normal text-on-surface-variant">· {m.clases.length} clase{m.clases.length === 1 ? '' : 's'}</span>
                   </p>
                   <input aria-label={`Título del módulo ${i + 1}`} className="input min-w-0 py-2! font-semibold" maxLength={120} placeholder="Título del módulo" value={m.titulo} onChange={(e) => updM(i, { titulo: e.target.value })} />
@@ -308,7 +308,7 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
         </>
       )}
       {quitadasConMaterial.length > 0 && (
-        <p role="status" className="rounded-sm border border-warning/50 p-3 text-sm text-warning">
+        <p role="status" className="rounded-lg border border-warning/50 p-3 text-sm text-warning">
           Al guardar, el material de {quitadasConMaterial.map((c) => `«${c.titulo}» (${conMaterial[c.id]})`).join(', ')} va a quedar como <strong>material general</strong>. No se borra.
         </p>
       )}
@@ -375,7 +375,7 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
       <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y no cuenta para el N° de clase de deserción. El material lo liberás vos, clase por clase. Saltear o adelantar no avisa por mail.</p>
       {grupos.map((g, gi) => (
         <BloqueModulo key={gi} cabecera={g.modulo ? (
-          <p className="pr-2 text-sm font-semibold"><span className="mr-1 text-[11px] uppercase tracking-wider text-secondary">Módulo {++nMod}</span> {g.modulo}</p>
+          <p className="pr-2 text-sm font-semibold"><span className="mr-1 text-[11px] text-secondary">Módulo {++nMod}</span> {g.modulo}</p>
         ) : undefined}>
           <ul className="divide-y divide-outline-variant/50">
             {g.filas.map(({ r, i }) => {
@@ -428,7 +428,7 @@ export function DestacadosEditor({ inicial }: { inicial: { tipo: string; texto: 
       {err && <p role="alert" className="text-sm text-danger">{err}</p>}
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay destacados.</p>}
       {rows.map((r, i) => (
-        <div key={r.key} className="flex flex-wrap items-end gap-2 rounded-sm border border-outline-variant p-3">
+        <div key={r.key} className="flex flex-wrap items-end gap-2 rounded-lg border border-outline-variant p-3">
           <label className="block w-full sm:w-44"><span className="label">Tipo</span>
             <select name={`destacado_tipo_${i}`} className="input" value={r.tipo} onChange={(e) => upd(i, { tipo: e.target.value })}>
               {TIPOS_DESTACADO.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -455,7 +455,7 @@ export function FotosEditor({ inicial }: { inicial: { imagen_url: string; alt: s
       {err && <p role="alert" className="text-sm text-danger">{err}</p>}
       {!rows.length && <p className="text-sm text-on-surface-variant">Todavía no hay fotos.</p>}
       {rows.map((r, i) => (
-        <div key={r.key} className="grid gap-3 rounded-sm border border-outline-variant p-3 sm:grid-cols-2">
+        <div key={r.key} className="grid gap-3 rounded-lg border border-outline-variant p-3 sm:grid-cols-2">
           {/* La key de la fila mantiene el estado del campo de imagen al reordenar. */}
           <MediaField tipo="imagen" label={`Foto ${i + 1}`} name={`foto_url_${i}`} defaultValue={r.imagen_url} />
           <label className="block sm:col-span-2"><span className="label">Texto alternativo (accesibilidad)</span>
