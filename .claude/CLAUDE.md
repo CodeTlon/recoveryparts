@@ -9,6 +9,10 @@ Ramas `feature/* -> dev -> test` por merge directo; solo `test -> main` va por P
 Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Postgres 16 (desplegado), Node 22. Excepciones: sesion propia y `postgres.js`. Fuente de versiones: `codetlon-cloud/.claude/modules/stack-versions.md`.
 
 ## Quirks
+- **UI: leer `design.md` antes de tocar pantallas** (sistema fijado en v0.17.0). Nada de `uppercase tracking-*`, `<em>` resaltado en títulos ni efectos tipo aurora/spotlight.
+- No exportar valores (objetos/constantes) desde un archivo `'use client'` para usarlos en el servidor: llegan como referencia de cliente (pasó con las etiquetas de la galería → `src/lib/galeria.ts`).
+- `next dev` (16.4) agrega un bloque a `AGENTS.md`: no commitearlo sin decidirlo (o `agentRules: false`).
+- Matar servidores locales por PID del puerto (`ss -ltnp | grep :PUERTO`), no con `pkill -f next-server`: se lleva puestos los de otros proyectos de la cuenta.
 - Coolify: *Docker Compose Location* tiene que ser `/docker-compose.coolify.yml`. Con `/docker-compose.yml` (desarrollo) solo se despliega la base, `app` no existe y el dominio desaparece (pasó en producción el 2026-10-21).
 - `.env.development` NO se versiona: `npm run setup:dev` lo crea desde `.env.development.example` con un `SESSION_SECRET` aleatorio.
 - No poner un `loading.tsx` en la raíz de `src/app/`: empieza a enviar la página antes de `notFound()` y un curso inexistente responde 200 (soft-404).
@@ -31,6 +35,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-28 | feature/dev2-rediseno | v0.17.0 — rediseño de sitio, acceso y campus (`design.md`: OKLCH, Archivo + Montserrat, fondo vivo de circuito, efectos en CSS/canvas sin librerías, View Transitions) y paginación con la página en la URL (`src/lib/paginar.ts`). 95 E2E, a11y 100, CLS 0; portada ~8 pts de Lighthouse móvil debajo de `dev`. |
 | 2026-10-27 | feature/dev2-qa-campus | v0.16.1 — QA de los 102 casos del campus (en `dev`: 100 OK, 2 fallas) y auditoría. Arregla subida de PDF > 10 MB, Campus › Aulas vacía, `anon` en el bootstrap, nodemailer, seed sin aulas, login de cuenta deshabilitada, `motion` fuera del sitio, ficha del curso en el celular, a11y y canonical. Informe en `docs/AUDITORIA-2026-10-27.md`. |
 | 2026-10-21 | feat/aulas-sitio | Sección pública «Aulas» (RF-60): `/aulas` con video general y fichas por aula (destacados con ícono, fotos, video), pestaña en Campus › Sitio web, link en menú/«Nosotros»/sitemap; migración 0030 (revoca a mano los permisos de anon: ver KNOWN_ISSUES). Sin mergear. |
 | 2026-10-21 | fix/auditoria-seguridad-logica | v0.16.0 — auditoría completa de seguridad, lógica, estilos/accesibilidad, SEO y rendimiento con sus correcciones (migraciones 0019-0029: RLS por conjuntos, anon mínimo, calendario atómico/versionado/avisos pendientes, locks de agenda; CSP con nonce, caché público, streaming, video en segundo plano, `.env.development` fuera del repo, E2E de campus por rol, job de navegadores). Mergeada a `dev`, `test` y `main` (PR #22) y desplegada en producción. Pendientes en KNOWN_ISSUES. |

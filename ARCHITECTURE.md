@@ -1,6 +1,6 @@
 # ARCHITECTURE — Recovery Parts
 
-Mapa para mantenimiento, vigente al 2026-10-16. El detalle esta en `.ai/context/` (empezar por `00_INDEX.md`) y `docs/ARQUITECTURA.md`. No releas el repo entero: busca tu tipo de cambio abajo.
+Mapa para mantenimiento, vigente al 2026-10-28. El detalle esta en `.ai/context/` (empezar por `00_INDEX.md`) y `docs/ARQUITECTURA.md`. No releas el repo entero: busca tu tipo de cambio abajo.
 
 ## Stack
 Next.js 16.4.2 (App Router, `output: 'standalone'`) · React 19.3.1 · TypeScript 6 · Tailwind 4 (tokens en `@theme` de `src/app/globals.css`) · Postgres 16 plano (`postgres.js` 3.4.5, sin ORM) con RLS · sesion propia (`SESSION_SECRET`) · SMTP (`nodemailer`) · archivos en volumen (`STORAGE_DIR`). Node 22. Coolify con `docker-compose.coolify.yml`.
@@ -9,10 +9,10 @@ Next.js 16.4.2 (App Router, `output: 'standalone'`) · React 19.3.1 · TypeScrip
 Server Components leen con el rol y el usuario de la sesion (RLS aplica) · Server Actions y Route Handlers escriben y sirven archivos. `src/proxy.ts` (antes `middleware.ts`, Next 16): sin sesion va a `/login`, cuenta no activa queda afuera y cada rol solo entra a su `/campus/<rol>`; ademas aplica los encabezados de seguridad (`src/lib/security-headers.ts`) con una CSP de nonce por request: las paginas con scripts se renderizan siempre en cada request. La autorizacion real es `requireRole()` mas RLS en todas las tablas.
 
 ## Estructura
-- `src/app/` — publico (`/`, `cursos`, `galeria`, `preguntas-frecuentes`, `contacto`), `login`, `activar`, `olvide-mi-contrasena`, `campus/{admin,profesor,alumno}`, `api/`, `media/`.
+- `src/app/` — publico (`/`, `cursos`, `aulas`, `galeria`, `preguntas-frecuentes`, `contacto`), `login`, `activar`, `olvide-mi-contrasena`, `campus/{admin,profesor,alumno}`, `api/`, `media/`.
 - `src/lib/` — `auth.ts`, `session.ts`, `users.ts`, `db/` (conexion `postgres.js` y `sqlAdmin()`), `storage.ts` y `media.ts` (archivos), `transcode.ts` (video), `mail.ts`, `encuestas.ts`, `rate-limit.ts`.
 - `db/migrations/` y `scripts/migrate.mjs` — migraciones SQL (en Coolify corren solas al arrancar).
-- `tests/e2e/` — Playwright de humo en 3 viewports (36).
+- `tests/e2e/` — Playwright en 3 viewports (99 casos: humo, CSP, acceso, formularios, campus). `tests/unit/` — `node:test` (13).
 
 ## Para cambios comunes
 | Querés cambiar… | Abri |
@@ -23,7 +23,9 @@ Server Components leen con el rol y el usuario de la sesion (RLS aplica) · Serv
 | Datos del sitio publico | `src/lib/data.ts` (cache de 60 s con tag `publico`); si una accion cambia lo que el sitio muestra, llamar a `invalidarPublico()` (`src/lib/cache-publico.ts`) |
 | SEO de una pagina publica | `metaPagina()` y `JsonLd` (`src/lib/seo.ts`, `src/components/seo/`) |
 | Subida de archivos | `src/app/api/media`, `src/lib/storage.ts`; los PDFs pasan por `/api/material/[id]` |
-| Estilos | `src/app/globals.css` (`@theme`, `@utility`); las utilidades propias no pueden llamarse como las nativas de Tailwind 4 |
+| Estilos | **`design.md` primero** (sistema fijado: tokens, tipografía, motivo de circuito, movimiento). `src/app/globals.css` (`@theme`, `@utility`, animaciones de scroll en CSS); las utilidades propias no pueden llamarse como las nativas de Tailwind 4 |
+| Efectos del sitio público | `src/components/ui/` (`CircuitField`, `TituloExpandido`, `Inclinable`, `Magnetico`, `SectionTitle`, `EncabezadoPagina`, `Paginas`); sin librerías de animación en el sitio público |
+| Paginación | `src/lib/paginar.ts` (reglas y tests), `components/ui/Paginas.tsx` (público), `components/campus/Paginacion.tsx` (campus) |
 
 ## Dónde no meterse sin pensar
 - `clienteAdmin()` / `sqlAdmin()` se saltean RLS: solo en servidor y despues de validar el rol.

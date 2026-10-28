@@ -132,3 +132,13 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 **Decision**: seguir el conjunto de `codetlon-cloud/.claude/modules/stack-versions.md` (versiones exactas) en `dev` y `test`. Se mantiene la excepcion de sesion propia y `postgres.js` (sin Better Auth ni Drizzle).
 **Por que**: reducir vulnerabilidades (Tailwind 3 arrastraba `chokidar`/`braces`) y tener la flota en un solo conjunto.
 **Consecuencias**: `src/middleware.ts` pasa a `src/proxy.ts`; ESLint 10 nuevo con config plana y reglas bajadas a aviso; `useRef` de React 19 con valor inicial; se retira `autoprefixer` y `tailwind.config.ts`. Postgres sigue en 16 (recurso desplegado: cambiarlo exige dump/restore).
+
+## 2026-10-28 — Rediseño v0.17.0 (sitio, acceso y campus)
+| Fecha | Decisión | Por qué |
+|---|---|---|
+| 2026-10-28 | Sistema visual fijado en `design.md`; tokens en OKLCH con los mismos nombres | Un solo sistema para sitio y campus; cambiar valores y no nombres restiliza el campus sin tocar cada pantalla |
+| 2026-10-28 | Display **Archivo variable** (ancho expandido) + Montserrat para texto | Carácter técnico/taller propio sin perder la fuente de siempre; el eje de ancho permite el efecto de título que se expande. Se descartaron Inter/Plex/Space Grotesk por genéricas |
+| 2026-10-28 | Fuera aurora, spotlight, BlurText, CountUp en JS, Marquee, eyebrows en mayúsculas | Son las huellas más reconocibles de sitios generados; se reemplazan por un motivo propio (el circuito del logo) |
+| 2026-10-28 | Fondo animado de circuito siempre activo **sin botón de pausa** (pedido de Mateo) | Es el efecto central del rediseño. Se respeta `prefers-reduced-motion` (queda quieto). Riesgo aceptado: no cumple estrictamente WCAG 2.2.2 (mecanismo para pausar lo que se mueve solo más de 5 s) |
+| 2026-10-28 | Efectos interactivos (canvas, inclinación 3D, magnetismo, View Transitions) aun con costo de rendimiento móvil | Pedido explícito de efectos «realmente novedosos». Se optimizó el canvas (capa estática, arranque diferido, 30 fps adaptativo, pausa si está tapado): TBT de la portada 11 s → <1 s; queda ~8 puntos de Lighthouse móvil debajo de `dev` en la portada |
+| 2026-10-28 | Paginación con la página en la URL (también la galería, antes todo en el cliente) | Se comparte, funciona Atrás y sin JS, no se mandan todas las fotos y cada página es indexable con su canónica |

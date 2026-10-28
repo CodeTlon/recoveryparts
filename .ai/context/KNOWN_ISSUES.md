@@ -43,6 +43,13 @@ Se guardan por índice, no por id. Por eso `guardarEncuesta` bloquea cambiar las
 ## Sin hacer de la auditoría
 `ImageUploader` y los formularios públicos (`ContactForm`, `DemandaForm`, `AuthForms`) no usan `ActionForm`. El `bodySizeLimit` (30 MB desde el 2026-10-27, junto con `proxyClientMaxBodySize`) sigue global: los PDFs lo necesitan. Un archivo de más de 30 MB que esquive el aviso del navegador vuelve a dar 500. El ZIP y los PDF ya van por streaming.
 
+## Abiertos tras el rediseño (2026-10-28, v0.17.0)
+- **Rendimiento móvil de la portada ~8 puntos debajo de `dev`** (Lighthouse celular simulado, 3 corridas: `dev` 66–78, rediseño 60–71; LCP ≈ +0,5 s por *render delay* del hilo principal). Causa: los efectos interactivos (canvas, inclinación, magnetismo). `/cursos` quedó igual o mejor; la ficha del curso, parecida (72–79 vs 74–86). Accesibilidad, SEO y buenas prácticas en 100, CLS 0. Si hace falta recuperar: no montar el `CircuitField` del cierre de la portada o bajar la densidad de pistas en celular.
+- **El fondo animado no tiene botón de pausa** (decisión de producto, ver `DECISIONS.md`): no cumple estrictamente WCAG 2.2.2. Con `prefers-reduced-motion` queda quieto.
+- **CSS moderno con alternativa**: animaciones atadas al scroll (`animation-timeline`), `interpolate-size` y View Transitions no existen en todos los navegadores; donde faltan, el contenido se ve completo y quieto. Firefox/Safari los cubre el job `navegadores` de la CI (no corren en la VPS).
+- **El morph de foto tarjeta → ficha** solo se ve cuando la ficha ya está en caché del router; si la página tarda, entra con un fundido.
+- `next dev` agrega solo un bloque «nextjs-agent-rules» a `AGENTS.md` (Next 16.4); no se commiteó. Se apaga con `agentRules: false` en `next.config.js` si molesta.
+
 ## Abiertos tras la QA del campus (2026-10-27)
 Detalle y propuestas en `docs/AUDITORIA-2026-10-27.md`. Resumen: confirmación de «mantener apretado» poco descubrible; un aula no se puede dar de baja si la usa una edición ya terminada (siguen `activo`); el «no encontrado» del campus responde HTTP 200; galería pública, CMS y el selector de ediciones de Encuestas sin límite; portada pesada en el celular (medir en producción); página del curso del profesor muy larga; sin promedio de las preguntas de puntaje; aviso de Turbopack por acceso dinámico al disco en `storage.ts`.
 
