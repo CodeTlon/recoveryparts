@@ -74,6 +74,12 @@ function distanciaA(p: Pista, q: P) {
   return min
 }
 
+// Cuántos fondos «hero» se ven ahora. Mientras haya alguno, el fondo fijo del sitio (tapado por la foto del hero) no
+// dibuja: dos canvas animando a la vez era trabajo tirado.
+let heroesVisibles = 0
+const avisarHeroes = new Set<() => void>()
+const cambiarHeroes = (d: number) => { heroesVisibles += d; avisarHeroes.forEach((f) => f()) }
+
 export default function CircuitField({ modo = 'fondo', className = '' }: { modo?: 'fondo' | 'hero'; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null)
 
@@ -88,78 +94,95 @@ export default function CircuitField({ modo = 'fondo', className = '' }: { modo?
     const base = color('--rp-outline-variant', '#44474d')
     const reducir = matchMedia('(prefers-reduced-motion: reduce)')
 
+    // Rendimiento (celulares): las pistas quietas se dibujan UNA vez en una capa aparte y cada cuadro solo la copia y
+    // pinta encima los pulsos y las pistas encendidas. La cercanía al puntero se calcula cuando el puntero se mueve,
+    // no en cada cuadro. Si un cuadro cuesta más de ~8 ms, se baja a 30 cuadros por segundo.
+    const capa = document.createElement('canvas')
+    const cctx = capa.getContext('2d')!
     let ancho = 0, alto = 0, dpr = 1
     let pistas: Pista[] = []
     let pulsos: Pulso[] = []
-    let raf = 0, visible = true, ultimo = 0
+    let raf = 0, visible = true, ultimo = 0, ultimoDibujo = 0, intervalo = 0, costo = 0, listo = false, enHero = false
+    let punteroMovido = false
     const puntero = { x: -9999, y: -9999, activo: false }
     const deriva = { x: 0, y: 0 }
     const RADIO = hero ? 190 : 150
     const alfaBase = hero ? 0.55 : 0.32
+    const objetivo = new Map<Pista, number>()
+
+    const trazar = (c: CanvasRenderingContext2D, p: Pista) => {
+      c.beginPath()
+      p.pts.forEach((pt, i) => (i ? c.lineTo(pt.x, pt.y) : c.moveTo(pt.x, pt.y)))
+      c.stroke()
+      // Nodos en los extremos: aros huecos, como las terminales del logo.
+      for (const pt of [p.pts[0], p.pts[p.pts.length - 1]]) { c.beginPath(); c.arc(pt.x, pt.y, 2.6, 0, Math.PI * 2); c.stroke() }
+    }
 
     const medir = () => {
       const r = canvas.getBoundingClientRect()
       ancho = r.width; alto = r.height
       dpr = Math.min(window.devicePixelRatio || 1, 2)
-      canvas.width = Math.round(ancho * dpr); canvas.height = Math.round(alto * dpr)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      for (const c of [canvas, capa]) { c.width = Math.round(ancho * dpr); c.height = Math.round(alto * dpr) }
       const chico = ancho < 640
+      intervalo = chico ? 1000 / 30 : 0
       pistas = armarPistas(ancho, alto, hero ? (chico ? 26 : 30) : (chico ? 34 : 40), hero ? 9 : 13)
       pulsos = []
+      objetivo.clear()
+      cctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      cctx.clearRect(0, 0, ancho, alto)
+      cctx.lineCap = 'round'; cctx.lineJoin = 'round'; cctx.lineWidth = 1.25
+      cctx.globalAlpha = alfaBase; cctx.strokeStyle = base
+      for (const p of pistas) trazar(cctx, p)
     }
 
     const lanzar = (p: Pista, tono = p.tono, rapido = false) => {
-      if (pulsos.length > (hero ? 140 : 90)) return
+      if (pulsos.length > (hero ? 110 : 70)) return
       const haciaAtras = Math.random() < 0.5
       const vel = (rapido ? 260 : 70 + Math.random() * 90) * (haciaAtras ? -1 : 1)
       pulsos.push({ pista: p, pos: haciaAtras ? p.largo : 0, vel, tono, vida: 1 })
     }
 
     const dibujar = (dt: number) => {
+      // Un canvas oculto (p. ej. el panel del login en el celular) mide 0×0 y drawImage de una capa vacía tira error.
+      if (!capa.width || !capa.height) return
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, ancho, alto)
       // Deriva suave hacia el lado contrario del puntero: paralaje de unos pocos píxeles.
       const objetivoX = puntero.activo ? (puntero.x - ancho / 2) * -0.012 : 0
       const objetivoY = puntero.activo ? (puntero.y - alto / 2) * -0.012 : 0
       deriva.x += (objetivoX - deriva.x) * Math.min(1, dt * 3)
       deriva.y += (objetivoY - deriva.y) * Math.min(1, dt * 3)
-      ctx.save()
       ctx.translate(deriva.x, deriva.y)
-      const q = { x: puntero.x - deriva.x, y: puntero.y - deriva.y }
+      ctx.globalAlpha = 1
+      ctx.drawImage(capa, 0, 0, ancho, alto)
 
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+      // Cercanía al puntero: solo si se movió desde el último cuadro.
+      if (punteroMovido) {
+        punteroMovido = false
+        const q = { x: puntero.x - deriva.x, y: puntero.y - deriva.y }
+        objetivo.clear()
+        if (puntero.activo) for (const p of pistas) { const c = 1 - distanciaA(p, q) / RADIO; if (c > 0) objetivo.set(p, c) }
+      }
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 1.25
       for (const p of pistas) {
-        const cerca = puntero.activo ? Math.max(0, 1 - distanciaA(p, q) / RADIO) : 0
-        p.brillo += (cerca - p.brillo) * Math.min(1, dt * 6)
-        if (cerca > 0.35 && Math.random() < dt * 2.5) lanzar(p)
-        ctx.beginPath()
-        p.pts.forEach((pt, i) => (i ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y)))
-        ctx.globalAlpha = alfaBase
-        ctx.strokeStyle = base; ctx.lineWidth = 1.25
-        ctx.stroke()
-        if (p.brillo > 0.02) {
-          ctx.globalAlpha = p.brillo * 0.85
-          ctx.strokeStyle = tonos[p.tono]
-          ctx.stroke()
-        }
-        // Nodos en los extremos: aros huecos, como las terminales del logo.
-        for (const pt of [p.pts[0], p.pts[p.pts.length - 1]]) {
-          ctx.beginPath(); ctx.arc(pt.x, pt.y, 2.6, 0, Math.PI * 2)
-          ctx.globalAlpha = alfaBase + p.brillo * 0.6
-          ctx.strokeStyle = p.brillo > 0.02 ? tonos[p.tono] : base
-          ctx.stroke()
-        }
+        const meta = objetivo.get(p) ?? 0
+        if (!meta && p.brillo < 0.02) continue
+        p.brillo += (meta - p.brillo) * Math.min(1, dt * 6)
+        if (meta > 0.35 && Math.random() < dt * 2.5) lanzar(p)
+        ctx.globalAlpha = p.brillo * 0.85
+        ctx.strokeStyle = tonos[p.tono]
+        trazar(ctx, p)
       }
 
       // Pulsos: cabeza brillante con una estela que se apaga.
       const estela = hero ? 46 : 34
       pulsos = pulsos.filter((u) => {
         u.pos += u.vel * dt
-        const fuera = u.pos < -estela || u.pos > u.pista.largo + estela
-        if (fuera) return false
+        if (u.pos < -estela || u.pos > u.pista.largo + estela) return false
         const dir = Math.sign(u.vel)
         const cola = Math.min(u.pista.largo, Math.max(0, u.pos - dir * estela))
         const cabeza = Math.min(u.pista.largo, Math.max(0, u.pos))
-        const pasos = 6
+        const pasos = 4
         ctx.strokeStyle = tonos[u.tono]
         for (let s = 0; s < pasos; s++) {
           const a = puntoEn(u.pista, cola + ((cabeza - cola) * s) / pasos)
@@ -175,31 +198,37 @@ export default function CircuitField({ modo = 'fondo', className = '' }: { modo?
         ctx.beginPath(); ctx.arc(h.x, h.y, 2, 0, Math.PI * 2); ctx.fill()
         return true
       })
-      ctx.restore()
       ctx.globalAlpha = 1
     }
 
+    const activo = () => listo && visible && !document.hidden && !reducir.matches && (hero || heroesVisibles === 0)
     const cuadro = (t: number) => {
+      raf = activo() ? requestAnimationFrame(cuadro) : 0
+      if (intervalo && t - ultimoDibujo < intervalo - 1) return
       const dt = Math.min(0.05, (t - (ultimo || t)) / 1000)
-      ultimo = t
+      ultimo = t; ultimoDibujo = t
       // Pulsos espontáneos: el circuito nunca queda quieto aunque nadie mueva el mouse.
       if (pistas.length && Math.random() < dt * (hero ? 7 : 3.5)) lanzar(pistas[Math.floor(Math.random() * pistas.length)])
+      const t0 = performance.now()
       dibujar(dt)
-      raf = visible && !document.hidden ? requestAnimationFrame(cuadro) : 0
+      costo = costo * 0.9 + (performance.now() - t0) * 0.1
+      if (costo > 8) intervalo = 1000 / 30
     }
     const arrancar = () => {
-      if (reducir.matches) { cancelAnimationFrame(raf); raf = 0; pulsos = []; dibujar(0); return }
-      if (!raf && visible && !document.hidden) { ultimo = 0; raf = requestAnimationFrame(cuadro) }
+      if (activo()) { if (!raf) { ultimo = 0; raf = requestAnimationFrame(cuadro) } return }
+      cancelAnimationFrame(raf); raf = 0
+      if (reducir.matches) { pulsos = []; dibujar(0) }
     }
 
     const alMover = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect()
       puntero.x = e.clientX - r.left; puntero.y = e.clientY - r.top
       puntero.activo = puntero.x > -RADIO && puntero.y > -RADIO && puntero.x < ancho + RADIO && puntero.y < alto + RADIO
+      punteroMovido = true
     }
-    const alSalir = () => { puntero.activo = false }
+    const alSalir = () => { puntero.activo = false; punteroMovido = true }
     const alTocar = (e: PointerEvent) => {
-      if (reducir.matches) return
+      if (!activo()) return
       alMover(e)
       if (!puntero.activo) return
       const q = { x: puntero.x - deriva.x, y: puntero.y - deriva.y }
@@ -207,12 +236,26 @@ export default function CircuitField({ modo = 'fondo', className = '' }: { modo?
     }
 
     medir()
-    arrancar()
+    dibujar(0) // las pistas se ven desde el primer momento; el movimiento arranca cuando la página terminó de cargar
+    // Arranque diferido: después del evento load y de un momento ocioso, para no competir con la carga de la página.
+    let idle = 0
+    const empezar = () => {
+      const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
+      const go = () => { listo = true; arrancar() }
+      idle = ric ? ric(go, { timeout: 1500 }) : window.setTimeout(go, 600)
+    }
+    if (document.readyState === 'complete') empezar(); else window.addEventListener('load', empezar, { once: true })
+
     let espera = 0
-    const ro = new ResizeObserver(() => { clearTimeout(espera); espera = window.setTimeout(() => { medir(); if (reducir.matches) dibujar(0) }, 150) })
+    const ro = new ResizeObserver(() => { clearTimeout(espera); espera = window.setTimeout(() => { medir(); dibujar(0) }, 150) })
     ro.observe(canvas)
-    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; arrancar() })
+    const io = new IntersectionObserver(([e]) => {
+      if (hero && e.isIntersecting !== enHero) { enHero = e.isIntersecting; cambiarHeroes(enHero ? 1 : -1) }
+      visible = e.isIntersecting
+      arrancar()
+    })
     io.observe(canvas)
+    if (!hero) avisarHeroes.add(arrancar)
     const alVisibilidad = () => arrancar()
     window.addEventListener('pointermove', alMover, { passive: true })
     window.addEventListener('pointerdown', alTocar, { passive: true })
@@ -220,7 +263,11 @@ export default function CircuitField({ modo = 'fondo', className = '' }: { modo?
     document.addEventListener('visibilitychange', alVisibilidad)
     reducir.addEventListener('change', arrancar)
     return () => {
-      cancelAnimationFrame(raf); clearTimeout(espera)
+      cancelAnimationFrame(raf); clearTimeout(espera); clearTimeout(idle)
+      ;(window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idle)
+      window.removeEventListener('load', empezar)
+      if (enHero) cambiarHeroes(-1)
+      avisarHeroes.delete(arrancar)
       ro.disconnect(); io.disconnect()
       window.removeEventListener('pointermove', alMover)
       window.removeEventListener('pointerdown', alTocar)
