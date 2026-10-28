@@ -147,7 +147,7 @@ export function Confirm({ children, message, className = 'btn-ghost px-3! py-2!'
     <dialog ref={dlg} aria-label="Confirmar acción" onClick={(e) => { if (e.target === dlg.current) dlg.current?.close() }}
       className="m-auto w-[calc(100%-2rem)] max-w-md rounded-card border border-outline-variant bg-surface-container p-0 text-on-surface shadow-card-hover backdrop:bg-black/60 backdrop:backdrop-blur-xs">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-primary">¿Confirmás?</h2>
+        <h2 className="display text-lg [font-stretch:105%]">¿Confirmás?</h2>
         <p className="mt-2 text-sm text-on-surface-variant">{message}</p>
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" autoFocus className="btn-ghost px-4! py-2!" onClick={() => dlg.current?.close()}>Cancelar</button>

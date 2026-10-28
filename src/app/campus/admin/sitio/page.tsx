@@ -79,7 +79,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
       <nav aria-label="Secciones del sitio" className="mb-4 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
         {tabs.map(([k, l]) => (
           <Link key={k} href={`/campus/admin/sitio?tab=${k}`} scroll={false} aria-current={actual[0] === k ? 'page' : undefined}
-            className={`rounded-sm px-4 py-2 text-sm font-semibold transition-colors ${actual[0] === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${actual[0] === k ? 'bg-on-surface text-surface-container-lowest' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-accent'}`}>{l}</Link>
         ))}
       </nav>
       <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-on-surface-variant">

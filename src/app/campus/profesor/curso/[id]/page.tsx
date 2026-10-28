@@ -86,7 +86,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
         {!alumnos?.length ? <Empty>No hay alumnos asignados.</Empty> : (
           <div className="card overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
-              <thead><tr className="text-left text-xs uppercase tracking-wider text-on-surface-variant"><th className="px-4 py-3">Alumno</th><th className="px-4 py-3">Email</th><th className="px-4 py-3">Teléfono</th><th className="px-4 py-3">Estado</th></tr></thead>
+              <thead><tr className="text-left text-xs text-on-surface-variant"><th className="px-4 py-3">Alumno</th><th className="px-4 py-3">Email</th><th className="px-4 py-3">Teléfono</th><th className="px-4 py-3">Estado</th></tr></thead>
               <tbody>
                 {alumnos.map((a: any) => (
                   <tr key={a.id} className="border-t border-outline-variant">

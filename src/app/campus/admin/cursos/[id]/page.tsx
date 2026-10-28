@@ -65,7 +65,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
       <nav aria-label="Secciones del curso" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
         {TABS.map(([k, l]) => (
           <Link key={k} href={href(k)} scroll={false} aria-current={tab === k ? 'page' : undefined}
-            className={`rounded-sm px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-accent text-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'}`}>{l}</Link>
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-on-surface text-surface-container-lowest' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-accent'}`}>{l}</Link>
         ))}
       </nav>
 
@@ -76,7 +76,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
             <p className="text-sm text-on-surface-variant">Cada vez que se dicta el curso: fecha, aula, profesor, cupo, calendario y alumnos. Una edición activa por vez.</p>
           </div>
           <ModalButton label={<><CalendarPlus size={16} aria-hidden /> Nueva edición</>} title={`Nueva edición de ${curso.nombre}`} className="btn-primary whitespace-nowrap" wide>
-            {!plan?.length && <p className="mb-4 rounded-sm border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">El curso todavía no tiene clases: cargalas en «Estructura» para poder armar el calendario de la edición.</p>}
+            {!plan?.length && <p className="mb-4 rounded-lg border border-accent/40 bg-accent/10 p-3 text-sm text-secondary">El curso todavía no tiene clases: cargalas en «Estructura» para poder armar el calendario de la edición.</p>}
             <EdicionForm cursoId={id} aulas={aulas ?? []} profesores={profOpts} />
           </ModalButton>
         </div>

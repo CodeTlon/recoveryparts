@@ -21,7 +21,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
   const users = filas?.slice(0, POR_PAGINA)
 
   const tab = (v: string | undefined, l: string) => (
-    <Link href={v ? `?rol=${v}` : '?'} className={`rounded-sm border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-accent bg-accent text-surface' : 'border-outline text-on-surface-variant hover:border-secondary'}`}>{l}</Link>
+    <Link href={v ? `?rol=${v}` : '?'} className={`rounded-lg border px-4 py-2 text-sm font-semibold ${rol === v || (!rol && !v) ? 'border-on-surface bg-on-surface text-surface-container-lowest' : 'border-outline text-on-surface-variant hover:border-outline'}`}>{l}</Link>
   )
 
   return (
@@ -58,7 +58,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                 <div className="flex flex-wrap items-center gap-3">
                   <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-linear-to-br from-brand-light to-accent text-sm font-bold text-white">{`${u.nombre?.[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold">{u.apellido}, {u.nombre} <span className="ml-2 text-xs font-normal uppercase text-on-surface-variant">{u.rol}</span></p>
+                    <p className="font-semibold">{u.apellido}, {u.nombre} <span className="ml-2 text-xs font-normal capitalize text-on-surface-variant">{u.rol}</span></p>
                     <p className="truncate text-sm text-on-surface-variant">{u.email}{u.telefono ? ` · ${u.telefono}` : ''}</p>
                   </div>
                   <Badge tone={tone as 'ok'}>{label}</Badge>

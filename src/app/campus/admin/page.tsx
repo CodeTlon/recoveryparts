@@ -83,7 +83,7 @@ export default async function AdminHome() {
             <ul className={lista}>
               {(porIniciar as unknown as PorIniciar[]).map((c) => (
                 <li key={c.id} className="flex items-start justify-between gap-3 py-2">
-                  <Link href={`/campus/admin/cursos/${c.curso_id}/ediciones/${c.id}`} className="font-medium hover:text-secondary">{uno(c.cursos)?.nombre ?? 'Curso'}</Link>
+                  <Link href={`/campus/admin/cursos/${c.curso_id}/ediciones/${c.id}`} className="font-medium hover:text-accent">{uno(c.cursos)?.nombre ?? 'Curso'}</Link>
                   <span className="shrink-0 text-xs text-on-surface-variant">{fechaAR(c.fecha_inicio)}</span>
                 </li>
               ))}

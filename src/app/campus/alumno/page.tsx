@@ -48,7 +48,7 @@ export default async function AlumnoHome() {
       <PageHead title={`Hola, ${perfil.nombre}`} sub="Tus cursos y el material liberado." />
 
       {pendientes.length > 0 && (
-        <Link href="/campus/alumno/encuestas" className="card mb-6 flex flex-wrap items-center gap-3 border-accent/40 p-4 text-sm transition-colors hover:border-secondary">
+        <Link href="/campus/alumno/encuestas" className="card mb-6 flex flex-wrap items-center gap-3 border-accent/40 p-4 text-sm transition-colors hover:border-outline">
           <ClipboardList size={18} className="text-accent" />
           <span className="min-w-0 flex-1">Tenés <strong>{pendientes.length}</strong> encuesta{pendientes.length === 1 ? '' : 's'} para responder.</span>
           <span className="inline-flex items-center gap-1 font-semibold text-secondary">Ver encuestas <ArrowRight size={16} /></span>
@@ -71,7 +71,7 @@ export default async function AlumnoHome() {
               </div>
 
               {i.estado === 'desertor' && (
-                <div role="alert" className="mb-4 flex gap-3 rounded-sm border border-danger/40 bg-danger/10 p-4 text-sm">
+                <div role="alert" className="mb-4 flex gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm">
                   <AlertTriangle size={20} className="mt-0.5 shrink-0 text-danger" />
                   <div>
                     <p className="font-semibold text-danger">Fuiste dado de baja de este curso el {fechaAR(i.fecha_desercion)}{i.n_clase_desercion != null ? ` (clase ${i.n_clase_desercion})` : ''}.</p>
