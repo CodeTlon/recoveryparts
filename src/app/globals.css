@@ -219,10 +219,11 @@
 /* 2 · Animaciones atadas al scroll, nativas del navegador (sin JS). Si no hay soporte, el contenido queda visible. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    /* Destape con recorte: el bloque se «imprime» de abajo hacia arriba al entrar en pantalla. */
+    /* Destape con recorte: el bloque se «imprime» de arriba hacia abajo al entrar en pantalla. El recorte termina
+       40px por fuera de la caja para no cortar sombras, nodos ni la inclinación de las tarjetas. */
     @keyframes destapar {
-      from { clip-path: inset(18% 0 0 0 round var(--radius-card)); opacity: 0.2; translate: 0 32px; }
-      to { clip-path: inset(0 0 0 0 round var(--radius-card)); opacity: 1; translate: 0 0; }
+      from { clip-path: inset(-40px -40px 35% -40px); opacity: 0.15; translate: 0 36px; }
+      to { clip-path: inset(-40px); opacity: 1; translate: 0 0; }
     }
     .al-entrar { animation: destapar linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
 

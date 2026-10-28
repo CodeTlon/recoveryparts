@@ -4,6 +4,7 @@ import { ArrowRight, Cpu, ShieldCheck, Sofa, Sparkles, Table, Wrench, type Lucid
 import { metaPagina, recortar } from '@/lib/seo'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
+import EncabezadoPagina from '@/components/ui/EncabezadoPagina'
 import Galeria from '@/components/public/Lightbox'
 import { getAulasPublicas, getSettings } from '@/lib/data'
 
@@ -33,15 +34,10 @@ export default async function AulasPage() {
   const video = videoDelSitio(s.aulas.video_url)
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface text-on-surface">
+    <div className="flex min-h-screen flex-col text-on-surface">
       <SiteNav />
-      <main id="contenido" tabIndex={-1} className="grow pt-20 outline-hidden">
-        <section className="grid-bg border-b border-outline-variant">
-          <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12">
-            <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Aulas</h1>
-            <p className="max-w-2xl whitespace-pre-line text-lg text-on-surface-variant">{s.aulas.texto || 'Conocé los espacios donde vas a cursar.'}</p>
-          </div>
-        </section>
+      <main id="contenido" tabIndex={-1} className="grow outline-hidden">
+        <EncabezadoPagina titulo="Aulas" bajada={<span className="whitespace-pre-line">{s.aulas.texto || 'Conocé los espacios donde vas a cursar.'}</span>} />
 
         {!aulas.length ? (
           <section className="mx-auto max-w-[1280px] px-4 py-14 md:px-12">
@@ -51,7 +47,7 @@ export default async function AulasPage() {
           <>
             {video && (
               <section aria-label="Video de las aulas" className="mx-auto max-w-[1280px] px-4 pt-14 md:px-12">
-                <div className="card overflow-hidden p-0">
+                <div className="al-entrar overflow-hidden rounded-card border border-outline-variant">
                   <video controls preload="metadata" playsInline poster={s.aulas.imagen_url || undefined} className="aspect-video w-full bg-black">
                     <source src={video} />
                     Tu navegador no puede reproducir este video.
@@ -63,19 +59,20 @@ export default async function AulasPage() {
             {aulas.length > 1 && (
               <nav aria-label="Ir a un aula" className="mx-auto flex max-w-[1280px] flex-wrap gap-2 px-4 pt-10 md:px-12">
                 {aulas.map((a) => (
-                  <a key={a.id} href={`#${ancla(a.nombre)}`} className="rounded-sm border border-outline px-4 py-2 text-sm font-semibold uppercase tracking-wide text-on-surface-variant transition-colors hover:border-secondary hover:text-secondary">{a.nombre}</a>
+                  <a key={a.id} href={`#${ancla(a.nombre)}`} className="rounded-pill border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors hover:border-on-surface hover:text-on-surface">{a.nombre}</a>
                 ))}
               </nav>
             )}
 
-            <div className="mx-auto max-w-[1280px] space-y-16 px-4 py-14 md:px-12">
-              {aulas.map((a) => {
+            <div className="mx-auto max-w-[1280px] space-y-20 px-4 py-14 md:px-12 md:py-20">
+              {aulas.map((a, n) => {
                 const v = videoDelSitio(a.video_url)
                 return (
                   <section key={a.id} id={ancla(a.nombre)} aria-labelledby={`${ancla(a.nombre)}-titulo`} className="scroll-mt-28 border-t border-outline-variant pt-12 first:border-t-0 first:pt-0">
                     <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-                      <div>
-                        <h2 id={`${ancla(a.nombre)}-titulo`} className="mb-3 text-3xl font-bold tracking-tight">{a.nombre}</h2>
+                      <div className="lg:sticky lg:top-28 lg:self-start">
+                        <span aria-hidden className="display mb-2 block text-6xl tabular-nums text-accent/80">{String(n + 1).padStart(2, '0')}</span>
+                        <h2 id={`${ancla(a.nombre)}-titulo`} className="display mb-4 text-[clamp(2rem,3.6vw,2.9rem)]">{a.nombre}</h2>
                         {a.descripcion && <p className="mb-6 whitespace-pre-line text-lg text-on-surface-variant">{a.descripcion}</p>}
                         {a.destacados.length > 0 && (
                           <ul className="space-y-3">
@@ -83,7 +80,7 @@ export default async function AulasPage() {
                               const Icono = ICONO[d.tipo] ?? Sparkles
                               return (
                                 <li key={i} className="flex items-start gap-3">
-                                  <span aria-hidden className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent"><Icono size={18} /></span>
+                                  <span aria-hidden className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent/40 bg-accent/10 text-accent"><Icono size={18} /></span>
                                   <span><span className="sr-only">{TIPO[d.tipo] ?? 'Destacado'}: </span>{d.texto}</span>
                                 </li>
                               )
@@ -96,7 +93,7 @@ export default async function AulasPage() {
                           <Galeria filtros={false} fotos={a.fotos.map((f) => ({ ...f, descripcion: null, categoria: 'aulas', area: null }))} />
                         )}
                         {v && (
-                          <div className="card overflow-hidden p-0">
+                          <div className="overflow-hidden rounded-card border border-outline-variant">
                             <video controls preload="metadata" playsInline className="aspect-video w-full bg-black" aria-label={`Video de ${a.nombre}`}>
                               <source src={v} />
                               Tu navegador no puede reproducir este video.
@@ -110,10 +107,10 @@ export default async function AulasPage() {
               })}
             </div>
 
-            <section className="border-t border-outline-variant">
-              <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-10 md:px-12">
+            <section className="border-t border-outline-variant/60 bg-surface-container-lowest/70">
+              <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-12 md:px-12">
                 <p className="text-on-surface-variant">¿Querés ver más? Hay más fotos de las aulas en la galería.</p>
-                <Link href="/galeria?categoria=aulas" className="btn-ghost">Ver más fotos en la galería <ArrowRight size={16} aria-hidden /></Link>
+                <Link href="/galeria?categoria=aulas" className="btn-outline">Ver más fotos en la galería <ArrowRight size={16} aria-hidden /></Link>
               </div>
             </section>
           </>

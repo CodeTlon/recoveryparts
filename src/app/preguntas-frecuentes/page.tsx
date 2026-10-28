@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { metaPagina } from '@/lib/seo'
 import Link from 'next/link'
-import { ChevronDown } from 'lucide-react'
+import { Plus, ArrowRight } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
+import EncabezadoPagina from '@/components/ui/EncabezadoPagina'
 import { query } from '@/lib/data'
 import JsonLd from '@/components/seo/JsonLd'
 
@@ -13,34 +14,36 @@ export const dynamic = 'force-dynamic'
 export default async function FaqPage() {
   const faq = await query<{ id: string; pregunta: string; respuesta: string }[]>('faq-pagina', (sb) => sb.from('cms_faq').select('id, pregunta, respuesta').order('orden'), [])
   return (
-    <div className="flex min-h-screen flex-col bg-surface text-on-surface">
+    <div className="flex min-h-screen flex-col text-on-surface">
       {faq.length > 0 && <JsonLd datos={{
         '@context': 'https://schema.org', '@type': 'FAQPage',
         mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.pregunta, acceptedAnswer: { '@type': 'Answer', text: f.respuesta } })),
       }} />}
       <SiteNav />
-      <main id="contenido" tabIndex={-1} className="grow pt-20 outline-hidden">
-        <section className="grid-bg border-b border-outline-variant">
-          <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12">
-            <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Preguntas frecuentes</h1>
-            <p className="max-w-2xl text-lg text-on-surface-variant">Todo lo que suelen preguntarnos antes de empezar.</p>
-          </div>
-        </section>
-        <section className="mx-auto max-w-3xl px-4 py-14">
+      <main id="contenido" tabIndex={-1} className="grow outline-hidden">
+        <EncabezadoPagina titulo="Preguntas frecuentes" bajada="Todo lo que suelen preguntarnos antes de empezar." />
+        <section className="mx-auto max-w-[1280px] px-4 py-14 md:px-12 md:py-20">
           {faq.length === 0 && <p className="text-on-surface-variant">Todavía no hay preguntas cargadas.</p>}
-          <div className="space-y-3">
-            {faq.map((f) => (
-              <details key={f.id} className="card group p-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
-                  {f.pregunta}<ChevronDown size={20} className="shrink-0 transition-transform group-open:rotate-180" aria-hidden />
-                </summary>
-                <p className="mt-3 whitespace-pre-line text-on-surface-variant">{f.respuesta}</p>
-              </details>
-            ))}
-          </div>
-          <div className="card mt-10 p-6 text-center">
-            <p className="font-semibold">¿No encontraste lo que buscabas?</p>
-            <Link href="/contacto" className="btn-primary mt-4 inline-flex">Escribinos</Link>
+          <div className="grid gap-12 md:grid-cols-12">
+            <div className="divide-y divide-outline-variant border-y border-outline-variant md:col-span-8">
+              {faq.map((f, i) => (
+                <details key={f.id} className="acordeon group">
+                  <summary className="flex cursor-pointer list-none items-baseline gap-5 py-5 text-lg font-semibold transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
+                    <span aria-hidden className="dato w-6 shrink-0 text-accent">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="flex-1">{f.pregunta}</span>
+                    <Plus size={22} aria-hidden className="shrink-0 self-center transition-transform duration-300 ease-(--ease-out) group-open:rotate-45" />
+                  </summary>
+                  <p className="whitespace-pre-line pb-6 pl-11 pr-10 text-on-surface-variant">{f.respuesta}</p>
+                </details>
+              ))}
+            </div>
+            <aside className="md:col-span-4">
+              <div className="card p-6 md:sticky md:top-28">
+                <p className="display text-2xl [font-stretch:105%]">¿No encontraste lo que buscabas?</p>
+                <p className="mt-2 text-on-surface-variant">Escribinos y te respondemos por mail.</p>
+                <Link href="/contacto" className="btn-primary mt-6">Escribinos <ArrowRight size={16} aria-hidden /></Link>
+              </div>
+            </aside>
           </div>
         </section>
       </main>

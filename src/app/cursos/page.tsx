@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { metaPagina } from '@/lib/seo'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
-import Reveal from '@/components/ui/Reveal'
+import EncabezadoPagina from '@/components/ui/EncabezadoPagina'
 import CursoCard from '@/components/public/CursoCard'
 import CursosFilters from '@/components/public/CursosFilters'
 import DemandaForm from '@/components/public/DemandaForm'
@@ -36,22 +36,18 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
   const wa = waLink(settings.contacto.whatsapp, 'Hola! No encontré el curso que busco.')
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface text-on-surface">
+    <div className="flex min-h-screen flex-col text-on-surface">
       <SiteNav />
-      <main id="contenido" tabIndex={-1} className="grow pt-20 outline-hidden">
-        <section className="grid-bg border-b border-outline-variant">
-          <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12">
-            <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Cursos y talleres</h1>
-            <p className="max-w-2xl text-lg text-on-surface-variant">Formación 100% presencial en La Rioja 345, Córdoba. Cursos de varias semanas y talleres cortos: una jornada, días seguidos o 1 a 2 semanas.</p>
-            <Suspense fallback={<div className="min-h-36" aria-hidden />}><CursosFilters /></Suspense>
-          </div>
-        </section>
+      <main id="contenido" tabIndex={-1} className="grow outline-hidden">
+        <EncabezadoPagina titulo="Cursos y talleres" bajada="Formación 100% presencial en La Rioja 345, Córdoba. Cursos de varias semanas y talleres cortos: una jornada, días seguidos o 1 a 2 semanas.">
+          <Suspense fallback={<div className="min-h-36" aria-hidden />}><CursosFilters /></Suspense>
+        </EncabezadoPagina>
 
         <section className="mx-auto max-w-[1280px] px-4 py-14 md:px-12">
-          <p className="mb-6 text-sm uppercase tracking-widest text-on-surface-variant">{lista.length} resultado{lista.length === 1 ? '' : 's'}</p>
+          <p role="status" className="mb-8 flex items-baseline gap-2 text-on-surface-variant"><span className="display text-3xl tabular-nums text-on-surface">{lista.length}</span> resultado{lista.length === 1 ? '' : 's'}</p>
           {lista.length === 0 ? (
-            <div className="card grid-bg p-10 text-center">
-              <p className="mb-2 text-lg font-semibold">No encontramos cursos</p>
+            <div className="card p-10 text-center">
+              <p className="display mb-2 text-2xl [font-stretch:105%]">No encontramos cursos</p>
               <p className="mb-6 text-on-surface-variant">Probá con otros filtros o contanos qué te gustaría aprender.</p>
               <div className="mx-auto max-w-md"><DemandaForm /></div>
               {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline mt-6">Consultar por WhatsApp</a>}
@@ -59,7 +55,7 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <h2 className="sr-only">Resultados</h2>
-              {lista.map((c, i) => <Reveal key={c.id} delay={Math.min(i, 8) * 0.05} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} modulos={mods.filter((m) => m.curso_id === c.id).map((m) => m.titulo)} /></Reveal>)}
+              {lista.map((c) => <div key={c.id} className="al-entrar h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} modulos={mods.filter((m) => m.curso_id === c.id).map((m) => m.titulo)} /></div>)}
             </div>
           )}
         </section>
