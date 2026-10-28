@@ -205,25 +205,26 @@
 /* ───────────────────────── Movimiento del sitio público (design.md § Movimiento) ─────────────────────────
    Todo lo de abajo se apaga con prefers-reduced-motion: el contenido se ve completo y quieto. */
 
-/* 1 · Título que se «expande»: cada palabra entra desde Archivo comprimido (wdth 62) hasta el ancho final, con una
-   máscara que la destapa de abajo hacia arriba. Lo arma TituloExpandido.tsx (una <span> por palabra). */
+/* 1 · Título que se «expande»: cada palabra entra desde Archivo comprimido (wdth 62) hasta el ancho final, subiendo
+   apenas. Lo arma TituloExpandido.tsx (una <span> por palabra). Sin máscara ni opacidad: el título se pinta desde el
+   primer cuadro (con una máscara, Chrome contaba el LCP recién al terminar la animación). */
 @keyframes expandir {
-  from { font-stretch: 62%; clip-path: inset(100% 0 0 0); translate: 0 0.25em; }
-  60% { clip-path: inset(0 0 0 0); }
-  to { font-stretch: 118%; clip-path: inset(0 0 0 0); translate: 0 0; }
+  from { font-stretch: 62%; translate: 0 0.18em; }
+  to { font-stretch: 118%; translate: 0 0; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .titulo-expandido > span { display: inline-block; animation: expandir 1.1s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
+  .titulo-expandido .titulo-palabra { animation: expandir 1.1s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
 }
 
 /* 2 · Animaciones atadas al scroll, nativas del navegador (sin JS). Si no hay soporte, el contenido queda visible. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     /* Destape con recorte: el bloque se «imprime» de arriba hacia abajo al entrar en pantalla. El recorte termina
-       40px por fuera de la caja para no cortar sombras, nodos ni la inclinación de las tarjetas. */
+       40px por fuera de la caja para no cortar sombras, nodos ni la inclinación de las tarjetas. Sin tocar la opacidad:
+       el texto que todavía no entró conserva su contraste (lectores, auditorías y quien llega por un ancla). */
     @keyframes destapar {
-      from { clip-path: inset(-40px -40px 35% -40px); opacity: 0.15; translate: 0 36px; }
-      to { clip-path: inset(-40px); opacity: 1; translate: 0 0; }
+      from { clip-path: inset(-40px -40px 35% -40px); translate: 0 36px; }
+      to { clip-path: inset(-40px); translate: 0 0; }
     }
     .al-entrar { animation: destapar linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
 

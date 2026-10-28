@@ -64,7 +64,8 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="grow outline-hidden">
         <EncabezadoPagina titulo="Cursos y talleres" bajada="Formación 100% presencial en La Rioja 345, Córdoba. Cursos de varias semanas y talleres cortos: una jornada, días seguidos o 1 a 2 semanas.">
-          <Suspense fallback={<div className="min-h-36" aria-hidden />}><CursosFilters /></Suspense>
+          {/* El lugar reservado mide lo mismo que los filtros (celular, tablet, escritorio): sin salto al cargar (CLS). */}
+          <Suspense fallback={<div className="min-h-[338px] md:min-h-[258px] lg:min-h-[200px]" aria-hidden />}><CursosFilters /></Suspense>
         </EncabezadoPagina>
 
         <section id="resultados" className="mx-auto max-w-[1280px] scroll-mt-28 px-4 py-14 md:px-12">

@@ -147,7 +147,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
             {kit.length > 0 && (
               <section>
                 <h2 className="display mb-1 text-3xl [font-stretch:108%]">Kit del curso</h2>
-                <p className="mb-5 text-sm text-on-surface-variant">Precios de referencia{c.precio_actualizado_en ? `, actualizados al ${new Date(c.precio_actualizado_en + 'T00:00').toLocaleDateString('es-AR')}` : ''}. La compra se hace en el sitio de nuestro socio <a href={MUNDO_PARTS_URL} target="_blank" rel="noopener noreferrer" className="text-secondary underline-offset-4 hover:underline">Mundo Parts</a>.</p>
+                <p className="mb-5 text-sm text-on-surface-variant">Precios de referencia{c.precio_actualizado_en ? `, actualizados al ${new Date(c.precio_actualizado_en + 'T00:00').toLocaleDateString('es-AR')}` : ''}. La compra se hace en el sitio de nuestro socio <a href={MUNDO_PARTS_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-on-surface underline decoration-accent decoration-2 underline-offset-4 hover:text-accent">Mundo Parts</a>.</p>
                 {[['Necesario para cursar', kit.filter((k) => k.requerido !== false)], ['Recomendado (opcional)', kit.filter((k) => k.requerido === false)]].map(([titulo, items]) => (items as typeof kit).length > 0 && (
                   <div key={titulo as string} className="mb-5">
                     <h3 className="dato mb-2">{titulo as string}</h3>

@@ -35,7 +35,7 @@ export default async function ContactoPage() {
                 <WhatsAppIcon size={18} /> Consultar por WhatsApp
               </a>
             )}
-            <p className="text-sm text-on-surface-variant">¿Dudas comunes? Mirá las <Link href="/preguntas-frecuentes" className="text-secondary underline-offset-4 hover:underline">preguntas frecuentes</Link>.</p>
+            <p className="text-sm text-on-surface-variant">¿Dudas comunes? Mirá las <Link href="/preguntas-frecuentes" className="font-semibold text-on-surface underline decoration-accent decoration-2 underline-offset-4 hover:text-accent">preguntas frecuentes</Link>.</p>
           </aside>
           <div className="card p-6 md:p-8">
             <h2 className="display mb-6 text-3xl [font-stretch:108%]">Escribinos</h2>
