@@ -5,6 +5,9 @@ import './globals.css'
 
 // Fuente autoalojada (src/app/fonts, subset latin): el build no depende de Google Fonts. Ver FONTS.md.
 const montserrat = localFont({ src: './fonts/montserrat-latin-wght-normal.woff2', weight: '100 900', variable: '--font-montserrat', display: 'swap' })
+// Display: Archivo variable con ejes de peso y ancho (wdth 62–125). El ancho expandido es la voz de los títulos y el
+// título del inicio lo anima de comprimido a expandido (globals.css § Movimiento).
+const archivo = localFont({ src: './fonts/archivo-latin-standard-normal.woff2', weight: '100 900', style: 'normal', variable: '--font-archivo', display: 'swap', declarations: [{ prop: 'font-stretch', value: '62% 125%' }] })
 
 export const metadata: Metadata = {
   title: { default: 'Recovery Parts — Academia de cursos técnicos', template: '%s · Recovery Parts' },
@@ -18,9 +21,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-AR" className={montserrat.variable}>
+    <html lang="es-AR" className={`${montserrat.variable} ${archivo.variable}`}>
       <body>
-        <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:bg-accent focus:px-4 focus:py-2 focus:font-bold focus:text-surface">
+        <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:font-bold focus:text-surface-container-lowest">
           Saltar al contenido
         </a>
         {children}
