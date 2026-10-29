@@ -62,11 +62,24 @@ test.describe('Público: galería fuera y pie', () => {
     await expect(page.getByRole('link', { name: 'Galería' })).toHaveCount(0)
   })
 
-  test('el pie lleva la invitación y la navegación', async ({ page }) => {
+  test('el pie lleva los datos en columnas y la navegación', async ({ page }) => {
     await page.goto('/cursos')
     const pie = page.locator('footer')
-    await expect(pie.getByText('¿Arrancamos? Escribinos.')).toBeVisible()
     await expect(pie.getByRole('navigation', { name: 'Sitio' }).getByRole('link', { name: 'Cursos y talleres' })).toBeVisible()
+    await expect(pie.getByRole('link', { name: 'Volver arriba' })).toHaveCount(0)
+  })
+
+  test('el filtro de destacadas de la portada filtra ahí mismo y marca la opción elegida', async ({ page }) => {
+    await page.goto('/')
+    const grupo = page.getByRole('group', { name: 'Filtrar capacitaciones' })
+    test.skip(await grupo.count() === 0, 'sin cursos cargados (CI sin base)')
+    const botones = grupo.getByRole('button')
+    await expect(botones.first()).toHaveAttribute('aria-pressed', 'true')
+    const otro = botones.nth(1)
+    await otro.click()
+    await expect(otro).toHaveAttribute('aria-pressed', 'true')
+    await expect(botones.first()).toHaveAttribute('aria-pressed', 'false')
+    await expect(page).toHaveURL(/\/$/) // no navega
   })
 })
 

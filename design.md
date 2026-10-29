@@ -57,8 +57,11 @@ Neutros siempre teñidos hacia el tono 263 (nada de gris puro). Colores nuevos: 
 - La portada no pasa de ~9–10 pantallas en el celular: listas cortas (4 inicios, 4 egresados), destacados en fila
   deslizable debajo de `lg` y un link «Ver todos» en vez de repetir el catálogo. El cierre con datos de contacto vive en el
   pie, no se repite en la portada.
-- Pie en tres franjas: invitación con acciones, datos en columnas (Visitanos / Contacto / Sitio) y la firma con el nombre
-  grande. En el celular el teléfono llama (`tel:`), el mail abre el correo y la dirección abre el mapa.
+- Pie compacto (v0.17.3, a gusto de Mateo): marca chica + datos en columnas (Visitanos / Contacto / Sitio) y el copyright.
+  Sin invitación grande, sin nombre gigante y sin «Volver arriba». En el celular el teléfono llama (`tel:`), el mail abre el
+  correo, la dirección abre el mapa y WhatsApp abre el chat.
+- Un control que parece filtro filtra ahí mismo y marca la opción elegida (`aria-pressed`); si lleva a otra página, se
+  escribe como link («Ver todo en …»), no como chip.
 - El circuito no compite con lo que se lee: tenue detrás del texto (`LECTURA` en `CircuitField.tsx`) y pulsos del fondo
   fijo más suaves que los del hero.
 
