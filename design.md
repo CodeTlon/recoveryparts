@@ -53,6 +53,15 @@ Neutros siempre teñidos hacia el tono 263 (nada de gris puro). Colores nuevos: 
 - Filtros secundarios plegados detrás de un botón en el celular (ver `CursosFilters`): lo primero que se ve son los resultados.
 - Tablas del campus: en el celular se ocultan las columnas secundarias (`hidden md:table-cell`) antes que hacer scroll lateral.
 
+## Portada y pie (v0.17.2)
+- La portada no pasa de ~9–10 pantallas en el celular: listas cortas (4 inicios, 4 egresados), destacados en fila
+  deslizable debajo de `lg` y un link «Ver todos» en vez de repetir el catálogo. El cierre con datos de contacto vive en el
+  pie, no se repite en la portada.
+- Pie en tres franjas: invitación con acciones, datos en columnas (Visitanos / Contacto / Sitio) y la firma con el nombre
+  grande. En el celular el teléfono llama (`tel:`), el mail abre el correo y la dirección abre el mapa.
+- El circuito no compite con lo que se lee: tenue detrás del texto (`LECTURA` en `CircuitField.tsx`) y pulsos del fondo
+  fijo más suaves que los del hero.
+
 ## Motivo propio: el circuito
 Pistas finas a 0°/45°/90° con nodos huecos en los extremos, como el hemisferio naranja del logo. Reemplaza a la aurora, las
 grillas y los brillos genéricos. Aparece en:
@@ -72,7 +81,7 @@ grillas y los brillos genéricos. Aparece en:
 | Díptico que se ensancha hacia el puntero | áreas de la portada | `.diptico` + `:has()` |
 | Tarjeta que se inclina en 3D con reflejo e imagen en paralaje | tarjetas de curso | `Inclinable.tsx` (solo mouse/lápiz) |
 | Botón magnético | CTA principales | `Magnetico.tsx` (sin rebote) |
-| Foto que viaja de la tarjeta a la ficha / de la grilla al visor | cursos, galería | `ViewTransition` de React con `share="morph"` |
+| Foto que viaja de la tarjeta a la ficha / de la grilla al visor | cursos, fotos de las aulas | `ViewTransition` de React con `share="morph"` |
 | Acordeón con altura animada nativa | preguntas frecuentes | `details.acordeon` + `interpolate-size` |
 | Fila deslizable con foco en la del centro | testimonios | `.fila-foco` (`view(inline)`) |
 

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowRight, Cpu, ShieldCheck, Sofa, Sparkles, Table, Wrench, type LucideIcon } from 'lucide-react'
+import { Cpu, ShieldCheck, Sofa, Sparkles, Table, Wrench, type LucideIcon } from 'lucide-react'
 import { metaPagina, recortar } from '@/lib/seo'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
@@ -90,7 +89,7 @@ export default async function AulasPage() {
                       </div>
                       <div className="space-y-6">
                         {a.fotos.length > 0 && (
-                          <Galeria fotos={a.fotos.map((f) => ({ ...f, descripcion: null, categoria: 'aulas', area: null }))} />
+                          <Galeria fotos={a.fotos.map((f) => ({ ...f, descripcion: null }))} />
                         )}
                         {v && (
                           <div className="overflow-hidden rounded-card border border-outline-variant">
@@ -107,12 +106,6 @@ export default async function AulasPage() {
               })}
             </div>
 
-            <section className="border-t border-outline-variant/60 bg-surface-container-lowest/70">
-              <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-12 md:px-12">
-                <p className="text-on-surface-variant">¿Querés ver más? Hay más fotos de las aulas en la galería.</p>
-                <Link href="/galeria?categoria=aulas" className="btn-outline">Ver más fotos en la galería <ArrowRight size={16} aria-hidden /></Link>
-              </div>
-            </section>
           </>
         )}
       </main>

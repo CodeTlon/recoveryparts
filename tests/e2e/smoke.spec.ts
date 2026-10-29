@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test'
 //  - health, SEO (robots, sitemap) y 404
 // Corre en 3 viewports (mobile / tablet / desktop), contra `npm run build && npm start` o contra BASE_URL (test).
 
-const RUTAS_PUBLICAS = ['/', '/cursos', '/galeria', '/preguntas-frecuentes', '/contacto', '/login', '/olvide-mi-contrasena']
+const RUTAS_PUBLICAS = ['/', '/cursos', '/preguntas-frecuentes', '/contacto', '/login', '/olvide-mi-contrasena']
 
 test.describe('Público: renderiza sin error', () => {
   for (const ruta of RUTAS_PUBLICAS) {
@@ -52,6 +52,21 @@ test.describe('Público: filtros de cursos', () => {
     await page.getByRole('button', { name: /Más filtros/ }).click()
     await expect(nivel).toBeVisible()
     await expect(page.getByRole('button', { name: /Menos filtros/ })).toHaveAttribute('aria-expanded', 'true')
+  })
+})
+
+test.describe('Público: galería fuera y pie', () => {
+  test('/galeria ya no existe: redirige al inicio y no aparece en el menú', async ({ page }) => {
+    await page.goto('/galeria')
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('link', { name: 'Galería' })).toHaveCount(0)
+  })
+
+  test('el pie lleva la invitación y la navegación', async ({ page }) => {
+    await page.goto('/cursos')
+    const pie = page.locator('footer')
+    await expect(pie.getByText('¿Arrancamos? Escribinos.')).toBeVisible()
+    await expect(pie.getByRole('navigation', { name: 'Sitio' }).getByRole('link', { name: 'Cursos y talleres' })).toBeVisible()
   })
 })
 

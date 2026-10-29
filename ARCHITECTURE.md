@@ -9,7 +9,7 @@ Next.js 16.4.2 (App Router, `output: 'standalone'`) · React 19.3.1 · TypeScrip
 Server Components leen con el rol y el usuario de la sesion (RLS aplica) · Server Actions y Route Handlers escriben y sirven archivos. `src/proxy.ts` (antes `middleware.ts`, Next 16): sin sesion va a `/login`, cuenta no activa queda afuera y cada rol solo entra a su `/campus/<rol>`; ademas aplica los encabezados de seguridad (`src/lib/security-headers.ts`) con una CSP de nonce por request: las paginas con scripts se renderizan siempre en cada request. La autorizacion real es `requireRole()` mas RLS en todas las tablas.
 
 ## Estructura
-- `src/app/` — publico (`/`, `cursos`, `aulas`, `galeria`, `preguntas-frecuentes`, `contacto`), `login`, `activar`, `olvide-mi-contrasena`, `campus/{admin,profesor,alumno}`, `api/`, `media/`.
+- `src/app/` — publico (`/`, `cursos`, `aulas`, `preguntas-frecuentes`, `contacto`; `/galeria` se sacó en v0.17.2 y redirige al inicio), `login`, `activar`, `olvide-mi-contrasena`, `campus/{admin,profesor,alumno}`, `api/`, `media/`.
 - `src/lib/` — `auth.ts`, `session.ts`, `users.ts`, `db/` (conexion `postgres.js` y `sqlAdmin()`), `storage.ts` y `media.ts` (archivos), `transcode.ts` (video), `mail.ts`, `encuestas.ts`, `rate-limit.ts`.
 - `db/migrations/` y `scripts/migrate.mjs` — migraciones SQL (en Coolify corren solas al arrancar).
 - `tests/e2e/` — Playwright en 3 viewports (99 casos: humo, CSP, acceso, formularios, campus). `tests/unit/` — `node:test` (13).

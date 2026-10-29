@@ -19,6 +19,14 @@ import { crearMotor, type MensajeCircuito, type Motor } from './circuito/motor'
 let heroesVisibles = 0
 const avisarHeroes = new Set<() => void>()
 const cambiarHeroes = (d: number) => { heroesVisibles += d; avisarHeroes.forEach((f) => f()) }
+// Que el circuito no compita con lo que se lee. El fondo fijo queda tenue en la franja central (donde va el texto) y
+// pleno en los bordes; en el celular, donde el texto ocupa todo el ancho, queda tenue entero. El hero queda tenue
+// detrás del título y los botones (a la izquierda en escritorio, todo en el celular) y pleno a la derecha.
+const LECTURA = {
+  fondo: 'opacity-55 md:opacity-100 md:[mask-image:linear-gradient(to_right,#000,rgb(0_0_0/0.35)_20%,rgb(0_0_0/0.35)_80%,#000)]',
+  hero: 'opacity-50 md:opacity-100 md:[mask-image:linear-gradient(to_right,rgb(0_0_0/0.4),rgb(0_0_0/0.4)_45%,#000_85%)]',
+}
+
 // Worker de cada canvas: un canvas se transfiere a OffscreenCanvas una sola vez.
 const workers = new WeakMap<HTMLCanvasElement, Worker>()
 
@@ -113,5 +121,5 @@ export default function CircuitField({ modo = 'fondo', className = '' }: { modo?
     }
   }, [modo])
 
-  return <canvas ref={ref} aria-hidden className={`pointer-events-none ${modo === 'fondo' ? 'fixed inset-0 h-dvh w-full' : 'absolute inset-0 h-full w-full'} ${className}`} />
+  return <canvas ref={ref} aria-hidden className={`pointer-events-none ${modo === 'fondo' ? `fixed inset-0 h-dvh w-full ${LECTURA.fondo}` : `absolute inset-0 h-full w-full ${LECTURA.hero}`} ${className}`} />
 }
