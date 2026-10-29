@@ -4,6 +4,8 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualización 2026-10-29 (v0.17.4, campus más simple):** rama `feature/dev2-campus-ux`: Resumen solo con lo del día y Reportes en su página, curso del profesor en pestañas, menú del admin agrupado, aulas y sitio web plegables. v0.17.1–v0.17.4 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
 **Actualización 2026-10-29 (v0.17.3, filtro y pie):** rama `feature/dev2-filtro-pie`: filtro real en «Capacitaciones destacadas» y pie compacto. v0.17.1–v0.17.3 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
 
 **Actualización 2026-10-29 (v0.17.2, portada y pie):** rama `feature/dev2-portada-pie` (desde `dev`): sin galería pública (`/galeria` → inicio), portada más corta (9,4 pantallas en el celular), pie nuevo en tres franjas y fondo atenuado detrás del texto. Verificado en local (107 E2E, capturas en `screenshots/portada-pie-2026-10-29/`). v0.17.1 y v0.17.2 están en `dev`/`test`; falta el PR a `main` con OK de Mateo.
