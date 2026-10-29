@@ -316,3 +316,25 @@
   .crece-x { transform-origin: left; animation: crece-x 0.7s var(--ease-out) both; }
   .crece-y { transform-origin: bottom; animation: crece-y 0.6s var(--ease-out) both; }
 }
+
+/* Cursor propio del sitio público (components/ui/CursorCircuito.tsx). Solo existe cuando el componente agregó
+   .cursor-propio al <html> (mouse y sin «reducir movimiento»). Los campos de texto conservan la barra del sistema. */
+.cursor-circuito { display: none; }
+.cursor-propio .cursor-circuito { display: block; }
+.cursor-propio, .cursor-propio * { cursor: none; }
+.cursor-propio :is(input:not([type='checkbox'], [type='radio'], [type='submit'], [type='range']), textarea, [contenteditable='true']) { cursor: text; }
+.cursor-punto, .cursor-anillo { position: fixed; left: 0; top: 0; z-index: 2147483647; pointer-events: none; opacity: 0; transition: opacity 0.2s var(--ease-out); }
+[data-cursor-visible='si'] :is(.cursor-punto, .cursor-anillo) { opacity: 1; }
+[data-cursor='texto'] :is(.cursor-punto, .cursor-anillo) { opacity: 0; }
+.cursor-punto span, .cursor-anillo span { position: absolute; translate: -50% -50%; border-radius: 9999px; display: block; }
+.cursor-punto span { width: 6px; height: 6px; background: var(--color-accent); box-shadow: 0 0 0 2px var(--color-surface); }
+.cursor-anillo span {
+  width: 30px; height: 30px; border: 1.5px solid color-mix(in oklch, var(--color-on-surface) 45%, transparent);
+  transition: width 0.25s var(--ease-out), height 0.25s var(--ease-out), background-color 0.25s var(--ease-out), border-color 0.25s var(--ease-out), scale 0.15s var(--ease-out);
+}
+/* Sobre algo clicable el anillo crece en claro (se lee también sobre los botones naranjas) y el punto se esconde. */
+[data-cursor='clic'] .cursor-anillo span { width: 46px; height: 46px; border-color: color-mix(in oklch, var(--color-on-surface) 85%, transparent); background-color: color-mix(in oklch, var(--color-on-surface) 10%, transparent); }
+.cursor-punto span { transition: scale 0.2s var(--ease-out); }
+[data-cursor='clic'] .cursor-punto span { scale: 0; }
+[data-cursor-apretado='si'] .cursor-anillo span { scale: 0.8; }
+@media (forced-colors: active) { .cursor-propio, .cursor-propio * { cursor: auto; } .cursor-circuito { display: none !important; } }

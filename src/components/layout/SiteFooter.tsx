@@ -7,7 +7,7 @@ import { WhatsAppIcon, InstagramIcon } from './SocialIcons'
 // Pie compacto: la marca y los datos en columnas («Visitanos», «Contacto», «Sitio») y el copyright. En el celular el teléfono llama, el mail abre el correo, la dirección abre el mapa y WhatsApp abre el chat.
 // Solo se muestra lo que está cargado en el CMS.
 export default async function SiteFooter() {
-  const [{ contacto: c }, conAulas] = await Promise.all([getSettings(), hayAulasVisibles()])
+  const [{ contacto: c, textos }, conAulas] = await Promise.all([getSettings(), hayAulasVisibles()])
   const wa = waLink(c.whatsapp)
   const ig = c.instagram?.replace('@', '')
   const mapa = c.direccion ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${c.direccion}, Córdoba`)}` : null
@@ -29,7 +29,7 @@ export default async function SiteFooter() {
               <Image src="/images/logo.png" alt="" width={96} height={96} className="h-10 w-10" />
               <span className="display text-xl [font-stretch:110%]">Recovery Parts</span>
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-on-surface-variant">Academia de cursos y talleres presenciales de reparación, tecnología y diseño en Córdoba.</p>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-on-surface-variant">{textos.pie.descripcion}</p>
           </div>
 
           {(c.direccion || c.horario) && (

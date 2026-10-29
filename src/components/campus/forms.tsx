@@ -65,7 +65,7 @@ export function Field({ label, name, type = 'text', defaultValue, required, plac
     <div>
       <label htmlFor={id} className="label">{label}{required && <span aria-hidden className="text-accent"> *</span>}</label>
       {typeof children === 'function' ? children({ id, 'aria-describedby': hintId }) : children ?? (rows
-        ? <textarea id={id} name={name} rows={rows} required={required} defaultValue={defaultValue ?? ''} placeholder={placeholder} aria-describedby={hintId} className="input font-mono text-xs" />
+        ? <textarea id={id} name={name} rows={rows} required={required} defaultValue={defaultValue ?? ''} placeholder={placeholder} aria-describedby={hintId} className="input text-sm leading-relaxed" />
         : <input id={id} name={name} type={type} required={required} min={min} max={max} step={step} defaultValue={defaultValue ?? ''} placeholder={placeholder} aria-describedby={hintId} className="input" />)}
       {hint && <p id={hintId} className="mt-1 text-xs text-on-surface-variant">{hint}</p>}
     </div>
