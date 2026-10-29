@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { hrefSeguro } from '@/lib/validar'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, Star, Plus, Search, MapPin, Clock, CalendarDays, Mail } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Star, Plus, Search } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import HeroVideo from '@/components/public/HeroVideo'
 import SiteFooter from '@/components/layout/SiteFooter'
@@ -31,7 +31,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq, conAulas] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
-    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('orden').limit(10), []),
+    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('orden').limit(4), []),
     query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
@@ -44,7 +44,6 @@ export default async function Home() {
   const cifras = ([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const)
     .map(([k, l]) => [Number(s.stats[k]), l] as const).filter(([n]) => Number.isFinite(n) && n > 0)
   const [principal, ...otrosTestimonios] = testimonios
-  const mapa = s.contacto.direccion ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.contacto.direccion}, Córdoba`)}` : null
   const estrellas = (n: number, size: number) => (
     <div role="img" className="flex gap-0.5 text-accent" aria-label={`${n} de 5`}>{Array.from({ length: n }).map((_, i) => <Star key={i} size={size} fill="currentColor" aria-hidden />)}</div>
   )
@@ -100,13 +99,13 @@ export default async function Home() {
         </section>
 
         {/* 2 · Las dos áreas: las dos mitades del logo. La mitad con el puntero se ensancha (.diptico). */}
-        <section aria-label="Áreas" className="mx-auto max-w-[1280px] px-4 py-20 md:px-12 md:py-28">
+        <section aria-label="Áreas" className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
           <div className="diptico grid gap-4">
             {areas.map((a) => {
               const cfg = s.areas[a]
               const color = AREA_COLOR[a]
               return (
-                <Link key={a} href={`/cursos?area=${a}`} className={`al-entrar group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-card border border-outline-variant bg-surface-container-low p-7 transition-colors ${color.bordeHover} md:min-h-[460px] md:p-10`}>
+                <Link key={a} href={`/cursos?area=${a}`} className={`al-entrar group relative flex min-h-[260px] flex-col justify-end overflow-hidden rounded-card border border-outline-variant bg-surface-container-low p-7 transition-colors ${color.bordeHover} md:min-h-[460px] md:p-10`}>
                   {cfg.imagen_url && <span aria-hidden className="absolute inset-0 overflow-hidden"><Image src={cfg.imagen_url} alt="" fill sizes="(max-width:768px) 100vw, 720px" className="paralaje object-cover opacity-45 grayscale-[35%] transition-[opacity,filter] duration-700 group-hover:opacity-60 group-hover:grayscale-0" /></span>}
                   <span aria-hidden className="absolute inset-0 bg-linear-to-t from-surface-container-lowest via-surface-container-lowest/75 to-transparent" />
                   <span aria-hidden className={`absolute inset-x-0 top-0 h-1 origin-left scale-x-25 transition-transform duration-700 ease-(--ease-out) group-hover:scale-x-100 ${color.fondo}`} />
@@ -124,10 +123,10 @@ export default async function Home() {
 
         {/* 3 · Próximos inicios (agenda) */}
         {proximos.length > 0 && (
-          <section aria-labelledby="t-proximos" className="mx-auto max-w-[1280px] px-4 pb-20 md:px-12 md:pb-28">
+          <section aria-labelledby="t-proximos" className="mx-auto max-w-[1280px] px-4 pb-16 md:px-12 md:pb-28">
             <SectionTitle id="t-proximos" bajada="Las próximas ediciones con fecha confirmada. Cada curso tiene cupo limitado.">Próximos inicios</SectionTitle>
             <ol className="border-t border-outline-variant">
-              {proximos.map((c) => {
+              {proximos.slice(0, 4).map((c) => {
                 const h = horarioTexto(horarios.filter((x) => x.edicion_id === c.edicion_id))
                 const color = AREA_COLOR[c.area]
                 return (
@@ -161,7 +160,7 @@ export default async function Home() {
         {/* 4 · Destacadas */}
         {destacados.length > 0 && (
           <section aria-labelledby="t-destacados" className="border-y border-outline-variant/60 bg-surface-container-lowest/70 backdrop-blur-[2px]">
-            <div className="mx-auto max-w-[1280px] px-4 py-20 md:px-12 md:py-28">
+            <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
               <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
                 <SectionTitle id="t-destacados" className="mb-0!">Capacitaciones destacadas</SectionTitle>
                 <nav aria-label="Filtrar por área" className="flex flex-wrap gap-2">
@@ -170,20 +169,26 @@ export default async function Home() {
                   ))}
                 </nav>
               </div>
-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 md:mt-12">
-                {destacados.map((c) => <div key={c.id} className="al-entrar h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} /></div>)}
-              </div>
+              {/* Celular y tablet: fila deslizable (una tarjeta y el borde de la siguiente). Escritorio: las 3 primeras. */}
+              <ul className="-mx-4 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 md:mt-12 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
+                {destacados.map((c, i) => (
+                  <li key={c.id} className={`w-[min(82vw,22rem)] shrink-0 snap-start lg:w-auto ${i > 2 ? 'lg:hidden' : ''}`}>
+                    <CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} />
+                  </li>
+                ))}
+              </ul>
+              <Link href="/cursos" className="btn-outline mt-8 lg:mt-10">Ver todos los cursos <ArrowRight size={16} aria-hidden /></Link>
             </div>
           </section>
         )}
 
         {/* 5 · Egresados */}
         {egresados.length > 0 && (
-          <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-20 md:px-12 md:py-28">
+          <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
             <SectionTitle id="t-egresados" bajada="Alumnos que hoy trabajan de lo que aprendieron acá.">Construyendo profesionales</SectionTitle>
-            <div className="grid grid-cols-2 gap-3 md:auto-rows-[210px] md:grid-cols-4 md:gap-4">
-              {egresados.map((e) => (
-                <figure key={e.id} className={`al-entrar group relative overflow-hidden rounded-card bg-surface-container ${e.destacado ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square md:aspect-auto'}`}>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+              {egresados.slice(0, 4).map((e) => (
+                <figure key={e.id} className="al-entrar group relative aspect-4/5 overflow-hidden rounded-card bg-surface-container">
                   {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 300px" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) grayscale-[40%] group-hover:scale-105 group-hover:grayscale-0" />}
                   <figcaption className="absolute inset-x-2 bottom-2 rounded-lg bg-surface-container-lowest/80 px-3 py-2 backdrop-blur-md">
                     <p className="text-sm font-semibold">{e.nombre}</p>
@@ -198,7 +203,7 @@ export default async function Home() {
         {/* 6 · Nosotros + cifras (cuentan solas al entrar, en CSS) */}
         {(s.nosotros.titulo || s.nosotros.texto) && (
           <section aria-labelledby="t-nosotros" className="relative overflow-hidden border-y border-outline-variant/60 bg-brand-dark/55 backdrop-blur-[2px]">
-            <div className="relative mx-auto grid max-w-[1280px] gap-14 px-4 py-20 md:grid-cols-12 md:px-12 md:py-28">
+            <div className="relative mx-auto grid max-w-[1280px] gap-14 px-4 py-16 md:grid-cols-12 md:px-12 md:py-28">
               <div className="md:col-span-7">
                 <SectionTitle id="t-nosotros" className="mb-6!">{s.nosotros.titulo || 'Nosotros'}</SectionTitle>
                 <p className="max-w-[62ch] whitespace-pre-line text-lg leading-relaxed text-on-surface-variant">{s.nosotros.texto}</p>
@@ -223,7 +228,7 @@ export default async function Home() {
 
         {/* 7 · Testimonios: una cita grande y el resto en una fila deslizable (la del centro toma foco con el scroll). */}
         {principal && (
-          <section aria-labelledby="t-testimonios" className="py-20 md:py-28">
+          <section aria-labelledby="t-testimonios" className="py-16 md:py-28">
             <div className="mx-auto max-w-[1280px] px-4 md:px-12">
               <SectionTitle id="t-testimonios">Lo que dicen nuestros alumnos</SectionTitle>
               <figure className="al-entrar max-w-4xl">
@@ -255,7 +260,7 @@ export default async function Home() {
         {/* 8 · FAQ: título fijo a la izquierda, acordeón (altura animada nativa) a la derecha. */}
         {faq.length > 0 && (
           <section aria-labelledby="t-faq" className="border-t border-outline-variant/60 bg-surface-container-lowest/70 backdrop-blur-[2px]">
-            <div className="mx-auto grid max-w-[1280px] gap-10 px-4 py-20 md:grid-cols-12 md:px-12 md:py-28">
+            <div className="mx-auto grid max-w-[1280px] gap-10 px-4 py-16 md:grid-cols-12 md:px-12 md:py-28">
               <div className="md:col-span-4">
                 <div className="md:sticky md:top-28">
                   <SectionTitle id="t-faq" className="mb-6!">Preguntas frecuentes</SectionTitle>
@@ -277,26 +282,6 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 9 · Cierre de contacto con datos reales */}
-        <section aria-labelledby="t-contacto" className="relative overflow-hidden border-t border-outline-variant/60">
-          <CircuitField modo="hero" className="opacity-70" />
-          <div className="relative mx-auto grid max-w-[1280px] gap-12 px-4 py-24 md:grid-cols-12 md:px-12 md:py-32">
-            <div className="md:col-span-7">
-              <TituloExpandido as="h2" texto="¿Arrancamos? Escribinos." className="text-[clamp(2.4rem,6vw,5rem)]" />
-              <p className="mt-6 max-w-xl text-lg text-on-surface-variant">Consultanos por cursos, horarios o talleres. Te respondemos por mail.</p>
-              <div className="mt-10 flex flex-wrap gap-3">
-                <Magnetico><Link href="/contacto" className="btn-primary px-6! py-3.5!">Ir a contacto <ArrowRight size={18} aria-hidden /></Link></Magnetico>
-                {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline px-6! py-3.5!"><WhatsAppIcon size={18} /> Consultar por WhatsApp</a>}
-              </div>
-            </div>
-            <ul className="flex flex-col justify-end gap-5 md:col-span-5">
-              {s.contacto.direccion && <li className="flex gap-3"><MapPin size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span><span className="block font-semibold">{s.contacto.direccion}</span>{mapa && <a href={mapa} target="_blank" rel="noopener noreferrer" className="-mb-2.5 inline-block py-2.5 text-sm text-on-surface-variant underline-offset-4 hover:text-on-surface hover:underline">Cómo llegar</a>}</span></li>}
-              {s.contacto.horario && <li className="flex gap-3"><Clock size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span className="font-semibold">{s.contacto.horario}</span></li>}
-              {s.contacto.email && <li className="flex gap-3"><Mail size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><a href={`mailto:${s.contacto.email}`} className="break-all font-semibold underline-offset-4 hover:underline">{s.contacto.email}</a></li>}
-              {proximos[0] && <li className="flex gap-3"><CalendarDays size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span className="font-semibold">Próximo inicio: {proximos[0].fecha_inicio!.slice(8, 10)} {MESES[Number(proximos[0].fecha_inicio!.slice(5, 7)) - 1]}</span></li>}
-            </ul>
-          </div>
-        </section>
       </main>
       <SiteFooter />
     </div>

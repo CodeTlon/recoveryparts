@@ -31,18 +31,16 @@ function Item({ tipo, row, children }: { tipo: string; row?: S; children: React.
   )
 }
 
-const CATS: [string, string][] = [['aulas', 'Aulas'], ['clases', 'Clases en acción'], ['trabajos', 'Trabajos de alumnos'], ['egresados', 'Egresados'], ['eventos', 'Eventos']]
 const AREAS: [string, string][] = [['diseno', 'Creación y Diseño'], ['tecnico', 'Reparación y Tecnología']]
 
 export default async function Sitio({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { sb } = await requireRole('admin')
   const { tab } = await searchParams
-  const [{ data: st }, { data: egr }, { data: tes }, { data: faq }, { data: gal }, { data: cursos }, { data: aulas }, { data: fichas }, { data: dest }, { data: fotos }] = await Promise.all([
+  const [{ data: st }, { data: egr }, { data: tes }, { data: faq }, { data: cursos }, { data: aulas }, { data: fichas }, { data: dest }, { data: fotos }] = await Promise.all([
     sb.from('site_settings').select('clave, valor'),
     sb.from('cms_egresados').select('*').order('orden'),
     sb.from('cms_testimonios').select('*').order('orden'),
     sb.from('cms_faq').select('*').order('orden'),
-    sb.from('cms_galeria').select('*').order('orden'),
     sb.from('cursos').select('id, nombre').eq('activo', true).order('nombre'),
     // RF-60: aulas activas y su ficha pública (las dadas de baja no se muestran en el sitio).
     sb.from('aulas').select('id, nombre').eq('activa', true).order('nombre'),
@@ -67,7 +65,6 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
     ['testimonios', `Testimonios (${tes?.length ?? 0})`, 'Opiniones del inicio y de la ficha de cada curso', '/'],
     ['faq', `Preguntas (${faq?.length ?? 0})`, 'Preguntas frecuentes', '/preguntas-frecuentes'],
     ['aulas', `Aulas (${visibles})`, 'Video general y ficha de cada aula (el número son las visibles en el sitio)', '/aulas'],
-    ['galeria', `Galería (${gal?.length ?? 0})`, 'Fotos de aulas, clases, trabajos y eventos', '/galeria'],
     ['imagenes', 'Imágenes', 'Subir una imagen y copiar su link', '/'],
     ['campus', 'Campus', 'Cómo entra el alumno al campus', '/login'],
   ]
@@ -199,20 +196,6 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
               </section>
             )
           })}
-        </div>
-      )}
-      {actual[0] === 'galeria' && (
-        <div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {[...(gal ?? []), null].map((r) => (
-          <Item key={r?.id ?? 'nuevo'} tipo="foto" row={r ?? undefined}>
-            {!r && <p className="font-semibold">Nueva foto</p>}
-            <MediaField tipo="imagen" label="Imagen" name="imagen_url" defaultValue={r?.imagen_url} /><Field label="Texto alternativo (accesibilidad)" name="alt" placeholder="Ej: Alumnos trabajando en el taller" defaultValue={r?.alt} required />
-            <Field label="Descripción corta" name="descripcion" placeholder="Contá qué se aprende y para quién…" defaultValue={r?.descripcion} />
-            <div className="grid gap-4 sm:grid-cols-2"><Select name="categoria" label="Categoría" defaultValue={r?.categoria ?? 'aulas'} options={CATS} /><Select name="area" label="Área" defaultValue={r?.area} empty="—" options={AREAS} /></div>
-          </Item>
-        ))}
-      </div>
         </div>
       )}
     </>

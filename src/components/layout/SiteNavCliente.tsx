@@ -10,7 +10,6 @@ const LINKS = [
   { href: '/', label: 'Inicio' },
   { href: '/cursos', label: 'Cursos' },
   { href: '/aulas', label: 'Aulas' }, // RF-60: solo si hay aulas visibles (ver SiteNav)
-  { href: '/galeria', label: 'Galería' },
   { href: '/preguntas-frecuentes', label: 'Preguntas' },
   { href: '/contacto', label: 'Contacto' },
 ]

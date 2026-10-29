@@ -3,18 +3,14 @@
 import { ViewTransition, startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
-import Link from 'next/link'
 import { useModalFocus } from '@/lib/useModalFocus'
 
-import { CATEGORIA_LABEL } from '@/lib/galeria'
+export type Foto = { id: string; imagen_url: string; alt: string; descripcion: string | null }
 
-export type Foto = { id: string; imagen_url: string; alt: string; descripcion: string | null; categoria: string; area: string | null }
-
-// Grilla de fotos con visor ampliado. Recibe las fotos ya filtradas y paginadas por el servidor (/galeria lleva la
-// categoría y la página en la URL). `categorias`: chips de filtro como links (en las fotos de un aula no van).
-// `prioridad`: las primeras fotos son el LCP solo en la primera página.
-export default function Galeria({ fotos, categorias, categoria = 'todas', prioridad = true, vacio = 'Pronto vamos a sumar fotos de la academia.' }: {
-  fotos: Foto[]; categorias?: string[]; categoria?: string; prioridad?: boolean; vacio?: string
+// Grilla de fotos con visor ampliado (las fotos de cada aula en /aulas). `prioridad`: las primeras fotos se cargan
+// con prioridad cuando son lo primero que se ve.
+export default function Galeria({ fotos, prioridad = true, vacio = 'Pronto vamos a sumar fotos de la academia.' }: {
+  fotos: Foto[]; prioridad?: boolean; vacio?: string
 }) {
   const [idx, setIdx] = useState<number | null>(null)
   const lista = fotos
@@ -33,22 +29,11 @@ export default function Galeria({ fotos, categorias, categoria = 'todas', priori
     return () => { window.removeEventListener('keydown', k); document.body.style.overflow = '' }
   }, [idx, go])
 
-  const chips = categorias && (
-    <nav aria-label="Categorías" className="mb-8 flex flex-wrap gap-2">
-      {['todas', ...categorias].map((c) => (
-        <Link key={c} href={c === 'todas' ? '/galeria' : `/galeria?categoria=${encodeURIComponent(c)}`} scroll={false} aria-current={categoria === c ? 'page' : undefined}
-          className={`rounded-pill border px-4 py-2 text-sm font-semibold transition-colors ${categoria === c ? 'border-on-surface bg-on-surface text-surface-container-lowest' : 'border-outline-variant text-on-surface-variant hover:border-on-surface hover:text-on-surface'}`}>
-          {CATEGORIA_LABEL[c] ?? c}
-        </Link>
-      ))}
-    </nav>
-  )
-  if (!fotos.length) return <>{chips}<p className="card p-10 text-center text-on-surface-variant">{vacio}</p></>
+  if (!fotos.length) return <p className="card p-10 text-center text-on-surface-variant">{vacio}</p>
   const actual = idx !== null ? lista[idx] : null
 
   return (
     <>
-      {chips}
       {/* Casillas de proporción fija (4:3): no se guardan las medidas de cada foto y, con tamaños supuestos, la página
           saltaba al cargar cada imagen. El visor ampliado muestra la foto completa. */}
       {/* Las 3 primeras (la primera fila) se cargan con prioridad: son el LCP de la página. */}

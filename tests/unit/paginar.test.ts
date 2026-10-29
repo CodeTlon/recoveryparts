@@ -24,7 +24,7 @@ test('una lista vacía es una sola página sin ítems', () => {
 test('el link conserva los filtros, no escribe la página 1 y descarta vacíos', () => {
   assert.equal(hrefPagina('/cursos', { area: 'tecnico', q: '', pagina: '3' }, 2, 'resultados'), '/cursos?area=tecnico&pagina=2#resultados')
   assert.equal(hrefPagina('/cursos', { area: 'tecnico' }, 1), '/cursos?area=tecnico')
-  assert.equal(hrefPagina('/galeria', {}, 1), '/galeria')
+  assert.equal(hrefPagina('/cursos', {}, 1), '/cursos')
 })
 test('números visibles: primera, última y vecinas de la actual con «…» en los saltos', () => {
   assert.deepEqual(paginasVisibles(1, 1), [1])
