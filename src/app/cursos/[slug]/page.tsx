@@ -85,7 +85,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
           {foto && (
             <ViewTransition name={`curso-foto-${c.slug}`} share="morph" default="none">
               <div className="relative h-64 overflow-hidden rounded-card border border-outline-variant bg-surface-container sm:h-80 lg:col-span-5 lg:h-[400px]">
-                <Image src={foto} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 42vw" className="object-cover" />
+                <Image src={foto} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 560px" className="object-cover" />
               </div>
             </ViewTransition>
           )}
