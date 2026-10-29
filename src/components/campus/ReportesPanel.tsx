@@ -20,6 +20,23 @@ function Card({ title, note, children }: { title: string; note?: string; childre
   return <Reveal className="h-full"><section className="card h-full p-6"><h2 className="text-lg font-semibold">{title}</h2>{note && <p className="mb-4 text-xs text-on-surface-variant">{note}</p>}<div className={note ? '' : 'mt-4'}>{children}</div></section></Reveal>
 }
 
+// Lista larga: se ven las primeras `n` y el resto queda plegado («Ver 14 más»), para que un reporte no ocupe una
+// pantalla entera cuando hay muchas ediciones.
+function Recortar({ n = 5, className, items }: { n?: number; className: string; items: React.ReactNode[] }) {
+  if (items.length <= n) return <ul className={className}>{items}</ul>
+  return (
+    <>
+      <ul className={className}>{items.slice(0, n)}</ul>
+      <details className="group mt-3">
+        <summary className="cursor-pointer list-none py-2 text-sm font-semibold text-secondary [&::-webkit-details-marker]:hidden">
+          <span className="group-open:hidden">Ver {items.length - n} más</span><span className="hidden group-open:inline">Ver menos</span>
+        </summary>
+        <ul className={`mt-2 ${className}`}>{items.slice(n)}</ul>
+      </details>
+    </>
+  )
+}
+
 export default async function ReportesPanel() {
   const { sb } = await requireRole('admin')
   const [{ data: eds }, { data: insc }, { data: demanda }] = await Promise.all([
@@ -57,7 +74,7 @@ export default async function ReportesPanel() {
     const todos = inscDe(c.id), d = todos.filter((i) => i.estado === 'desertor')
     const porClase = new Map<number, number>(); d.forEach((i) => porClase.set(i.n_clase_desercion ?? 0, (porClase.get(i.n_clase_desercion ?? 0) ?? 0) + 1))
     return { nombre: c.nombre, total: todos.length, d: d.length, p: pct(d.length, todos.length), porClase: [...porClase.entries()].sort((a, b) => a[0] - b[0]), motivos: d.map((x) => x.motivo_desercion) }
-  }).filter((x) => x.total > 0)
+  }).filter((x) => x.total > 0).sort((a, b) => b.d - a.d || b.p - a.p) // primero las que tienen desertores
 
   // RF-50 · velocidad de llenado
   const llenos = C.map((c) => {
@@ -90,7 +107,6 @@ export default async function ReportesPanel() {
 
   return (
     <>
-      <p className="mb-6 text-sm text-on-surface-variant">Ocupación = alumnos inscriptos / cupo (los pagos no se manejan en este sistema).</p>
       {!C.length ? <Empty>Todavía no hay datos para reportar.</Empty> : (
         <>
         <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -105,29 +121,29 @@ export default async function ReportesPanel() {
               data={[{ label: 'Activos', value: estados.activo, color: 'text-success' }, { label: 'Finalizados', value: estados.finalizado, color: 'text-info' }, { label: 'Desertores', value: estados.desertor, color: 'text-danger' }]} />
           </Card>
           <Card title="Ocupación por edición">
-            <ul className="space-y-3">{ocup.map((o) => <li key={o.nombre}><div className="mb-1 flex justify-between text-sm"><span>{o.nombre}</span><span className="text-on-surface-variant">{o.n}/{o.cupo} · {o.p}%</span></div><Bar v={o.p} max={100} /></li>)}</ul>
+            <Recortar n={6} className="space-y-3" items={ocup.map((o) => <li key={o.nombre}><div className="mb-1 flex justify-between gap-3 text-sm"><span>{o.nombre}</span><span className="shrink-0 text-on-surface-variant">{o.n}/{o.cupo} · {o.p}%</span></div><Bar v={o.p} max={100} /></li>)} />
           </Card>
           <Card title="Días con mayor deserción" note="Desertores según el día de cursada.">
             <Columns data={DIAS.map((d, i) => ({ label: d.slice(0, 3), value: diasDes[i] }))} color="bg-danger" />
           </Card>
           <Card title="Deserción por edición" note="Cantidad, % sobre el total y en qué N° de clase desertan." >
-            {!des.length ? <p className="text-sm text-on-surface-variant">Sin inscripciones.</p> : <ul className="space-y-5">{des.map((x) => (
+            {!des.length ? <p className="text-sm text-on-surface-variant">Sin inscripciones.</p> : <Recortar className="space-y-5" items={des.map((x) => (
               <li key={x.nombre}>
-                <p className="flex justify-between text-sm font-semibold"><span>{x.nombre}</span><span>{x.d} de {x.total} · {x.p}%</span></p>
+                <p className="flex justify-between gap-3 text-sm font-semibold"><span>{x.nombre}</span><span className="shrink-0">{x.d} de {x.total} · {x.p}%</span></p>
                 {x.porClase.length > 0 && <p className="mt-1 text-xs text-on-surface-variant">Por clase: {x.porClase.map(([n, c]) => `clase ${n}: ${c}`).join(' · ')}</p>}
                 {x.motivos.length > 0 && <details className="mt-1 text-xs text-on-surface-variant"><summary className="cursor-pointer py-2 text-secondary">Motivos</summary><ul className="mt-1 list-disc pl-5">{x.motivos.map((m, k) => <li key={k}>{m}</li>)}</ul></details>}
-              </li>))}</ul>}
+              </li>))} />}
           </Card>
           <Card title="Velocidad de llenado" note="Días desde que se creó la edición hasta completar el cupo.">
-            {llenos.length ? <ul className="mb-4 space-y-1 text-sm">{llenos.map((l) => <li key={l.nombre} className="flex justify-between"><span>{l.nombre}</span><span className="text-on-surface-variant">{l.dias} días</span></li>)}</ul> : <p className="mb-4 text-sm text-on-surface-variant">Ninguna edición completó su cupo todavía.</p>}
+            {llenos.length ? <div className="mb-4"><Recortar className="space-y-1 text-sm" items={llenos.map((l) => <li key={l.nombre} className="flex justify-between gap-3"><span>{l.nombre}</span><span className="shrink-0 text-on-surface-variant">{l.dias} días</span></li>)} /></div> : <p className="mb-4 text-sm text-on-surface-variant">Ninguna edición completó su cupo todavía.</p>}
             <p className="text-xs font-semibold text-on-surface-variant">No se llenan (menos del 50% y ya iniciados)</p>
             <p className="mt-1 text-sm">{vacios.length ? vacios.map((v) => `${v.nombre} (${v.p}%)`).join(' · ') : '—'}</p>
           </Card>
           <Card title="Qué eligen al terminar un curso" note="Cursos en los que se inscriben los alumnos que finalizaron otro.">
-            {siguientes.length ? <ul className="space-y-1 text-sm">{siguientes.map(([id, n]) => <li key={id} className="flex justify-between"><span>{nombre(id)}</span><span className="text-on-surface-variant">{n}</span></li>)}</ul> : <p className="text-sm text-on-surface-variant">Todavía no hay datos.</p>}
+            {siguientes.length ? <Recortar className="space-y-1 text-sm" items={siguientes.map(([id, n]) => <li key={id} className="flex justify-between gap-3"><span>{nombre(id)}</span><span className="text-on-surface-variant">{n}</span></li>)} /> : <p className="text-sm text-on-surface-variant">Todavía no hay datos.</p>}
           </Card>
           <Card title="Demanda de cursos que aún no se dictan" note="Pedidos registrados desde el buscador del sitio.">
-            {demanda_.length ? <ul className="space-y-1 text-sm">{demanda_.map(([k, n]) => <li key={k} className="flex justify-between"><span className="capitalize">{k}</span><span className="text-on-surface-variant">{n}</span></li>)}</ul> : <p className="text-sm text-on-surface-variant">Todavía no hay pedidos.</p>}
+            {demanda_.length ? <Recortar className="space-y-1 text-sm" items={demanda_.map(([k, n]) => <li key={k} className="flex justify-between gap-3"><span className="capitalize">{k}</span><span className="text-on-surface-variant">{n}</span></li>)} /> : <p className="text-sm text-on-surface-variant">Todavía no hay pedidos.</p>}
           </Card>
         </div>
         </>

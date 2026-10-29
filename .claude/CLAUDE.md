@@ -40,6 +40,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-29 | feature/dev2-campus-ux | v0.17.4 — campus más simple: Reportes en su página, Resumen del día, curso del profesor en pestañas, menú agrupado con contador de consultas, aulas y sitio plegables, `Pestanas` común. 112 E2E. |
 | 2026-10-29 | feature/dev2-filtro-pie | v0.17.3 — filtro real de destacadas en la portada (`DestacadosFiltro`), pie compacto (marca + columnas, sin invitación, nombre gigante ni «Volver arriba»), `DEV_ORIGINS` para `next dev` por IP. 110 E2E. |
 | 2026-10-29 | feature/dev2-portada-pie | v0.17.2 — sin galería pública (`/galeria` → inicio, fotos en `cms_galeria`), portada 15,7 → 9,4 pantallas en el celular, pie en tres franjas (invitación, datos, firma), fondo atenuado detrás del texto. 107 E2E. |
 | 2026-10-29 | feature/dev2-optimizacion | v0.17.1 — fondo de circuito en Web Worker (OffscreenCanvas), Archivo 90 → 58 KB, `sizes` de imágenes; corrige el título animado sin espacios (estaba en producción); celular: campos de 16 px, toques de 40 px, «Más filtros» en `/cursos`, tablas del campus. 104 E2E. |

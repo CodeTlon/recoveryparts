@@ -1,14 +1,12 @@
-import { Suspense } from 'react'
 import Link from 'next/link'
-import { BookOpen, CalendarDays, GraduationCap, Inbox, Users } from 'lucide-react'
+import { BarChart3, BookOpen, CalendarDays, GraduationCap, Inbox, Users } from 'lucide-react'
 import { fechaAR, requireRole } from '@/lib/auth'
 import { PageHead, StatTile } from '@/components/campus/ui'
 import Reveal from '@/components/ui/Reveal'
-import ReportesPanel from '@/components/campus/ReportesPanel'
-import Skeleton from '@/components/ui/Skeleton'
 import { hoyAR } from '@/lib/fechas'
 
-// Resumen del administrador: lo que requiere atención hoy + los reportes de la academia (antes en /reportes).
+// Resumen del administrador: solo lo que pide atención estas semanas. Los reportes viven en /campus/admin/reportes
+// (estuvieron acá abajo y el resumen pasaba a ser una página de varios metros).
 export default async function AdminHome() {
   const { sb } = await requireRole('admin')
   const hoy = hoyAR()
@@ -36,7 +34,8 @@ export default async function AdminHome() {
   const lista = 'divide-y divide-outline-variant text-sm'
   return (
     <>
-      <PageHead title="Resumen" sub="Lo que pasa en la academia: novedades, próximas fechas y reportes." />
+      <PageHead title="Resumen" sub="Lo que pide tu atención: consultas, próximas clases y ediciones por empezar."
+        action={<Link href="/campus/admin/reportes" className="btn-outline">Ver reportes <BarChart3 size={16} aria-hidden /></Link>} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map(({ Icon, v, l, href, alert }, i) => (
           <Reveal key={l} delay={i * 0.05} className="h-full">
@@ -92,11 +91,6 @@ export default async function AdminHome() {
         </section>
       </div>
 
-      <h2 className="mb-4 mt-12 text-2xl font-semibold">Reportes</h2>
-      {/* Los reportes agregan varias tablas: con Suspense el resumen de arriba se ve sin esperarlos. */}
-      <Suspense fallback={<div role="status" aria-label="Cargando reportes" className="grid gap-6 lg:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-56" />)}</div>}>
-        <ReportesPanel />
-      </Suspense>
     </>
   )
 }
