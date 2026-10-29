@@ -19,6 +19,26 @@ test.describe('Público: renderiza sin error', () => {
   }
 })
 
+test.describe('Público: título animado', () => {
+  test('el título de la portada se lee con espacios entre palabras', async ({ page }) => {
+    await page.goto('/')
+    // Cada palabra va en su propio inline-block; si el espacio queda adentro, el navegador lo descarta y el h1 se lee
+    // «Aprendéunoficio…» (pasó en v0.17.0).
+    const h1 = (await page.locator('h1').first().innerText()).trim()
+    expect(h1.split(/\s+/).length, `h1: «${h1}»`).toBeGreaterThan(1)
+  })
+
+  test('el fondo de circuito arranca sin errores de consola ni de CSP', async ({ page }) => {
+    const errores: string[] = []
+    page.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()) })
+    page.on('pageerror', (e) => errores.push(e.message))
+    await page.goto('/', { waitUntil: 'load' })
+    await expect(page.locator('canvas').first()).toBeAttached()
+    await page.waitForTimeout(1500)
+    expect(errores).toEqual([])
+  })
+})
+
 test.describe('Campus: exige sesión', () => {
   for (const ruta of ['/campus/alumno', '/campus/admin']) {
     test(`${ruta} sin sesión no muestra el campus`, async ({ page }) => {
