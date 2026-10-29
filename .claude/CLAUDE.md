@@ -39,6 +39,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-29 | feature/dev2-portada-pie | v0.17.2 — sin galería pública (`/galeria` → inicio, fotos en `cms_galeria`), portada 15,7 → 9,4 pantallas en el celular, pie en tres franjas (invitación, datos, firma), fondo atenuado detrás del texto. 107 E2E. |
 | 2026-10-29 | feature/dev2-optimizacion | v0.17.1 — fondo de circuito en Web Worker (OffscreenCanvas), Archivo 90 → 58 KB, `sizes` de imágenes; corrige el título animado sin espacios (estaba en producción); celular: campos de 16 px, toques de 40 px, «Más filtros» en `/cursos`, tablas del campus. 104 E2E. |
 | 2026-10-28 | feature/dev2-rediseno | v0.17.0 — rediseño de sitio, acceso y campus (`design.md`: OKLCH, Archivo + Montserrat, fondo vivo de circuito, efectos en CSS/canvas sin librerías, View Transitions) y paginación con la página en la URL (`src/lib/paginar.ts`). 95 E2E, a11y 100, CLS 0; portada ~8 pts de Lighthouse móvil debajo de `dev`. |
 | 2026-10-27 | feature/dev2-qa-campus | v0.16.1 — QA de los 102 casos del campus (en `dev`: 100 OK, 2 fallas) y auditoría. Arregla subida de PDF > 10 MB, Campus › Aulas vacía, `anon` en el bootstrap, nodemailer, seed sin aulas, login de cuenta deshabilitada, `motion` fuera del sitio, ficha del curso en el celular, a11y y canonical. Informe en `docs/AUDITORIA-2026-10-27.md`. |

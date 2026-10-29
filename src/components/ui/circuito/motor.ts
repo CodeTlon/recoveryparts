@@ -94,6 +94,8 @@ export function crearMotor(canvas: Lienzo, capa: Lienzo, { hero, tonos, base }: 
   const deriva = { x: 0, y: 0 }
   const RADIO = hero ? 190 : 150
   const alfaBase = hero ? 0.55 : 0.32
+  // Brillo de los pulsos: el fondo fijo va detrás de texto en todo el sitio, así que pulsa más suave que el hero.
+  const brilloPulso = hero ? 1 : 0.65
   const objetivo = new Map<Pista, number>()
 
   const trazar = (c: Ctx, p: Pista) => {
@@ -156,14 +158,14 @@ export function crearMotor(canvas: Lienzo, capa: Lienzo, { hero, tonos, base }: 
       for (let s = 0; s < pasos; s++) {
         const a = puntoEn(u.pista, cola + ((cabeza - cola) * s) / pasos)
         const b = puntoEn(u.pista, cola + ((cabeza - cola) * (s + 1)) / pasos)
-        ctx.globalAlpha = ((s + 1) / pasos) * 0.9
+        ctx.globalAlpha = ((s + 1) / pasos) * 0.9 * brilloPulso
         ctx.lineWidth = 1 + ((s + 1) / pasos) * 1.4
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()
       }
       const h = puntoEn(u.pista, cabeza)
-      ctx.globalAlpha = 0.22; ctx.fillStyle = tonos[u.tono]
+      ctx.globalAlpha = 0.22 * brilloPulso; ctx.fillStyle = tonos[u.tono]
       ctx.beginPath(); ctx.arc(h.x, h.y, 7, 0, Math.PI * 2); ctx.fill()
-      ctx.globalAlpha = 1
+      ctx.globalAlpha = brilloPulso
       ctx.beginPath(); ctx.arc(h.x, h.y, 2, 0, Math.PI * 2); ctx.fill()
       return true
     })

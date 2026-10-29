@@ -215,6 +215,8 @@ stateDiagram-v2
 
 ### A2. Galería de fotos
 
+> **Sacada el 2026-10-29 (v0.17.2), a pedido de Mateo.** La página no existe más: `/galeria` redirige al inicio y no está en el menú, el pie, el sitemap ni el campus. Las fotos cargadas quedan en `cms_galeria`; las de cada aula se ven en `/aulas`. Lo que sigue queda como referencia por si se vuelve a sumar.
+
 > Ruta propuesta: `/galeria` · En la demo existe `components/sections/Gallery.tsx` y la sección `#egresados`.
 
 | Elemento | Detalle |
@@ -251,7 +253,7 @@ Las aulas son un diferencial de la academia. La sección arranca con un **video 
 | **Qué muestra cada aula** | Nombre, descripción, **destacados** con ícono según su tipo (Mesas de trabajo, Equipamiento, Herramientas, Comodidades, Seguridad, Otro), fotos que se amplían y un video corto opcional. |
 | **Qué no muestra** | La capacidad ni los cursos que se dictan en cada aula. |
 | **Visibilidad** | Solo aulas activas y marcadas «Mostrar en el sitio», en el orden que elige el admin. Sin aulas visibles, la sección sale del menú y la página muestra un mensaje. |
-| **Enlaces** | «Ver más fotos en la galería» (abre la galería filtrada por «Aulas») y «Conocé nuestras aulas» en el bloque «Nosotros» de la portada. |
+| **Enlaces** | «Conocé nuestras aulas» en el bloque «Nosotros» de la portada. |
 | **Estilo** | Los colores, tipografías y componentes del resto del sitio. |
 
 <details>
