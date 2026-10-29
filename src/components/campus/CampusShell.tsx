@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useState, useRef } from 'react'
+import { Fragment, useEffect, useId, useState, useRef } from 'react'
 import { useModalFocus } from '@/lib/useModalFocus'
 import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
@@ -10,28 +10,31 @@ import { LayoutDashboard, BookOpen, Users, BarChart3, Globe, Inbox, ClipboardLis
 import { logout } from '@/app/auth/actions'
 
 // `match`: prefijo que marca el ítem como activo cuando no coincide con `href` (p. ej. el detalle de una encuesta).
-type Item = { href: string; label: string; icon: keyof typeof ICONS; match?: string }
+// `grupo`: título que agrupa ítems en el menú del admin (8 ítems sueltos costaba recorrerlos). `abajo`: va al pie del
+// menú, junto a «Cerrar sesión» (la cuenta propia no es parte del trabajo diario).
+type Item = { href: string; label: string; icon: keyof typeof ICONS; match?: string; grupo?: string; abajo?: boolean }
 const ICONS = { home: LayoutDashboard, cursos: BookOpen, usuarios: Users, reportes: BarChart3, sitio: Globe, consultas: Inbox, encuestas: ClipboardList, aulas: DoorOpen, cuenta: UserRound }
 
 export const NAV: Record<string, Item[]> = {
   alumno: [
     { href: '/campus/alumno', label: 'Mis cursos', icon: 'cursos' },
     { href: '/campus/alumno/encuestas', label: 'Encuestas', icon: 'encuestas', match: '/campus/alumno/encuesta' },
-    { href: '/campus/alumno/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
+    { href: '/campus/alumno/cuenta', label: 'Mi cuenta', icon: 'cuenta', abajo: true },
   ],
   profesor: [
     { href: '/campus/profesor', label: 'Mis cursos', icon: 'cursos' },
-    { href: '/campus/profesor/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
+    { href: '/campus/profesor/cuenta', label: 'Mi cuenta', icon: 'cuenta', abajo: true },
   ],
   admin: [
     { href: '/campus/admin', label: 'Resumen', icon: 'home' },
-    { href: '/campus/admin/usuarios', label: 'Usuarios', icon: 'usuarios' },
-    { href: '/campus/admin/cursos', label: 'Cursos y talleres', icon: 'cursos' },
-    { href: '/campus/admin/aulas', label: 'Aulas', icon: 'aulas' },
-    { href: '/campus/admin/encuestas', label: 'Encuestas', icon: 'encuestas' },
-    { href: '/campus/admin/sitio', label: 'Sitio web', icon: 'sitio' },
-    { href: '/campus/admin/consultas', label: 'Consultas', icon: 'consultas' },
-    { href: '/campus/admin/cuenta', label: 'Mi cuenta', icon: 'cuenta' },
+    { href: '/campus/admin/cursos', label: 'Cursos y talleres', icon: 'cursos', grupo: 'Academia' },
+    { href: '/campus/admin/aulas', label: 'Aulas', icon: 'aulas', grupo: 'Academia' },
+    { href: '/campus/admin/usuarios', label: 'Usuarios', icon: 'usuarios', grupo: 'Academia' },
+    { href: '/campus/admin/consultas', label: 'Consultas', icon: 'consultas', grupo: 'Seguimiento' },
+    { href: '/campus/admin/encuestas', label: 'Encuestas', icon: 'encuestas', grupo: 'Seguimiento' },
+    { href: '/campus/admin/reportes', label: 'Reportes', icon: 'reportes', grupo: 'Seguimiento' },
+    { href: '/campus/admin/sitio', label: 'Sitio web', icon: 'sitio', grupo: 'Sitio público' },
+    { href: '/campus/admin/cuenta', label: 'Mi cuenta', icon: 'cuenta', abajo: true },
   ],
 }
 const ROL_LABEL: Record<string, string> = { admin: 'Administración', profesor: 'Profesor', alumno: 'Alumno' }
@@ -52,24 +55,39 @@ function Inner({ rol, nombre, avisos, onNavigate }: { rol: string; nombre: strin
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1" aria-label="Campus">
-        {items.map(({ href, label, icon, match }) => {
+        {items.filter((it) => !it.abajo).map(({ href, label, icon, match, grupo }, i, lista) => {
           const Icon = ICONS[icon]
           const on = href === items[0].href ? path === href : path.startsWith(match ?? href)
           const n = avisos?.[href] ?? 0
+          const titulo = grupo && grupo !== lista[i - 1]?.grupo ? <p className="dato px-4 pb-1 pt-5 text-on-surface-variant/80">{grupo}</p> : null
           return (
-            <Link key={href} href={href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
+            <Fragment key={href}>{titulo}
+            <Link href={href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
               className={`relative flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${on ? 'text-on-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'}`}>
               {/* Indicador del ítem activo: se desliza entre ítems (resorte) con una pista naranja a la izquierda. */}
               {on && <motion.span layoutId={pillId} transition={{ type: 'spring', stiffness: 400, damping: 34 }} className="absolute inset-0 rounded-lg border border-outline-variant bg-surface-container-highest before:absolute before:inset-y-2.5 before:-left-px before:w-[3px] before:rounded-full before:bg-accent" />}
               <Icon size={20} className="relative" /> <span className="relative">{label}</span>
               {n > 0 && <span className="relative ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-accent px-1.5 text-xs font-bold text-surface-container-lowest"><span aria-hidden>{n}</span><span className="sr-only">{n} pendiente{n === 1 ? '' : 's'}</span></span>}
             </Link>
+            </Fragment>
           )
         })}
       </nav>
-      <form action={logout} className="border-t border-outline-variant pt-3">
+      <div className="border-t border-outline-variant pt-3">
+        {items.filter((it) => it.abajo).map(({ href, label, icon }) => {
+          const Icon = ICONS[icon]
+          const on = path.startsWith(href)
+          return (
+            <Link key={href} href={href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
+              className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${on ? 'bg-surface-container-highest text-on-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'}`}>
+              <Icon size={20} aria-hidden /> {label}
+            </Link>
+          )
+        })}
+      <form action={logout}>
         <button className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"><LogOut size={20} aria-hidden /> Cerrar sesión</button>
       </form>
+      </div>
     </>
   )
 }

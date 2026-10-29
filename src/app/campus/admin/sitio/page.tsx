@@ -1,20 +1,28 @@
+import { ChevronDown } from 'lucide-react'
 import { MediaField } from '@/components/campus/MediaField'
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth'
 import ImageUploader from '@/components/campus/ImageUploader'
-import { ActionForm, Badge, Confirm, Field, PageHead, Select, Check } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Field, PageHead, Select, Check, Pestanas } from '@/components/campus/ui'
 import { borrarItemCms, guardarFichaAula, guardarItemCms, guardarSetting } from '../actions'
 import { DestacadosEditor, FotosEditor } from '@/components/campus/ListEditors'
 
 type S = Record<string, any>
 
-function Setting({ clave, title, hint, children }: { clave: string; title: string; hint?: string; children: React.ReactNode }) {
+// Un bloque editable del sitio. Plegable: en una pestaña con varios bloques (Inicio) se abre uno por vez y se ve de
+// un vistazo qué se puede editar, en vez de cuatro formularios largos apilados.
+function Setting({ clave, title, hint, abierto = true, children }: { clave: string; title: string; hint?: string; abierto?: boolean; children: React.ReactNode }) {
   return (
-    <section className="card p-6">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {hint && <p className="mb-4 mt-1 text-sm text-on-surface-variant">{hint}</p>}
-      <div className="mt-4 max-w-2xl"><ActionForm action={guardarSetting} reset={false}><input type="hidden" name="clave" value={clave} />{children}</ActionForm></div>
-    </section>
+    <details open={abierto} className="card group">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-6 [&::-webkit-details-marker]:hidden">
+        <span>
+          <span className="block text-lg font-semibold">{title}</span>
+          {hint && <span className="mt-1 block text-sm text-on-surface-variant">{hint}</span>}
+        </span>
+        <ChevronDown size={20} aria-hidden className="mt-1 shrink-0 text-on-surface-variant transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="max-w-2xl px-6 pb-6"><ActionForm action={guardarSetting} reset={false}><input type="hidden" name="clave" value={clave} />{children}</ActionForm></div>
+    </details>
   )
 }
 
@@ -50,7 +58,6 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
   ])
   const v = (k: string): S => (st?.find((s) => s.clave === k)?.valor as S) ?? {}
   const h = v('hero'), c = v('contacto'), s = v('stats'), n = v('nosotros'), a = v('areas'), campus = v('campus')
-  const h2 = 'mb-4 mt-12 text-2xl font-semibold'
   type Ficha = { aula_id: string; descripcion: string | null; visible: boolean; orden: number; video_url: string | null }
   const ficha = (id: string) => ((fichas ?? []) as Ficha[]).find((f) => f.aula_id === id)
   const aulasActivas = ((aulas ?? []) as { id: string; nombre: string }[])
@@ -73,12 +80,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       <PageHead title="Sitio web" sub="Todo el contenido público sale de acá. Solo el administrador puede modificarlo." />
-      <nav aria-label="Secciones del sitio" className="mb-4 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
-        {tabs.map(([k, l]) => (
-          <Link key={k} href={`/campus/admin/sitio?tab=${k}`} scroll={false} aria-current={actual[0] === k ? 'page' : undefined}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${actual[0] === k ? 'bg-on-surface text-surface-container-lowest' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-accent'}`}>{l}</Link>
-        ))}
-      </nav>
+      <Pestanas label="Secciones del sitio" items={tabs.map(([k, l]) => [k, l])} actual={actual[0]} href={(k) => `/campus/admin/sitio?tab=${k}`} />
       <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-on-surface-variant">
         <span>Estás editando: <b className="text-on-surface">{actual[1].replace(/ \(\d+\)$/, '')}</b> — {actual[2]}.</span>
         <Link href={actual[3]} target="_blank" className="-my-2.5 inline-block py-2.5 font-semibold text-secondary hover:underline">Ver en el sitio ↗</Link>
@@ -92,12 +94,12 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
           <MediaField tipo="video" label="Video de fondo (opcional)" name="video_url" defaultValue={h.video_url} hint="Se reproduce en la portada, sin sonido y en bucle. Hasta 60 s; se comprime solo a 720p." />
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Texto botón cursos" name="cta_cursos" placeholder="Ej: Ver cursos" defaultValue={h.cta_cursos} /><Field label="Texto botón WhatsApp" name="cta_whatsapp" placeholder="Ej: Consultar por WhatsApp" defaultValue={h.cta_whatsapp} /></div>
         </Setting>
-        <Setting clave="areas" title="Las dos áreas" hint="Las dos tarjetas grandes del inicio que llevan al catálogo de cada área.">
+        <Setting clave="areas" abierto={false} title="Las dos áreas" hint="Las dos tarjetas grandes del inicio que llevan al catálogo de cada área.">
           {AREAS.map(([k, l]) => <div key={k} className="space-y-3 border-b border-outline-variant pb-4"><p className="font-semibold">{l}</p>
             <Field label="Título" name={`${k}.titulo`} defaultValue={a[k]?.titulo} /><Field label="Texto" name={`${k}.texto`} rows={2} defaultValue={a[k]?.texto} /><Field label="Imagen (URL)" name={`${k}.imagen_url`} defaultValue={a[k]?.imagen_url} /></div>)}
         </Setting>
-        <Setting clave="nosotros" title="Nosotros" hint="Texto de presentación de la academia en el inicio."><Field label="Título" name="titulo" placeholder="Ej: Aprendé un oficio con salida laboral" defaultValue={n.titulo} /><Field label="Texto" name="texto" placeholder="Escribí el texto acá…" rows={5} defaultValue={n.texto} /></Setting>
-        <Setting clave="stats" title="Números" hint="Los tres números destacados de «Nosotros» (aulas, profesores y egresados).">
+        <Setting clave="nosotros" abierto={false} title="Nosotros" hint="Texto de presentación de la academia en el inicio."><Field label="Título" name="titulo" placeholder="Ej: Aprendé un oficio con salida laboral" defaultValue={n.titulo} /><Field label="Texto" name="texto" placeholder="Escribí el texto acá…" rows={5} defaultValue={n.texto} /></Setting>
+        <Setting clave="stats" abierto={false} title="Números" hint="Los tres números destacados de «Nosotros» (aulas, profesores y egresados).">
           <div className="grid gap-4 sm:grid-cols-3"><Field label="Aulas" name="aulas" placeholder="Ej: 3" type="number" defaultValue={s.aulas} /><Field label="Profesores" name="profesores" placeholder="Ej: 8" type="number" defaultValue={s.profesores} /><Field label="Egresados" name="egresados" placeholder="Ej: 250" type="number" defaultValue={s.egresados} /></div>
         </Setting>
         </div>
