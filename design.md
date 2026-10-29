@@ -44,6 +44,15 @@ Neutros siempre teñidos hacia el tono 263 (nada de gris puro). Colores nuevos: 
 - Encabezado de página interior: `components/ui/EncabezadoPagina.tsx`. Título de sección: `components/ui/SectionTitle.tsx`
   (pista de circuito que se dibuja con el scroll + título display).
 
+## Celular (v0.17.1)
+- Campos (`input`, `select`, `textarea`) a 16 px en pantallas táctiles: con menos, Safari de iPhone hace zoom al enfocarlos.
+  Lo resuelve una regla de `globals.css` fuera de las capas de Tailwind; no hace falta tocar cada campo.
+- Zona de toque de 40 px como mínimo en todo control aislado. Si el texto es chico, se agranda con `py-*` y se compensa con
+  margen negativo (`-my-*`) para no mover el layout.
+- Letra mínima de 12 px (`text-xs`), también en gráficos y etiquetas del campus.
+- Filtros secundarios plegados detrás de un botón en el celular (ver `CursosFilters`): lo primero que se ve son los resultados.
+- Tablas del campus: en el celular se ocultan las columnas secundarias (`hidden md:table-cell`) antes que hacer scroll lateral.
+
 ## Motivo propio: el circuito
 Pistas finas a 0°/45°/90° con nodos huecos en los extremos, como el hemisferio naranja del logo. Reemplaza a la aurora, las
 grillas y los brillos genéricos. Aparece en:
@@ -54,7 +63,7 @@ grillas y los brillos genéricos. Aparece en:
 ## Movimiento (todo se apaga con `prefers-reduced-motion`)
 | Efecto | Dónde | Cómo |
 |---|---|---|
-| Circuito vivo: pulsos todo el tiempo, se encienden cerca del puntero, ráfaga al clic, paralaje | fondo público, hero | `CircuitField.tsx` (canvas 2D, sin librerías) |
+| Circuito vivo: pulsos todo el tiempo, se encienden cerca del puntero, ráfaga al clic, paralaje | fondo público, hero | `CircuitField.tsx` + `circuito/motor.ts` (canvas 2D en un Web Worker, sin librerías) |
 | Título que se expande de Archivo comprimido a ancho | h1 de páginas públicas, login, 404 | `TituloExpandido.tsx` + keyframes `expandir` (CSS) |
 | Entrada con recorte atada al scroll | tarjetas, filas de agenda, mosaicos | clase `al-entrar` (`animation-timeline: view()`, sin JS) |
 | Pista que se dibuja al entrar la sección | títulos de sección | `.pista-trazo` / `.pista-nodo` |

@@ -17,6 +17,8 @@
 - Animaciones: las de scroll van en CSS (`al-entrar`, `pista-trazo`, `progreso-pagina`, `fila-foco`, `paralaje`); todo bajo `prefers-reduced-motion`. No bajar la opacidad del contenido que entra (contraste). Un título animado usa `TituloExpandido` (deja la copia estática que fija el layout).
 - Un valor (objeto, constante) que necesite el servidor no se exporta desde un archivo `'use client'`: llega como referencia de cliente. Va en `src/lib/` (p. ej. `src/lib/galeria.ts`).
 - Canvas o capas que pueden quedar ocultos (`hidden lg:flex`): no dibujar con tamaño 0 (`drawImage` de una capa 0×0 tira error).
+- Celular (`design.md` › Celular): campos a 16 px en táctil (regla global), zona de toque ≥ 40 px (`py-*` + `-my-*` si el texto es chico), letra ≥ 12 px, filtros secundarios plegados y columnas secundarias ocultas en tablas. Revisar con una pasada a 360 y 390 px antes de cerrar un cambio visual.
+- Dibujo continuo (canvas): fuera del hilo principal cuando se pueda (Web Worker + OffscreenCanvas, como `ui/circuito/`).
 
 ## Base de datos
 - Nunca editar una migración aplicada: nueva `NNNN_descripcion.sql`, probada con `npm run db:reset`.
