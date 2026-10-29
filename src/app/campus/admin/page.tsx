@@ -68,13 +68,13 @@ export default async function AdminHome() {
             <ul className={lista}>
               {msgs.map((m) => (
                 <li key={m.id} className="py-2">
-                  <p className="font-medium">{m.nombre}{!m.leido && <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-secondary">Nueva</span>}</p>
+                  <p className="font-medium">{m.nombre}{!m.leido && <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-secondary">Nueva</span>}</p>
                   <p className="line-clamp-2 text-xs text-on-surface-variant">{m.mensaje}</p>
                 </li>
               ))}
             </ul>
           ) : <p className="text-sm text-on-surface-variant">Todavía no hay consultas.</p>}
-          <Link href="/campus/admin/consultas" className="mt-3 inline-block text-sm font-semibold text-secondary hover:underline">Ver todas →</Link>
+          <Link href="/campus/admin/consultas" className="mt-0.5 inline-block py-2.5 text-sm font-semibold text-secondary hover:underline">Ver todas →</Link>
         </section>
 
         <section className="card p-5">
@@ -83,7 +83,7 @@ export default async function AdminHome() {
             <ul className={lista}>
               {(porIniciar as unknown as PorIniciar[]).map((c) => (
                 <li key={c.id} className="flex items-start justify-between gap-3 py-2">
-                  <Link href={`/campus/admin/cursos/${c.curso_id}/ediciones/${c.id}`} className="font-medium hover:text-accent">{uno(c.cursos)?.nombre ?? 'Curso'}</Link>
+                  <Link href={`/campus/admin/cursos/${c.curso_id}/ediciones/${c.id}`} className="-my-2 inline-block py-2 font-medium hover:text-accent">{uno(c.cursos)?.nombre ?? 'Curso'}</Link>
                   <span className="shrink-0 text-xs text-on-surface-variant">{fechaAR(c.fecha_inicio)}</span>
                 </li>
               ))}

@@ -39,6 +39,22 @@ test.describe('Público: título animado', () => {
   })
 })
 
+test.describe('Público: filtros de cursos', () => {
+  test('en el celular nivel/día/orden se abren con «Más filtros»; en pantallas grandes se ven siempre', async ({ page }) => {
+    await page.goto('/cursos')
+    const nivel = page.getByLabel('Nivel')
+    if ((page.viewportSize()?.width ?? 1280) >= 768) {
+      await expect(nivel).toBeVisible()
+      await expect(page.getByRole('button', { name: /Más filtros/ })).toBeHidden()
+      return
+    }
+    await expect(nivel).toBeHidden()
+    await page.getByRole('button', { name: /Más filtros/ }).click()
+    await expect(nivel).toBeVisible()
+    await expect(page.getByRole('button', { name: /Menos filtros/ })).toHaveAttribute('aria-expanded', 'true')
+  })
+})
+
 test.describe('Campus: exige sesión', () => {
   for (const ruta of ['/campus/alumno', '/campus/admin']) {
     test(`${ruta} sin sesión no muestra el campus`, async ({ page }) => {

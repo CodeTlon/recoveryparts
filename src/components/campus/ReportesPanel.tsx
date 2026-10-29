@@ -101,7 +101,7 @@ export default async function ReportesPanel() {
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <Card title="Estado de las inscripciones">
-            <Donut caption="Estado de las inscripciones" center={<div><p className="text-2xl font-bold tabular-nums">{I.length}</p><p className="text-[11px] text-on-surface-variant">inscripciones</p></div>}
+            <Donut caption="Estado de las inscripciones" center={<div><p className="text-2xl font-bold tabular-nums">{I.length}</p><p className="text-xs text-on-surface-variant">inscripciones</p></div>}
               data={[{ label: 'Activos', value: estados.activo, color: 'text-success' }, { label: 'Finalizados', value: estados.finalizado, color: 'text-info' }, { label: 'Desertores', value: estados.desertor, color: 'text-danger' }]} />
           </Card>
           <Card title="Ocupación por edición">
@@ -115,7 +115,7 @@ export default async function ReportesPanel() {
               <li key={x.nombre}>
                 <p className="flex justify-between text-sm font-semibold"><span>{x.nombre}</span><span>{x.d} de {x.total} · {x.p}%</span></p>
                 {x.porClase.length > 0 && <p className="mt-1 text-xs text-on-surface-variant">Por clase: {x.porClase.map(([n, c]) => `clase ${n}: ${c}`).join(' · ')}</p>}
-                {x.motivos.length > 0 && <details className="mt-1 text-xs text-on-surface-variant"><summary className="cursor-pointer text-secondary">Motivos</summary><ul className="mt-1 list-disc pl-5">{x.motivos.map((m, k) => <li key={k}>{m}</li>)}</ul></details>}
+                {x.motivos.length > 0 && <details className="mt-1 text-xs text-on-surface-variant"><summary className="cursor-pointer py-2 text-secondary">Motivos</summary><ul className="mt-1 list-disc pl-5">{x.motivos.map((m, k) => <li key={k}>{m}</li>)}</ul></details>}
               </li>))}</ul>}
           </Card>
           <Card title="Velocidad de llenado" note="Días desde que se creó la edición hasta completar el cupo.">

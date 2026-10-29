@@ -28,7 +28,7 @@ export default async function ContactoPage() {
               {c.horario && <li className={fila}><Clock size={20} className="mt-0.5 shrink-0 text-accent" aria-hidden /> <span>{c.horario}</span></li>}
               {c.telefono && <li className={fila}><Phone size={20} className="mt-0.5 shrink-0 text-accent" aria-hidden /> <span>{c.telefono}</span></li>}
               {c.email && <li className={fila}><Mail size={20} className="mt-0.5 shrink-0 text-accent" aria-hidden /> <a className="min-w-0 wrap-break-word hover:text-secondary" href={`mailto:${c.email}`}>{c.email}</a></li>}
-              {c.instagram && <li className={fila}><InstagramIcon size={20} className="mt-0.5 shrink-0 text-accent" /> <a className="hover:text-secondary" href={`https://www.instagram.com/${c.instagram.replace('@', '')}/`} target="_blank" rel="noopener noreferrer">{c.instagram}</a></li>}
+              {c.instagram && <li className={fila}><InstagramIcon size={20} className="mt-0.5 shrink-0 text-accent" /> <a className="-my-2 inline-block py-2 hover:text-secondary" href={`https://www.instagram.com/${c.instagram.replace('@', '')}/`} target="_blank" rel="noopener noreferrer">{c.instagram}</a></li>}
             </ul>
             {c.whatsapp && (
               <a href={waLink(c.whatsapp, 'Hola! Quería hacer una consulta.')} target="_blank" rel="noopener noreferrer" className="btn-outline">

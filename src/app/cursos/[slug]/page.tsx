@@ -70,7 +70,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
       <JsonLd datos={jsonLd} />
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1280px] grow px-4 pb-12 pt-28 md:px-12 md:pb-20 md:pt-36">
-        <Link href="/cursos" className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface"><ArrowLeft size={16} aria-hidden /> Todos los cursos</Link>
+        <Link href="/cursos" className="-mt-2.5 mb-5.5 inline-flex items-center gap-2 py-2.5 text-sm font-semibold text-on-surface-variant hover:text-on-surface"><ArrowLeft size={16} aria-hidden /> Todos los cursos</Link>
         <section className="mb-16 grid grid-cols-1 items-end gap-8 lg:grid-cols-12 lg:gap-10">
           <div className={`flex flex-col gap-6 ${foto ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
             <div className="flex flex-wrap items-center gap-2">
