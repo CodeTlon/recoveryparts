@@ -7,6 +7,7 @@ import SiteNav from '@/components/layout/SiteNav'
 import HeroVideo from '@/components/public/HeroVideo'
 import SiteFooter from '@/components/layout/SiteFooter'
 import CursoCard, { AREA_COLOR, Cupos, horarioTexto } from '@/components/public/CursoCard'
+import DestacadosFiltro, { type FiltroDestacados } from '@/components/public/DestacadosFiltro'
 import CircuitField from '@/components/ui/CircuitField'
 import TituloExpandido from '@/components/ui/TituloExpandido'
 import Magnetico from '@/components/ui/Magnetico'
@@ -36,7 +37,17 @@ export default async function Home() {
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
   ])
-  const destacados = cursos.filter((c) => c.destacado).slice(0, 6)
+  // Filtro de destacadas: «Todos» son las destacadas; cada área y los talleres muestran primero las destacadas y después
+  // las que empiezan antes. Hasta 4 por filtro (3 en escritorio); un filtro sin cursos no se ofrece.
+  const enOrden = [...cursos].sort((a, b) => Number(b.destacado) - Number(a.destacado) || (a.fecha_inicio ?? '9999').localeCompare(b.fecha_inicio ?? '9999'))
+  const primeros = (f: (c: (typeof cursos)[number]) => boolean) => enOrden.filter(f).slice(0, 4).map((c) => c.id)
+  const destacados = cursos.filter((c) => c.destacado)
+  const filtros: FiltroDestacados[] = [
+    { clave: 'todos', label: 'Todos', corto: 'Todos', href: '/cursos', ids: destacados.length ? destacados.slice(0, 4).map((c) => c.id) : primeros(() => true) },
+    { clave: 'tecnico', label: AREA_LABEL.tecnico, corto: 'Reparación', href: '/cursos?area=tecnico', ids: primeros((c) => c.area === 'tecnico') },
+    { clave: 'diseno', label: AREA_LABEL.diseno, corto: 'Diseño', href: '/cursos?area=diseno', ids: primeros((c) => c.area === 'diseno') },
+    { clave: 'taller', label: 'Talleres', corto: 'Talleres', href: '/cursos?tipo=taller', ids: primeros((c) => c.tipo === 'taller') },
+  ].filter((f) => f.ids.length > 0)
   // Agenda: los próximos inicios reales (cursos con fecha de la próxima edición), del más cercano al más lejano.
   const proximos = cursos.filter((c) => c.fecha_inicio).sort((a, b) => a.fecha_inicio!.localeCompare(b.fecha_inicio!)).slice(0, 6)
   const wa = waLink(s.contacto.whatsapp)
@@ -157,27 +168,18 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 4 · Destacadas */}
-        {destacados.length > 0 && (
+        {/* 4 · Destacadas, con filtro que cambia las tarjetas ahí mismo */}
+        {filtros.length > 0 && (
           <section aria-labelledby="t-destacados" className="border-y border-outline-variant/60 bg-surface-container-lowest/70 backdrop-blur-[2px]">
             <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
-              <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-                <SectionTitle id="t-destacados" className="mb-0!">Capacitaciones destacadas</SectionTitle>
-                <nav aria-label="Filtrar por área" className="flex flex-wrap gap-2">
-                  {[['/cursos', 'Todos'], ['/cursos?area=tecnico', AREA_LABEL.tecnico], ['/cursos?area=diseno', AREA_LABEL.diseno], ['/cursos?tipo=taller', 'Talleres']].map(([href, label]) => (
-                    <Link key={href} href={href} className="rounded-pill border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors hover:border-on-surface hover:text-on-surface">{label}</Link>
-                  ))}
-                </nav>
-              </div>
-              {/* Celular y tablet: fila deslizable (una tarjeta y el borde de la siguiente). Escritorio: las 3 primeras. */}
-              <ul className="-mx-4 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 md:mt-12 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
-                {destacados.map((c, i) => (
-                  <li key={c.id} className={`w-[min(82vw,22rem)] shrink-0 snap-start lg:w-auto ${i > 2 ? 'lg:hidden' : ''}`}>
-                    <CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} />
-                  </li>
-                ))}
-              </ul>
-              <Link href="/cursos" className="btn-outline mt-8 lg:mt-10">Ver todos los cursos <ArrowRight size={16} aria-hidden /></Link>
+              <DestacadosFiltro
+                titulo={<SectionTitle id="t-destacados" className="mb-0!">Capacitaciones destacadas</SectionTitle>}
+                filtros={filtros}
+                tarjetas={Object.fromEntries([...new Set(filtros.flatMap((f) => f.ids))].map((id) => {
+                  const c = cursos.find((x) => x.id === id)!
+                  return [id, <CursoCard key={id} c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} />]
+                }))}
+              />
             </div>
           </section>
         )}
