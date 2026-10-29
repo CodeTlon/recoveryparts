@@ -10,6 +10,10 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 
 ## Quirks
 - **UI: leer `design.md` antes de tocar pantallas** (sistema fijado en v0.17.0). Nada de `uppercase tracking-*`, `<em>` resaltado en títulos ni efectos tipo aurora/spotlight.
+- Web Worker con Turbopack: `new Worker(new URL('./x.worker.ts', import.meta.url), { type: 'module' })`. Sin `type: 'module'` el `.ts` se copia como archivo suelto, sin compilar. La CSP necesita `worker-src 'self'`.
+- Un canvas se transfiere a OffscreenCanvas una sola vez: en desarrollo React monta el efecto dos veces, por eso `CircuitField` reutiliza el worker de cada canvas (WeakMap) y solo lo cierra si el canvas salió de la página.
+- `experimental.inlineCss` NO: duplica el CSS en el HTML (34 → 80 KB) y empeora el FCP.
+- Texto entre `inline-block`: un espacio al final de la caja se descarta. Los espacios entre palabras van afuera (pasó con `TituloExpandido`).
 - No exportar valores (objetos/constantes) desde un archivo `'use client'` para usarlos en el servidor: llegan como referencia de cliente (pasó con las etiquetas de la galería → `src/lib/galeria.ts`).
 - `next dev` (16.4) agrega un bloque a `AGENTS.md`: no commitearlo sin decidirlo (o `agentRules: false`).
 - Matar servidores locales por PID del puerto (`ss -ltnp | grep :PUERTO`), no con `pkill -f next-server`: se lleva puestos los de otros proyectos de la cuenta.
@@ -35,6 +39,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-29 | feature/dev2-optimizacion | v0.17.1 — fondo de circuito en Web Worker (OffscreenCanvas), Archivo 90 → 58 KB, `sizes` de imágenes; corrige el título animado sin espacios (estaba en producción); celular: campos de 16 px, toques de 40 px, «Más filtros» en `/cursos`, tablas del campus. 104 E2E. |
 | 2026-10-28 | feature/dev2-rediseno | v0.17.0 — rediseño de sitio, acceso y campus (`design.md`: OKLCH, Archivo + Montserrat, fondo vivo de circuito, efectos en CSS/canvas sin librerías, View Transitions) y paginación con la página en la URL (`src/lib/paginar.ts`). 95 E2E, a11y 100, CLS 0; portada ~8 pts de Lighthouse móvil debajo de `dev`. |
 | 2026-10-27 | feature/dev2-qa-campus | v0.16.1 — QA de los 102 casos del campus (en `dev`: 100 OK, 2 fallas) y auditoría. Arregla subida de PDF > 10 MB, Campus › Aulas vacía, `anon` en el bootstrap, nodemailer, seed sin aulas, login de cuenta deshabilitada, `motion` fuera del sitio, ficha del curso en el celular, a11y y canonical. Informe en `docs/AUDITORIA-2026-10-27.md`. |
 | 2026-10-21 | feat/aulas-sitio | Sección pública «Aulas» (RF-60): `/aulas` con video general y fichas por aula (destacados con ícono, fotos, video), pestaña en Campus › Sitio web, link en menú/«Nosotros»/sitemap; migración 0030 (revoca a mano los permisos de anon: ver KNOWN_ISSUES). Sin mergear. |

@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Search } from 'lucide-react'
+import { Search, SlidersHorizontal } from 'lucide-react'
 import { DIAS } from '@/lib/types'
 
 // Los filtros viven en la URL (sin datos personales).
@@ -15,6 +15,10 @@ export default function CursosFilters() {
   // El debounce tiene que partir de la URL de ESE momento: con el `sp` del render viejo pisaba filtros elegidos en los 300 ms.
   const spRef = useRef(sp)
   spRef.current = sp
+  // En el celular, nivel/día/orden van plegados detrás de «Más filtros» para que los cursos se vean sin bajar una
+  // pantalla entera. Arrancan abiertos si alguno ya está elegido. En tablet y escritorio se ven siempre.
+  const extras = ['nivel', 'dia', 'orden'].filter((k) => sp.get(k)).length
+  const [masFiltros, setMasFiltros] = useState(extras > 0)
 
   const set = (k: string, v: string) => {
     const p = new URLSearchParams(spRef.current.toString())
@@ -29,8 +33,8 @@ export default function CursosFilters() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q])
 
-  const sel = (name: string, label: string, opts: [string, string][], todos = 'Todos') => (
-    <label className="flex min-w-0 flex-col">
+  const sel = (name: string, label: string, opts: [string, string][], todos = 'Todos', ancho = '') => (
+    <label className={`flex min-w-0 flex-col ${ancho}`}>
       <span className="label">{label}</span>
       <select className="input py-2.5!" value={sp.get(name) ?? ''} onChange={(e) => set(name, e.target.value)}>
         <option value="">{todos}</option>
@@ -41,7 +45,7 @@ export default function CursosFilters() {
 
   // Área y tipo: grupos de botones de un toque (aria-pressed). La opción activa se marca con el color de la marca.
   const chips = (name: string, label: string, opts: [string, string][]) => (
-    <div role="group" aria-label={label} className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-outline-variant bg-surface-container-lowest/70 p-1 backdrop-blur-sm">
+    <div role="group" aria-label={label} className="flex max-w-full flex-wrap gap-1 rounded-xl border border-outline-variant bg-surface-container-lowest/70 p-1 backdrop-blur-sm">
       {[['', 'Todos'] as [string, string], ...opts].map(([v, l]) => {
         const on = (sp.get(name) ?? '') === v
         return (
@@ -63,11 +67,14 @@ export default function CursosFilters() {
       <div className="flex flex-wrap gap-3">
         {chips('area', 'Área', [['tecnico', 'Reparación y Tecnología'], ['diseno', 'Creación y Diseño']])}
         {chips('tipo', 'Tipo', [['curso', 'Cursos'], ['taller', 'Talleres']])}
+        <button type="button" aria-expanded={masFiltros} aria-controls="filtros-extra" onClick={() => setMasFiltros((v) => !v)} className="btn-outline px-4! py-2.5! md:hidden">
+          <SlidersHorizontal size={16} aria-hidden /> {masFiltros ? 'Menos filtros' : 'Más filtros'}{extras > 0 && ` (${extras})`}
+        </button>
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:max-w-3xl">
+      <div id="filtros-extra" className={`${masFiltros ? 'grid' : 'hidden'} grid-cols-2 gap-3 md:grid md:grid-cols-3 lg:max-w-3xl`}>
         {sel('nivel', 'Nivel', [['inicial', 'Inicial'], ['intermedio', 'Intermedio'], ['avanzado', 'Avanzado']])}
         {sel('dia', 'Día', DIAS.map((d, i) => [String(i), d]))}
-        {sel('orden', 'Ordenar por', [['destacados', 'Destacados'], ['proximos', 'Próximos a iniciar'], ['precio', 'Precio']], 'Predeterminado')}
+        {sel('orden', 'Ordenar por', [['destacados', 'Destacados'], ['proximos', 'Próximos a iniciar'], ['precio', 'Precio']], 'Predeterminado', 'col-span-2 md:col-span-1')}
       </div>
     </div>
   )

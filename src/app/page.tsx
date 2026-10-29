@@ -80,7 +80,7 @@ export default async function Home() {
             <div className="mt-10 flex flex-col gap-4 lg:flex-row lg:items-center">
               <form action="/cursos" role="search" className="flex w-full max-w-xl items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest/80 p-1.5 pl-4 shadow-card backdrop-blur-md transition-colors focus-within:border-accent">
                 <Search size={18} aria-hidden className="shrink-0 text-on-surface-variant" />
-                <input name="q" type="search" aria-label="Buscar cursos" placeholder="¿Qué querés aprender? Ej: celulares, diseño…" className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-hidden" />
+                <input name="q" type="search" aria-label="Buscar cursos" placeholder="¿Qué querés aprender?" className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-hidden" />
                 <button className="btn-primary px-4! py-2.5!">Buscar</button>
               </form>
               <div className="flex flex-wrap gap-3">
@@ -107,7 +107,7 @@ export default async function Home() {
               const color = AREA_COLOR[a]
               return (
                 <Link key={a} href={`/cursos?area=${a}`} className={`al-entrar group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-card border border-outline-variant bg-surface-container-low p-7 transition-colors ${color.bordeHover} md:min-h-[460px] md:p-10`}>
-                  {cfg.imagen_url && <span aria-hidden className="absolute inset-0 overflow-hidden"><Image src={cfg.imagen_url} alt="" fill sizes="(max-width:768px) 100vw, 60vw" className="paralaje object-cover opacity-45 grayscale-[35%] transition-[opacity,filter] duration-700 group-hover:opacity-60 group-hover:grayscale-0" /></span>}
+                  {cfg.imagen_url && <span aria-hidden className="absolute inset-0 overflow-hidden"><Image src={cfg.imagen_url} alt="" fill sizes="(max-width:768px) 100vw, 720px" className="paralaje object-cover opacity-45 grayscale-[35%] transition-[opacity,filter] duration-700 group-hover:opacity-60 group-hover:grayscale-0" /></span>}
                   <span aria-hidden className="absolute inset-0 bg-linear-to-t from-surface-container-lowest via-surface-container-lowest/75 to-transparent" />
                   <span aria-hidden className={`absolute inset-x-0 top-0 h-1 origin-left scale-x-25 transition-transform duration-700 ease-(--ease-out) group-hover:scale-x-100 ${color.fondo}`} />
                   <div className="relative">
@@ -184,7 +184,7 @@ export default async function Home() {
             <div className="grid grid-cols-2 gap-3 md:auto-rows-[210px] md:grid-cols-4 md:gap-4">
               {egresados.map((e) => (
                 <figure key={e.id} className={`al-entrar group relative overflow-hidden rounded-card bg-surface-container ${e.destacado ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square md:aspect-auto'}`}>
-                  {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) grayscale-[40%] group-hover:scale-105 group-hover:grayscale-0" />}
+                  {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 300px" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) grayscale-[40%] group-hover:scale-105 group-hover:grayscale-0" />}
                   <figcaption className="absolute inset-x-2 bottom-2 rounded-lg bg-surface-container-lowest/80 px-3 py-2 backdrop-blur-md">
                     <p className="text-sm font-semibold">{e.nombre}</p>
                     <p className="text-xs text-on-surface-variant">{e.especialidad}</p>
@@ -290,7 +290,7 @@ export default async function Home() {
               </div>
             </div>
             <ul className="flex flex-col justify-end gap-5 md:col-span-5">
-              {s.contacto.direccion && <li className="flex gap-3"><MapPin size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span><span className="block font-semibold">{s.contacto.direccion}</span>{mapa && <a href={mapa} target="_blank" rel="noopener noreferrer" className="text-sm text-on-surface-variant underline-offset-4 hover:text-on-surface hover:underline">Cómo llegar</a>}</span></li>}
+              {s.contacto.direccion && <li className="flex gap-3"><MapPin size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span><span className="block font-semibold">{s.contacto.direccion}</span>{mapa && <a href={mapa} target="_blank" rel="noopener noreferrer" className="-mb-2.5 inline-block py-2.5 text-sm text-on-surface-variant underline-offset-4 hover:text-on-surface hover:underline">Cómo llegar</a>}</span></li>}
               {s.contacto.horario && <li className="flex gap-3"><Clock size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span className="font-semibold">{s.contacto.horario}</span></li>}
               {s.contacto.email && <li className="flex gap-3"><Mail size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><a href={`mailto:${s.contacto.email}`} className="break-all font-semibold underline-offset-4 hover:underline">{s.contacto.email}</a></li>}
               {proximos[0] && <li className="flex gap-3"><CalendarDays size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span className="font-semibold">Próximo inicio: {proximos[0].fecha_inicio!.slice(8, 10)} {MESES[Number(proximos[0].fecha_inicio!.slice(5, 7)) - 1]}</span></li>}
