@@ -120,7 +120,7 @@ export default async function ReportesPanel() {
           </Card>
           <Card title="Velocidad de llenado" note="Días desde que se creó la edición hasta completar el cupo.">
             {llenos.length ? <ul className="mb-4 space-y-1 text-sm">{llenos.map((l) => <li key={l.nombre} className="flex justify-between"><span>{l.nombre}</span><span className="text-on-surface-variant">{l.dias} días</span></li>)}</ul> : <p className="mb-4 text-sm text-on-surface-variant">Ninguna edición completó su cupo todavía.</p>}
-            <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">No se llenan (menos del 50% y ya iniciados)</p>
+            <p className="text-xs font-semibold text-on-surface-variant">No se llenan (menos del 50% y ya iniciados)</p>
             <p className="mt-1 text-sm">{vacios.length ? vacios.map((v) => `${v.nombre} (${v.p}%)`).join(' · ') : '—'}</p>
           </Card>
           <Card title="Qué eligen al terminar un curso" note="Cursos en los que se inscriben los alumnos que finalizaron otro.">

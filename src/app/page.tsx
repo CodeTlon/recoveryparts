@@ -2,17 +2,15 @@ import type { Metadata } from 'next'
 import { hrefSeguro } from '@/lib/validar'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Star, ChevronDown, Search } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Star, Plus, Search, MapPin, Clock, CalendarDays, Mail } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import HeroVideo from '@/components/public/HeroVideo'
 import SiteFooter from '@/components/layout/SiteFooter'
-import CursoCard from '@/components/public/CursoCard'
-import AuroraBackground from '@/components/ui/AuroraBackground'
-import BlurText from '@/components/ui/BlurText'
-import Marquee from '@/components/ui/Marquee'
+import CursoCard, { AREA_COLOR, Cupos, horarioTexto } from '@/components/public/CursoCard'
+import CircuitField from '@/components/ui/CircuitField'
+import TituloExpandido from '@/components/ui/TituloExpandido'
+import Magnetico from '@/components/ui/Magnetico'
 import SectionTitle from '@/components/ui/SectionTitle'
-import Reveal from '@/components/ui/Reveal'
-import CountUp from '@/components/ui/CountUp'
 import { WhatsAppIcon } from '@/components/layout/SocialIcons'
 import { getCursos, getHorarios, getSettings, hayAulasVisibles, query, waLink } from '@/lib/data'
 import { AREA_LABEL, type Area } from '@/lib/types'
@@ -28,6 +26,8 @@ type Egresado = { id: string; nombre: string; especialidad: string; foto_url: st
 type Testimonio = { id: string; nombre: string; curso: string | null; texto: string; puntaje: number; foto_url: string | null }
 type Faq = { id: string; pregunta: string; respuesta: string }
 
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq, conAulas] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
@@ -37,18 +37,16 @@ export default async function Home() {
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
   ])
   const destacados = cursos.filter((c) => c.destacado).slice(0, 6)
+  // Agenda: los próximos inicios reales (cursos con fecha de la próxima edición), del más cercano al más lejano.
+  const proximos = cursos.filter((c) => c.fecha_inicio).sort((a, b) => a.fecha_inicio!.localeCompare(b.fecha_inicio!)).slice(0, 6)
   const wa = waLink(s.contacto.whatsapp)
-  const areas = (['diseno', 'tecnico'] as Area[])
-  const cinta = testimonios.length > 3 // pocos: grilla; muchos: cinta que se desplaza
-  const card = (t: Testimonio) => (
-    <figure key={t.id} className={`card flex flex-col p-6 ${cinta ? 'w-[320px] shrink-0 sm:w-[380px]' : ''}`}>
-                  <div role="img" className="mb-3 flex gap-0.5 text-accent" aria-label={`${t.puntaje} de 5`}>{Array.from({ length: t.puntaje }).map((_, i) => <Star key={i} size={18} fill="currentColor" />)}</div>
-                  <blockquote className="flex-1 text-on-surface-variant">{t.texto}</blockquote>
-                  <figcaption className="mt-4 flex items-center gap-3">
-                    <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-surface-container-high">{t.foto_url && <Image src={t.foto_url} alt="" fill sizes="40px" className="object-cover" />}</span>
-                    <span><span className="block text-sm font-semibold">{t.nombre}</span>{t.curso && <span className="text-xs text-on-surface-variant">{t.curso}</span>}</span>
-                  </figcaption>
-                </figure>
+  const areas = (['tecnico', 'diseno'] as Area[])
+  const cifras = ([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const)
+    .map(([k, l]) => [Number(s.stats[k]), l] as const).filter(([n]) => Number.isFinite(n) && n > 0)
+  const [principal, ...otrosTestimonios] = testimonios
+  const mapa = s.contacto.direccion ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.contacto.direccion}, Córdoba`)}` : null
+  const estrellas = (n: number, size: number) => (
+    <div role="img" className="flex gap-0.5 text-accent" aria-label={`${n} de 5`}>{Array.from({ length: n }).map((_, i) => <Star key={i} size={size} fill="currentColor" aria-hidden />)}</div>
   )
 
   const base = siteUrl().replace(/\/$/, '')
@@ -63,44 +61,60 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
+    <div className="min-h-screen text-on-surface">
       <JsonLd datos={jsonLd} />
       <SiteNav />
       <main id="contenido" tabIndex={-1}>
-        {/* 1 · Hero */}
-        <section className="relative flex min-h-[85vh] items-center overflow-hidden pt-20">
+        {/* 1 · Hero: foto o video del CMS, velo navy y el circuito vivo encima (reacciona al puntero y al clic). */}
+        <section className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden pt-28">
           {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}
           {hrefSeguro(s.hero.video_url) && <HeroVideo src={hrefSeguro(s.hero.video_url)!} poster={s.hero.imagen_url || undefined} />}
-          <div className="absolute inset-0 bg-linear-to-r from-surface via-surface/85 to-surface/40" />
-          <div className="pointer-events-none absolute -bottom-1/4 -left-1/4 h-[500px] w-[500px] rounded-full bg-accent/20 blur-[130px]" />
-          <div className="relative mx-auto w-full max-w-[1280px] px-4 py-20 md:px-12">
-            <BlurText text={s.hero.titulo || 'Aprendé un oficio con equipos reales'} className="mb-6 max-w-4xl text-4xl font-bold tracking-tight md:text-6xl" />
-            <p className="mb-10 max-w-2xl text-lg text-on-surface-variant md:text-xl">{s.hero.subtitulo || 'Cursos y talleres presenciales en Córdoba.'}</p>
-            <form action="/cursos" role="search" className="mb-8 flex max-w-xl items-center gap-2 rounded-pill border border-outline-variant bg-surface-container/80 p-1.5 pl-5 shadow-card backdrop-blur-sm focus-within:border-accent">
-              <Search size={18} aria-hidden className="shrink-0 text-on-surface-variant" />
-              <input name="q" type="search" aria-label="Buscar cursos" placeholder="¿Qué querés aprender? Ej: celulares, diseño…" className="min-w-0 flex-1 bg-transparent py-2 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-hidden" />
-              <button className="btn-primary rounded-pill! px-5! py-2.5!">Buscar</button>
-            </form>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/cursos" className="btn-primary px-8! py-4!">{s.hero.cta_cursos || 'Ver cursos'} <ArrowRight size={18} /></Link>
-              {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline px-8! py-4!"><WhatsAppIcon size={18} /> {s.hero.cta_whatsapp || 'WhatsApp'}</a>}
+          <div aria-hidden className="absolute inset-0 bg-linear-to-r from-surface via-surface/85 to-surface/45" />
+          <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-surface" />
+          <CircuitField modo="hero" />
+
+          <div className="relative mx-auto w-full max-w-[1280px] px-4 pb-10 md:px-12 md:pb-14">
+            <TituloExpandido texto={s.hero.titulo || 'Aprendé un oficio con equipos reales'} className="max-w-5xl text-[clamp(2.6rem,7.4vw,6.4rem)]" />
+            <p className="mt-6 max-w-2xl text-lg text-on-surface-variant md:text-xl">{s.hero.subtitulo || 'Cursos y talleres presenciales en Córdoba.'}</p>
+
+            <div className="mt-10 flex flex-col gap-4 lg:flex-row lg:items-center">
+              <form action="/cursos" role="search" className="flex w-full max-w-xl items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest/80 p-1.5 pl-4 shadow-card backdrop-blur-md transition-colors focus-within:border-accent">
+                <Search size={18} aria-hidden className="shrink-0 text-on-surface-variant" />
+                <input name="q" type="search" aria-label="Buscar cursos" placeholder="¿Qué querés aprender? Ej: celulares, diseño…" className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-hidden" />
+                <button className="btn-primary px-4! py-2.5!">Buscar</button>
+              </form>
+              <div className="flex flex-wrap gap-3">
+                <Magnetico><Link href="/cursos" className="btn-primary px-6! py-3.5!">{s.hero.cta_cursos || 'Ver cursos'} <ArrowRight size={18} aria-hidden /></Link></Magnetico>
+                {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline px-6! py-3.5!"><WhatsAppIcon size={18} /> {s.hero.cta_whatsapp || 'WhatsApp'}</a>}
+              </div>
             </div>
+
+            {/* Franja de datos reales: solo lo que está cargado. */}
+            <dl className="mt-14 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-outline-variant/70 pt-6 md:grid-cols-4">
+              <div><dt className="dato">Modalidad</dt><dd className="mt-1 font-semibold">100% presencial</dd></div>
+              {s.contacto.direccion && <div><dt className="dato">Dónde</dt><dd className="mt-1 font-semibold">{s.contacto.direccion}</dd></div>}
+              {proximos[0] && <div><dt className="dato">Próximo inicio</dt><dd className="mt-1 font-semibold"><Link href={`/cursos/${proximos[0].slug}`} className="underline-offset-4 hover:text-accent hover:underline">{proximos[0].fecha_inicio!.slice(8, 10)} {MESES[Number(proximos[0].fecha_inicio!.slice(5, 7)) - 1]} · {proximos[0].nombre}</Link></dd></div>}
+              {s.contacto.horario && <div><dt className="dato">Atención</dt><dd className="mt-1 font-semibold">{s.contacto.horario}</dd></div>}
+            </dl>
           </div>
         </section>
 
-        {/* 2 · Las dos áreas */}
-        <section className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
-          <div className="grid gap-6 md:grid-cols-2">
+        {/* 2 · Las dos áreas: las dos mitades del logo. La mitad con el puntero se ensancha (.diptico). */}
+        <section aria-label="Áreas" className="mx-auto max-w-[1280px] px-4 py-20 md:px-12 md:py-28">
+          <div className="diptico grid gap-4">
             {areas.map((a) => {
               const cfg = s.areas[a]
+              const color = AREA_COLOR[a]
               return (
-                <Link key={a} href={`/cursos?area=${a}`} className={`card group relative flex min-h-[300px] flex-col justify-end overflow-hidden p-8 transition-colors hover:border-accent ${a === 'diseno' ? 'border-t-4 border-t-accent' : 'border-t-4 border-t-brand-light'}`}>
-                  {cfg.imagen_url && <Image src={cfg.imagen_url} alt="" fill sizes="50vw" className="object-cover opacity-40 transition-opacity group-hover:opacity-50" />}
-                  <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/90 to-surface/20" />
+                <Link key={a} href={`/cursos?area=${a}`} className={`al-entrar group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-card border border-outline-variant bg-surface-container-low p-7 transition-colors ${color.bordeHover} md:min-h-[460px] md:p-10`}>
+                  {cfg.imagen_url && <span aria-hidden className="absolute inset-0 overflow-hidden"><Image src={cfg.imagen_url} alt="" fill sizes="(max-width:768px) 100vw, 60vw" className="paralaje object-cover opacity-45 grayscale-[35%] transition-[opacity,filter] duration-700 group-hover:opacity-60 group-hover:grayscale-0" /></span>}
+                  <span aria-hidden className="absolute inset-0 bg-linear-to-t from-surface-container-lowest via-surface-container-lowest/75 to-transparent" />
+                  <span aria-hidden className={`absolute inset-x-0 top-0 h-1 origin-left scale-x-25 transition-transform duration-700 ease-(--ease-out) group-hover:scale-x-100 ${color.fondo}`} />
                   <div className="relative">
-                    <h2 className="mb-2 text-2xl font-bold">{cfg.titulo || AREA_LABEL[a]}</h2>
-                    {cfg.texto && <p className="mb-4 text-on-surface-variant">{cfg.texto}</p>}
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-wide text-secondary">Ver cursos <ArrowRight size={16} /></span>
+                    <span className={`dato mb-3 inline-flex items-center gap-2 ${color.texto}`}><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${color.fondo}`} /> Área</span>
+                    <h2 className="display text-[clamp(2rem,4vw,3.25rem)]">{cfg.titulo || AREA_LABEL[a]}</h2>
+                    {cfg.texto && <p className="mt-3 max-w-md text-on-surface-variant">{cfg.texto}</p>}
+                    <span className="mt-6 inline-flex items-center gap-2 font-semibold">Ver cursos <ArrowRight size={18} aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" /></span>
                   </div>
                 </Link>
               )
@@ -108,32 +122,70 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* 3 · Destacadas */}
+        {/* 3 · Próximos inicios (agenda) */}
+        {proximos.length > 0 && (
+          <section aria-labelledby="t-proximos" className="mx-auto max-w-[1280px] px-4 pb-20 md:px-12 md:pb-28">
+            <SectionTitle id="t-proximos" bajada="Las próximas ediciones con fecha confirmada. Cada curso tiene cupo limitado.">Próximos inicios</SectionTitle>
+            <ol className="border-t border-outline-variant">
+              {proximos.map((c) => {
+                const h = horarioTexto(horarios.filter((x) => x.edicion_id === c.edicion_id))
+                const color = AREA_COLOR[c.area]
+                return (
+                  <li key={c.id} className="al-entrar border-b border-outline-variant">
+                    <Link href={`/cursos/${c.slug}`} className="group relative grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-4 py-5 md:grid-cols-[6rem_minmax(0,1.6fr)_minmax(0,1fr)_auto] md:gap-8 md:py-6">
+                      <span aria-hidden className="absolute inset-0 -z-10 origin-left scale-x-0 rounded-lg bg-surface-container-low transition-transform duration-500 ease-(--ease-out) group-hover:scale-x-100" />
+                      <span className="pl-2 tabular-nums">
+                        <span className="display block text-4xl leading-none md:text-5xl">{c.fecha_inicio!.slice(8, 10)}</span>
+                        <span className="dato">{MESES[Number(c.fecha_inicio!.slice(5, 7)) - 1]} {c.fecha_inicio!.slice(0, 4)}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className={`mb-1 inline-flex items-center gap-2 text-xs font-bold ${color.texto}`}><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${color.fondo}`} /> {AREA_LABEL[c.area]}</span>
+                        <span className="display block text-lg leading-tight [font-stretch:105%] md:text-2xl">{c.nombre}</span>
+                        {h && <span className="mt-1 block text-sm tabular-nums text-on-surface-variant md:hidden">{h}</span>}
+                      </span>
+                      <span className="hidden text-sm text-on-surface-variant md:block">
+                        {h && <span className="block tabular-nums">{h}</span>}
+                        {c.cupos_disponibles != null && <span className="mt-1 block"><Cupos n={c.cupos_disponibles} /></span>}
+                      </span>
+                      <span aria-hidden className="mr-2 grid h-11 w-11 place-items-center rounded-full border border-outline-variant transition-[background-color,border-color,color,rotate] duration-300 group-hover:rotate-45 group-hover:border-accent group-hover:bg-accent group-hover:text-surface-container-lowest">
+                        <ArrowUpRight size={20} />
+                      </span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+        )}
+
+        {/* 4 · Destacadas */}
         {destacados.length > 0 && (
-          <section className="grid-bg border-y border-outline-variant">
-            <div className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
-              <SectionTitle eyebrow="Formación presencial">Capacitaciones <em>destacadas</em></SectionTitle>
-              <nav aria-label="Filtrar por área" className="-mt-4 mb-8 flex flex-wrap gap-2">
-                {[['/cursos', 'Todos'], ['/cursos?area=diseno', AREA_LABEL.diseno], ['/cursos?area=tecnico', AREA_LABEL.tecnico], ['/cursos?tipo=taller', 'Talleres']].map(([href, label]) => (
-                  <Link key={href} href={href} className="rounded-pill border border-outline-variant px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-on-surface-variant transition-colors hover:border-accent hover:text-accent">{label}</Link>
-                ))}
-              </nav>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {destacados.map((c, i) => <Reveal key={c.id} delay={i * 0.06} className="h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} /></Reveal>)}
+          <section aria-labelledby="t-destacados" className="border-y border-outline-variant/60 bg-surface-container-lowest/70 backdrop-blur-[2px]">
+            <div className="mx-auto max-w-[1280px] px-4 py-20 md:px-12 md:py-28">
+              <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+                <SectionTitle id="t-destacados" className="mb-0!">Capacitaciones destacadas</SectionTitle>
+                <nav aria-label="Filtrar por área" className="flex flex-wrap gap-2">
+                  {[['/cursos', 'Todos'], ['/cursos?area=tecnico', AREA_LABEL.tecnico], ['/cursos?area=diseno', AREA_LABEL.diseno], ['/cursos?tipo=taller', 'Talleres']].map(([href, label]) => (
+                    <Link key={href} href={href} className="rounded-pill border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors hover:border-on-surface hover:text-on-surface">{label}</Link>
+                  ))}
+                </nav>
+              </div>
+              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 md:mt-12">
+                {destacados.map((c) => <div key={c.id} className="al-entrar h-full"><CursoCard c={c} horarios={horarios.filter((h) => h.edicion_id === c.edicion_id)} /></div>)}
               </div>
             </div>
           </section>
         )}
 
-        {/* 4 · Egresados */}
+        {/* 5 · Egresados */}
         {egresados.length > 0 && (
-          <section className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
-            <SectionTitle eyebrow="Egresados">Construyendo <em>profesionales</em></SectionTitle>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:auto-rows-[200px]">
+          <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-20 md:px-12 md:py-28">
+            <SectionTitle id="t-egresados" bajada="Alumnos que hoy trabajan de lo que aprendieron acá.">Construyendo profesionales</SectionTitle>
+            <div className="grid grid-cols-2 gap-3 md:auto-rows-[210px] md:grid-cols-4 md:gap-4">
               {egresados.map((e) => (
-                <figure key={e.id} className={`relative overflow-hidden rounded-sm border border-outline-variant bg-surface-container ${e.destacado ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square md:aspect-auto'}`}>
-                  {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover" />}
-                  <figcaption className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 to-transparent p-3 pt-10">
+                <figure key={e.id} className={`al-entrar group relative overflow-hidden rounded-card bg-surface-container ${e.destacado ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square md:aspect-auto'}`}>
+                  {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) grayscale-[40%] group-hover:scale-105 group-hover:grayscale-0" />}
+                  <figcaption className="absolute inset-x-2 bottom-2 rounded-lg bg-surface-container-lowest/80 px-3 py-2 backdrop-blur-md">
                     <p className="text-sm font-semibold">{e.nombre}</p>
                     <p className="text-xs text-on-surface-variant">{e.especialidad}</p>
                   </figcaption>
@@ -143,61 +195,106 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 5 · Nosotros + stats */}
+        {/* 6 · Nosotros + cifras (cuentan solas al entrar, en CSS) */}
         {(s.nosotros.titulo || s.nosotros.texto) && (
-          <section className="relative overflow-hidden border-y border-outline-variant bg-linear-to-br from-brand-dark via-surface-container-lowest to-surface-container-lowest">
-            <AuroraBackground className="opacity-60" />
-            <div className="relative mx-auto grid max-w-[1280px] items-center gap-12 px-4 py-20 md:grid-cols-2 md:px-12">
-              <div>
-                <span className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-accent">Nosotros</span>
-                <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">{s.nosotros.titulo}</h2>
-                <p className="whitespace-pre-line text-lg text-on-surface-variant">{s.nosotros.texto}</p>
-                {conAulas && <Link href="/aulas" className="mt-6 inline-flex items-center gap-1 font-semibold text-secondary hover:underline">Conocé nuestras aulas <ArrowRight size={16} aria-hidden /></Link>}
+          <section aria-labelledby="t-nosotros" className="relative overflow-hidden border-y border-outline-variant/60 bg-brand-dark/55 backdrop-blur-[2px]">
+            <div className="relative mx-auto grid max-w-[1280px] gap-14 px-4 py-20 md:grid-cols-12 md:px-12 md:py-28">
+              <div className="md:col-span-7">
+                <SectionTitle id="t-nosotros" className="mb-6!">{s.nosotros.titulo || 'Nosotros'}</SectionTitle>
+                <p className="max-w-[62ch] whitespace-pre-line text-lg leading-relaxed text-on-surface-variant">{s.nosotros.texto}</p>
+                {conAulas && <Link href="/aulas" className="btn-outline mt-8">Conocé nuestras aulas <ArrowRight size={16} aria-hidden /></Link>}
               </div>
-              {/* Cada cifra es un grupo <div><dt><dd> (lo único que admite un <dl>); flex-col-reverse muestra el número arriba. */}
-              <Reveal className="self-center"><dl className="grid grid-cols-3 gap-4 text-center">
-                {([['aulas', 'Aulas'], ['profesores', 'Profesores'], ['egresados', 'Egresados']] as const).map(([k, l]) => (
-                  s.stats[k] != null && <div key={k} className="flex flex-col-reverse rounded-card border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><dt className="mt-1 text-xs uppercase tracking-wider text-on-surface-variant">{l}</dt><dd className="text-4xl font-bold text-accent md:text-5xl"><CountUp to={Number(s.stats[k])} /></dd></div>
-                ))}
-              </dl></Reveal>
+              {cifras.length > 0 && (
+                <dl className="flex flex-col justify-center divide-y divide-outline-variant/70 border-y border-outline-variant/70 md:col-span-5">
+                  {cifras.map(([n, l]) => (
+                    <div key={l} className="flex items-baseline justify-between gap-6 py-6">
+                      <dt className="text-lg font-semibold text-on-surface-variant">{l}</dt>
+                      <dd className="display text-6xl tabular-nums text-accent md:text-7xl">
+                        <span className="cifra-real">{n}</span>
+                        <span aria-hidden className="cifra-animada" style={{ '--hasta': n } as React.CSSProperties} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
             </div>
           </section>
         )}
 
-        {/* 6 · Testimonios */}
-        {testimonios.length > 0 && (
-          <section className="mx-auto max-w-[1280px] px-4 py-20 md:px-12">
-            <SectionTitle eyebrow="Testimonios">Lo que dicen <em>nuestros alumnos</em></SectionTitle>
-            {cinta
-              ? <Marquee>{testimonios.map(card)}</Marquee>
-              : <div className="grid gap-6 md:grid-cols-3">{testimonios.map(card)}</div>}
+        {/* 7 · Testimonios: una cita grande y el resto en una fila deslizable (la del centro toma foco con el scroll). */}
+        {principal && (
+          <section aria-labelledby="t-testimonios" className="py-20 md:py-28">
+            <div className="mx-auto max-w-[1280px] px-4 md:px-12">
+              <SectionTitle id="t-testimonios">Lo que dicen nuestros alumnos</SectionTitle>
+              <figure className="al-entrar max-w-4xl">
+                {estrellas(principal.puntaje, 20)}
+                <blockquote className="display mt-5 text-[clamp(1.5rem,3.2vw,2.5rem)] font-semibold leading-snug [font-stretch:100%]">«{principal.texto}»</blockquote>
+                <figcaption className="mt-6 flex items-center gap-3">
+                  <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-container-high">{principal.foto_url && <Image src={principal.foto_url} alt="" fill sizes="48px" className="object-cover" />}</span>
+                  <span><span className="block font-semibold">{principal.nombre}</span>{principal.curso && <span className="text-sm text-on-surface-variant">{principal.curso}</span>}</span>
+                </figcaption>
+              </figure>
+            </div>
+            {otrosTestimonios.length > 0 && (
+              <ul aria-label="Más opiniones" className="fila-foco mt-14 flex snap-x snap-mandatory gap-5 overflow-x-auto px-[max(1rem,calc(50%-11.5rem))] pb-6">
+                {otrosTestimonios.map((t) => (
+                  <li key={t.id} className="card flex w-[min(84vw,23rem)] shrink-0 snap-center flex-col p-6">
+                    {estrellas(t.puntaje, 16)}
+                    <blockquote className="mt-3 flex-1 text-on-surface-variant">{t.texto}</blockquote>
+                    <p className="mt-4 flex items-center gap-3">
+                      <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-surface-container-high">{t.foto_url && <Image src={t.foto_url} alt="" fill sizes="36px" className="object-cover" />}</span>
+                      <span><span className="block text-sm font-semibold">{t.nombre}</span>{t.curso && <span className="text-xs text-on-surface-variant">{t.curso}</span>}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         )}
 
-        {/* 7 · FAQ */}
+        {/* 8 · FAQ: título fijo a la izquierda, acordeón (altura animada nativa) a la derecha. */}
         {faq.length > 0 && (
-          <section className="border-t border-outline-variant bg-surface-container-lowest">
-            <div className="mx-auto max-w-3xl px-4 py-20">
-              <SectionTitle eyebrow="Ayuda" align="center">Preguntas <em>frecuentes</em></SectionTitle>
-              <div className="space-y-3">
+          <section aria-labelledby="t-faq" className="border-t border-outline-variant/60 bg-surface-container-lowest/70 backdrop-blur-[2px]">
+            <div className="mx-auto grid max-w-[1280px] gap-10 px-4 py-20 md:grid-cols-12 md:px-12 md:py-28">
+              <div className="md:col-span-4">
+                <div className="md:sticky md:top-28">
+                  <SectionTitle id="t-faq" className="mb-6!">Preguntas frecuentes</SectionTitle>
+                  {faq.length > 4 && <Link href="/preguntas-frecuentes" className="btn-outline">Ver todas las preguntas <ArrowRight size={16} aria-hidden /></Link>}
+                </div>
+              </div>
+              <div className="divide-y divide-outline-variant border-y border-outline-variant md:col-span-8">
                 {faq.slice(0, 4).map((f) => (
-                  <details key={f.id} className="card group p-5">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{f.pregunta}<ChevronDown size={20} className="shrink-0 transition-transform group-open:rotate-180" /></summary>
-                    <p className="mt-3 whitespace-pre-line text-on-surface-variant">{f.respuesta}</p>
+                  <details key={f.id} className="acordeon group">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-lg font-semibold transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
+                      {f.pregunta}
+                      <Plus size={22} aria-hidden className="shrink-0 transition-transform duration-300 ease-(--ease-out) group-open:rotate-45" />
+                    </summary>
+                    <p className="whitespace-pre-line pb-6 pr-10 text-on-surface-variant">{f.respuesta}</p>
                   </details>
                 ))}
               </div>
-              {faq.length > 4 && <p className="mt-6 text-center"><Link href="/preguntas-frecuentes" className="text-secondary underline-offset-4 hover:underline">Ver todas las preguntas →</Link></p>}
             </div>
           </section>
         )}
 
-        {/* 8 · Contacto: la consulta vive en /contacto */}
-        <section className="border-t border-outline-variant">
-          <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-            <SectionTitle eyebrow="¿Tenés dudas?" align="center" className="mb-6!"><em>Escribinos</em></SectionTitle>
-            <p className="mb-8 text-on-surface-variant">Consultanos por cursos, horarios o talleres. Te respondemos por mail.</p>
-            <Link href="/contacto" className="btn-primary inline-flex">Ir a contacto</Link>
+        {/* 9 · Cierre de contacto con datos reales */}
+        <section aria-labelledby="t-contacto" className="relative overflow-hidden border-t border-outline-variant/60">
+          <CircuitField modo="hero" className="opacity-70" />
+          <div className="relative mx-auto grid max-w-[1280px] gap-12 px-4 py-24 md:grid-cols-12 md:px-12 md:py-32">
+            <div className="md:col-span-7">
+              <TituloExpandido as="h2" texto="¿Arrancamos? Escribinos." className="text-[clamp(2.4rem,6vw,5rem)]" />
+              <p className="mt-6 max-w-xl text-lg text-on-surface-variant">Consultanos por cursos, horarios o talleres. Te respondemos por mail.</p>
+              <div className="mt-10 flex flex-wrap gap-3">
+                <Magnetico><Link href="/contacto" className="btn-primary px-6! py-3.5!">Ir a contacto <ArrowRight size={18} aria-hidden /></Link></Magnetico>
+                {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-outline px-6! py-3.5!"><WhatsAppIcon size={18} /> Consultar por WhatsApp</a>}
+              </div>
+            </div>
+            <ul className="flex flex-col justify-end gap-5 md:col-span-5">
+              {s.contacto.direccion && <li className="flex gap-3"><MapPin size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span><span className="block font-semibold">{s.contacto.direccion}</span>{mapa && <a href={mapa} target="_blank" rel="noopener noreferrer" className="text-sm text-on-surface-variant underline-offset-4 hover:text-on-surface hover:underline">Cómo llegar</a>}</span></li>}
+              {s.contacto.horario && <li className="flex gap-3"><Clock size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span className="font-semibold">{s.contacto.horario}</span></li>}
+              {s.contacto.email && <li className="flex gap-3"><Mail size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><a href={`mailto:${s.contacto.email}`} className="break-all font-semibold underline-offset-4 hover:underline">{s.contacto.email}</a></li>}
+              {proximos[0] && <li className="flex gap-3"><CalendarDays size={20} aria-hidden className="mt-0.5 shrink-0 text-accent" /><span className="font-semibold">Próximo inicio: {proximos[0].fecha_inicio!.slice(8, 10)} {MESES[Number(proximos[0].fecha_inicio!.slice(5, 7)) - 1]}</span></li>}
+            </ul>
           </div>
         </section>
       </main>

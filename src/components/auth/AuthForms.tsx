@@ -6,7 +6,7 @@ import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import PasswordMeter from '@/components/ui/PasswordMeter'
 import { login, olvideContrasena, definirContrasena, cambiarContrasena, type AuthState } from '@/app/auth/actions'
 
-const field = 'flex items-center gap-3 rounded-sm border border-outline-variant bg-surface-container-low px-4 py-3 transition-colors focus-within:border-accent'
+const field = 'flex items-center gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-3 transition-colors hover:border-outline focus-within:border-accent'
 const inp = 'w-full bg-transparent text-sm text-on-surface outline-hidden placeholder:text-on-surface-variant/60'
 
 function Err({ s }: { s: AuthState }) {
@@ -23,7 +23,7 @@ function PasswordField({ name, placeholder, label, autoComplete, minLength, valu
       <input name={name} type={ver ? 'text' : 'password'} required minLength={minLength} autoComplete={autoComplete} placeholder={placeholder} aria-label={label} className={inp}
         {...(onChange ? { value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value) } : {})} />
       <button type="button" onClick={() => setVer((v) => !v)} aria-label={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={ver}
-        className="text-on-surface-variant hover:text-secondary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-accent">
+        className="text-on-surface-variant hover:text-accent focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-accent">
         {ver ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
       </button>
     </label>
@@ -39,7 +39,7 @@ export function LoginForm() {
       <PasswordField name="password" placeholder="Contraseña" label="Contraseña" autoComplete="current-password" />
       <Err s={s} />
       <button disabled={pending} className="btn-primary w-full">{pending ? 'Ingresando…' : <>Ingresar <ArrowRight size={16} /></>}</button>
-      <p className="text-center text-sm"><Link href="/olvide-mi-contrasena" className="text-on-surface-variant hover:text-secondary">¿Olvidaste tu contraseña?</Link></p>
+      <p className="text-center text-sm"><Link href="/olvide-mi-contrasena" className="text-on-surface-variant hover:text-accent">¿Olvidaste tu contraseña?</Link></p>
     </form>
   )
 }

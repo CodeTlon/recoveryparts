@@ -1,15 +1,30 @@
 import Link from 'next/link'
-import { ArrowLeft, Inbox } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Inbox, type LucideIcon } from 'lucide-react'
 
 export function PageHead({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
   return (
     <header className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary md:text-4xl">{title}</h1>
-        {sub && <p className="mt-1 text-on-surface-variant">{sub}</p>}
+        <h1 className="display text-3xl [font-stretch:108%] md:text-4xl">{title}</h1>
+        {sub && <p className="mt-2 text-on-surface-variant">{sub}</p>}
       </div>
       {action}
     </header>
+  )
+}
+
+// Cifra del resumen (admin/profesor): número grande en Archivo, ícono y flecha que se corre al pasar el mouse. El
+// enlace lo pone quien la usa (con `group`). `alerta`: algo pide atención (borde naranja y punto).
+export function StatTile({ Icon, valor, etiqueta, alerta = false }: { Icon: LucideIcon; valor: number; etiqueta: string; alerta?: boolean }) {
+  return (
+    <div className={`card relative h-full p-5 shadow-card transition-[border-color,box-shadow,translate] duration-300 ease-(--ease-out) group-hover:-translate-y-0.5 group-hover:border-outline group-hover:shadow-card-hover ${alerta ? 'border-accent/70' : ''}`}>
+      <div className="flex items-center justify-between">
+        <span aria-hidden className={`grid h-9 w-9 place-items-center rounded-lg ${alerta ? 'bg-accent/15 text-accent' : 'bg-surface-container-high text-on-surface-variant'}`}><Icon size={18} /></span>
+        <ArrowUpRight size={16} aria-hidden className="text-on-surface-variant transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      </div>
+      <p className="display mt-4 text-4xl tabular-nums">{valor}{alerta && <span aria-hidden className="ml-2 inline-block h-2 w-2 -translate-y-4 rounded-full bg-accent motion-safe:animate-pulse" />}</p>
+      <p className="mt-1 text-sm text-on-surface-variant">{etiqueta}</p>
+    </div>
   )
 }
 
@@ -25,13 +40,13 @@ export function Empty({ children }: { children: React.ReactNode }) {
 }
 
 export function Badge({ tone = 'neutral', children }: { tone?: 'ok' | 'bad' | 'warn' | 'neutral'; children: React.ReactNode }) {
-  const t = { ok: 'bg-success/20 text-success', bad: 'bg-danger/20 text-danger', warn: 'bg-accent/20 text-secondary', neutral: 'bg-surface-container-high text-on-surface-variant' }[tone]
+  const t = { ok: 'bg-success/15 text-success', bad: 'bg-danger/15 text-danger', warn: 'bg-accent/15 text-secondary', neutral: 'bg-surface-container-high text-on-surface-variant' }[tone]
   return <span className={`badge ${t}`}>{children}</span>
 }
 
 export function BackLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="mb-4 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-secondary">
+    <Link href={href} className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface">
       <ArrowLeft size={16} /> {children}
     </Link>
   )

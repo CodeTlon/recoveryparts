@@ -55,9 +55,9 @@ export default async function CursoAlumno({ params }: { params: Promise<{ id: st
   const item = (m: Mat) => (
     <li key={m.id}>
       {m.tipo === 'pdf' ? (
-        <Link href={`/campus/alumno/curso/${id}/ver/${m.id}`} className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><FileText size={20} className="text-primary" /> {m.titulo}<span className="ml-auto text-xs text-on-surface-variant">Ver PDF</span></Link>
+        <Link href={`/campus/alumno/curso/${id}/ver/${m.id}`} className="card flex items-center gap-3 p-4 transition-colors hover:border-outline"><FileText size={20} className="text-primary" /> {m.titulo}<span className="ml-auto text-xs text-on-surface-variant">Ver PDF</span></Link>
       ) : (
-        <a href={hrefSeguro(m.url)} target="_blank" rel="noopener noreferrer" className="card flex items-center gap-3 p-4 transition-colors hover:border-secondary"><Link2 size={20} className="text-primary" /> {m.titulo}<ExternalLink size={14} className="ml-auto text-on-surface-variant" /></a>
+        <a href={hrefSeguro(m.url)} target="_blank" rel="noopener noreferrer" className="card flex items-center gap-3 p-4 transition-colors hover:border-outline"><Link2 size={20} className="text-primary" /> {m.titulo}<ExternalLink size={14} className="ml-auto text-on-surface-variant" /></a>
       )}
     </li>
   )

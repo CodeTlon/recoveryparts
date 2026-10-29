@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { ArrowUpRight, Menu, X } from 'lucide-react'
 
 const LINKS = [
   { href: '/', label: 'Inicio' },
@@ -15,63 +15,88 @@ const LINKS = [
   { href: '/contacto', label: 'Contacto' },
 ]
 
+// Menú flotante: al bajar se compacta en una cápsula con desenfoque; debajo, una pista que se carga con el scroll de la
+// página (`.progreso-pagina`, animación nativa atada al scroll). En el celular abre un panel a pantalla completa.
 export default function SiteNavCliente({ conAulas = false }: { conAulas?: boolean }) {
   const links = conAulas ? LINKS : LINKS.filter((l) => l.href !== '/aulas')
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const menuId = useId()
+  const boton = useRef<HTMLButtonElement>(null)
+  const panel = useRef<HTMLDivElement>(null)
   const path = usePathname()
   const close = () => setOpen(false)
-  const activo = (href: string) => !href.includes('#') && (href === '/' ? path === '/' : path.startsWith(href))
+  const activo = (href: string) => (href === '/' ? path === '/' : path.startsWith(href))
 
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 8)
+    const on = () => setScrolled(window.scrollY > 24)
     on()
     window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
   }, [])
 
+  // Panel móvil: bloquea el scroll de fondo, lleva el foco adentro, lo mantiene ahí con Tab y Esc lo cierra.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close()
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    panel.current?.querySelector<HTMLElement>('a')?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setOpen(false); boton.current?.focus(); return }
+      if (e.key !== 'Tab' || !panel.current) return
+      const f = [boton.current, ...panel.current.querySelectorAll<HTMLElement>('a')].filter(Boolean) as HTMLElement[]
+      const i = f.indexOf(document.activeElement as HTMLElement)
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus() }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus() }
+    }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
-  const link = 'text-on-surface-variant hover:text-secondary transition-colors'
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey) }
+  }, [open])
 
   return (
-    <nav className={`fixed top-0 z-50 w-full border-b transition-[background-color,backdrop-filter,border-color] duration-300 ${scrolled || open ? 'border-outline-variant bg-surface/85 backdrop-blur-md' : 'border-transparent bg-surface'}`}>
-      <div className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between px-4 md:px-12">
-        <Link href="/" onClick={close} className="flex items-center gap-2.5 text-lg font-bold uppercase tracking-tighter text-on-surface sm:text-xl md:text-2xl">
-          <Image src="/images/logo.png" alt="" width={36} height={36} className="h-8 w-8 shrink-0 md:h-9 md:w-9" />
-          Recovery Parts
+    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-6">
+      <nav aria-label="Principal" className={`relative mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-4 rounded-2xl border px-3 transition-[background-color,border-color,box-shadow] duration-500 ease-(--ease-out) md:px-5 ${scrolled || open ? 'border-outline-variant/70 bg-surface-container-lowest/75 shadow-card backdrop-blur-xl' : 'border-transparent bg-transparent'}`}>
+        <Link href="/" onClick={close} className="group flex shrink-0 items-center gap-2.5 text-on-surface">
+          <Image src="/images/logo.png" alt="" width={36} height={36} priority className="h-8 w-8 transition-transform duration-500 ease-(--ease-out) group-hover:rotate-[-8deg] group-hover:scale-110" />
+          <span className="display text-lg leading-none md:text-xl">Recovery Parts</span>
         </Link>
 
-        <div className="hidden items-center gap-8 text-sm font-semibold uppercase tracking-wide lg:flex">
+        <ul className="hidden items-center gap-1 lg:flex">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} aria-current={activo(l.href) ? 'page' : undefined} className={`relative py-2 ${activo(l.href) ? 'text-on-surface' : link}`}>
-              {l.label}
-              {activo(l.href) && <span aria-hidden className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-accent" />}
-            </Link>
+            <li key={l.href}>
+              <Link href={l.href} aria-current={activo(l.href) ? 'page' : undefined}
+                className={`relative block rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors ${activo(l.href) ? 'text-on-surface' : 'text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface'}`}>
+                {l.label}
+                {activo(l.href) && <span aria-hidden className="absolute inset-x-3.5 -bottom-px h-0.5 rounded-full bg-accent" />}
+              </Link>
+            </li>
           ))}
+        </ul>
+
+        <div className="flex items-center gap-2">
+          <Link href="/login" className="btn-outline hidden py-2! lg:inline-flex">Campus <ArrowUpRight size={16} aria-hidden /></Link>
+          <button ref={boton} type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls={menuId}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-on-surface hover:bg-on-surface/5 lg:hidden">
+            {open ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
 
-        <Link href="/login" className="btn-primary hidden py-2! lg:inline-flex">Campus</Link>
+        <span aria-hidden className="progreso-pagina pointer-events-none absolute inset-x-4 -bottom-px h-px scale-x-0 bg-linear-to-r from-accent via-accent to-signal-blue" />
+      </nav>
 
-        <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls={open ? menuId : undefined}
-          className="-mr-1.5 inline-flex h-11 w-11 items-center justify-center rounded-sm text-on-surface hover:text-secondary lg:hidden">
-          {open ? <X size={24} /> : <Menu size={24} />}
-        </button>
+      <div ref={panel} id={menuId} hidden={!open} className="fixed inset-x-0 bottom-0 top-[5.25rem] z-40 overflow-y-auto bg-surface-container-lowest/95 px-6 pb-10 pt-6 backdrop-blur-xl lg:hidden">
+        <ul className="flex flex-col">
+          {links.map((l, i) => (
+            <li key={l.href} className="border-b border-outline-variant/60 motion-safe:animate-[menu-entra_0.5s_var(--ease-out)_both]" style={{ animationDelay: `${i * 45}ms` }}>
+              <Link href={l.href} onClick={close} aria-current={activo(l.href) ? 'page' : undefined}
+                className={`display flex items-center justify-between py-4 text-3xl ${activo(l.href) ? 'text-accent' : 'text-on-surface'}`}>
+                {l.label} <ArrowUpRight size={22} aria-hidden className="text-on-surface-variant" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <Link href="/login" onClick={close} className="btn-primary mt-8 w-full">Entrar al campus</Link>
       </div>
-
-      {open && (
-        <div id={menuId} className="border-t border-outline-variant bg-surface px-4 pb-4 pt-2 lg:hidden">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} onClick={close} className={`block rounded-sm px-3 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-surface-container-low ${link}`}>{l.label}</Link>
-          ))}
-          <Link href="/login" onClick={close} className="btn-primary mt-2 w-full">Campus</Link>
-        </div>
-      )}
-    </nav>
+    </header>
   )
 }

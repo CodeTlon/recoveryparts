@@ -15,11 +15,11 @@ export default async function Ver({ params }: { params: Promise<{ id: string; mi
     <>
       <BackLink href={`/campus/alumno/curso/${id}`}>Volver al curso</BackLink>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-primary">{m.titulo}</h1>
+        <h1 className="display text-2xl [font-stretch:105%]">{m.titulo}</h1>
         <a href={`/api/material/${mid}?download=1`} className="btn-primary"><Download size={16} /> Descargar PDF</a>
       </div>
       <div>
-        <iframe src={`/api/material/${mid}#navpanes=0`} title={m.titulo} className="h-[78vh] w-full rounded-sm border border-outline-variant bg-white" />
+        <iframe src={`/api/material/${mid}#navpanes=0`} title={m.titulo} className="h-[78vh] w-full rounded-lg border border-outline-variant bg-white" />
       </div>
     </>
   )

@@ -44,11 +44,11 @@ function Inner({ rol, nombre, avisos, onNavigate }: { rol: string; nombre: strin
   const iniciales = nombre.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase()
   return (
     <>
-      <div className="mb-8 flex items-center gap-3 rounded-card border border-outline-variant bg-surface-container-high/60 p-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-light to-accent font-bold text-white ring-2 ring-accent/30">{iniciales}</div>
+      <div className="mb-8 flex items-center gap-3 rounded-card border border-outline-variant bg-surface-container-low p-3">
+        <div aria-hidden className="display flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/40 bg-accent/10 text-base text-accent">{iniciales}</div>
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-primary">{nombre}</p>
-          <p className="text-xs text-on-surface-variant">{ROL_LABEL[rol]}</p>
+          <p className="truncate text-base font-semibold">{nombre}</p>
+          <p className="dato">{ROL_LABEL[rol]}</p>
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1" aria-label="Campus">
@@ -58,16 +58,17 @@ function Inner({ rol, nombre, avisos, onNavigate }: { rol: string; nombre: strin
           const n = avisos?.[href] ?? 0
           return (
             <Link key={href} href={href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
-              className={`relative flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${on ? 'text-white' : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'}`}>
-              {on && <motion.span layoutId={pillId} transition={{ type: 'spring', stiffness: 400, damping: 34 }} className="absolute inset-0 rounded-lg bg-secondary-container shadow-glow" />}
+              className={`relative flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${on ? 'text-on-surface' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'}`}>
+              {/* Indicador del ítem activo: se desliza entre ítems (resorte) con una pista naranja a la izquierda. */}
+              {on && <motion.span layoutId={pillId} transition={{ type: 'spring', stiffness: 400, damping: 34 }} className="absolute inset-0 rounded-lg border border-outline-variant bg-surface-container-highest before:absolute before:inset-y-2.5 before:-left-px before:w-[3px] before:rounded-full before:bg-accent" />}
               <Icon size={20} className="relative" /> <span className="relative">{label}</span>
-              {n > 0 && <span className="relative ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-accent px-1.5 text-xs font-bold text-surface"><span aria-hidden>{n}</span><span className="sr-only">{n} pendiente{n === 1 ? '' : 's'}</span></span>}
+              {n > 0 && <span className="relative ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-accent px-1.5 text-xs font-bold text-surface-container-lowest"><span aria-hidden>{n}</span><span className="sr-only">{n} pendiente{n === 1 ? '' : 's'}</span></span>}
             </Link>
           )
         })}
       </nav>
       <form action={logout} className="border-t border-outline-variant pt-3">
-        <button className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-highest"><LogOut size={20} /> Cerrar sesión</button>
+        <button className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"><LogOut size={20} aria-hidden /> Cerrar sesión</button>
       </form>
     </>
   )
@@ -89,24 +90,24 @@ export default function CampusShell({ rol, nombre, avisos, children }: { rol: st
 
   return (
     <div className="min-h-dvh bg-surface text-on-surface">
-      <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-64 flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4 md:flex">
-        <Link href="/" className="mb-6 flex items-center gap-2 text-sm font-bold uppercase tracking-tighter"><Image src="/images/logo.png" alt="" width={28} height={28} /> Recovery Parts</Link>
+      <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-64 flex-col overflow-y-auto border-r border-outline-variant bg-surface-container-lowest p-4 md:flex">
+        <Link href="/" className="mb-6 flex items-center gap-2.5 px-1"><Image src="/images/logo.png" alt="" width={30} height={30} /> <span className="display text-lg">Recovery Parts</span></Link>
         <Inner rol={rol} nombre={nombre} avisos={avisos} />
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-outline-variant bg-surface-container px-4 md:hidden">
-        <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-tighter"><Image src="/images/logo.png" alt="" width={28} height={28} /> Recovery Parts</span>
-        <button type="button" onClick={() => setOpen(true)} aria-label="Abrir menú" className="-mr-1.5 flex h-11 w-11 items-center justify-center rounded-sm hover:text-secondary"><Menu size={24} /></button>
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-outline-variant bg-surface-container-lowest/85 px-4 backdrop-blur-xl md:hidden">
+        <span className="flex items-center gap-2.5"><Image src="/images/logo.png" alt="" width={28} height={28} /> <span className="display text-base">Recovery Parts</span></span>
+        <button type="button" onClick={() => setOpen(true)} aria-label="Abrir menú" className="-mr-1.5 flex h-11 w-11 items-center justify-center rounded-lg hover:bg-on-surface/5"><Menu size={24} /></button>
       </header>
 
       <AnimatePresence>
         {open && (
           <motion.div key="drawer" initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 1 }} transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menú">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setOpen(false)} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-surface-container-lowest/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
             <motion.div ref={drawerRef} initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-              className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-outline-variant bg-surface-container p-4">
-              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú" className="-mr-1.5 mb-2 flex h-11 w-11 items-center justify-center self-end rounded-sm hover:text-secondary"><X size={24} /></button>
+              className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-outline-variant bg-surface-container-lowest p-4">
+              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú" className="-mr-1.5 mb-2 flex h-11 w-11 items-center justify-center self-end rounded-lg hover:bg-on-surface/5"><X size={24} /></button>
               <Inner rol={rol} nombre={nombre} avisos={avisos} onNavigate={() => setOpen(false)} />
             </motion.div>
           </motion.div>
