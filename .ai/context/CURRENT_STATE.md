@@ -4,6 +4,8 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualización 2026-10-29 (v0.17.5, gráficos y admin):** rama `feature/dev2-graficos`: reportes con filtro por área, inscripciones por mes, barras en vez de anillo, paleta `dato*` validada, encuestas con reparto de notas y «Por empezar» con inscriptos/cupo. v0.17.1–v0.17.5 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
 **Actualización 2026-10-29 (v0.17.4, campus más simple):** rama `feature/dev2-campus-ux`: Resumen solo con lo del día y Reportes en su página, curso del profesor en pestañas, menú del admin agrupado, aulas y sitio web plegables. v0.17.1–v0.17.4 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
 
 **Actualización 2026-10-29 (v0.17.3, filtro y pie):** rama `feature/dev2-filtro-pie`: filtro real en «Capacitaciones destacadas» y pie compacto. v0.17.1–v0.17.3 en `dev`/`test`; falta el PR a `main` con OK de Mateo.

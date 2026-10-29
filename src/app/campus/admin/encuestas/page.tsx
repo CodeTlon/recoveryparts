@@ -2,6 +2,7 @@ import { requireRole } from '@/lib/auth'
 import { etiquetaEdicion } from '@/lib/fechas'
 import Paginacion, { paginaDe } from '@/components/campus/Paginacion'
 import { ActionForm, Badge, Empty, Field, PageHead, Select, Check } from '@/components/campus/ui'
+import { Medidor } from '@/components/campus/charts'
 import { guardarEncuesta } from '../actions'
 
 type Pregunta = { tipo: 'puntaje' | 'texto'; texto: string }
@@ -55,14 +56,34 @@ export default async function Encuestas({ searchParams }: { searchParams: Promis
                   <Badge tone={e.activa ? 'ok' : 'neutral'}>{e.activa ? 'Activa' : 'Inactiva'}</Badge>
                   <span className="ml-auto text-sm text-on-surface-variant">{hechas} respuesta{hechas === 1 ? '' : 's'}</span>
                 </div>
-                <ul className="space-y-3 text-sm">
+                {/* Preguntas de puntaje: promedio grande y cuántos eligieron cada nota (1 a 5). Las de texto, las respuestas. */}
+                <ul className="grid gap-x-8 gap-y-6 text-sm md:grid-cols-2">
                   {(e.preguntas as Pregunta[]).map((p, i) => {
                     const vals = rs.map((r) => r[String(i)]).filter(Boolean)
-                    const prom = p.tipo === 'puntaje' && vals.length ? (vals.reduce((s, v) => s + Number(v), 0) / vals.length).toFixed(1) : null
+                    if (p.tipo === 'texto') return (
+                      <li key={i} className="md:col-span-2">
+                        <p className="font-medium">{p.texto}</p>
+                        {vals.length ? <ul className="mt-2 space-y-1.5 border-l-2 border-outline-variant pl-4 text-on-surface-variant">{vals.map((v, k) => <li key={k}>{v}</li>)}</ul> : <p className="mt-1 text-on-surface-variant">Sin respuestas.</p>}
+                      </li>
+                    )
+                    const notas = [5, 4, 3, 2, 1].map((n) => ({ n, c: vals.filter((v) => Number(v) === n).length }))
+                    const tope = Math.max(1, ...notas.map((x) => x.c))
+                    const prom = vals.length ? vals.reduce((s, v) => s + Number(v), 0) / vals.length : null
                     return (
-                      <li key={i}>
-                        <p className="font-medium">{p.texto} {prom && <span className="ml-2 text-accent">promedio {prom}/5</span>}</p>
-                        {p.tipo === 'texto' && vals.length > 0 && <ul className="mt-1 list-disc pl-5 text-on-surface-variant">{vals.map((v, k) => <li key={k}>{v}</li>)}</ul>}
+                      <li key={i} className="rounded-xl border border-outline-variant p-4">
+                        <p className="font-medium">{p.texto}</p>
+                        {prom == null ? <p className="mt-1 text-on-surface-variant">Sin respuestas.</p> : <div className="mt-3 flex items-center gap-5">
+                          <p className="shrink-0 text-center"><span className="display block text-3xl">{prom.toFixed(1).replace('.', ',')}</span><span className="text-xs text-on-surface-variant">de 5</span></p>
+                          <ul role="img" aria-label={`Notas: ${notas.map((x) => `${x.n}: ${x.c}`).join(', ')}`} className="min-w-0 flex-1 space-y-1">
+                            {notas.map((x) => (
+                              <li key={x.n} className="flex items-center gap-2 text-xs text-on-surface-variant">
+                                <span className="w-2 tabular-nums">{x.n}</span>
+                                <Medidor valor={x.c} max={tope} alto="h-1.5" />
+                                <span className="w-5 text-right tabular-nums">{x.c}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>}
                       </li>
                     )
                   })}

@@ -93,6 +93,18 @@ columnas del díptico); easing `--ease-out`; nada de rebote en controles; nada d
 no entró (rompe el contraste para lectores y auditorías); el texto animado deja una copia estática que fija el layout
 (CLS 0). El fondo no tiene botón de pausa por decisión de producto (ver `.ai/context/DECISIONS.md`).
 
+## Gráficos (v0.17.5, `src/components/campus/charts.tsx`)
+- Sin librerías ni JS en el cliente: HTML/CSS del servidor. Las barras crecen al cargar (`crece-x`/`crece-y`, se apagan con
+  `prefers-reduced-motion`).
+- Colores: una serie = `bg-dato` (naranja contenido, L 0,66); estados de inscripción = `dato-fin` (finalizadas),
+  `dato-curso` (cursando), `dato-baja` (desertores). Validados contra el navy de las tarjetas (banda de luminosidad,
+  croma y ΔE ≥ 21 entre vecinos para deutan/protan). No usar `accent`/`success`/`danger` en marcas de datos.
+- Marcas finas: barras de 8 px (6 px en tarjetas chicas) con pista `bg-dato/15`, columnas de 24 px como máximo con la
+  esquina redondeada solo arriba y una línea de base; parte de un todo = una barra partida con 2 px de separación (no anillos).
+- Los números van en color de texto y escritos al lado de la marca (nunca solo en un tooltip); cada gráfico lleva
+  `role="img"` con los datos en `aria-label`. Porcentajes con coma decimal y espacio (`33,3 %`).
+- Un solo filtro por página, arriba de todo (`Pestanas` con el valor en la URL).
+
 ## Qué comparten todas las páginas
 Wordmark (logo + «Recovery Parts» en display), menú flotante, pie «declaración», tokens, tipografía, botones, chips,
 paginación y el fondo de circuito (solo en el sitio público). El campus usa el mismo sistema sin el fondo animado.
