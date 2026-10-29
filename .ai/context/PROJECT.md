@@ -2,7 +2,7 @@
 
 Academia de cursos y talleres técnicos presenciales (Córdoba, AR). Dos partes en una sola app Next.js 16:
 
-- **Sitio público** (`/`, `/cursos`, `/cursos/[slug]`, `/galeria`): contenido administrable desde el CMS (`site_settings`, `cms_*`).
+- **Sitio público** (`/`, `/cursos`, `/cursos/[slug]`, `/aulas`; la galería se sacó en v0.17.2): contenido administrable desde el CMS (`site_settings`, `cms_*`).
 - **Campus virtual** (`/campus/{admin,profesor,alumno}`): el admin gestiona cursos, usuarios, material y encuestas; el profesor sube material a sus cursos; el alumno ve y descarga el material liberado.
 
 ## Stack
