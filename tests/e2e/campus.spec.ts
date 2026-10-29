@@ -162,6 +162,20 @@ test('el admin ve los reportes en su página y el resumen ya no los repite', asy
   await ctx.close()
 })
 
+test('los reportes se filtran por área y cada gráfico describe sus datos', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/reportes')
+  await expect(page.getByRole('img', { name: /^Estado de las inscripciones: Finalizadas \d+/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /^Inscripciones por mes: / })).toBeVisible()
+  const filtro = page.getByRole('navigation', { name: 'Filtrar por área' })
+  await filtro.getByRole('link', { name: 'Creación y Diseño' }).click()
+  await expect(page).toHaveURL(/area=diseno/)
+  await expect(filtro.getByRole('link', { name: 'Creación y Diseño' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('heading', { name: 'Ocupación por edición' }).or(page.getByText('No hay ediciones activas en esta área.'))).toBeVisible()
+  await ctx.close()
+})
+
 test('el curso del profesor se recorre por pestañas (material, calendario, alumnos, estructura)', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.profesor)
   const page = await ctx.newPage()

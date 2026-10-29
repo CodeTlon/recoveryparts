@@ -16,6 +16,13 @@
   --color-signal-blue: oklch(0.7 0.14 252);
   --color-signal-green: oklch(0.76 0.17 148);
 
+  /* Gráficos del campus (design.md § Gráficos). Luminosidad 0,62-0,66 sobre el navy, validados para daltonismo
+     (deutan/protan ΔE ≥ 21 entre vecinos). Una serie = `dato`; estados de inscripción = fin / curso / baja. */
+  --color-dato: oklch(0.66 0.16 50);
+  --color-dato-fin: oklch(0.66 0.15 150);
+  --color-dato-curso: oklch(0.64 0.14 252);
+  --color-dato-baja: oklch(0.62 0.18 22);
+
   /* Superficies navy: escalones de ~3 puntos de luminosidad para que las capas se lean sin bordes gruesos. */
   --color-surface: oklch(0.175 0.038 263);
   --color-surface-container-lowest: oklch(0.145 0.032 263);
@@ -300,4 +307,12 @@
    corrida. Va fuera de las capas de Tailwind para ganarle a `text-sm`/`text-xs` de cada campo; en escritorio no cambia. */
 @media (pointer: coarse) {
   input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color']), select, textarea { font-size: 16px; }
+}
+
+/* Gráficos del campus (charts.tsx): las barras crecen desde la base al cargar. Sin movimiento se ven completas. */
+@keyframes crece-x { from { scale: 0 1; } }
+@keyframes crece-y { from { scale: 1 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .crece-x { transform-origin: left; animation: crece-x 0.7s var(--ease-out) both; }
+  .crece-y { transform-origin: bottom; animation: crece-y 0.6s var(--ease-out) both; }
 }
