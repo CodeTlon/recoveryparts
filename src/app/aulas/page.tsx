@@ -21,7 +21,7 @@ const videoDelSitio = (u?: string | null) => (u && u.startsWith('/') ? u : null)
 export async function generateMetadata(): Promise<Metadata> {
   const [s, aulas] = await Promise.all([getSettings(), getAulasPublicas()])
   return metaPagina({
-    titulo: 'Aulas',
+    titulo: s.textos.aulas.titulo,
     descripcion: recortar(s.aulas.texto) ?? 'Conocé las aulas-taller de la academia: mesas de trabajo, equipamiento y comodidades.',
     ruta: '/aulas',
     imagen: s.aulas.imagen_url || aulas.find((a) => a.fotos.length)?.fotos[0].imagen_url,
@@ -36,7 +36,7 @@ export default async function AulasPage() {
     <div className="flex min-h-screen flex-col text-on-surface">
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="grow outline-hidden">
-        <EncabezadoPagina titulo="Aulas" bajada={<span className="whitespace-pre-line">{s.aulas.texto || 'Conocé los espacios donde vas a cursar.'}</span>} />
+        <EncabezadoPagina titulo={s.textos.aulas.titulo} bajada={<span className="whitespace-pre-line">{s.aulas.texto || 'Conocé los espacios donde vas a cursar.'}</span>} />
 
         {!aulas.length ? (
           <section className="mx-auto max-w-[1280px] px-4 py-14 md:px-12">

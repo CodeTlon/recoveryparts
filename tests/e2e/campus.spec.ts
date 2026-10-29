@@ -176,6 +176,55 @@ test('los reportes se filtran por área y cada gráfico describe sus datos', asy
   await ctx.close()
 })
 
+test('Cursos y talleres del admin va paginado, con filtros en la URL, y una página de más vuelve a la última', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/cursos?pagina=999')
+  await expect(page).not.toHaveURL(/pagina=999/)
+  await expect(page.getByRole('heading', { name: 'Cursos y talleres', level: 1 })).toBeVisible()
+  await page.goto('/campus/admin/cursos')
+  const paginas = page.getByRole('navigation', { name: 'Páginas de cursos' })
+  if (await paginas.count()) {
+    await expect(paginas).toContainText(/Mostrando 1–15 de \d+ cursos/)
+    await paginas.getByRole('link', { name: 'Página 2' }).click()
+    await expect(page).toHaveURL(/pagina=2/)
+    await expect(paginas.getByRole('link', { name: 'Página 2' })).toHaveAttribute('aria-current', 'page')
+  }
+  await page.getByRole('link', { name: 'De baja' }).click()
+  await expect(page).toHaveURL(/estado=baja/)
+  await page.getByRole('searchbox', { name: 'Buscar curso por nombre' }).fill('zzz-no-existe')
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(page).toHaveURL(/q=zzz-no-existe/)
+  await expect(page).toHaveURL(/estado=baja/)
+  await expect(page.getByText('Ningún curso coincide con los filtros.')).toBeVisible()
+  await ctx.close()
+})
+
+test('los textos de las páginas se editan desde Sitio web y se ven en el sitio', async ({ browser, baseURL }, info) => {
+  test.skip(info.project.name !== 'desktop', 'edita un texto compartido: corre en un solo tamaño para no pisarse')
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/sitio')
+  await page.getByRole('link', { name: /Preguntas/ }).first().click()
+  await expect(page).toHaveURL(/tab=faq/)
+  const bloque = page.locator('details', { hasText: 'Encabezado de la página' })
+  await bloque.locator('summary').click()
+  const titulo = `Dudas frecuentes ${Date.now()}`
+  await bloque.getByLabel('Título').fill(titulo)
+  await bloque.getByRole('button', { name: 'Guardar' }).click()
+  await expect(bloque.getByText(/Guardado|Listo|Hecho/)).toBeVisible()
+  const pub = await ctx.newPage()
+  await pub.goto('/preguntas-frecuentes')
+  await expect(pub.locator('h1')).toContainText(titulo.split(' ')[0])
+  await expect(pub).toHaveTitle(new RegExp(titulo))
+  // Vuelve al texto por defecto (campo vacío).
+  await bloque.getByLabel('Título').fill('')
+  await bloque.getByRole('button', { name: 'Guardar' }).click()
+  // El aviso «Guardado» del primer guardado sigue en pantalla: se recarga hasta ver el cambio.
+  await expect.poll(async () => { await pub.reload(); return pub.title() }, { timeout: 15_000 }).toMatch(/^Preguntas frecuentes/)
+  await ctx.close()
+})
+
 test('el curso del profesor se recorre por pestañas (material, calendario, alumnos, estructura)', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.profesor)
   const page = await ctx.newPage()

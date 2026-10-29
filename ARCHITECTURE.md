@@ -27,7 +27,9 @@ Server Components leen con el rol y el usuario de la sesion (RLS aplica) · Serv
 | Campus | `CampusShell.tsx` (menú por rol en `NAV`, con grupos y avisos), `ui.tsx` (`PageHead`, `Pestanas`, `StatTile`…); una página por tarea, pestañas en `?tab=` |
 | Gráficos | `campus/charts.tsx` (server components, sin JS en el cliente) usados por `ReportesPanel.tsx` (filtro `?area=`), Resumen y Encuestas. `AnimatedBar` se borró en v0.17.5 |
 | Efectos del sitio público | `src/components/ui/` (`CircuitField` — el dibujo vive en `ui/circuito/motor.ts` y corre en un Web Worker con OffscreenCanvas, `ui/circuito/circuito.worker.ts`, o en la página si no hay soporte —, `TituloExpandido`, `Inclinable`, `Magnetico`, `SectionTitle`, `EncabezadoPagina`, `Paginas`); sin librerías de animación en el sitio público |
-| Paginación | `src/lib/paginar.ts` (reglas y tests), `components/ui/Paginas.tsx` (público), `components/campus/Paginacion.tsx` (campus) |
+| Paginación | `src/lib/paginar.ts` (reglas y tests), `components/ui/Paginas.tsx` (numerada, la usan el sitio y el campus), `components/campus/Paginacion.tsx` (total con `count: 'exact'`, `rango()`, `corregirPagina()`) |
+| Textos editables del sitio | `src/lib/textos.ts` (valores por defecto + `conTextos()`), `site_settings` clave `textos`, editor en `campus/admin/sitio` (`?tab=` por página; sin tab, índice de secciones) |
+| Cursor propio | `components/ui/CursorCircuito.tsx` (montado en `SiteNav`, solo sitio público) + `globals.css` § Cursor propio |
 
 ## Dónde no meterse sin pensar
 - `clienteAdmin()` / `sqlAdmin()` se saltean RLS: solo en servidor y despues de validar el rol.

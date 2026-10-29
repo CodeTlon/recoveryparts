@@ -19,7 +19,11 @@ import { NOMBRE_SITIO } from '@/lib/seo'
 import { siteUrl } from '@/lib/env'
 import JsonLd from '@/components/seo/JsonLd'
 
-export const metadata: Metadata = { alternates: { canonical: '/' } }
+// Título y descripción para buscadores: Campus › Sitio web › Pie y buscadores.
+export async function generateMetadata(): Promise<Metadata> {
+  const { textos: { seo } } = await getSettings()
+  return { title: { absolute: seo.titulo }, description: seo.descripcion, alternates: { canonical: '/' }, openGraph: { type: 'website', locale: 'es_AR', siteName: NOMBRE_SITIO, title: seo.titulo, description: seo.descripcion, url: '/' } }
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +41,7 @@ export default async function Home() {
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
   ])
+  const t = s.textos.inicio
   // Filtro de destacadas: «Todos» son las destacadas; cada área y los talleres muestran primero las destacadas y después
   // las que empiezan antes. Hasta 4 por filtro (3 en escritorio); un filtro sin cursos no se ofrece.
   const enOrden = [...cursos].sort((a, b) => Number(b.destacado) - Number(a.destacado) || (a.fecha_inicio ?? '9999').localeCompare(b.fecha_inicio ?? '9999'))
@@ -135,7 +140,7 @@ export default async function Home() {
         {/* 3 · Próximos inicios (agenda) */}
         {proximos.length > 0 && (
           <section aria-labelledby="t-proximos" className="mx-auto max-w-[1280px] px-4 pb-16 md:px-12 md:pb-28">
-            <SectionTitle id="t-proximos" bajada="Las próximas ediciones con fecha confirmada. Cada curso tiene cupo limitado.">Próximos inicios</SectionTitle>
+            <SectionTitle id="t-proximos" bajada={t.proximos_bajada}>{t.proximos_titulo}</SectionTitle>
             <ol className="border-t border-outline-variant">
               {proximos.slice(0, 4).map((c) => {
                 const h = horarioTexto(horarios.filter((x) => x.edicion_id === c.edicion_id))
@@ -173,7 +178,7 @@ export default async function Home() {
           <section aria-labelledby="t-destacados" className="border-y border-outline-variant/60 bg-surface-container-lowest/70 backdrop-blur-[2px]">
             <div className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
               <DestacadosFiltro
-                titulo={<SectionTitle id="t-destacados" className="mb-0!">Capacitaciones destacadas</SectionTitle>}
+                titulo={<SectionTitle id="t-destacados" className="mb-0!">{t.destacados_titulo}</SectionTitle>}
                 filtros={filtros}
                 tarjetas={Object.fromEntries([...new Set(filtros.flatMap((f) => f.ids))].map((id) => {
                   const c = cursos.find((x) => x.id === id)!
@@ -187,7 +192,7 @@ export default async function Home() {
         {/* 5 · Egresados */}
         {egresados.length > 0 && (
           <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
-            <SectionTitle id="t-egresados" bajada="Alumnos que hoy trabajan de lo que aprendieron acá.">Construyendo profesionales</SectionTitle>
+            <SectionTitle id="t-egresados" bajada={t.egresados_bajada}>{t.egresados_titulo}</SectionTitle>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               {egresados.slice(0, 4).map((e) => (
                 <figure key={e.id} className="al-entrar group relative aspect-4/5 overflow-hidden rounded-card bg-surface-container">
@@ -232,7 +237,7 @@ export default async function Home() {
         {principal && (
           <section aria-labelledby="t-testimonios" className="py-16 md:py-28">
             <div className="mx-auto max-w-[1280px] px-4 md:px-12">
-              <SectionTitle id="t-testimonios">Lo que dicen nuestros alumnos</SectionTitle>
+              <SectionTitle id="t-testimonios">{t.testimonios_titulo}</SectionTitle>
               <figure className="al-entrar max-w-4xl">
                 {estrellas(principal.puntaje, 20)}
                 <blockquote className="display mt-5 text-[clamp(1.5rem,3.2vw,2.5rem)] font-semibold leading-snug [font-stretch:100%]">«{principal.texto}»</blockquote>
@@ -265,7 +270,7 @@ export default async function Home() {
             <div className="mx-auto grid max-w-[1280px] gap-10 px-4 py-16 md:grid-cols-12 md:px-12 md:py-28">
               <div className="md:col-span-4">
                 <div className="md:sticky md:top-28">
-                  <SectionTitle id="t-faq" className="mb-6!">Preguntas frecuentes</SectionTitle>
+                  <SectionTitle id="t-faq" className="mb-6!">{t.faq_titulo}</SectionTitle>
                   {faq.length > 4 && <Link href="/preguntas-frecuentes" className="btn-outline">Ver todas las preguntas <ArrowRight size={16} aria-hidden /></Link>}
                 </div>
               </div>
