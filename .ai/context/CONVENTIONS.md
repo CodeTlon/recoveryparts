@@ -17,6 +17,7 @@
 - Animaciones: las de scroll van en CSS (`al-entrar`, `pista-trazo`, `progreso-pagina`, `fila-foco`, `paralaje`); todo bajo `prefers-reduced-motion`. No bajar la opacidad del contenido que entra (contraste). Un título animado usa `TituloExpandido` (deja la copia estática que fija el layout).
 - Un valor (objeto, constante) que necesite el servidor no se exporta desde un archivo `'use client'`: llega como referencia de cliente. Va en `src/lib/` (pasó con las etiquetas de la galería, ya sacada).
 - Canvas o capas que pueden quedar ocultos (`hidden lg:flex`): no dibujar con tamaño 0 (`drawImage` de una capa 0×0 tira error).
+- Campus: una página = una tarea. Si junta varias, van en pestañas con `Pestanas` (`?tab=` en la URL); las acciones ocasionales (subir, crear) quedan plegadas detrás de un botón y las listas largas muestran las primeras y «Ver N más». El menú del admin se agrupa con `grupo` en `NAV` (`CampusShell.tsx`).
 - Celular (`design.md` › Celular): campos a 16 px en táctil (regla global), zona de toque ≥ 40 px (`py-*` + `-my-*` si el texto es chico), letra ≥ 12 px, filtros secundarios plegados y columnas secundarias ocultas en tablas. Revisar con una pasada a 360 y 390 px antes de cerrar un cambio visual.
 - Dibujo continuo (canvas): fuera del hilo principal cuando se pueda (Web Worker + OffscreenCanvas, como `ui/circuito/`).
 

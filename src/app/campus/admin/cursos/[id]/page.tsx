@@ -5,7 +5,7 @@ import { requireRole, fechaAR } from '@/lib/auth'
 import CursoForm from '@/components/campus/CursoForm'
 import EdicionForm from '@/components/campus/EdicionForm'
 import DuplicarEdicion from '@/components/campus/DuplicarEdicion'
-import { ActionForm, Badge, Confirm, Empty, ModalButton, PageHead, BackLink } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, ModalButton, PageHead, BackLink, Pestanas } from '@/components/campus/ui'
 import MaterialForms from '@/components/campus/MaterialForms'
 import { borrarMaterial } from '../../../profesor/actions'
 import { guardarEstructura, guardarKit, setEstadoEdicion } from '../../actions'
@@ -62,12 +62,7 @@ export default async function CursoAdmin({ params, searchParams }: { params: Pro
       <BackLink href="/campus/admin/cursos">Cursos</BackLink>
       <PageHead title={curso.nombre} sub={curso.activo ? 'El contenido se carga una vez; cada vez que se dicta es una edición.' : 'Curso dado de baja: no se ve en el sitio (con todas sus ediciones).'} />
 
-      <nav aria-label="Secciones del curso" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
-        {TABS.map(([k, l]) => (
-          <Link key={k} href={href(k)} scroll={false} aria-current={tab === k ? 'page' : undefined}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-on-surface text-surface-container-lowest' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-accent'}`}>{l}</Link>
-        ))}
-      </nav>
+      <Pestanas label="Secciones del curso" items={TABS.map(([k, l]) => [k, l])} actual={tab} href={href} />
 
       {tab === 'ediciones' && <section className={sec}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

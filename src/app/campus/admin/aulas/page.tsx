@@ -79,10 +79,16 @@ export default async function Aulas() {
                       )}
                     </div>
                   </div>
+                  {/* La lista de ediciones se abre a pedido: con todas a la vista, cada aula era un bloque de chips. */}
                   {activos.length > 0 && (
-                    <ul className="mt-3 flex flex-wrap gap-1.5 sm:pl-13" aria-label={`Ediciones activas en ${a.nombre}`}>
-                      {activos.map((c) => <li key={c.id} className="rounded-full border border-outline-variant px-2.5 py-0.5 text-xs text-on-surface-variant">{c.nombre} · cupo {c.cupo}</li>)}
-                    </ul>
+                    <details className="group mt-2 sm:pl-13">
+                      <summary className="w-fit cursor-pointer list-none py-2 text-sm font-semibold text-secondary [&::-webkit-details-marker]:hidden">
+                        <span className="group-open:hidden">Ver ediciones</span><span className="hidden group-open:inline">Ocultar ediciones</span>
+                      </summary>
+                      <ul className="mt-1 flex flex-wrap gap-1.5" aria-label={`Ediciones activas en ${a.nombre}`}>
+                        {activos.map((c) => <li key={c.id} className="rounded-full border border-outline-variant px-2.5 py-0.5 text-xs text-on-surface-variant">{c.nombre} · cupo {c.cupo}</li>)}
+                      </ul>
+                    </details>
                   )}
               </Reveal>
             )

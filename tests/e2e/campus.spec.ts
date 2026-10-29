@@ -117,6 +117,7 @@ test('regresión: el profesor sube un PDF de 12 MB y uno de más de 25 MB recibe
   const pdf = (mb: number) => { const b = Buffer.alloc(Math.round(mb * 1048576), 48); b.write('%PDF-1.4\n'); return b }
   const subir = async (titulo: string, mb: number) => {
     await page.goto(`/campus/profesor/curso/${e.edicion}`)
+    await page.getByText('Subir material').click() // las formas de subir quedan plegadas detrás de este botón
     const form = page.locator('form', { has: page.getByRole('button', { name: 'Subir PDF' }) })
     await form.getByLabel('Título').fill(titulo)
     await form.locator('input[type=file]').setInputFiles({ name: `${titulo}.pdf`, mimeType: 'application/pdf', buffer: pdf(mb) })
@@ -147,4 +148,28 @@ test('regresión: Campus › Aulas lista las aulas cargadas', async ({ browser, 
   await expect(page.getByText('Todavía no hay aulas cargadas.')).toHaveCount(0)
   await ctx.close()
   await e.sql.begin(async (tx) => { await tx`set local session_replication_role = replica`; await tx`delete from aulas where nombre = ${nombre}` })
+})
+
+// Campus más simple (2026-10-29): los reportes tienen página propia y el curso del profesor va por pestañas.
+test('el admin ve los reportes en su página y el resumen ya no los repite', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin')
+  await expect(page.getByRole('heading', { name: 'Estado de las inscripciones' })).toHaveCount(0)
+  await page.getByRole('link', { name: 'Ver reportes' }).click() // el menú lateral en el celular va en un cajón
+  await expect(page).toHaveURL(/\/campus\/admin\/reportes$/)
+  await expect(page.getByRole('heading', { name: 'Reportes', level: 1 })).toBeVisible()
+  await ctx.close()
+})
+
+test('el curso del profesor se recorre por pestañas (material, calendario, alumnos, estructura)', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.profesor)
+  const page = await ctx.newPage()
+  await page.goto(`/campus/profesor/curso/${e.edicion}`)
+  const pestanas = page.getByRole('navigation', { name: 'Secciones del curso' })
+  await expect(pestanas.getByRole('link', { name: /Material/ })).toHaveAttribute('aria-current', 'page')
+  await pestanas.getByRole('link', { name: /Alumnos/ }).click()
+  await expect(page).toHaveURL(/tab=alumnos/)
+  await expect(pestanas.getByRole('link', { name: /Alumnos/ })).toHaveAttribute('aria-current', 'page')
+  await ctx.close()
 })
