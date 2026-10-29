@@ -22,7 +22,7 @@ export function StatTile({ Icon, valor, etiqueta, alerta = false }: { Icon: Luci
         <span aria-hidden className={`grid h-9 w-9 place-items-center rounded-lg ${alerta ? 'bg-accent/15 text-accent' : 'bg-surface-container-high text-on-surface-variant'}`}><Icon size={18} /></span>
         <ArrowUpRight size={16} aria-hidden className="text-on-surface-variant transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </div>
-      <p className="display mt-4 text-4xl tabular-nums">{valor}{alerta && <span aria-hidden className="ml-2 inline-block h-2 w-2 -translate-y-4 rounded-full bg-accent motion-safe:animate-pulse" />}</p>
+      <p className="display mt-4 text-4xl">{valor}{alerta && <span aria-hidden className="ml-2 inline-block h-2 w-2 -translate-y-4 rounded-full bg-accent motion-safe:animate-pulse" />}</p>
       <p className="mt-1 text-sm text-on-surface-variant">{etiqueta}</p>
     </div>
   )
