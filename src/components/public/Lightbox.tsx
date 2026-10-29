@@ -55,7 +55,7 @@ export default function Galeria({ fotos, categorias, categoria = 'todas', priori
       {/* Grilla con ritmo: cada sexta foto ocupa dos columnas (en pantallas medianas para arriba). */}
       <div className="grid grid-cols-1 gap-3 sm:auto-rows-[220px] sm:grid-cols-2 md:gap-4 lg:auto-rows-[280px] lg:grid-cols-3">
         {lista.map((f, i) => {
-          const img = <Image src={f.imagen_url} alt={f.alt} fill {...(i < 3 && prioridad ? { priority: true } : { loading: 'lazy' as const })} sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) group-hover:scale-105" />
+          const img = <Image src={f.imagen_url} alt={f.alt} fill {...(i < 3 && prioridad ? { priority: true } : { loading: 'lazy' as const })} sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,400px" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) group-hover:scale-105" />
           return (
             <button key={f.id} type="button" onClick={() => abrir(i)} className={`al-entrar group relative block aspect-4/3 w-full overflow-hidden rounded-card bg-surface-container sm:aspect-auto ${i % 6 === 0 ? 'sm:col-span-2' : ''}`}>
               {idx === i ? img : <ViewTransition name={`foto-${f.id}`} share="morph" default="none">{img}</ViewTransition>}

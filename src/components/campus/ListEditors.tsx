@@ -287,7 +287,7 @@ export function EstructuraEditor({ name, taller, inicial, conMaterial }: {
             <BloqueModulo key={m.key} cabecera={
               <div className="flex items-end gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-[11px] font-semibold text-secondary">
+                  <p className="mb-1 text-xs font-semibold text-secondary">
                     Módulo {i + 1} <span className="font-normal normal-case tracking-normal text-on-surface-variant">· {m.clases.length} clase{m.clases.length === 1 ? '' : 's'}</span>
                   </p>
                   <input aria-label={`Título del módulo ${i + 1}`} className="input min-w-0 py-2! font-semibold" maxLength={120} placeholder="Título del módulo" value={m.titulo} onChange={(e) => updM(i, { titulo: e.target.value })} />
@@ -375,7 +375,7 @@ export function ClasesEditor({ name, plan, inicial, inicio, dias, avisar }: {
       <p className="text-xs text-on-surface-variant">Para <strong>adelantar</strong> una clase, poné su fecha antes que la de otras. Para <strong>saltearla</strong>, marcala «Salteada»: no se dicta y no cuenta para el N° de clase de deserción. El material lo liberás vos, clase por clase. Saltear o adelantar no avisa por mail.</p>
       {grupos.map((g, gi) => (
         <BloqueModulo key={gi} cabecera={g.modulo ? (
-          <p className="pr-2 text-sm font-semibold"><span className="mr-1 text-[11px] text-secondary">Módulo {++nMod}</span> {g.modulo}</p>
+          <p className="pr-2 text-sm font-semibold"><span className="mr-1 text-xs text-secondary">Módulo {++nMod}</span> {g.modulo}</p>
         ) : undefined}>
           <ul className="divide-y divide-outline-variant/50">
             {g.filas.map(({ r, i }) => {

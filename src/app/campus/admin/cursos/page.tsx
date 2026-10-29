@@ -22,14 +22,14 @@ export default async function Cursos({ searchParams }: { searchParams: Promise<{
       {!cursos?.length ? <Empty>{pagina > 1 ? 'No hay más cursos.' : 'Todavía no hay cursos. Creá el primero.'}</Empty> : (
         <div className="card max-h-[70vh] overflow-auto">
           <table className="tabla w-full min-w-[720px] text-sm">
-            <thead><tr className="text-left text-xs text-on-surface-variant"><th className="px-4 py-3">Curso</th><th className="px-4 py-3">Área</th><th className="px-4 py-3">Ediciones</th><th className="px-4 py-3">Próxima</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3" /></tr></thead>
+            <thead><tr className="text-left text-xs text-on-surface-variant"><th className="px-4 py-3">Curso</th><th className="hidden px-4 py-3 md:table-cell">Área</th><th className="px-4 py-3">Ediciones</th><th className="hidden px-4 py-3 md:table-cell">Próxima</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3" /></tr></thead>
             <tbody>
               {cursos.map((c: any) => (
                 <tr key={c.id} className="border-t border-outline-variant">
                   <td className="px-4 py-3 font-medium"><Link href={`/campus/admin/cursos/${c.id}`} className="hover:text-accent">{c.nombre}</Link> <span className="ml-1 text-xs text-on-surface-variant">{TIPO_LABEL[c.tipo as 'curso']}</span></td>
-                  <td className="px-4 py-3 text-on-surface-variant">{AREA_LABEL[c.area as 'diseno']}</td>
+                  <td className="hidden px-4 py-3 text-on-surface-variant md:table-cell">{AREA_LABEL[c.area as 'diseno']}</td>
                   <td className="px-4 py-3 text-on-surface-variant">{(() => { const n = c.ediciones.filter((e: any) => e.activo).length, a = c.ediciones.reduce((k: number, e: any) => k + e.inscripciones.length, 0); return `${n} ${n === 1 ? 'activa' : 'activas'} · ${a} ${a === 1 ? 'alumno' : 'alumnos'}` })()}</td>
-                  <td className="px-4 py-3 text-on-surface-variant">{(() => { const p = c.ediciones.filter((e: any) => e.activo && e.fecha_inicio >= hoy).sort((a: any, b: any) => a.fecha_inicio.localeCompare(b.fecha_inicio))[0]; return p ? fechaAR(p.fecha_inicio) : '—' })()}</td>
+                  <td className="hidden px-4 py-3 text-on-surface-variant md:table-cell">{(() => { const p = c.ediciones.filter((e: any) => e.activo && e.fecha_inicio >= hoy).sort((a: any, b: any) => a.fecha_inicio.localeCompare(b.fecha_inicio))[0]; return p ? fechaAR(p.fecha_inicio) : '—' })()}</td>
                   <td className="px-4 py-3"><Badge tone={c.activo ? 'ok' : 'neutral'}>{c.activo ? 'Activo' : 'De baja'}</Badge></td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link href={`/campus/admin/cursos/${c.id}`} className="btn-ghost px-3! py-2!">Gestionar</Link>

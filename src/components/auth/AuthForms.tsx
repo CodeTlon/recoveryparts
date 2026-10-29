@@ -23,7 +23,7 @@ function PasswordField({ name, placeholder, label, autoComplete, minLength, valu
       <input name={name} type={ver ? 'text' : 'password'} required minLength={minLength} autoComplete={autoComplete} placeholder={placeholder} aria-label={label} className={inp}
         {...(onChange ? { value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value) } : {})} />
       <button type="button" onClick={() => setVer((v) => !v)} aria-label={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={ver}
-        className="text-on-surface-variant hover:text-accent focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-accent">
+        className="-m-3 rounded-md p-3 text-on-surface-variant hover:text-accent focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-accent">
         {ver ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
       </button>
     </label>

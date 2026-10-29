@@ -44,7 +44,7 @@ export function Columns({ data, unit = '', color = 'bg-accent' }: { data: { labe
         <div key={d.label} className="flex h-full min-w-0 flex-1 flex-col justify-end text-center">
           <span className="mb-1 text-xs font-semibold tabular-nums">{d.value}{unit}</span>
           <div className={`w-full rounded-t ${d.value ? color : 'bg-surface-container-highest'}`} style={{ height: `${d.value ? Math.max((d.value / max) * 100, 4) : 2}%` }} />
-          <span className="mt-1 truncate text-[11px] text-on-surface-variant">{d.label}</span>
+          <span className="mt-1 truncate text-xs text-on-surface-variant">{d.label}</span>
         </div>
       ))}
     </div>

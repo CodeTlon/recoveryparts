@@ -24,7 +24,7 @@ Server Components leen con el rol y el usuario de la sesion (RLS aplica) · Serv
 | SEO de una pagina publica | `metaPagina()` y `JsonLd` (`src/lib/seo.ts`, `src/components/seo/`) |
 | Subida de archivos | `src/app/api/media`, `src/lib/storage.ts`; los PDFs pasan por `/api/material/[id]` |
 | Estilos | **`design.md` primero** (sistema fijado: tokens, tipografía, motivo de circuito, movimiento). `src/app/globals.css` (`@theme`, `@utility`, animaciones de scroll en CSS); las utilidades propias no pueden llamarse como las nativas de Tailwind 4 |
-| Efectos del sitio público | `src/components/ui/` (`CircuitField`, `TituloExpandido`, `Inclinable`, `Magnetico`, `SectionTitle`, `EncabezadoPagina`, `Paginas`); sin librerías de animación en el sitio público |
+| Efectos del sitio público | `src/components/ui/` (`CircuitField` — el dibujo vive en `ui/circuito/motor.ts` y corre en un Web Worker con OffscreenCanvas, `ui/circuito/circuito.worker.ts`, o en la página si no hay soporte —, `TituloExpandido`, `Inclinable`, `Magnetico`, `SectionTitle`, `EncabezadoPagina`, `Paginas`); sin librerías de animación en el sitio público |
 | Paginación | `src/lib/paginar.ts` (reglas y tests), `components/ui/Paginas.tsx` (público), `components/campus/Paginacion.tsx` (campus) |
 
 ## Dónde no meterse sin pensar

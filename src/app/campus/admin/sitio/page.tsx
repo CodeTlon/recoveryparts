@@ -84,7 +84,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
       </nav>
       <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-on-surface-variant">
         <span>Estás editando: <b className="text-on-surface">{actual[1].replace(/ \(\d+\)$/, '')}</b> — {actual[2]}.</span>
-        <Link href={actual[3]} target="_blank" className="font-semibold text-secondary hover:underline">Ver en el sitio ↗</Link>
+        <Link href={actual[3]} target="_blank" className="-my-2.5 inline-block py-2.5 font-semibold text-secondary hover:underline">Ver en el sitio ↗</Link>
       </p>
 
       {actual[0] === 'inicio' && (

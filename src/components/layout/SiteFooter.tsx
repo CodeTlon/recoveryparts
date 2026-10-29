@@ -10,7 +10,7 @@ export default async function SiteFooter() {
   const [{ contacto: c }, conAulas] = await Promise.all([getSettings(), hayAulasVisibles()])
   const wa = waLink(c.whatsapp)
   const ig = c.instagram?.replace('@', '')
-  const lnk = 'text-sm font-semibold text-on-surface-variant transition-colors hover:text-on-surface'
+  const lnk = 'inline-flex min-h-10 items-center text-sm font-semibold text-on-surface-variant transition-colors hover:text-on-surface'
   const red = 'flex h-11 w-11 items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant transition-colors hover:border-accent hover:text-on-surface'
   const datos = [
     c.direccion && { icono: MapPin, texto: c.direccion, titulo: 'Dirección' },
@@ -46,13 +46,13 @@ export default async function SiteFooter() {
           </dl>
         </div>
 
-        <nav aria-label="Pie de página" className="mt-14 flex flex-wrap gap-x-6 gap-y-3 border-t border-outline-variant/60 pt-6">
+        <nav aria-label="Pie de página" className="mt-14 flex flex-wrap gap-x-6 gap-y-0 border-t border-outline-variant/60 pt-6">
           <Link href="/cursos" className={lnk}>Cursos y talleres</Link>
           {conAulas && <Link href="/aulas" className={lnk}>Aulas</Link>}{/* RF-60: igual que el menú, solo con aulas visibles */}
           <Link href="/galeria" className={lnk}>Galería</Link>
           <Link href="/preguntas-frecuentes" className={lnk}>Preguntas frecuentes</Link>
           <Link href="/contacto" className={lnk}>Contacto</Link>
-          <Link href="/login" className={`${lnk} inline-flex items-center gap-1`}>Campus <ArrowUpRight size={14} aria-hidden /></Link>
+          <Link href="/login" className={`${lnk} gap-1`}>Campus <ArrowUpRight size={14} aria-hidden /></Link>
         </nav>
 
         <Link href="/" aria-label="Recovery Parts, inicio" className="group mt-12 flex flex-col items-start gap-3 text-on-surface sm:flex-row sm:items-center sm:gap-4">

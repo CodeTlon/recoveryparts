@@ -22,7 +22,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }: { eyeb
 
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm motion-safe:animate-[menu-entra_0.6s_var(--ease-out)_both]">
-          <Link href="/" className="mb-10 flex w-fit items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface"><ArrowLeft size={16} aria-hidden /> Volver al sitio</Link>
+          <Link href="/" className="-mt-2.5 mb-7.5 flex w-fit items-center gap-2 py-2.5 text-sm font-semibold text-on-surface-variant hover:text-on-surface"><ArrowLeft size={16} aria-hidden /> Volver al sitio</Link>
           <Image src="/images/logo.png" alt="Recovery Parts" width={64} height={64} priority className="mb-6 h-14 w-14 lg:hidden" />
           <span className="dato text-accent">{eyebrow}</span>
           <h1 className="display mt-2 text-3xl [font-stretch:108%]">{title}</h1>
