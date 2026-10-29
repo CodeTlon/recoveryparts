@@ -13,6 +13,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 - Web Worker con Turbopack: `new Worker(new URL('./x.worker.ts', import.meta.url), { type: 'module' })`. Sin `type: 'module'` el `.ts` se copia como archivo suelto, sin compilar. La CSP necesita `worker-src 'self'`.
 - Un canvas se transfiere a OffscreenCanvas una sola vez: en desarrollo React monta el efecto dos veces, por eso `CircuitField` reutiliza el worker de cada canvas (WeakMap) y solo lo cierra si el canvas salió de la página.
 - Ver el campus desde otra máquina sin túnel: `next dev` con `DEV_ORIGINS=<ip>` (habilita `allowedDevOrigins`; sin eso el JS no hidrata, el form de login se manda sin JS con `Origin: null` y la server action da 500). Con `next start` la cookie es `Secure` y solo anda por https o `localhost`.
+- E2E del campus: sin `SESSION_SECRET` (el mismo del servidor) en el entorno de Playwright, los tests de campus se saltean en silencio (34 skipped).
 - `experimental.inlineCss` NO: duplica el CSS en el HTML (34 → 80 KB) y empeora el FCP.
 - Texto entre `inline-block`: un espacio al final de la caja se descarta. Los espacios entre palabras van afuera (pasó con `TituloExpandido`).
 - No exportar valores (objetos/constantes) desde un archivo `'use client'` para usarlos en el servidor: llegan como referencia de cliente (pasó con las etiquetas de la galería → `src/lib/galeria.ts`).
@@ -40,6 +41,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-29 | feature/dev2-graficos | v0.17.5 — gráficos y admin: reportes con filtro por área, inscripciones por mes, barra partida, paleta `dato*` validada, sin `AnimatedBar`; encuestas con reparto de notas; «Por empezar» con inscriptos/cupo. 119 E2E. |
 | 2026-10-29 | feature/dev2-campus-ux | v0.17.4 — campus más simple: Reportes en su página, Resumen del día, curso del profesor en pestañas, menú agrupado con contador de consultas, aulas y sitio plegables, `Pestanas` común. 112 E2E. |
 | 2026-10-29 | feature/dev2-filtro-pie | v0.17.3 — filtro real de destacadas en la portada (`DestacadosFiltro`), pie compacto (marca + columnas, sin invitación, nombre gigante ni «Volver arriba»), `DEV_ORIGINS` para `next dev` por IP. 110 E2E. |
 | 2026-10-29 | feature/dev2-portada-pie | v0.17.2 — sin galería pública (`/galeria` → inicio, fotos en `cms_galeria`), portada 15,7 → 9,4 pantallas en el celular, pie en tres franjas (invitación, datos, firma), fondo atenuado detrás del texto. 107 E2E. |

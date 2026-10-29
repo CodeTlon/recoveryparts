@@ -25,6 +25,7 @@ Server Components leen con el rol y el usuario de la sesion (RLS aplica) · Serv
 | Subida de archivos | `src/app/api/media`, `src/lib/storage.ts`; los PDFs pasan por `/api/material/[id]` |
 | Estilos | **`design.md` primero** (sistema fijado: tokens, tipografía, motivo de circuito, movimiento). `src/app/globals.css` (`@theme`, `@utility`, animaciones de scroll en CSS); las utilidades propias no pueden llamarse como las nativas de Tailwind 4 |
 | Campus | `CampusShell.tsx` (menú por rol en `NAV`, con grupos y avisos), `ui.tsx` (`PageHead`, `Pestanas`, `StatTile`…); una página por tarea, pestañas en `?tab=` |
+| Gráficos | `campus/charts.tsx` (server components, sin JS en el cliente) usados por `ReportesPanel.tsx` (filtro `?area=`), Resumen y Encuestas. `AnimatedBar` se borró en v0.17.5 |
 | Efectos del sitio público | `src/components/ui/` (`CircuitField` — el dibujo vive en `ui/circuito/motor.ts` y corre en un Web Worker con OffscreenCanvas, `ui/circuito/circuito.worker.ts`, o en la página si no hay soporte —, `TituloExpandido`, `Inclinable`, `Magnetico`, `SectionTitle`, `EncabezadoPagina`, `Paginas`); sin librerías de animación en el sitio público |
 | Paginación | `src/lib/paginar.ts` (reglas y tests), `components/ui/Paginas.tsx` (público), `components/campus/Paginacion.tsx` (campus) |
 

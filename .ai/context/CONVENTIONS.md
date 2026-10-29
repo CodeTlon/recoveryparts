@@ -50,7 +50,7 @@
 - **Errores de consultas**: el builder devuelve `{ data, error }` y registra `db: <op> <tabla> falló — …` en el log del servidor; una pantalla que solo mira `data` mostraría «vacío» ante un fallo, así que ante un listado inesperadamente vacío mirar primero ese log. No volver a poner un `loading.tsx` en la raíz de `app/` (rompe el 404 real de `notFound()`).
 - **Colores de estado**: `text-danger`, `text-success`, `text-warning`, `text-info` (tokens de `@theme`); no usar `red-400` ni similares. Bordes de controles: `border-outline` (3:1 mínimo), los divisores sutiles `border-outline-variant`.
 - **Rangos**: `Field` acepta `min/max/step`; el servidor revalida (`guardarCurso`) y la base tiene los `check`.
-- **Gráficos**: SVG propio en `components/campus/charts.tsx` (sin librerías).
+- **Gráficos**: componentes propios en `components/campus/charts.tsx` (`Medidor`, `filasBarras`, `Columnas`, `Partes`, `Stat`), sin librerías ni JS en el cliente. Colores `dato*` y reglas en `design.md` § Gráficos.
 - **Seed de demo**: `seed:dev`/`seed:test` crean cuentas `@demo.example.com` (contraseña `demo1234`), 5 cursos y 4 talleres cortos.
 
 ## Mails
