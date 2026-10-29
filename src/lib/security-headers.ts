@@ -17,6 +17,8 @@ export function construirCsp(nonce: string) {
   `img-src 'self' data: blob: https:${isDev ? ' http://127.0.0.1:*' : ''}`,
   `media-src 'self' blob: https:${isDev ? ' http://127.0.0.1:*' : ''}`,
   "font-src 'self' data:",
+  // El fondo de circuito dibuja en un Web Worker propio; con 'strict-dynamic', script-src no alcanza a los workers.
+  "worker-src 'self'",
   `connect-src 'self'${isDev ? ' http://127.0.0.1:* ws://localhost:*' : ''}`,
   "frame-src 'self'",
   "object-src 'none'",
