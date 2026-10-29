@@ -4,6 +4,8 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualización 2026-10-29 (v0.17.3, filtro y pie):** rama `feature/dev2-filtro-pie`: filtro real en «Capacitaciones destacadas» y pie compacto. v0.17.1–v0.17.3 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
 **Actualización 2026-10-29 (v0.17.2, portada y pie):** rama `feature/dev2-portada-pie` (desde `dev`): sin galería pública (`/galeria` → inicio), portada más corta (9,4 pantallas en el celular), pie nuevo en tres franjas y fondo atenuado detrás del texto. Verificado en local (107 E2E, capturas en `screenshots/portada-pie-2026-10-29/`). v0.17.1 y v0.17.2 están en `dev`/`test`; falta el PR a `main` con OK de Mateo.
 
 **Actualización 2026-10-29 (v0.17.1, optimización y celular):** el rediseño v0.17.0 está en `main` (PR #27). La rama `feature/dev2-optimizacion` (desde `dev`) lo optimiza sin cambiar el diseño (fondo de circuito en un Web Worker, Archivo de 90 a 58 KB, `sizes` de imágenes), corrige el título animado sin espacios (estaba en producción) y ajusta el celular (campos de 16 px, zonas de toque de 40 px, filtros plegados, tablas del campus). Verificado en local: 104 E2E, 13 unitarios, tipos, lint, build, auditoría móvil automática a 360/390 px (sin scroll horizontal ni a 320 px) y capturas en `screenshots/optimizacion-movil-2026-10-29/`. **Sin verificar:** Safari/Firefox reales (los cubre la CI), un iPhone/Android de verdad, homologación y producción.
