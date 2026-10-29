@@ -39,6 +39,18 @@ test.describe('Público: título animado', () => {
   })
 })
 
+test.describe('Público: cursor propio', () => {
+  test('solo con mouse: reemplaza al del sistema; en pantallas táctiles no aparece', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' })
+    const conMouse = await page.evaluate(() => matchMedia('(pointer: fine) and (prefers-reduced-motion: no-preference)').matches)
+    await expect(page.locator('html')).toHaveClass(conMouse ? /cursor-propio/ : /^(?!.*cursor-propio).*$/)
+    if (!conMouse) return
+    const link = page.getByRole('link', { name: /Ver cursos/ }).first()
+    await link.hover()
+    await expect(page.locator('html')).toHaveAttribute('data-cursor', 'clic')
+  })
+})
+
 test.describe('Público: filtros de cursos', () => {
   test('en el celular nivel/día/orden se abren con «Más filtros»; en pantallas grandes se ven siempre', async ({ page }) => {
     await page.goto('/cursos')

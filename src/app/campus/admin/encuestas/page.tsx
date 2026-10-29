@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth'
 import { etiquetaEdicion } from '@/lib/fechas'
-import Paginacion, { paginaDe } from '@/components/campus/Paginacion'
+import Paginacion, { corregirPagina, paginaDe, rango } from '@/components/campus/Paginacion'
 import { ActionForm, Badge, Empty, Field, PageHead, Select, Check } from '@/components/campus/ui'
 import { Medidor } from '@/components/campus/charts'
 import { guardarEncuesta } from '../actions'
@@ -12,12 +12,11 @@ const POR_PAGINA_ENCUESTAS = 10
 export default async function Encuestas({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
   const pagina = paginaDe((await searchParams).pagina)
   const { sb } = await requireRole('admin')
-  const [{ data: filas }, { data: cursos }] = await Promise.all([
-    sb.from('encuestas').select('*').order('creado_en', { ascending: false }).order('id').range((pagina - 1) * POR_PAGINA_ENCUESTAS, pagina * POR_PAGINA_ENCUESTAS),
+  const [{ data: encs, count }, { data: cursos }] = await Promise.all([
+    sb.from('encuestas').select('*', { count: 'exact' }).order('creado_en', { ascending: false }).order('id').range(...rango(pagina, POR_PAGINA_ENCUESTAS)),
     sb.from('ediciones').select('id, fecha_inicio, activo, cursos(nombre, activo)').order('fecha_inicio', { ascending: false }),
   ])
-  const hayMas = (filas?.length ?? 0) > POR_PAGINA_ENCUESTAS
-  const encs = filas?.slice(0, POR_PAGINA_ENCUESTAS)
+  corregirPagina(pagina, count ?? 0, {}, POR_PAGINA_ENCUESTAS)
   // Respuestas solo de las encuestas que se muestran (antes se traían las de todas).
   const ids = (encs ?? []).map((e) => e.id as string)
   const [{ data: resp }, { data: comp }] = ids.length ? await Promise.all([
@@ -103,7 +102,7 @@ export default async function Encuestas({ searchParams }: { searchParams: Promis
           })}
         </div>
       )}
-      <Paginacion pagina={pagina} hayMas={hayMas} />
+      <Paginacion pagina={pagina} total={count ?? 0} porPagina={POR_PAGINA_ENCUESTAS} que="encuestas" />
     </>
   )
 }

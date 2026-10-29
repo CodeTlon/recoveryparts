@@ -5,14 +5,20 @@ import { Plus, ArrowRight } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import EncabezadoPagina from '@/components/ui/EncabezadoPagina'
-import { query } from '@/lib/data'
+import { getSettings, query } from '@/lib/data'
 import JsonLd from '@/components/seo/JsonLd'
 
-export const metadata: Metadata = metaPagina({ titulo: 'Preguntas frecuentes', descripcion: 'Respuestas a las dudas más comunes sobre cursos, talleres y el campus.', ruta: '/preguntas-frecuentes' })
+export async function generateMetadata(): Promise<Metadata> {
+  const { textos: t } = await getSettings()
+  return metaPagina({ titulo: t.faq.titulo, descripcion: t.faq.descripcion, ruta: '/preguntas-frecuentes' })
+}
 export const dynamic = 'force-dynamic'
 
 export default async function FaqPage() {
-  const faq = await query<{ id: string; pregunta: string; respuesta: string }[]>('faq-pagina', (sb) => sb.from('cms_faq').select('id, pregunta, respuesta').order('orden'), [])
+  const [faq, { textos: { faq: t } }] = await Promise.all([
+    query<{ id: string; pregunta: string; respuesta: string }[]>('faq-pagina', (sb) => sb.from('cms_faq').select('id, pregunta, respuesta').order('orden'), []),
+    getSettings(),
+  ])
   return (
     <div className="flex min-h-screen flex-col text-on-surface">
       {faq.length > 0 && <JsonLd datos={{
@@ -21,7 +27,7 @@ export default async function FaqPage() {
       }} />}
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="grow outline-hidden">
-        <EncabezadoPagina titulo="Preguntas frecuentes" bajada="Todo lo que suelen preguntarnos antes de empezar." />
+        <EncabezadoPagina titulo={t.titulo} bajada={t.bajada} />
         <section className="mx-auto max-w-[1280px] px-4 py-14 md:px-12 md:py-20">
           {faq.length === 0 && <p className="text-on-surface-variant">Todavía no hay preguntas cargadas.</p>}
           <div className="grid gap-12 md:grid-cols-12">

@@ -5,6 +5,7 @@ import { TAG_PUBLICO, TTL_PUBLICO } from '@/lib/cache-publico'
 import { clienteAnon, type Cliente } from '@/lib/db'
 import { dbConfigured } from '@/lib/env'
 import type { CursoPublico, EdicionPublica, Horario } from '@/lib/types'
+import { conTextos, type Textos, type TextosGuardados } from '@/lib/textos'
 
 // Todo el contenido público sale de la base (CMS). Sin base configurada, devuelve vacíos.
 export type Settings = {
@@ -14,18 +15,19 @@ export type Settings = {
   nosotros: { titulo?: string; texto?: string }
   areas: Record<'diseno' | 'tecnico', { titulo?: string; texto?: string; imagen_url?: string }>
   aulas: { texto?: string; video_url?: string; imagen_url?: string } // presentación de la sección «Aulas» (RF-60)
+  textos: Textos // títulos y bajadas de cada página, ya mezclados con los valores por defecto (lib/textos.ts)
 }
 
 const EMPTY_AREAS = { diseno: {}, tecnico: {} }
 
 // cache(): dentro de un mismo render (página + footer + generateMetadata) la consulta se hace una sola vez.
 export const getSettings = cache(async (): Promise<Settings> => {
-  const base = { contacto: {}, hero: {}, stats: {}, nosotros: {}, areas: EMPTY_AREAS, aulas: {} } as Settings
+  const base = { contacto: {}, hero: {}, stats: {}, nosotros: {}, areas: EMPTY_AREAS, aulas: {}, textos: conTextos(undefined) } as Settings
   await connection() // el contenido sale de la base: siempre dinámico, aunque el build no tenga DATABASE_URL
   if (!dbConfigured) return base
   try {
     const data = await settingsCacheadas()
-    for (const r of data) (base as any)[r.clave] = r.valor
+    for (const r of data) (base as any)[r.clave] = r.clave === 'textos' ? conTextos(r.valor as TextosGuardados) : r.valor
   } catch (e) { console.error('data: site_settings', (e as Error).name) }
   return base
 })
