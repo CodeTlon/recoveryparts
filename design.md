@@ -105,6 +105,12 @@ no entró (rompe el contraste para lectores y auditorías); el texto animado dej
   `role="img"` con los datos en `aria-label`. Porcentajes con coma decimal y espacio (`33,3 %`).
 - Un solo filtro por página, arriba de todo (`Pestanas` con el valor en la URL).
 
+## Cursor propio (v0.18.0, `components/ui/CursorCircuito.tsx`)
+Un nodo naranja (6 px, el punto exacto) y un anillo de 30 px que lo sigue con retraso; sobre algo clicable el anillo crece
+a 46 px en claro (se lee sobre los botones naranjas) y el punto se esconde; al apretar, el anillo se achica. Solo sitio
+público, solo `pointer: fine` y sin `prefers-reduced-motion`; campos de texto con la barra del sistema; con
+`forced-colors` vuelve el cursor del sistema. Un solo `requestAnimationFrame` que se detiene en reposo.
+
 ## Qué comparten todas las páginas
 Wordmark (logo + «Recovery Parts» en display), menú flotante, pie «declaración», tokens, tipografía, botones, chips,
 paginación y el fondo de circuito (solo en el sitio público). El campus usa el mismo sistema sin el fondo animado.

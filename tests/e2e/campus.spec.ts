@@ -220,8 +220,8 @@ test('los textos de las páginas se editan desde Sitio web y se ven en el sitio'
   // Vuelve al texto por defecto (campo vacío).
   await bloque.getByLabel('Título').fill('')
   await bloque.getByRole('button', { name: 'Guardar' }).click()
-  await pub.reload()
-  await expect(pub).toHaveTitle(/^Preguntas frecuentes/)
+  // El aviso «Guardado» del primer guardado sigue en pantalla: se recarga hasta ver el cambio.
+  await expect.poll(async () => { await pub.reload(); return pub.title() }, { timeout: 15_000 }).toMatch(/^Preguntas frecuentes/)
   await ctx.close()
 })
 
