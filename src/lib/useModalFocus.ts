@@ -1,15 +1,16 @@
 'use client'
 
-import { useEffect, type RefObject } from 'react'
+import { useLayoutEffect, type RefObject } from 'react'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
 
 /**
  * Manejo de foco de un diálogo modal: al abrir enfoca el primer control, atrapa el Tab dentro y,
- * al cerrar, devuelve el foco a lo que lo tenía (el botón que lo abrió).
+ * al cerrar, devuelve el foco a lo que lo tenía (el botón que lo abrió). Va en useLayoutEffect para que el foco entre
+ * apenas se abre, también cuando el diálogo se abre con una transición de vista.
  */
 export function useModalFocus(ref: RefObject<HTMLElement | null>, abierto: boolean) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current
     if (!abierto || !el) return
     const previo = document.activeElement as HTMLElement | null

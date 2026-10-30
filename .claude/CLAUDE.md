@@ -34,6 +34,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 - `npm audit` completo muestra `braces` (cadena de `eslint-config-next`): es de lint y no tiene parche; el gate es `npm audit --omit=dev` en 0.
 - Tailwind 4: sin clases pegadas a `${}` y sin utilidades propias llamadas `delay-`, `duration-`, etc.
 - `useRef` en React 19 exige valor inicial.
+- Con `<ViewTransition>`, React corre los `useEffect` recién al terminar la animación: listeners de teclado y foco de un diálogo que se abre con transición van en `useLayoutEffect` (pasó con el visor de fotos: Escape no cerraba).
 - `proxy.ts` corre delante de las server actions: Next le limita el cuerpo a 10 MB (`proxyClientMaxBodySize`). Toda subida por server action necesita ese tope en `next.config.js`, no solo `serverActions.bodySizeLimit`.
 - `db/bootstrap.sql` corre en CADA arranque (Coolify migra al iniciar): nada de `grant` amplios ahí, se reaplican siempre.
 - `npm run db:migrate` no corre `db/seed.sql` (solo con `--seed`); el seed de pruebas crea sus aulas.
@@ -42,7 +43,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
-| 2026-10-30 | feature/dev2-egresados-grupos | v0.18.1 — egresados como fotos de grupo por curso/taller (migración 0031: `curso`, `promocion`), destacada 2×2, fila deslizable en el celular. 129 E2E. |
+| 2026-10-30 | feature/dev2-egresados-grupos | v0.18.1 — egresados como fotos de grupo por curso/taller (migración 0031: `curso`, `promocion`) en grilla tipo galería con rótulo y visor; arregla teclado y foco del visor. 129 E2E. |
 | 2026-10-30 | test → main | PR #28: v0.17.1–v0.18.0 en `main` con los checks en verde. Deploy de producción sin verificar. |
 | 2026-10-29 | feature/dev2-cms-paginacion | v0.18.0 — paginación numerada en el admin (con filtros en Cursos), todo el sitio editable desde Sitio web (`site_settings.textos`), listas del CMS con modal, cursor propio en el sitio público. 126 E2E. |
 | 2026-10-29 | feature/dev2-graficos | v0.17.5 — gráficos y admin: reportes con filtro por área, inscripciones por mes, barra partida, paleta `dato*` validada, sin `AnimatedBar`; encuestas con reparto de notas; «Por empezar» con inscriptos/cupo. 119 E2E. |

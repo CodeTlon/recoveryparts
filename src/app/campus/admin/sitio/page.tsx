@@ -222,11 +222,11 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         </div>
       )}
       {actual[0] === 'egresados' && (
-        <Lista tipo="egresado" nombre="grupo" vacio="Todavía no hay fotos de grupos." nota="Una foto por grupo que terminó un curso o taller. En el inicio se ven las 6 primeras (las destacadas, primero). Se necesita el consentimiento de uso de imagen."
-          nuevo={<><Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" /><MediaField tipo="imagen" label="Foto del grupo" name="foto_url" /><Check name="destacado" >Destacada (se ve más grande en el inicio)</Check></>}>
+        <Lista tipo="egresado" nombre="grupo" vacio="Todavía no hay fotos de grupos." nota="Una foto por grupo que terminó un curso o taller. En el inicio se ven las 5 primeras en una grilla tipo galería (las destacadas, primero; la primera va en grande). Se necesita el consentimiento de uso de imagen."
+          nuevo={<><Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" /><MediaField tipo="imagen" label="Foto del grupo" name="foto_url" /><Check name="destacado" >Destacada (va primera y en grande)</Check></>}>
           {(egr ?? []).map((r) => (
             <Item key={r.id} tipo="egresado" nombre="grupo" row={r} resumen={<>{r.curso}{r.destacado && <span className="ml-2"><Badge tone="warn">Destacada</Badge></span>}</>} detalle={r.promocion}>
-              <Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" defaultValue={r.curso} required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" defaultValue={r.promocion ?? ''} /><MediaField tipo="imagen" label="Foto del grupo" name="foto_url" defaultValue={r.foto_url} /><Check name="destacado" defaultChecked={r.destacado}>Destacada (se ve más grande en el inicio)</Check>
+              <Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" defaultValue={r.curso} required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" defaultValue={r.promocion ?? ''} /><MediaField tipo="imagen" label="Foto del grupo" name="foto_url" defaultValue={r.foto_url} /><Check name="destacado" defaultChecked={r.destacado}>Destacada (va primera y en grande)</Check>
             </Item>
           ))}
         </Lista>
