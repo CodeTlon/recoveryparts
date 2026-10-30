@@ -102,7 +102,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
     ['aulas', `Aulas (${visibles})`, 'Título, video general y ficha de cada aula (el número son las visibles en el sitio)', '/aulas', DoorOpen],
     ['faq', `Preguntas (${faq?.length ?? 0})`, 'Encabezado de la página y las preguntas frecuentes', '/preguntas-frecuentes', HelpCircle],
     ['contacto', 'Contacto', 'Textos de la página, dirección, horarios, mail, WhatsApp e Instagram', '/contacto', Mail],
-    ['egresados', `Egresados (${egr?.length ?? 0})`, 'Mosaico de egresados del inicio', '/', GraduationCap],
+    ['egresados', `Egresados (${egr?.length ?? 0})`, 'Fotos de los grupos que se recibieron', '/', GraduationCap],
     ['testimonios', `Testimonios (${tes?.length ?? 0})`, 'Opiniones del inicio y de la ficha de cada curso', '/', MessageSquareQuote],
     ['pie', 'Pie y buscadores', 'Texto del pie de página y cómo aparece el sitio en Google', '/', Search],
     ['campus', 'Campus', 'Cómo entra el alumno al campus', '/login', FileText],
@@ -222,11 +222,11 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         </div>
       )}
       {actual[0] === 'egresados' && (
-        <Lista tipo="egresado" nombre="egresado" vacio="Todavía no hay egresados." nota="Aparecen en el mosaico del inicio (se ven los 4 primeros). Se necesita el consentimiento de uso de imagen."
-          nuevo={<><Field label="Nombre" name="nombre" placeholder="Ej: María" required /><Field label="Especialidad" name="especialidad" placeholder="Ej: Reparación de celulares" required /><MediaField tipo="imagen" label="Foto" name="foto_url" /><Check name="destacado" >Destacado (ocupa 2×2 en el mosaico)</Check></>}>
+        <Lista tipo="egresado" nombre="grupo" vacio="Todavía no hay fotos de grupos." nota="Una foto por grupo que terminó un curso o taller. En el inicio se ven las 6 primeras (las destacadas, primero). Se necesita el consentimiento de uso de imagen."
+          nuevo={<><Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" /><MediaField tipo="imagen" label="Foto del grupo" name="foto_url" /><Check name="destacado" >Destacada (se ve más grande en el inicio)</Check></>}>
           {(egr ?? []).map((r) => (
-            <Item key={r.id} tipo="egresado" nombre="egresado" row={r} resumen={<>{r.nombre}{r.destacado && <span className="ml-2"><Badge tone="warn">Destacado</Badge></span>}</>} detalle={r.especialidad}>
-              <Field label="Nombre" name="nombre" placeholder="Ej: María" defaultValue={r.nombre} required /><Field label="Especialidad" name="especialidad" placeholder="Ej: Reparación de celulares" defaultValue={r.especialidad} required /><MediaField tipo="imagen" label="Foto" name="foto_url" defaultValue={r.foto_url} /><Check name="destacado" defaultChecked={r.destacado}>Destacado (ocupa 2×2 en el mosaico)</Check>
+            <Item key={r.id} tipo="egresado" nombre="grupo" row={r} resumen={<>{r.curso}{r.destacado && <span className="ml-2"><Badge tone="warn">Destacada</Badge></span>}</>} detalle={r.promocion}>
+              <Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" defaultValue={r.curso} required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" defaultValue={r.promocion ?? ''} /><MediaField tipo="imagen" label="Foto del grupo" name="foto_url" defaultValue={r.foto_url} /><Check name="destacado" defaultChecked={r.destacado}>Destacada (se ve más grande en el inicio)</Check>
             </Item>
           ))}
         </Lista>

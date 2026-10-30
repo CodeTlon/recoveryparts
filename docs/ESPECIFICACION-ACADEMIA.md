@@ -185,7 +185,7 @@ stateDiagram-v2
 | 1 | **Hero** | Imagen de fondo con overlay legible, glow naranja, título y subtítulo. **Doble CTA**: *Ver Cursos* y *WhatsApp*. |
 | 2 | **Las dos áreas** | Dos bloques diferenciados (RNF-03): 🎨 Creación y Diseño / 🛠️ Reparación y Tecnología. Cada uno lleva a la búsqueda ya filtrada. |
 | 3 | **Capacitaciones Destacadas** | Grilla de cursos destacados (el admin elige cuáles). Cada card muestra imagen, nombre, duración, **precio** y cupos. |
-| 4 | **Construyendo Profesionales** | Egresados en bento grid (2 destacados 2×2 + 8 simples), con nombre y especialidad. |
+| 4 | **Construyendo Profesionales** | Fotos de los grupos que terminaron cada curso o taller (no personas sueltas), con curso y promoción; la destacada ocupa 2×2 (v0.18.1). |
 | 5 | **Nosotros / Stats** | Qué es la academia y números (aulas, profesores, egresados). |
 | 6 | **Testimonios** | Foto, nombre, curso y puntaje ⭐. |
 | 7 | **FAQ** | Preguntas frecuentes en acordeón. |
@@ -197,7 +197,7 @@ stateDiagram-v2
 - Imagen, título, subtítulo y textos de los CTA del hero
 - Textos e imágenes de las dos áreas
 - Qué cursos aparecen como destacados, y en qué orden
-- Egresados: foto, nombre y especialidad (alta, baja y orden)
+- Egresados: foto del grupo, curso o taller y promoción (alta, baja y orden)
 - Números de stats
 - Testimonios: alta, baja y edición
 - Preguntas y respuestas del FAQ
