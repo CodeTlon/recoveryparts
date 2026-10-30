@@ -4,6 +4,8 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualización 2026-10-30 (v0.18.1, egresados por grupo):** rama `feature/dev2-egresados-grupos`: «Construyendo profesionales» pasa a fotos de grupos por curso o taller (migración `0031`, corre sola al arrancar). Si producción tiene egresados cargados como personas, hay que reescribirlos en Campus › Sitio web › Egresados. En `dev`/`test`; falta `main` con OK de Mateo.
+
 **Actualización 2026-10-30 (v0.17.1–v0.18.0 en `main`):** PR #28 (`test → main`) mergeado con todos los checks en verde (tipos y build, migraciones, E2E en 3 tamaños, Firefox y Safari, imagen Docker). Coolify despliega `main` solo. **Sin verificar:** que producción haya levantado la versión nueva (el título de la portada con espacios, `/galeria` → inicio, Campus › Sitio web) y homologación.
 
 **Actualización 2026-10-29 (v0.18.0, paginación, sitio editable y cursor):** rama `feature/dev2-cms-paginacion`: paginación numerada en todas las listas del admin, filtros en Cursos y talleres, textos de todas las páginas editables desde Sitio web (índice por sección), listas del CMS con modal, cursor propio en el sitio público. v0.17.1–v0.18.0 en `dev`/`test`; falta el PR a `main` con OK de Mateo.

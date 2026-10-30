@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = 'force-dynamic'
 
-type Egresado = { id: string; nombre: string; especialidad: string; foto_url: string | null; destacado: boolean }
+type Egresado = { id: string; curso: string; promocion: string | null; foto_url: string; destacado: boolean }
 type Testimonio = { id: string; nombre: string; curso: string | null; texto: string; puntaje: number; foto_url: string | null }
 type Faq = { id: string; pregunta: string; respuesta: string }
 
@@ -36,7 +36,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq, conAulas] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
-    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('orden').limit(4), []),
+    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').not('foto_url', 'is', null).order('destacado', { ascending: false }).order('orden').limit(6), []),
     query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
@@ -189,21 +189,26 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 5 · Egresados */}
+        {/* 5 · Egresados: una foto por grupo que terminó un curso o taller (no personas sueltas). La destacada ocupa
+            2×2 en escritorio; en el celular van en una fila deslizable para no alargar la portada. */}
         {egresados.length > 0 && (
           <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
             <SectionTitle id="t-egresados" bajada={t.egresados_bajada}>{t.egresados_titulo}</SectionTitle>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-              {egresados.slice(0, 4).map((e) => (
-                <figure key={e.id} className="al-entrar group relative aspect-4/5 overflow-hidden rounded-card bg-surface-container">
-                  {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 300px" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) grayscale-[40%] group-hover:scale-105 group-hover:grayscale-0" />}
-                  <figcaption className="absolute inset-x-2 bottom-2 rounded-lg bg-surface-container-lowest/80 px-3 py-2 backdrop-blur-md">
-                    <p className="text-sm font-semibold">{e.nombre}</p>
-                    <p className="text-xs text-on-surface-variant">{e.especialidad}</p>
-                  </figcaption>
-                </figure>
+            <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-4 md:mx-0 md:grid md:grid-flow-dense md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3">
+              {egresados.map((e) => (
+                <li key={e.id} className={`w-[min(85vw,24rem)] shrink-0 snap-start md:w-auto ${e.destacado ? 'lg:col-span-2 lg:row-span-2' : ''}`}>
+                  <figure className="al-entrar group relative aspect-3/2 h-full overflow-hidden rounded-card bg-surface-container">
+                    <Image src={e.foto_url} alt={`Grupo de egresados de ${e.curso}${e.promocion ? `, ${e.promocion}` : ''}`} fill
+                      sizes={e.destacado ? '(max-width:768px) 85vw, (max-width:1024px) 50vw, 820px' : '(max-width:768px) 85vw, (max-width:1024px) 50vw, 400px'}
+                      className="object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.03]" />
+                    <figcaption className="absolute inset-x-2 bottom-2 rounded-lg bg-surface-container-lowest/80 px-3 py-2 backdrop-blur-md">
+                      <p className="text-sm font-semibold">{e.curso}</p>
+                      {e.promocion && <p className="text-xs text-on-surface-variant">{e.promocion}</p>}
+                    </figcaption>
+                  </figure>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         )}
 

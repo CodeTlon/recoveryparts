@@ -603,7 +603,7 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   const puntaje = num(fd, 'puntaje') ?? 5
   if (tipo === 'testimonio' && !(Number.isInteger(puntaje) && puntaje >= 1 && puntaje <= 5)) return { error: 'El puntaje va de 1 a 5.' }
   const obligatorios: Record<string, [string, number][]> = {
-    egresado: [['nombre', 120], ['especialidad', 160]], testimonio: [['nombre', 120], ['texto', 1500]],
+    egresado: [['curso', 160]], testimonio: [['nombre', 120], ['texto', 1500]],
     faq: [['pregunta', 300], ['respuesta', 3000]], foto: [['categoria', 80], ['alt', 200]],
   }
   for (const [campo, max] of obligatorios[tipo]) {
@@ -614,8 +614,10 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   const foto = imagenOpcional(txt(fd, 'foto_url')), imagen = imagenOpcional(txt(fd, 'imagen_url'))
   if (foto === undefined || imagen === undefined) return { error: 'Subí las imágenes desde el campo de imagen (las rutas deben ser del sitio, ej. /media/… o /images/…).' }
   if (tipo === 'foto' && !imagen) return { error: 'La foto de la galería necesita una imagen.' }
+  if (tipo === 'egresado' && !foto) return { error: 'Subí la foto del grupo.' }
+  if (tipo === 'egresado' && txt(fd, 'promocion').length > 80) return { error: 'La promoción admite hasta 80 caracteres.' }
   const rows: Record<string, unknown> = {
-    egresado: { nombre: txt(fd, 'nombre'), especialidad: txt(fd, 'especialidad'), foto_url: foto, destacado: fd.get('destacado') === 'on', orden },
+    egresado: { curso: txt(fd, 'curso'), promocion: txt(fd, 'promocion') || null, foto_url: foto, destacado: fd.get('destacado') === 'on', orden },
     testimonio: { nombre: txt(fd, 'nombre'), curso: txt(fd, 'curso') || null, texto: txt(fd, 'texto'), puntaje, foto_url: foto, curso_id: txt(fd, 'curso_id') || null, orden },
     faq: { pregunta: txt(fd, 'pregunta'), respuesta: txt(fd, 'respuesta'), orden },
     foto: { categoria: txt(fd, 'categoria'), area: txt(fd, 'area') || null, imagen_url: imagen ?? '', alt: txt(fd, 'alt'), descripcion: txt(fd, 'descripcion') || null, orden },
