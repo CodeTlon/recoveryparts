@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { hrefSeguro } from '@/lib/validar'
 import Image from 'next/image'
 import Link from 'next/link'
+import Galeria from '@/components/public/Lightbox'
 import { ArrowRight, ArrowUpRight, Star, Plus, Search } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import HeroVideo from '@/components/public/HeroVideo'
@@ -36,7 +37,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq, conAulas] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
-    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').not('foto_url', 'is', null).order('destacado', { ascending: false }).order('orden').limit(6), []),
+    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').not('foto_url', 'is', null).order('destacado', { ascending: false }).order('orden').limit(5), []),
     query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
@@ -189,26 +190,15 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 5 · Egresados: una foto por grupo que terminó un curso o taller (no personas sueltas). La destacada ocupa
-            2×2 en escritorio; en el celular van en una fila deslizable para no alargar la portada. */}
+        {/* 5 · Egresados: grilla tipo galería con una foto por grupo que terminó un curso o taller; cada foto dice a
+            qué curso pertenece y se amplía con el visor. */}
         {egresados.length > 0 && (
           <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
             <SectionTitle id="t-egresados" bajada={t.egresados_bajada}>{t.egresados_titulo}</SectionTitle>
-            <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-4 md:mx-0 md:grid md:grid-flow-dense md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3">
-              {egresados.map((e) => (
-                <li key={e.id} className={`w-[min(85vw,24rem)] shrink-0 snap-start md:w-auto ${e.destacado ? 'lg:col-span-2 lg:row-span-2' : ''}`}>
-                  <figure className="al-entrar group relative aspect-3/2 h-full overflow-hidden rounded-card bg-surface-container">
-                    <Image src={e.foto_url} alt={`Grupo de egresados de ${e.curso}${e.promocion ? `, ${e.promocion}` : ''}`} fill
-                      sizes={e.destacado ? '(max-width:768px) 85vw, (max-width:1024px) 50vw, 820px' : '(max-width:768px) 85vw, (max-width:1024px) 50vw, 400px'}
-                      className="object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.03]" />
-                    <figcaption className="absolute inset-x-2 bottom-2 rounded-lg bg-surface-container-lowest/80 px-3 py-2 backdrop-blur-md">
-                      <p className="text-sm font-semibold">{e.curso}</p>
-                      {e.promocion && <p className="text-xs text-on-surface-variant">{e.promocion}</p>}
-                    </figcaption>
-                  </figure>
-                </li>
-              ))}
-            </ul>
+            <Galeria densa prioridad={false} fotos={egresados.map((e) => ({
+              id: e.id, imagen_url: e.foto_url, etiqueta: e.curso, descripcion: e.promocion,
+              alt: `Grupo de egresados de ${e.curso}${e.promocion ? `, ${e.promocion}` : ''}`,
+            }))} />
           </section>
         )}
 
