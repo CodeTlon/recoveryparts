@@ -44,6 +44,27 @@ Neutros siempre teñidos hacia el tono 263 (nada de gris puro). Colores nuevos: 
 - Encabezado de página interior: `components/ui/EncabezadoPagina.tsx`. Título de sección: `components/ui/SectionTitle.tsx`
   (pista de circuito que se dibuja con el scroll + título display).
 
+## Celular (v0.17.1)
+- Campos (`input`, `select`, `textarea`) a 16 px en pantallas táctiles: con menos, Safari de iPhone hace zoom al enfocarlos.
+  Lo resuelve una regla de `globals.css` fuera de las capas de Tailwind; no hace falta tocar cada campo.
+- Zona de toque de 40 px como mínimo en todo control aislado. Si el texto es chico, se agranda con `py-*` y se compensa con
+  margen negativo (`-my-*`) para no mover el layout.
+- Letra mínima de 12 px (`text-xs`), también en gráficos y etiquetas del campus.
+- Filtros secundarios plegados detrás de un botón en el celular (ver `CursosFilters`): lo primero que se ve son los resultados.
+- Tablas del campus: en el celular se ocultan las columnas secundarias (`hidden md:table-cell`) antes que hacer scroll lateral.
+
+## Portada y pie (v0.17.2)
+- La portada no pasa de ~9–10 pantallas en el celular: listas cortas (4 inicios, 4 egresados), destacados en fila
+  deslizable debajo de `lg` y un link «Ver todos» en vez de repetir el catálogo. El cierre con datos de contacto vive en el
+  pie, no se repite en la portada.
+- Pie compacto (v0.17.3, a gusto de Mateo): marca chica + datos en columnas (Visitanos / Contacto / Sitio) y el copyright.
+  Sin invitación grande, sin nombre gigante y sin «Volver arriba». En el celular el teléfono llama (`tel:`), el mail abre el
+  correo, la dirección abre el mapa y WhatsApp abre el chat.
+- Un control que parece filtro filtra ahí mismo y marca la opción elegida (`aria-pressed`); si lleva a otra página, se
+  escribe como link («Ver todo en …»), no como chip.
+- El circuito no compite con lo que se lee: tenue detrás del texto (`LECTURA` en `CircuitField.tsx`) y pulsos del fondo
+  fijo más suaves que los del hero.
+
 ## Motivo propio: el circuito
 Pistas finas a 0°/45°/90° con nodos huecos en los extremos, como el hemisferio naranja del logo. Reemplaza a la aurora, las
 grillas y los brillos genéricos. Aparece en:
@@ -54,7 +75,7 @@ grillas y los brillos genéricos. Aparece en:
 ## Movimiento (todo se apaga con `prefers-reduced-motion`)
 | Efecto | Dónde | Cómo |
 |---|---|---|
-| Circuito vivo: pulsos todo el tiempo, se encienden cerca del puntero, ráfaga al clic, paralaje | fondo público, hero | `CircuitField.tsx` (canvas 2D, sin librerías) |
+| Circuito vivo: pulsos todo el tiempo, se encienden cerca del puntero, ráfaga al clic, paralaje | fondo público, hero | `CircuitField.tsx` + `circuito/motor.ts` (canvas 2D en un Web Worker, sin librerías) |
 | Título que se expande de Archivo comprimido a ancho | h1 de páginas públicas, login, 404 | `TituloExpandido.tsx` + keyframes `expandir` (CSS) |
 | Entrada con recorte atada al scroll | tarjetas, filas de agenda, mosaicos | clase `al-entrar` (`animation-timeline: view()`, sin JS) |
 | Pista que se dibuja al entrar la sección | títulos de sección | `.pista-trazo` / `.pista-nodo` |
@@ -63,7 +84,7 @@ grillas y los brillos genéricos. Aparece en:
 | Díptico que se ensancha hacia el puntero | áreas de la portada | `.diptico` + `:has()` |
 | Tarjeta que se inclina en 3D con reflejo e imagen en paralaje | tarjetas de curso | `Inclinable.tsx` (solo mouse/lápiz) |
 | Botón magnético | CTA principales | `Magnetico.tsx` (sin rebote) |
-| Foto que viaja de la tarjeta a la ficha / de la grilla al visor | cursos, galería | `ViewTransition` de React con `share="morph"` |
+| Foto que viaja de la tarjeta a la ficha / de la grilla al visor | cursos, fotos de las aulas | `ViewTransition` de React con `share="morph"` |
 | Acordeón con altura animada nativa | preguntas frecuentes | `details.acordeon` + `interpolate-size` |
 | Fila deslizable con foco en la del centro | testimonios | `.fila-foco` (`view(inline)`) |
 
@@ -71,6 +92,24 @@ Reglas: animar `transform`/`translate`/`opacity`/`clip-path` (la excepción deli
 columnas del díptico); easing `--ease-out`; nada de rebote en controles; nada de bajar la opacidad del contenido que todavía
 no entró (rompe el contraste para lectores y auditorías); el texto animado deja una copia estática que fija el layout
 (CLS 0). El fondo no tiene botón de pausa por decisión de producto (ver `.ai/context/DECISIONS.md`).
+
+## Gráficos (v0.17.5, `src/components/campus/charts.tsx`)
+- Sin librerías ni JS en el cliente: HTML/CSS del servidor. Las barras crecen al cargar (`crece-x`/`crece-y`, se apagan con
+  `prefers-reduced-motion`).
+- Colores: una serie = `bg-dato` (naranja contenido, L 0,66); estados de inscripción = `dato-fin` (finalizadas),
+  `dato-curso` (cursando), `dato-baja` (desertores). Validados contra el navy de las tarjetas (banda de luminosidad,
+  croma y ΔE ≥ 21 entre vecinos para deutan/protan). No usar `accent`/`success`/`danger` en marcas de datos.
+- Marcas finas: barras de 8 px (6 px en tarjetas chicas) con pista `bg-dato/15`, columnas de 24 px como máximo con la
+  esquina redondeada solo arriba y una línea de base; parte de un todo = una barra partida con 2 px de separación (no anillos).
+- Los números van en color de texto y escritos al lado de la marca (nunca solo en un tooltip); cada gráfico lleva
+  `role="img"` con los datos en `aria-label`. Porcentajes con coma decimal y espacio (`33,3 %`).
+- Un solo filtro por página, arriba de todo (`Pestanas` con el valor en la URL).
+
+## Cursor propio (v0.18.0, `components/ui/CursorCircuito.tsx`)
+Un nodo naranja (6 px, el punto exacto) y un anillo de 30 px que lo sigue con retraso; sobre algo clicable el anillo crece
+a 46 px en claro (se lee sobre los botones naranjas) y el punto se esconde; al apretar, el anillo se achica. Solo sitio
+público, solo `pointer: fine` y sin `prefers-reduced-motion`; campos de texto con la barra del sistema; con
+`forced-colors` vuelve el cursor del sistema. Un solo `requestAnimationFrame` que se detiene en reposo.
 
 ## Qué comparten todas las páginas
 Wordmark (logo + «Recovery Parts» en display), menú flotante, pie «declaración», tokens, tipografía, botones, chips,

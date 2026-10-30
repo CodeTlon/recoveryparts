@@ -4,6 +4,18 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualización 2026-10-29 (v0.18.0, paginación, sitio editable y cursor):** rama `feature/dev2-cms-paginacion`: paginación numerada en todas las listas del admin, filtros en Cursos y talleres, textos de todas las páginas editables desde Sitio web (índice por sección), listas del CMS con modal, cursor propio en el sitio público. v0.17.1–v0.18.0 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
+**Actualización 2026-10-29 (v0.17.5, gráficos y admin):** rama `feature/dev2-graficos`: reportes con filtro por área, inscripciones por mes, barras en vez de anillo, paleta `dato*` validada, encuestas con reparto de notas y «Por empezar» con inscriptos/cupo. v0.17.1–v0.17.5 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
+**Actualización 2026-10-29 (v0.17.4, campus más simple):** rama `feature/dev2-campus-ux`: Resumen solo con lo del día y Reportes en su página, curso del profesor en pestañas, menú del admin agrupado, aulas y sitio web plegables. v0.17.1–v0.17.4 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
+**Actualización 2026-10-29 (v0.17.3, filtro y pie):** rama `feature/dev2-filtro-pie`: filtro real en «Capacitaciones destacadas» y pie compacto. v0.17.1–v0.17.3 en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
+**Actualización 2026-10-29 (v0.17.2, portada y pie):** rama `feature/dev2-portada-pie` (desde `dev`): sin galería pública (`/galeria` → inicio), portada más corta (9,4 pantallas en el celular), pie nuevo en tres franjas y fondo atenuado detrás del texto. Verificado en local (107 E2E, capturas en `screenshots/portada-pie-2026-10-29/`). v0.17.1 y v0.17.2 están en `dev`/`test`; falta el PR a `main` con OK de Mateo.
+
+**Actualización 2026-10-29 (v0.17.1, optimización y celular):** el rediseño v0.17.0 está en `main` (PR #27). La rama `feature/dev2-optimizacion` (desde `dev`) lo optimiza sin cambiar el diseño (fondo de circuito en un Web Worker, Archivo de 90 a 58 KB, `sizes` de imágenes), corrige el título animado sin espacios (estaba en producción) y ajusta el celular (campos de 16 px, zonas de toque de 40 px, filtros plegados, tablas del campus). Verificado en local: 104 E2E, 13 unitarios, tipos, lint, build, auditoría móvil automática a 360/390 px (sin scroll horizontal ni a 320 px) y capturas en `screenshots/optimizacion-movil-2026-10-29/`. **Sin verificar:** Safari/Firefox reales (los cubre la CI), un iPhone/Android de verdad, homologación y producción.
+
 **Actualización 2026-10-28 (rediseño v0.17.0):** la rama `feature/dev2-rediseno` (desde `dev`) rediseña el sitio público, el acceso y el campus con el sistema de `design.md` y agrega paginación en `/cursos`, `/galeria` y Campus › Cursos. Verificado en local contra una base con el seed: tipos, lint, build, 13 unitarios, 95 E2E en 3 viewports, Lighthouse celular (a11y/SEO/buenas prácticas 100, CLS 0) y capturas en `screenshots/rediseno-2026-10-28/`. **Sin verificar:** Firefox/Safari (job `navegadores` de la CI), homologación y producción (no se desplegó). Costo conocido de rendimiento móvil en la portada: `KNOWN_ISSUES.md`.
 
 **Actualización 2026-10-21 (sección «Aulas»):** la rama `feat/aulas-sitio` (desde `dev`, **sin mergear ni pushear**) suma la sección pública «Aulas» (RF-60): página `/aulas`, pestaña «Aulas» en Campus › Sitio web, link en el menú, en «Nosotros» y en el sitemap. Migración **0030** (`db/migrations/0030_aulas_sitio.sql`). Verificada en local por HTTP, SQL y Chrome real. Las fotos de prueba del seed son los flyers viejos de `public/images`: en la demo las tiene que cargar el admin con fotos reales.

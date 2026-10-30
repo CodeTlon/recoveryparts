@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { requireRole, fechaAR } from '@/lib/auth'
 import EdicionForm from '@/components/campus/EdicionForm'
 import { RotateCcw } from 'lucide-react'
-import { ActionForm, Badge, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, Field, PageHead, BackLink, EstadoBadge, Check, Pestanas } from '@/components/campus/ui'
 import { agregarAlumno, corregirFechaDesercion, finalizarEdicion, guardarClases, guardarEstructuraEdicion, guardarHorarios, marcarDesertor, restablecerEstructura } from '../../../../actions'
 import { hoyAR, etiquetaEdicion } from '@/lib/fechas'
 import AvisosPendientes from '@/components/campus/AvisosPendientes'
@@ -54,12 +54,7 @@ export default async function EdicionAdmin({ params, searchParams }: { params: P
         </p>
       )}
 
-      <nav aria-label="Secciones de la edición" className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant pb-3">
-        {TABS.map(([k, l]) => (
-          <Link key={k} href={href(k)} scroll={false} aria-current={tab === k ? 'page' : undefined}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? 'bg-on-surface text-surface-container-lowest' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-accent'}`}>{l}</Link>
-        ))}
-      </nav>
+      <Pestanas label="Secciones de la edición" items={TABS.map(([k, l]) => [k, l])} actual={tab} href={href} />
 
       {tab === 'datos' && <section className={`${sec} max-w-3xl`}>
         <h2 className="mb-4 text-xl font-semibold">Datos de la edición</h2>

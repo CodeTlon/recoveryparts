@@ -1,5 +1,5 @@
 import { requireRole, fechaAR } from '@/lib/auth'
-import Paginacion, { POR_PAGINA, paginaDe } from '@/components/campus/Paginacion'
+import Paginacion, { corregirPagina, paginaDe, rango } from '@/components/campus/Paginacion'
 import { ActionForm, Badge, Empty, PageHead, SubmitButton } from '@/components/campus/ui'
 import { marcarContactoLeido } from '../actions'
 
@@ -7,9 +7,8 @@ export default async function Consultas({ searchParams }: { searchParams: Promis
   const pagina = paginaDe((await searchParams).pagina)
   const { sb } = await requireRole('admin')
   // Antes: las 200 más nuevas y el resto inalcanzable. Ahora todas, de a POR_PAGINA.
-  const { data: filas } = await sb.from('contactos').select('*').order('creado_en', { ascending: false }).order('id').range((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
-  const hayMas = (filas?.length ?? 0) > POR_PAGINA
-  const data = filas?.slice(0, POR_PAGINA)
+  const { data, count } = await sb.from('contactos').select('*', { count: 'exact' }).order('creado_en', { ascending: false }).order('id').range(...rango(pagina))
+  corregirPagina(pagina, count ?? 0)
   return (
     <>
       <PageHead title="Consultas" sub="Mensajes enviados desde el formulario de contacto del sitio." />
@@ -33,7 +32,7 @@ export default async function Consultas({ searchParams }: { searchParams: Promis
           ))}
         </ul>
       )}
-      <Paginacion pagina={pagina} hayMas={hayMas} params={{}} />
+      <Paginacion pagina={pagina} total={count ?? 0} que="consultas" />
     </>
   )
 }

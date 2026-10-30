@@ -6,8 +6,9 @@ import './globals.css'
 // Fuente autoalojada (src/app/fonts, subset latin): el build no depende de Google Fonts. Ver FONTS.md.
 const montserrat = localFont({ src: './fonts/montserrat-latin-wght-normal.woff2', weight: '100 900', variable: '--font-montserrat', display: 'swap' })
 // Display: Archivo variable con ejes de peso y ancho (wdth 62–125). El ancho expandido es la voz de los títulos y el
-// título del inicio lo anima de comprimido a expandido (globals.css § Movimiento).
-const archivo = localFont({ src: './fonts/archivo-latin-standard-normal.woff2', weight: '100 900', style: 'normal', variable: '--font-archivo', display: 'swap', declarations: [{ prop: 'font-stretch', value: '62% 125%' }] })
+// título del inicio lo anima de comprimido a expandido (globals.css § Movimiento). El archivo trae solo los pesos que usan
+// los títulos (600–700): pesa 58 KB en vez de 90 KB (FONTS.md explica cómo se recortó).
+const archivo = localFont({ src: './fonts/archivo-latin-wght600-700-normal.woff2', weight: '600 700', style: 'normal', variable: '--font-archivo', display: 'swap', declarations: [{ prop: 'font-stretch', value: '62% 125%' }] })
 
 export const metadata: Metadata = {
   title: { default: 'Recovery Parts — Academia de cursos técnicos', template: '%s · Recovery Parts' },

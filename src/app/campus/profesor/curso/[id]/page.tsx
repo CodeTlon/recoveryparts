@@ -1,9 +1,9 @@
 import AvisosPendientes from '@/components/campus/AvisosPendientes'
 import { ClasesEditor, EstructuraEditor } from '@/components/campus/ListEditors'
 import { notFound } from 'next/navigation'
-import { FileText, Link2, Eye, EyeOff, Trash2, RotateCcw } from 'lucide-react'
+import { FileText, Link2, Eye, EyeOff, Trash2, RotateCcw, Plus } from 'lucide-react'
 import { requireRole, fechaAR } from '@/lib/auth'
-import { ActionForm, Badge, Confirm, Empty, PageHead, SubmitButton, BackLink, EstadoBadge, Check } from '@/components/campus/ui'
+import { ActionForm, Badge, Confirm, Empty, PageHead, SubmitButton, BackLink, EstadoBadge, Check, Pestanas } from '@/components/campus/ui'
 import { guardarClases, guardarEstructuraEdicion, restablecerEstructura } from '../../../admin/actions'
 import { borrarMaterial, liberarMaterial } from '../../actions'
 import MaterialForms from '@/components/campus/MaterialForms'
@@ -11,8 +11,13 @@ import { hoyAR, etiquetaEdicion, momentoEdicion } from '@/lib/fechas'
 import ArbolEstructura, { type ArbolClase, type ArbolModulo } from '@/components/campus/ArbolEstructura'
 
 // Página de una EDICIÓN que dicta el profesor (el id de la ruta es el de la edición).
-export default async function EdicionProfesor({ params }: { params: Promise<{ id: string }> }) {
+const TABS = ['material', 'calendario', 'alumnos', 'estructura'] as const
+
+export default async function EdicionProfesor({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { id } = await params
+  const { tab: t } = await searchParams
+  // Una pestaña por tarea (antes todo iba en una sola página de varios metros): arranca en Material, lo de todos los días.
+  const tab = (TABS as readonly string[]).includes(t ?? '') ? t! : 'material'
   const { sb, perfil } = await requireRole('profesor')
   const { data: ed } = await sb.from('ediciones').select('id, curso_id, fecha_inicio, activo, cursos(nombre, tipo, duracion_semanas), aulas(nombre), clases(fecha)').eq('id', id).eq('profesor_id', perfil.id).maybeSingle()
   if (!ed) notFound() // un profesor nunca ve ediciones ajenas (ni terminadas: RLS con edicion_vigente)
@@ -80,9 +85,10 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
     <>
       <BackLink href="/campus/profesor">Mis cursos</BackLink>
       <PageHead title={`${curso.nombre} · ${etiquetaEdicion(ed.fecha_inicio)}`} sub={`${(ed.aulas as unknown as { nombre: string } | null)?.nombre ?? 'Aula sin asignar'} · inicia el ${fechaAR(ed.fecha_inicio)}`} />
+      <Pestanas label="Secciones del curso" actual={tab} href={(k) => `/campus/profesor/curso/${id}?tab=${k}`}
+        items={[['material', 'Material', (mats ?? []).length], ['calendario', 'Calendario'], ['alumnos', 'Alumnos', (alumnos ?? []).length], ['estructura', 'Estructura']]} />
 
-      <section className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold">Alumnos</h2>
+      {tab === 'alumnos' && <section>
         {!alumnos?.length ? <Empty>No hay alumnos asignados.</Empty> : (
           <div className="card overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
@@ -100,20 +106,21 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
             </table>
           </div>
         )}
-      </section>
+      </section>}
 
-      <section className="mb-12">
-        <h2 className="mb-1 text-xl font-semibold">Material</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">El «material base» lo carga la academia; el resto es el que subís vos para este curso. Tus alumnos ven cada material solo cuando lo liberás con «Liberar ahora».</p>
-        {!mats?.length && <Empty>Todavía no hay material cargado.</Empty>}
-        <div className="mb-6"><ArbolEstructura modulos={modulos} clases={clasesPlan} materiales={(mats ?? []) as Mat[]} renderMaterial={filaMaterial} /></div>
+      {tab === 'material' && <section>
+        <p className="mb-6 max-w-2xl text-sm text-on-surface-variant">Tus alumnos ven cada material solo cuando lo liberás con «Liberar ahora». El «material base» lo carga la academia; el resto es el que subís vos.</p>
+        {/* Subir es la acción ocasional: queda plegada para que lo primero que se vea sea el material y su estado. */}
+        <details className="group mb-6">
+          <summary className="btn-primary w-fit cursor-pointer list-none [&::-webkit-details-marker]:hidden"><Plus size={16} aria-hidden className="transition-transform group-open:rotate-45" /> Subir material</summary>
+          <div className="mt-4"><MaterialForms cursoId={ed.curso_id} edicionId={id} modulos={modulos} clases={clasesPlan} /></div>
+        </details>
+        {!mats?.length ? <Empty>Todavía no hay material cargado.</Empty>
+          : <ArbolEstructura modulos={modulos} clases={clasesPlan} materiales={(mats ?? []) as Mat[]} renderMaterial={filaMaterial} />}
+      </section>}
 
-        <MaterialForms cursoId={ed.curso_id} edicionId={id} modulos={modulos} clases={clasesPlan} />
-      </section>
-
-      <section className="mb-12">
-        <h2 className="mb-1 text-xl font-semibold">Calendario</h2>
-        <p className="mb-4 text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase: podés adelantar una clase o saltearla, o marcarla suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
+      {tab === 'calendario' && <section>
+        <p className="mb-4 max-w-3xl text-sm text-on-surface-variant">Asigná o ajustá la fecha de cada clase: podés adelantar una clase o saltearla, o marcarla suspendida o reprogramada. El alumno solo ve el título de la clase siguiente.</p>
         <AvisosPendientes edicionId={id} cantidad={avisosPendientes} />
         <div className="max-w-4xl">
           <ActionForm action={guardarClases} reset={false}>
@@ -123,9 +130,9 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
               avisar={<Check name="avisar" defaultChecked>Avisar ahora por mail a los alumnos si hay clases suspendidas o reprogramadas (si no, el aviso queda pendiente)</Check>} />
           </ActionForm>
         </div>
-      </section>
+      </section>}
 
-      <section>
+      {tab === 'estructura' && <section>
         <div className="mb-1 flex flex-wrap items-center gap-3">
           <h2 className="text-xl font-semibold">Estructura de tu curso</h2>
           {estructura.personalizada ? <Badge tone="warn">Personalizada para este curso</Badge> : <Badge>Sigue la guía general</Badge>}
@@ -148,7 +155,7 @@ export default async function EdicionProfesor({ params }: { params: Promise<{ id
             </ActionForm>
           )}
         </div>
-      </section>
+      </section>}
     </>
   )
 }

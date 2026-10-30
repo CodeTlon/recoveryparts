@@ -1,14 +1,13 @@
-import { Suspense } from 'react'
 import Link from 'next/link'
-import { BookOpen, CalendarDays, GraduationCap, Inbox, Users } from 'lucide-react'
+import { BarChart3, BookOpen, CalendarDays, GraduationCap, Inbox, Users } from 'lucide-react'
 import { fechaAR, requireRole } from '@/lib/auth'
 import { PageHead, StatTile } from '@/components/campus/ui'
+import { Medidor } from '@/components/campus/charts'
 import Reveal from '@/components/ui/Reveal'
-import ReportesPanel from '@/components/campus/ReportesPanel'
-import Skeleton from '@/components/ui/Skeleton'
 import { hoyAR } from '@/lib/fechas'
 
-// Resumen del administrador: lo que requiere atención hoy + los reportes de la academia (antes en /reportes).
+// Resumen del administrador: solo lo que pide atención estas semanas. Los reportes viven en /campus/admin/reportes
+// (estuvieron acá abajo y el resumen pasaba a ser una página de varios metros).
 export default async function AdminHome() {
   const { sb } = await requireRole('admin')
   const hoy = hoyAR()
@@ -21,8 +20,13 @@ export default async function AdminHome() {
     count(sb.from('contactos').select('*', { count: 'exact', head: true }).eq('leido', false)),
     sb.from('clases').select('id, fecha, estado, plan_clases(titulo), ediciones!inner(activo, curso_id, cursos(nombre))').eq('ediciones.activo', true).gte('fecha', hoy).lte('fecha', en14).order('fecha').limit(6),
     sb.from('contactos').select('id, nombre, mensaje, leido, creado_en').order('creado_en', { ascending: false }).limit(4),
-    sb.from('ediciones').select('id, curso_id, fecha_inicio, cursos!inner(nombre, tipo, activo)').eq('activo', true).eq('cursos.activo', true).gte('fecha_inicio', hoy).order('fecha_inicio').limit(5),
+    sb.from('ediciones').select('id, curso_id, cupo, fecha_inicio, cursos!inner(nombre, tipo, activo)').eq('activo', true).eq('cursos.activo', true).gte('fecha_inicio', hoy).order('fecha_inicio').limit(5),
   ])
+  // Cuántos inscriptos tiene cada edición por empezar (para ver de un vistazo si se va a llenar).
+  const idsPorIniciar = (porIniciar ?? []).map((e) => e.id as string)
+  const { data: inscPorIniciar } = idsPorIniciar.length ? await sb.from('inscripciones').select('edicion_id').in('edicion_id', idsPorIniciar) : { data: [] }
+  const inscriptos = new Map<string, number>()
+  for (const i of inscPorIniciar ?? []) inscriptos.set(i.edicion_id, (inscriptos.get(i.edicion_id) ?? 0) + 1)
   const kpis = [
     { Icon: BookOpen, v: cursos, l: 'Cursos y talleres activos', href: '/campus/admin/cursos' },
     { Icon: Users, v: alumnos, l: 'Alumnos', href: '/campus/admin/usuarios?rol=alumno' },
@@ -32,11 +36,12 @@ export default async function AdminHome() {
   // Las relaciones muchos-a-uno llegan como objeto (el tipo inferido es una lista).
   const uno = <T,>(x: T | T[] | null | undefined) => (Array.isArray(x) ? x[0] : x) ?? null
   type Clase = { id: string; fecha: string; estado: string; plan_clases: { titulo: string } | null; ediciones: { curso_id: string; cursos: { nombre: string } | null } | null }
-  type PorIniciar = { id: string; curso_id: string; fecha_inicio: string; cursos: { nombre: string; tipo: string } | null }
+  type PorIniciar = { id: string; curso_id: string; cupo: number; fecha_inicio: string; cursos: { nombre: string; tipo: string } | null }
   const lista = 'divide-y divide-outline-variant text-sm'
   return (
     <>
-      <PageHead title="Resumen" sub="Lo que pasa en la academia: novedades, próximas fechas y reportes." />
+      <PageHead title="Resumen" sub="Lo que pide tu atención: consultas, próximas clases y ediciones por empezar."
+        action={<Link href="/campus/admin/reportes" className="btn-outline">Ver reportes <BarChart3 size={16} aria-hidden /></Link>} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map(({ Icon, v, l, href, alert }, i) => (
           <Reveal key={l} delay={i * 0.05} className="h-full">
@@ -68,23 +73,29 @@ export default async function AdminHome() {
             <ul className={lista}>
               {msgs.map((m) => (
                 <li key={m.id} className="py-2">
-                  <p className="font-medium">{m.nombre}{!m.leido && <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-secondary">Nueva</span>}</p>
+                  <p className="font-medium">{m.nombre}{!m.leido && <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-secondary">Nueva</span>}</p>
                   <p className="line-clamp-2 text-xs text-on-surface-variant">{m.mensaje}</p>
                 </li>
               ))}
             </ul>
           ) : <p className="text-sm text-on-surface-variant">Todavía no hay consultas.</p>}
-          <Link href="/campus/admin/consultas" className="mt-3 inline-block text-sm font-semibold text-secondary hover:underline">Ver todas →</Link>
+          <Link href="/campus/admin/consultas" className="mt-0.5 inline-block py-2.5 text-sm font-semibold text-secondary hover:underline">Ver todas →</Link>
         </section>
 
         <section className="card p-5">
-          <h2 className="mb-3 flex items-center gap-2 font-semibold"><BookOpen size={18} className="text-secondary" aria-hidden /> Por empezar</h2>
+          <h2 className="mb-3 flex items-center gap-2 font-semibold"><BookOpen size={18} className="text-secondary" aria-hidden /> Por empezar <span className="text-xs font-normal text-on-surface-variant">(inscriptos / cupo)</span></h2>
           {porIniciar?.length ? (
             <ul className={lista}>
               {(porIniciar as unknown as PorIniciar[]).map((c) => (
-                <li key={c.id} className="flex items-start justify-between gap-3 py-2">
-                  <Link href={`/campus/admin/cursos/${c.curso_id}/ediciones/${c.id}`} className="font-medium hover:text-accent">{uno(c.cursos)?.nombre ?? 'Curso'}</Link>
-                  <span className="shrink-0 text-xs text-on-surface-variant">{fechaAR(c.fecha_inicio)}</span>
+                <li key={c.id} className="py-2.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <Link href={`/campus/admin/cursos/${c.curso_id}/ediciones/${c.id}`} className="-my-2 inline-block py-2 font-medium hover:text-accent">{uno(c.cursos)?.nombre ?? 'Curso'}</Link>
+                    <span className="shrink-0 text-xs text-on-surface-variant">{fechaAR(c.fecha_inicio)}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-3">
+                    <Medidor valor={inscriptos.get(c.id) ?? 0} max={c.cupo} alto="h-1.5" />
+                    <span className="shrink-0 text-xs tabular-nums text-on-surface-variant">{inscriptos.get(c.id) ?? 0}/{c.cupo} inscriptos</span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -92,11 +103,6 @@ export default async function AdminHome() {
         </section>
       </div>
 
-      <h2 className="mb-4 mt-12 text-2xl font-semibold">Reportes</h2>
-      {/* Los reportes agregan varias tablas: con Suspense el resumen de arriba se ve sin esperarlos. */}
-      <Suspense fallback={<div role="status" aria-label="Cargando reportes" className="grid gap-6 lg:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-56" />)}</div>}>
-        <ReportesPanel />
-      </Suspense>
     </>
   )
 }

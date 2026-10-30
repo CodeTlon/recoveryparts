@@ -117,6 +117,7 @@ test('regresión: el profesor sube un PDF de 12 MB y uno de más de 25 MB recibe
   const pdf = (mb: number) => { const b = Buffer.alloc(Math.round(mb * 1048576), 48); b.write('%PDF-1.4\n'); return b }
   const subir = async (titulo: string, mb: number) => {
     await page.goto(`/campus/profesor/curso/${e.edicion}`)
+    await page.getByText('Subir material').click() // las formas de subir quedan plegadas detrás de este botón
     const form = page.locator('form', { has: page.getByRole('button', { name: 'Subir PDF' }) })
     await form.getByLabel('Título').fill(titulo)
     await form.locator('input[type=file]').setInputFiles({ name: `${titulo}.pdf`, mimeType: 'application/pdf', buffer: pdf(mb) })
@@ -147,4 +148,91 @@ test('regresión: Campus › Aulas lista las aulas cargadas', async ({ browser, 
   await expect(page.getByText('Todavía no hay aulas cargadas.')).toHaveCount(0)
   await ctx.close()
   await e.sql.begin(async (tx) => { await tx`set local session_replication_role = replica`; await tx`delete from aulas where nombre = ${nombre}` })
+})
+
+// Campus más simple (2026-10-29): los reportes tienen página propia y el curso del profesor va por pestañas.
+test('el admin ve los reportes en su página y el resumen ya no los repite', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin')
+  await expect(page.getByRole('heading', { name: 'Estado de las inscripciones' })).toHaveCount(0)
+  await page.getByRole('link', { name: 'Ver reportes' }).click() // el menú lateral en el celular va en un cajón
+  await expect(page).toHaveURL(/\/campus\/admin\/reportes$/)
+  await expect(page.getByRole('heading', { name: 'Reportes', level: 1 })).toBeVisible()
+  await ctx.close()
+})
+
+test('los reportes se filtran por área y cada gráfico describe sus datos', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/reportes')
+  await expect(page.getByRole('img', { name: /^Estado de las inscripciones: Finalizadas \d+/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /^Inscripciones por mes: / })).toBeVisible()
+  const filtro = page.getByRole('navigation', { name: 'Filtrar por área' })
+  await filtro.getByRole('link', { name: 'Creación y Diseño' }).click()
+  await expect(page).toHaveURL(/area=diseno/)
+  await expect(filtro.getByRole('link', { name: 'Creación y Diseño' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('heading', { name: 'Ocupación por edición' }).or(page.getByText('No hay ediciones activas en esta área.'))).toBeVisible()
+  await ctx.close()
+})
+
+test('Cursos y talleres del admin va paginado, con filtros en la URL, y una página de más vuelve a la última', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/cursos?pagina=999')
+  await expect(page).not.toHaveURL(/pagina=999/)
+  await expect(page.getByRole('heading', { name: 'Cursos y talleres', level: 1 })).toBeVisible()
+  await page.goto('/campus/admin/cursos')
+  const paginas = page.getByRole('navigation', { name: 'Páginas de cursos' })
+  if (await paginas.count()) {
+    await expect(paginas).toContainText(/Mostrando 1–15 de \d+ cursos/)
+    await paginas.getByRole('link', { name: 'Página 2' }).click()
+    await expect(page).toHaveURL(/pagina=2/)
+    await expect(paginas.getByRole('link', { name: 'Página 2' })).toHaveAttribute('aria-current', 'page')
+  }
+  await page.getByRole('link', { name: 'De baja' }).click()
+  await expect(page).toHaveURL(/estado=baja/)
+  await page.getByRole('searchbox', { name: 'Buscar curso por nombre' }).fill('zzz-no-existe')
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(page).toHaveURL(/q=zzz-no-existe/)
+  await expect(page).toHaveURL(/estado=baja/)
+  await expect(page.getByText('Ningún curso coincide con los filtros.')).toBeVisible()
+  await ctx.close()
+})
+
+test('los textos de las páginas se editan desde Sitio web y se ven en el sitio', async ({ browser, baseURL }, info) => {
+  test.skip(info.project.name !== 'desktop', 'edita un texto compartido: corre en un solo tamaño para no pisarse')
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/sitio')
+  await page.getByRole('link', { name: /Preguntas/ }).first().click()
+  await expect(page).toHaveURL(/tab=faq/)
+  const bloque = page.locator('details', { hasText: 'Encabezado de la página' })
+  await bloque.locator('summary').click()
+  const titulo = `Dudas frecuentes ${Date.now()}`
+  await bloque.getByLabel('Título').fill(titulo)
+  await bloque.getByRole('button', { name: 'Guardar' }).click()
+  await expect(bloque.getByText(/Guardado|Listo|Hecho/)).toBeVisible()
+  const pub = await ctx.newPage()
+  await pub.goto('/preguntas-frecuentes')
+  await expect(pub.locator('h1')).toContainText(titulo.split(' ')[0])
+  await expect(pub).toHaveTitle(new RegExp(titulo))
+  // Vuelve al texto por defecto (campo vacío).
+  await bloque.getByLabel('Título').fill('')
+  await bloque.getByRole('button', { name: 'Guardar' }).click()
+  // El aviso «Guardado» del primer guardado sigue en pantalla: se recarga hasta ver el cambio.
+  await expect.poll(async () => { await pub.reload(); return pub.title() }, { timeout: 15_000 }).toMatch(/^Preguntas frecuentes/)
+  await ctx.close()
+})
+
+test('el curso del profesor se recorre por pestañas (material, calendario, alumnos, estructura)', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.profesor)
+  const page = await ctx.newPage()
+  await page.goto(`/campus/profesor/curso/${e.edicion}`)
+  const pestanas = page.getByRole('navigation', { name: 'Secciones del curso' })
+  await expect(pestanas.getByRole('link', { name: /Material/ })).toHaveAttribute('aria-current', 'page')
+  await pestanas.getByRole('link', { name: /Alumnos/ }).click()
+  await expect(page).toHaveURL(/tab=alumnos/)
+  await expect(pestanas.getByRole('link', { name: /Alumnos/ })).toHaveAttribute('aria-current', 'page')
+  await ctx.close()
 })

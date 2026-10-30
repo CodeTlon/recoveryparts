@@ -550,7 +550,7 @@ export async function guardarEncuesta(_: R, fd: FormData): Promise<R> {
 
 // ── CMS del sitio (RF-53) ────────────────────────────────
 // Los campos llegan como rutas "grupo.campo" (ej. areas.diseno.titulo) y se anidan en el JSON.
-const CLAVES_SETTINGS = ['contacto', 'hero', 'stats', 'nosotros', 'areas', 'campus', 'aulas'] // aulas: presentación de la sección (RF-60)
+const CLAVES_SETTINGS = ['contacto', 'hero', 'stats', 'nosotros', 'areas', 'campus', 'aulas', 'textos'] // aulas: presentación de la sección (RF-60); textos: títulos y bajadas de cada página (lib/textos.ts)
 // Formato de los campos del CMS que se usan como link, imagen, email o interruptor (el resto es texto libre).
 function campoSettingInvalido(campo: string, val: string): string | null {
   if (!val) return null

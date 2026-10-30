@@ -10,9 +10,9 @@ import CursosFilters from '@/components/public/CursosFilters'
 import DemandaForm from '@/components/public/DemandaForm'
 import { getCursos, getHorarios, getSettings, query, waLink } from '@/lib/data'
 import Paginas from '@/components/ui/Paginas'
+import { TEXTOS_BASE } from '@/lib/textos'
 import { hrefPagina, paginaDe, paginar } from '@/lib/paginar'
 
-const DESCRIPCION = 'Cursos y talleres presenciales en Córdoba: reparación y tecnología, y diseño. Fechas, horarios y cupos.'
 const FILTROS = ['q', 'area', 'tipo', 'nivel', 'dia', 'orden']
 
 // Cada página del listado completo es su propia URL canónica (/cursos?pagina=2). Las vistas filtradas son variantes del
@@ -21,9 +21,10 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const f = await searchParams
   const pagina = paginaDe(f.pagina)
   const filtrado = FILTROS.some((k) => f[k])
+  const { textos: { cursos: t } } = await getSettings()
   return metaPagina({
-    titulo: pagina > 1 && !filtrado ? `Cursos y talleres — Página ${pagina}` : 'Cursos y talleres',
-    descripcion: DESCRIPCION,
+    titulo: pagina > 1 && !filtrado ? `${t.titulo} — Página ${pagina}` : t.titulo,
+    descripcion: t.descripcion,
     ruta: filtrado ? '/cursos' : hrefPagina('/cursos', {}, pagina),
   })
 }
@@ -58,14 +59,17 @@ export default async function CursosPage({ searchParams }: { searchParams: Promi
   if (f.pagina && pagina !== paginaDe(f.pagina)) redirect(hrefPagina('/cursos', f, pagina))
 
   const wa = waLink(settings.contacto.whatsapp, 'Hola! No encontré el curso que busco.')
+  // La bajada por defecto nombra la dirección cargada en Contacto (antes estaba escrita a mano en el código).
+  const dir = settings.contacto.direccion
+  const bajada = settings.textos.cursos.bajada === TEXTOS_BASE.cursos.bajada && dir ? TEXTOS_BASE.cursos.bajada.replace('en Córdoba', `en ${dir}, Córdoba`) : settings.textos.cursos.bajada
 
   return (
     <div className="flex min-h-screen flex-col text-on-surface">
       <SiteNav />
       <main id="contenido" tabIndex={-1} className="grow outline-hidden">
-        <EncabezadoPagina titulo="Cursos y talleres" bajada="Formación 100% presencial en La Rioja 345, Córdoba. Cursos de varias semanas y talleres cortos: una jornada, días seguidos o 1 a 2 semanas.">
+        <EncabezadoPagina titulo={settings.textos.cursos.titulo} bajada={bajada}>
           {/* El lugar reservado mide lo mismo que los filtros (celular, tablet, escritorio): sin salto al cargar (CLS). */}
-          <Suspense fallback={<div className="min-h-[338px] md:min-h-[258px] lg:min-h-[200px]" aria-hidden />}><CursosFilters /></Suspense>
+          <Suspense fallback={<div className="min-h-[304px] min-[360px]:min-h-[264px] sm:min-h-[170px] md:min-h-[258px] lg:min-h-[200px]" aria-hidden />}><CursosFilters /></Suspense>
         </EncabezadoPagina>
 
         <section id="resultados" className="mx-auto max-w-[1280px] scroll-mt-28 px-4 py-14 md:px-12">
