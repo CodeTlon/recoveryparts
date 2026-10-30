@@ -54,7 +54,7 @@ Neutros siempre teñidos hacia el tono 263 (nada de gris puro). Colores nuevos: 
 - Tablas del campus: en el celular se ocultan las columnas secundarias (`hidden md:table-cell`) antes que hacer scroll lateral.
 
 ## Portada y pie (v0.17.2)
-- La portada no pasa de ~9–10 pantallas en el celular: listas cortas (4 inicios, 4 egresados), destacados en fila
+- La portada no pasa de ~9–10 pantallas en el celular: listas cortas (4 inicios, hasta 6 fotos de grupos de egresados en fila deslizable), destacados en fila
   deslizable debajo de `lg` y un link «Ver todos» en vez de repetir el catálogo. El cierre con datos de contacto vive en el
   pie, no se repite en la portada.
 - Pie compacto (v0.17.3, a gusto de Mateo): marca chica + datos en columnas (Visitanos / Contacto / Sitio) y el copyright.

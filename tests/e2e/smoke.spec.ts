@@ -93,6 +93,14 @@ test.describe('Público: galería fuera y pie', () => {
     await expect(botones.first()).toHaveAttribute('aria-pressed', 'false')
     await expect(page).toHaveURL(/\/$/) // no navega
   })
+
+  test('«Construyendo profesionales» muestra fotos de grupos por curso, no de personas', async ({ page }) => {
+    await page.goto('/')
+    const fotos = page.locator('section[aria-labelledby="t-egresados"] img')
+    test.skip(await fotos.count() === 0, 'sin grupos cargados (CI sin base)')
+    for (const alt of await fotos.evaluateAll((imgs) => imgs.map((i) => i.getAttribute('alt'))))
+      expect(alt).toMatch(/^Grupo de egresados de \S/)
+  })
 })
 
 test.describe('Campus: exige sesión', () => {
