@@ -42,6 +42,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-10-30 | test → main | PR #28: v0.17.1–v0.18.0 en `main` con los checks en verde. Deploy de producción sin verificar. |
 | 2026-10-29 | feature/dev2-cms-paginacion | v0.18.0 — paginación numerada en el admin (con filtros en Cursos), todo el sitio editable desde Sitio web (`site_settings.textos`), listas del CMS con modal, cursor propio en el sitio público. 126 E2E. |
 | 2026-10-29 | feature/dev2-graficos | v0.17.5 — gráficos y admin: reportes con filtro por área, inscripciones por mes, barra partida, paleta `dato*` validada, sin `AnimatedBar`; encuestas con reparto de notas; «Por empezar» con inscriptos/cupo. 119 E2E. |
 | 2026-10-29 | feature/dev2-campus-ux | v0.17.4 — campus más simple: Reportes en su página, Resumen del día, curso del profesor en pestañas, menú agrupado con contador de consultas, aulas y sitio plegables, `Pestanas` común. 112 E2E. |
