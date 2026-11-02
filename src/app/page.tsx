@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { hrefSeguro } from '@/lib/validar'
+import { videoSeguro } from '@/lib/validar'
 import Image from 'next/image'
 import Link from 'next/link'
 import Galeria from '@/components/public/Lightbox'
@@ -85,7 +85,7 @@ export default async function Home() {
         {/* 1 · Hero: foto o video del CMS, velo navy y el circuito vivo encima (reacciona al puntero y al clic). */}
         <section className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden pt-28">
           {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}
-          {hrefSeguro(s.hero.video_url) && <HeroVideo src={hrefSeguro(s.hero.video_url)!} poster={s.hero.imagen_url || undefined} />}
+          {videoSeguro(s.hero.video_url) && <HeroVideo src={videoSeguro(s.hero.video_url)!} poster={s.hero.imagen_url || undefined} />}
           <div aria-hidden className="absolute inset-0 bg-linear-to-r from-surface via-surface/85 to-surface/45" />
           <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-surface" />
           <CircuitField modo="hero" />
