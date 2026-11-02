@@ -245,13 +245,6 @@
     @keyframes cargar { from { scale: 0 1; } to { scale: 1 1; } }
     .progreso-pagina { transform-origin: left; animation: cargar linear both; animation-timeline: scroll(root); }
 
-    /* Fila con scroll horizontal (testimonios): la tarjeta centrada crece y las de los costados se apagan. */
-    @keyframes foco-horizontal {
-      0%, 100% { scale: 0.9; opacity: 0.45; }
-      50% { scale: 1; opacity: 1; }
-    }
-    .fila-foco > * { animation: foco-horizontal linear both; animation-timeline: view(inline); }
-
     /* Imagen con paralaje vertical dentro de su marco. */
     @keyframes paralaje { from { translate: 0 -8%; } to { translate: 0 8%; } }
     .paralaje { animation: paralaje linear both; animation-timeline: view(); scale: 1.18; }
