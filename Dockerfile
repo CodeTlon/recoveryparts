@@ -26,7 +26,7 @@ COPY --from=build --chown=app:app /app/public ./public
 # Next empaqueta postgres dentro del servidor; los scripts (migrate, crear-admin) lo necesitan suelto.
 COPY --from=deps --chown=app:app /app/node_modules/postgres ./node_modules/postgres
 COPY --from=build --chown=app:app /app/db ./db
-COPY --from=build --chown=app:app /app/scripts/migrate.mjs /app/scripts/crear-admin.mjs ./scripts/
+COPY --from=build --chown=app:app /app/scripts/migrate.mjs /app/scripts/crear-admin.mjs /app/scripts/clave-demo.mjs ./scripts/
 COPY --chown=app:app docker-entrypoint.sh ./
 USER app
 VOLUME /data/storage
