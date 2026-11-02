@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { hrefSeguro } from '@/lib/validar'
 import Image from 'next/image'
 import Link from 'next/link'
+import Galeria from '@/components/public/Lightbox'
 import { ArrowRight, ArrowUpRight, Star, Plus, Search } from 'lucide-react'
 import SiteNav from '@/components/layout/SiteNav'
 import HeroVideo from '@/components/public/HeroVideo'
@@ -27,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = 'force-dynamic'
 
-type Egresado = { id: string; nombre: string; especialidad: string; foto_url: string | null; destacado: boolean }
+type Egresado = { id: string; curso: string; promocion: string | null; foto_url: string; destacado: boolean }
 type Testimonio = { id: string; nombre: string; curso: string | null; texto: string; puntaje: number; foto_url: string | null }
 type Faq = { id: string; pregunta: string; respuesta: string }
 
@@ -36,7 +37,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq, conAulas] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
-    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('orden').limit(4), []),
+    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').not('foto_url', 'is', null).order('destacado', { ascending: false }).order('orden').limit(5), []),
     query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
@@ -189,21 +190,15 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 5 · Egresados */}
+        {/* 5 · Egresados: grilla tipo galería con una foto por grupo que terminó un curso o taller; cada foto dice a
+            qué curso pertenece y se amplía con el visor. */}
         {egresados.length > 0 && (
           <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
             <SectionTitle id="t-egresados" bajada={t.egresados_bajada}>{t.egresados_titulo}</SectionTitle>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-              {egresados.slice(0, 4).map((e) => (
-                <figure key={e.id} className="al-entrar group relative aspect-4/5 overflow-hidden rounded-card bg-surface-container">
-                  {e.foto_url && <Image src={e.foto_url} alt={`${e.nombre}, ${e.especialidad}`} fill sizes="(max-width:768px) 50vw, 300px" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) grayscale-[40%] group-hover:scale-105 group-hover:grayscale-0" />}
-                  <figcaption className="absolute inset-x-2 bottom-2 rounded-lg bg-surface-container-lowest/80 px-3 py-2 backdrop-blur-md">
-                    <p className="text-sm font-semibold">{e.nombre}</p>
-                    <p className="text-xs text-on-surface-variant">{e.especialidad}</p>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
+            <Galeria densa prioridad={false} fotos={egresados.map((e) => ({
+              id: e.id, imagen_url: e.foto_url, etiqueta: e.curso, descripcion: e.promocion,
+              alt: `Grupo de egresados de ${e.curso}${e.promocion ? `, ${e.promocion}` : ''}`,
+            }))} />
           </section>
         )}
 

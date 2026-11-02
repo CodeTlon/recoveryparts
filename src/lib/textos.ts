@@ -7,7 +7,7 @@ export const TEXTOS_BASE = {
     proximos_bajada: 'Las próximas ediciones con fecha confirmada. Cada curso tiene cupo limitado.',
     destacados_titulo: 'Capacitaciones destacadas',
     egresados_titulo: 'Construyendo profesionales',
-    egresados_bajada: 'Alumnos que hoy trabajan de lo que aprendieron acá.',
+    egresados_bajada: 'Los grupos que terminaron cada curso y taller.',
     testimonios_titulo: 'Lo que dicen nuestros alumnos',
     faq_titulo: 'Preguntas frecuentes',
   },

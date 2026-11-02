@@ -382,9 +382,16 @@ ok(await sb.from('cms_testimonios').insert([
   T('Diego S.', 'Armado y Mantenimiento de PCs', 'Cursé de noche y pude combinarlo con el trabajo.', 4, 'armado-y-mantenimiento-de-pcs'),
 ].map((t, i) => ({ ...t, orden: i + 1 }))), 'testimonios')
 
-const ESP = ['Reparación de celulares', 'Reparación de notebooks', 'Estampados', 'Cartelería', 'Impresión 3D', 'Armado de PCs']
-const NOM = ['Lucas Fernández', 'Mariana Rossi', 'Tomás Villarreal', 'Sofía Argañaraz', 'Martín Quiroga', 'Julieta Montenegro', 'Carlos Paz', 'Ana Giménez']
-ok(await sb.from('cms_egresados').insert(NOM.map((nombre, i) => ({ nombre, especialidad: ESP[i % ESP.length], foto_url: `/images/egresado-${i + 1}.jpg`, destacado: i < 4, orden: i + 1 }))), 'egresados')
+// Una foto por grupo que terminó un curso o taller (en dev/test se usan fotos del sitio como reemplazo).
+const GRUPOS = [
+  ['Reparación de Celulares', 'Marzo 2026', '/images/egresados.jpg', true],
+  ['Reparación de Notebooks', 'Abril 2026', '/images/curso-notebooks.jpg', false],
+  ['Estampados Personalizados', 'Mayo 2026', '/images/curso-estampados.jpg', false],
+  ['Armado y Mantenimiento de PCs', 'Junio 2026', '/images/curso-computadoras.jpg', false],
+  ['Taller de Cambio de Glass', 'Julio 2026', '/images/curso-glass.jpg', false],
+  ['Señalética y Cartelería', 'Agosto 2026', '/images/curso-neon.jpg', false],
+] as const
+ok(await sb.from('cms_egresados').insert(GRUPOS.map(([curso, promocion, foto_url, destacado], i) => ({ curso, promocion, foto_url, destacado, orden: i + 1 }))), 'egresados')
 await set('stats', { aulas: 3, profesores: 10, egresados: 750 })
 
 const G = [

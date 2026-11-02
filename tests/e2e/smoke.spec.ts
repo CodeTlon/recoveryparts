@@ -93,6 +93,23 @@ test.describe('Público: galería fuera y pie', () => {
     await expect(botones.first()).toHaveAttribute('aria-pressed', 'false')
     await expect(page).toHaveURL(/\/$/) // no navega
   })
+
+  test('«Construyendo profesionales» es una galería de grupos por curso que se amplía', async ({ page }) => {
+    await page.goto('/')
+    const seccion = page.locator('section[aria-labelledby="t-egresados"]')
+    const fotos = seccion.locator('img')
+    test.skip(await fotos.count() === 0, 'sin grupos cargados (CI sin base)')
+    for (const alt of await fotos.evaluateAll((imgs) => imgs.map((i) => i.getAttribute('alt'))))
+      expect(alt).toMatch(/^Grupo de egresados de \S/)
+    const primera = seccion.getByRole('button').first()
+    const curso = (await primera.locator('img').getAttribute('alt'))!.replace(/^Grupo de egresados de /, '').split(',')[0]
+    await primera.click()
+    const visor = page.getByRole('dialog')
+    await expect(visor).toBeVisible()
+    await expect(visor).toContainText(curso)
+    await page.keyboard.press('Escape')
+    await expect(visor).toHaveCount(0)
+  })
 })
 
 test.describe('Campus: exige sesión', () => {
