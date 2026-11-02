@@ -2,20 +2,21 @@
 
 import { ViewTransition, startTransition, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react'
 import { useModalFocus } from '@/lib/useModalFocus'
 
-export type Foto = { id: string; imagen_url: string; alt: string; descripcion: string | null; etiqueta?: string }
+export type Foto = { id: string; imagen_url: string | null; alt: string; descripcion: string | null; etiqueta?: string }
 
 // Grilla de fotos con visor ampliado (las fotos de cada aula en /aulas y los grupos de egresados del inicio).
 // `prioridad`: las primeras fotos se cargan con prioridad cuando son lo primero que se ve. `etiqueta`: un rótulo que
 // se ve siempre sobre la foto (ej. el curso del grupo), con `descripcion` debajo; sin etiqueta, la descripción aparece
-// al pasar el mouse. `densa`: dos columnas también en el celular (la foto ancha, también ahí).
+// al pasar el mouse. `densa`: dos columnas también en el celular (la foto ancha, también ahí). Un elemento sin
+// `imagen_url` queda como tarjeta vacía con su rótulo: arma la grilla igual y no se abre en el visor.
 export default function Galeria({ fotos, prioridad = true, densa = false, vacio = 'Pronto vamos a sumar fotos de la academia.' }: {
   fotos: Foto[]; prioridad?: boolean; densa?: boolean; vacio?: string
 }) {
   const [idx, setIdx] = useState<number | null>(null)
-  const lista = fotos
+  const lista = fotos.filter((f): f is Foto & { imagen_url: string } => !!f.imagen_url) // las que se ven en el visor
 
   const dialogRef = useRef<HTMLDivElement>(null)
   useModalFocus(dialogRef, idx !== null)
@@ -43,17 +44,32 @@ export default function Galeria({ fotos, prioridad = true, densa = false, vacio 
       {/* Las 3 primeras (la primera fila) se cargan con prioridad: son el LCP de la página. */}
       {/* Grilla con ritmo: cada sexta foto ocupa dos columnas (en pantallas medianas para arriba). */}
       <div className={`grid ${densa ? 'grid-cols-2' : 'grid-cols-1'} gap-3 sm:auto-rows-[220px] sm:grid-cols-2 md:gap-4 lg:auto-rows-[280px] lg:grid-cols-3`}>
-        {lista.map((f, i) => {
-          const img = <Image src={f.imagen_url} alt={f.alt} fill {...(i < 3 && prioridad ? { priority: true } : { loading: 'lazy' as const })} sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,400px" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) group-hover:scale-105" />
-          return (
-            <button key={f.id} type="button" onClick={() => abrir(i)} className={`al-entrar group relative block aspect-4/3 w-full overflow-hidden rounded-card bg-surface-container sm:aspect-auto ${i % 6 === 0 ? (densa ? 'col-span-2' : 'sm:col-span-2') : ''}`}>
-              {idx === i ? img : <ViewTransition name={`foto-${f.id}`} share="morph" default="none">{img}</ViewTransition>}
-              {f.etiqueta ? (
-                <span aria-hidden className="absolute inset-x-1.5 bottom-1.5 rounded-lg bg-surface-container-lowest/85 px-2.5 py-1.5 text-left backdrop-blur-md sm:inset-x-2 sm:bottom-2 sm:px-3 sm:py-2">
-                  <span className="line-clamp-2 text-xs font-semibold leading-snug sm:text-sm">{f.etiqueta}</span>
+        {fotos.map((f, pos) => {
+          const ancha = pos % 6 === 0 ? (densa ? 'col-span-2' : 'sm:col-span-2') : ''
+          const caja = `al-entrar group relative block aspect-4/3 w-full overflow-hidden rounded-card bg-surface-container sm:aspect-auto ${ancha}`
+          const rotulo = f.etiqueta && (
+            <span aria-hidden className="absolute inset-x-1.5 bottom-1.5 rounded-lg bg-surface-container-lowest/85 px-2.5 py-1.5 text-left backdrop-blur-md sm:inset-x-2 sm:bottom-2 sm:px-3 sm:py-2">
+              <span className="line-clamp-2 text-xs font-semibold leading-snug sm:text-sm">{f.etiqueta}</span>
+              {f.descripcion && <span className="block truncate text-xs text-on-surface-variant">{f.descripcion}</span>}
+            </span>
+          )
+          if (!f.imagen_url) return (
+            <div key={f.id} className={`${caja} flex! flex-col border border-dashed border-outline-variant/70 bg-surface-container/50 p-1.5 sm:p-2`}>
+              <span aria-hidden className="grid flex-1 place-items-center text-on-surface-variant/40"><GraduationCap size={32} strokeWidth={1.25} /></span>
+              {f.etiqueta && (
+                <span className="rounded-lg bg-surface-container-lowest/85 px-2.5 py-1.5 sm:px-3 sm:py-2">
+                  <span className="line-clamp-3 text-xs font-semibold leading-snug sm:text-sm">{f.etiqueta}</span>
                   {f.descripcion && <span className="block truncate text-xs text-on-surface-variant">{f.descripcion}</span>}
                 </span>
-              ) : f.descripcion && <span aria-hidden className="absolute inset-x-2 bottom-2 translate-y-2 rounded-lg bg-surface-container-lowest/85 px-3 py-2 text-left text-sm opacity-0 backdrop-blur-md transition-[opacity,translate] duration-300 ease-(--ease-out) group-hover:translate-y-0 group-hover:opacity-100">{f.descripcion}</span>}
+              )}
+            </div>
+          )
+          const i = lista.findIndex((x) => x.id === f.id)
+          const img = <Image src={f.imagen_url} alt={f.alt} fill {...(pos < 3 && prioridad ? { priority: true } : { loading: 'lazy' as const })} sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,400px" className="object-cover transition-[scale,filter] duration-700 ease-(--ease-out) group-hover:scale-105" />
+          return (
+            <button key={f.id} type="button" onClick={() => abrir(i)} className={caja}>
+              {idx === i ? img : <ViewTransition name={`foto-${f.id}`} share="morph" default="none">{img}</ViewTransition>}
+              {rotulo || (f.descripcion && <span aria-hidden className="absolute inset-x-2 bottom-2 translate-y-2 rounded-lg bg-surface-container-lowest/85 px-3 py-2 text-left text-sm opacity-0 backdrop-blur-md transition-[opacity,translate] duration-300 ease-(--ease-out) group-hover:translate-y-0 group-hover:opacity-100">{f.descripcion}</span>)}
             </button>
           )
         })}

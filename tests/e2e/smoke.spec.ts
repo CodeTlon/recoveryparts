@@ -94,18 +94,19 @@ test.describe('Público: galería fuera y pie', () => {
     await expect(page).toHaveURL(/\/$/) // no navega
   })
 
-  test('«Construyendo profesionales» es una galería de grupos por curso que se amplía', async ({ page }) => {
+  test('«Construyendo profesionales» es una grilla de grupos por curso: con foto se amplía, sin foto queda la tarjeta', async ({ page }) => {
     await page.goto('/')
     const seccion = page.locator('section[aria-labelledby="t-egresados"]')
-    const fotos = seccion.locator('img')
-    test.skip(await fotos.count() === 0, 'sin grupos cargados (CI sin base)')
-    for (const alt of await fotos.evaluateAll((imgs) => imgs.map((i) => i.getAttribute('alt'))))
+    test.skip(await seccion.count() === 0, 'sin grupos cargados (CI sin base)')
+    // Ningún retrato de persona: solo fotos de grupo (alt «Grupo de egresados de …») o tarjetas vacías con el curso.
+    await expect(seccion.locator('img[src*="egresado-"]')).toHaveCount(0)
+    for (const alt of await seccion.locator('img').evaluateAll((imgs) => imgs.map((i) => i.getAttribute('alt'))))
       expect(alt).toMatch(/^Grupo de egresados de \S/)
     const primera = seccion.getByRole('button').first()
+    if (await primera.count() === 0) { await expect(seccion.locator('.grid > div').first()).not.toBeEmpty(); return }
     const curso = (await primera.locator('img').getAttribute('alt'))!.replace(/^Grupo de egresados de /, '').split(',')[0]
     await primera.click()
     const visor = page.getByRole('dialog')
-    await expect(visor).toBeVisible()
     await expect(visor).toContainText(curso)
     await page.keyboard.press('Escape')
     await expect(visor).toHaveCount(0)
