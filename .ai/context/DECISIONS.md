@@ -4,6 +4,8 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-11-02 | Egresados sin foto real del grupo = tarjeta vacía con el curso; migración 0032 convierte las personas de la demo en grupos sin foto | Mateo: las imágenes tienen que ser de grupos de egresados de la academia o no tener imagen. Un flyer o un retrato no sirven. |
+| 2026-11-02 | Campus: ícono de usuario en vez de iniciales | «Maxi Escaroni» daba «ME», que se lee como la palabra «me». |
 | 2026-10-30 | Egresados = una foto por grupo (curso + promoción) en grilla tipo galería con visor (reusa `Lightbox` con `etiqueta`), migración 0031 que renombra columnas | Mateo: «van a salir fotos del grupo que se recibió en cada curso/taller, no de una persona». Renombrar conserva filas, RLS y permisos; las filas viejas (personas) se reescriben desde el admin. |
 | 2026-10-22 | SDD en modo retrofit (`specs/`, perfil Retrofit): 3 capacidades semilla (inscripciones, calendario, acceso) con REQ verificables; el resto del negocio sigue en `docs/ESPECIFICACION-ACADEMIA.md` | Proyecto en producción: una spec global retroactiva diverge del código; se especifica lo que cuesta caro si se rompe y se suma por `/cambio` |
 | 2026-10-22 | Los tests llevan `[REQ-XXX-NNN]` en el nombre (o en un comentario en SQL) y `spec:lint` corre en la CI | Trazabilidad REQ → test comprobada por el validador, no por convención |

@@ -44,11 +44,11 @@ function Inner({ rol, nombre, avisos, onNavigate }: { rol: string; nombre: strin
   const path = usePathname()
   const pillId = useId() // cada instancia (sidebar y drawer) anima su propio indicador
   const items = NAV[rol]
-  const iniciales = nombre.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase()
   return (
     <>
       <div className="mb-8 flex items-center gap-3 rounded-card border border-outline-variant bg-surface-container-low p-3">
-        <div aria-hidden className="display flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/40 bg-accent/10 text-base text-accent">{iniciales}</div>
+        {/* Ícono y no iniciales: «Maxi Escaroni» daba «ME», que se leía como la palabra «me». */}
+        <div aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/40 bg-accent/10 text-accent"><UserRound size={20} /></div>
         <div className="min-w-0">
           <p className="truncate text-base font-semibold">{nombre}</p>
           <p className="dato">{ROL_LABEL[rol]}</p>

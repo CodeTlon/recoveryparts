@@ -382,16 +382,16 @@ ok(await sb.from('cms_testimonios').insert([
   T('Diego S.', 'Armado y Mantenimiento de PCs', 'Cursé de noche y pude combinarlo con el trabajo.', 4, 'armado-y-mantenimiento-de-pcs'),
 ].map((t, i) => ({ ...t, orden: i + 1 }))), 'testimonios')
 
-// Una foto por grupo que terminó un curso o taller (en dev/test se usan fotos del sitio como reemplazo).
+// Una tarjeta por grupo que terminó un curso o taller, SIN foto: no hay fotos reales de grupos para la prueba y
+// un flyer o un retrato no sirven (la tarjeta vacía arma la grilla igual).
 const GRUPOS = [
-  ['Reparación de Celulares', 'Marzo 2026', '/images/egresados.jpg', true],
-  ['Reparación de Notebooks', 'Abril 2026', '/images/curso-notebooks.jpg', false],
-  ['Estampados Personalizados', 'Mayo 2026', '/images/curso-estampados.jpg', false],
-  ['Armado y Mantenimiento de PCs', 'Junio 2026', '/images/curso-computadoras.jpg', false],
-  ['Taller de Cambio de Glass', 'Julio 2026', '/images/curso-glass.jpg', false],
-  ['Señalética y Cartelería', 'Agosto 2026', '/images/curso-neon.jpg', false],
+  ['Reparación de Celulares', 'Marzo 2026'],
+  ['Reparación de Notebooks', 'Abril 2026'],
+  ['Estampados Personalizados', 'Mayo 2026'],
+  ['Armado y Mantenimiento de PCs', 'Junio 2026'],
+  ['Taller de Cambio de Glass', 'Julio 2026'],
 ] as const
-ok(await sb.from('cms_egresados').insert(GRUPOS.map(([curso, promocion, foto_url, destacado], i) => ({ curso, promocion, foto_url, destacado, orden: i + 1 }))), 'egresados')
+ok(await sb.from('cms_egresados').insert(GRUPOS.map(([curso, promocion], i) => ({ curso, promocion, foto_url: null, destacado: false, orden: i + 1 }))), 'egresados')
 await set('stats', { aulas: 3, profesores: 10, egresados: 750 })
 
 const G = [

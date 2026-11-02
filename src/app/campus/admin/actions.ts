@@ -614,7 +614,6 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   const foto = imagenOpcional(txt(fd, 'foto_url')), imagen = imagenOpcional(txt(fd, 'imagen_url'))
   if (foto === undefined || imagen === undefined) return { error: 'Subí las imágenes desde el campo de imagen (las rutas deben ser del sitio, ej. /media/… o /images/…).' }
   if (tipo === 'foto' && !imagen) return { error: 'La foto de la galería necesita una imagen.' }
-  if (tipo === 'egresado' && !foto) return { error: 'Subí la foto del grupo.' }
   if (tipo === 'egresado' && txt(fd, 'promocion').length > 80) return { error: 'La promoción admite hasta 80 caracteres.' }
   const rows: Record<string, unknown> = {
     egresado: { curso: txt(fd, 'curso'), promocion: txt(fd, 'promocion') || null, foto_url: foto, destacado: fd.get('destacado') === 'on', orden },
