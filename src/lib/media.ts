@@ -15,7 +15,10 @@ const escala = (w: number, h: number, max: number) => { const k = Math.min(1, ma
 
 /** Foto → WebP (máx. 1920 px, calidad 82). Si el navegador no puede codificar WebP, usa JPEG. */
 export async function comprimirImagen(f: File): Promise<Comprimido> {
+  // Un archivo que no es imagen, o un formato que el navegador no lee (HEIC del iPhone en Chrome), falla acá con un
+  // mensaje del navegador en inglés: se reemplaza por uno que diga qué hacer.
   const bmp = await createImageBitmap(f, { imageOrientation: 'from-image' })
+    .catch(() => { throw new Error('No se pudo leer la imagen. Subila en JPG, PNG o WebP (las fotos HEIC del iPhone no se pueden leer en todos los navegadores).') })
   const [w, h] = escala(bmp.width, bmp.height, IMG_MAX_LADO)
   const c = document.createElement('canvas'); c.width = w; c.height = h
   c.getContext('2d')!.drawImage(bmp, 0, 0, w, h); bmp.close()

@@ -236,3 +236,59 @@ test('el curso del profesor se recorre por pestañas (material, calendario, alum
   await expect(pestanas.getByRole('link', { name: /Alumnos/ })).toHaveAttribute('aria-current', 'page')
   await ctx.close()
 })
+
+// Subidas del CMS: la foto se comprime en el navegador (WebP) y el video de la portada, subido al sitio, se tiene que ver
+// en el inicio (antes solo se mostraba si era un link http(s) y el subido quedaba guardado pero invisible).
+test('la foto del curso y el video de la portada se suben desde el admin y se ven en el sitio', async ({ browser, baseURL }, info) => {
+  test.skip(info.project.name !== 'desktop', 'cambia la portada compartida: corre en un solo tamaño para no pisarse')
+  test.setTimeout(90_000)
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  // Archivos de prueba hechos en el navegador: una foto grande (4000×3000) y un video WebM de 2 s.
+  await page.goto('/campus/admin')
+  const { jpg, webm } = await page.evaluate(async () => {
+    const b64 = async (blob: Blob) => { const a = new Uint8Array(await blob.arrayBuffer()); let s = ''; for (let i = 0; i < a.length; i += 32768) s += String.fromCharCode(...a.subarray(i, i + 32768)); return btoa(s) }
+    const c = document.createElement('canvas'); c.width = 4000; c.height = 3000; const x = c.getContext('2d')!
+    x.fillStyle = '#c05010'; x.fillRect(0, 0, 4000, 3000)
+    const foto = await new Promise<Blob>((ok) => c.toBlob((b) => ok(b!), 'image/jpeg', 0.9))
+    const v = document.createElement('canvas'); v.width = 640; v.height = 360; const vx = v.getContext('2d')!
+    const rec = new MediaRecorder(v.captureStream(30), { mimeType: 'video/webm' }); const partes: Blob[] = []
+    rec.ondataavailable = (ev) => partes.push(ev.data); const fin = new Promise((ok) => { rec.onstop = ok })
+    rec.start(); const t0 = performance.now()
+    await new Promise<void>((ok) => { const f = () => { const t = performance.now() - t0; vx.fillStyle = `hsl(${t / 10},60%,40%)`; vx.fillRect(0, 0, 640, 360); if (t < 2000) requestAnimationFrame(f); else ok() }; f() })
+    rec.stop(); await fin
+    return { jpg: await b64(foto), webm: await b64(new Blob(partes, { type: 'video/webm' })) }
+  })
+  const subir = async (label: string, name: string, mimeType: string, datos: string) => {
+    const caja = page.locator('div.sm\\:col-span-2', { has: page.locator(`span.label:text-is("${label}")`) })
+    const oculto = caja.locator('input[type=hidden]'); const antes = await oculto.inputValue()
+    await caja.locator('input[type=file]').setInputFiles({ name, mimeType, buffer: Buffer.from(datos, 'base64') })
+    await expect.poll(() => oculto.inputValue(), { timeout: 30_000 }).not.toBe(antes)
+    const url = await oculto.inputValue()
+    expect(url).toMatch(/^\/media\/[0-9a-f-]+\.(webp|jpg|webm|mp4)$/)
+    return url
+  }
+
+  // Foto del curso: se guarda como WebP achicada y la sirve /media.
+  await page.goto(`/campus/admin/cursos/${e.curso}?tab=datos`); await page.waitForLoadState('networkidle')
+  const foto = await subir('Imagen del curso', 'foto.jpg', 'image/jpeg', jpg)
+  await page.getByRole('button', { name: 'Guardar cambios' }).click()
+  await expect(page.getByText('Guardado')).toBeVisible()
+  const [{ imagen_url }] = await e.sql<{ imagen_url: string }[]>`select imagen_url from cursos where id = ${e.curso}`
+  expect(imagen_url).toBe(foto)
+  const r = await ctx.request.get(foto)
+  expect(r.headers()['content-type']).toMatch(/^image\//)
+
+  // Video de fondo de la portada: aparece en el inicio y se quita al terminar (la portada es compartida).
+  await page.goto('/campus/admin/sitio?tab=inicio'); await page.waitForLoadState('networkidle')
+  const portada = page.locator('details', { hasText: 'Portada' }).first()
+  const video = await subir('Video de fondo (opcional)', 'video.webm', 'video/webm', webm)
+  await portada.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(portada.getByText('Guardado')).toBeVisible()
+  const pub = await ctx.newPage()
+  await expect.poll(async () => { await pub.goto('/'); return pub.locator(`video[src="${video}"]`).count() }, { timeout: 15_000 }).toBe(1)
+  await portada.locator('div.sm\\:col-span-2', { has: page.locator('span.label:text-is("Video de fondo (opcional)")') }).getByRole('button', { name: 'Quitar' }).click()
+  await portada.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect.poll(async () => { await pub.goto('/'); return pub.locator('main video').count() }, { timeout: 15_000 }).toBe(0)
+  await ctx.close()
+})
