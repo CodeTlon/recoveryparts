@@ -47,6 +47,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-11-02 | test → main | PR #32: v0.18.4 (QA de subidas) en `main` con los checks en verde; deploy verificado (health y páginas públicas). |
 | 2026-11-02 | feature/dev2-qa-subidas | v0.18.4 — QA de subidas (fotos, PDF, videos) en build de producción; arregla el video de la portada subido al sitio (no se veía), aviso en español para imágenes ilegibles (HEIC), medida 1600×1200 en la foto del curso. 133 E2E. |
 | 2026-11-02 | test → main | PR #31: v0.18.3 (testimonios) en `main` con los checks en verde. |
 | 2026-11-02 | feature/dev2-testimonios | v0.18.3 — testimonios: carrusel con flechas alineado al contenido (`FilaDeslizable`), sin `.fila-foco`, sin círculo vacío sin foto. 132 E2E. |
