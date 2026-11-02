@@ -4,7 +4,7 @@
 
 # CURRENT_STATE — Recovery Parts
 
-**Actualización 2026-11-02 (v0.18.4, QA de subidas):** rama `feature/dev2-qa-subidas`: QA de todas las subidas del admin (fotos, PDF, videos) contra el build de producción; arregla el video de fondo de la portada subido al sitio (no se mostraba: `videoSeguro()`), aviso en español cuando el navegador no puede leer la imagen, medida recomendada en la foto del curso (1600 × 1200, 4:3). E2E nuevo de subidas. Sin mergear a `test`/`main` todavía.
+**Actualización 2026-11-02 (v0.18.4, QA de subidas):** rama `feature/dev2-qa-subidas`: QA de todas las subidas del admin (fotos, PDF, videos) contra el build de producción; arregla el video de fondo de la portada subido al sitio (no se mostraba: `videoSeguro()`), aviso en español cuando el navegador no puede leer la imagen, medida recomendada en la foto del curso (1600 × 1200, 4:3). E2E nuevo de subidas. En `main` desde el 2026-11-02 (PR #32, checks en verde) y desplegado en producción.
 
 **Actualización 2026-11-02 (v0.18.3, testimonios):** rama `feature/dev2-testimonios`: las demás opiniones de la portada en un carrusel con flechas alineado con el título (`src/components/public/FilaDeslizable.tsx`), sin efecto de foco ni círculos vacíos. En `main` desde el 2026-11-02 (PR #31, checks en verde).
 
