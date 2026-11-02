@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = 'force-dynamic'
 
-type Egresado = { id: string; curso: string; promocion: string | null; foto_url: string; destacado: boolean }
+type Egresado = { id: string; curso: string; promocion: string | null; foto_url: string | null; destacado: boolean }
 type Testimonio = { id: string; nombre: string; curso: string | null; texto: string; puntaje: number; foto_url: string | null }
 type Faq = { id: string; pregunta: string; respuesta: string }
 
@@ -37,7 +37,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
 export default async function Home() {
   const [s, cursos, horarios, egresados, testimonios, faq, conAulas] = await Promise.all([
     getSettings(), getCursos(), getHorarios(),
-    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').not('foto_url', 'is', null).order('destacado', { ascending: false }).order('orden').limit(5), []),
+    query<Egresado[]>('egresados', (sb) => sb.from('cms_egresados').select('*').order('destacado', { ascending: false }).order('orden').limit(5), []),
     query<Testimonio[]>('testimonios-home', (sb) => sb.from('cms_testimonios').select('id, nombre, curso, texto, puntaje, foto_url').is('curso_id', null).order('orden'), []),
     query<Faq[]>('faq-home', (sb) => sb.from('cms_faq').select('*').order('orden'), []),
     hayAulasVisibles(), // RF-60: link «Conocé nuestras aulas» en «Nosotros»
@@ -191,7 +191,7 @@ export default async function Home() {
         )}
 
         {/* 5 · Egresados: grilla tipo galería con una foto por grupo que terminó un curso o taller; cada foto dice a
-            qué curso pertenece y se amplía con el visor. */}
+            qué curso pertenece y se amplía con el visor. Un grupo sin foto queda como tarjeta vacía con el curso. */}
         {egresados.length > 0 && (
           <section aria-labelledby="t-egresados" className="mx-auto max-w-[1280px] px-4 py-16 md:px-12 md:py-28">
             <SectionTitle id="t-egresados" bajada={t.egresados_bajada}>{t.egresados_titulo}</SectionTitle>
