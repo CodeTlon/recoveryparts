@@ -27,7 +27,7 @@ export default function CursoForm({ curso }: { curso?: Curso }) {
         <Field label="Duración (semanas)" name="duracion_semanas" placeholder="Ej: 12" type="number" min={1} max={104} defaultValue={c.duracion_semanas} />
         <Field label="Precio (ARS) — solo se muestra" name="precio" placeholder="Ej: 90000" type="number" min={0} max={100000000} step={100} defaultValue={c.precio} hint="Un solo precio para todas las ediciones." />
         <Field label="Descuento (%)" name="descuento_pct" placeholder="Ej: 10" type="number" min={0} max={100} defaultValue={c.descuento_pct} />
-        <MediaField tipo="imagen" label="Imagen del curso" name="imagen_url" defaultValue={c.imagen_url} />
+        <MediaField tipo="imagen" label="Imagen del curso" name="imagen_url" defaultValue={c.imagen_url} hint="Horizontal 4:3, ideal 1600 × 1200 px. Dejá lo importante en el centro: en la ficha se recorta más apaisada. Se achica sola a WebP." />
         <MediaField tipo="video" label="Video corto del curso" name="video_url" defaultValue={c.video_url} />
         <Field label="Orden" name="orden" placeholder="Ej: 1" type="number" min={0} max={9999} defaultValue={c.orden ?? 0} />
         <Check name="destacado" defaultChecked={c.destacado} className="self-end pb-3">Mostrar como destacado en el inicio</Check>
