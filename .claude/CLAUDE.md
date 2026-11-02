@@ -43,6 +43,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-11-02 | test → main | PR #29: v0.18.1 (egresados por grupo, migración 0031) en `main` con los checks en verde. Deploy sin verificar. |
 | 2026-10-30 | feature/dev2-egresados-grupos | v0.18.1 — egresados como fotos de grupo por curso/taller (migración 0031: `curso`, `promocion`) en grilla tipo galería con rótulo y visor; arregla teclado y foco del visor. 129 E2E. |
 | 2026-10-30 | test → main | PR #28: v0.17.1–v0.18.0 en `main` con los checks en verde. Deploy de producción sin verificar. |
 | 2026-10-29 | feature/dev2-cms-paginacion | v0.18.0 — paginación numerada en el admin (con filtros en Cursos), todo el sitio editable desde Sitio web (`site_settings.textos`), listas del CMS con modal, cursor propio en el sitio público. 126 E2E. |
