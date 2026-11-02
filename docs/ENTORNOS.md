@@ -28,7 +28,7 @@ Ver `docs/DESPLIEGUE-COOLIFY.md` (variables, volúmenes, primer administrador, b
 Producción (Coolify): https://recoveryparts.51.91.253.54.sslip.io (salud: `/api/health`, con `started_at` del arranque).
 
 ### Demo para el cliente en producción (temporal)
-Mientras se entrega la demo, producción puede llevar datos de prueba: `ALLOW_DEMO_SEED=1 npm run seed:demo-cliente` (con `.env.production`, desde un entorno con acceso a la base). Aborta si hay alumnos/profesores reales y genera contraseñas al azar (se imprimen una vez; guardalas). Para pasar a datos reales: backup (`pg_dump`) y `ALLOW_DEMO_SEED=1 npm run seed:demo-cliente:purge`; después reeditá hero/áreas/contacto desde el CMS.
+Mientras se entrega la demo, producción puede llevar datos de prueba: `ALLOW_DEMO_SEED=1 npm run seed:demo-cliente` (con `.env.production`, desde un entorno con acceso a la base). Aborta si hay alumnos/profesores reales y genera contraseñas al azar (se imprimen una vez; guardalas). Para darle al cliente una contraseña simple (las contraseñas no se pueden leer, solo reemplazar): en la terminal del contenedor `app`, `DEMO_PASSWORD='…' node scripts/clave-demo.mjs` (solo cuentas `@demo.example.com`). Para pasar a datos reales: backup (`pg_dump`) y `ALLOW_DEMO_SEED=1 npm run seed:demo-cliente:purge`; después reeditá hero/áreas/contacto desde el CMS.
 
 ## CI y workflows (2026-10-15)
 - `ci.yml` (PR y push): tipos + build, migraciones desde cero + reglas de RLS, imagen Docker y E2E de humo en 3 viewports (`tests/e2e/smoke.spec.ts`, 36 pruebas). Node 22.
