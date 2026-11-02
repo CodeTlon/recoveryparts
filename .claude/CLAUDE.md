@@ -34,6 +34,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 - `npm audit` completo muestra `braces` (cadena de `eslint-config-next`): es de lint y no tiene parche; el gate es `npm audit --omit=dev` en 0.
 - Tailwind 4: sin clases pegadas a `${}` y sin utilidades propias llamadas `delay-`, `duration-`, etc.
 - `useRef` en React 19 exige valor inicial.
+- Producción: https://recoveryparts.51.91.253.54.sslip.io. El primer pedido después de un rato puede salir del caché viejo (60 s, se revalida en segundo plano): para verificar, pedir dos veces.
 - Con `<ViewTransition>`, React corre los `useEffect` recién al terminar la animación: listeners de teclado y foco de un diálogo que se abre con transición van en `useLayoutEffect` (pasó con el visor de fotos: Escape no cerraba).
 - `proxy.ts` corre delante de las server actions: Next le limita el cuerpo a 10 MB (`proxyClientMaxBodySize`). Toda subida por server action necesita ese tope en `next.config.js`, no solo `serverActions.bodySizeLimit`.
 - `db/bootstrap.sql` corre en CADA arranque (Coolify migra al iniciar): nada de `grant` amplios ahí, se reaplican siempre.
@@ -43,6 +44,8 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-11-02 | feature/dev2-testimonios | v0.18.3 — testimonios: carrusel con flechas alineado al contenido (`FilaDeslizable`), sin `.fila-foco`, sin círculo vacío sin foto. 132 E2E. |
+| 2026-11-02 | test → main | PR #30: v0.18.2 en `main`, verificado en producción (https://recoveryparts.51.91.253.54.sslip.io). |
 | 2026-11-02 | feature/dev2-egresados-sin-fotos | v0.18.2 — migración 0032 (personas de la demo → grupos sin foto), tarjetas vacías sin foto, sin retratos en `public/images`, ícono en vez de iniciales en el campus. 129 E2E + revisión en celular. |
 | 2026-11-02 | test → main | PR #29: v0.18.1 (egresados por grupo, migración 0031) en `main` con los checks en verde. Deploy sin verificar. |
 | 2026-10-30 | feature/dev2-egresados-grupos | v0.18.1 — egresados como fotos de grupo por curso/taller (migración 0031: `curso`, `promocion`) en grilla tipo galería con rótulo y visor; arregla teclado y foco del visor. 129 E2E. |

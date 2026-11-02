@@ -86,7 +86,7 @@ grillas y los brillos genéricos. Aparece en:
 | Botón magnético | CTA principales | `Magnetico.tsx` (sin rebote) |
 | Foto que viaja de la tarjeta a la ficha / de la grilla al visor | cursos, fotos de las aulas | `ViewTransition` de React con `share="morph"` |
 | Acordeón con altura animada nativa | preguntas frecuentes | `details.acordeon` + `interpolate-size` |
-| Fila deslizable con foco en la del centro | testimonios | `.fila-foco` (`view(inline)`) |
+| Carrusel con flechas, alineado con el contenido, sin efecto de foco | testimonios | `FilaDeslizable` (`scroll-snap` + `scrollBy`) |
 
 Reglas: animar `transform`/`translate`/`opacity`/`clip-path` (la excepción deliberada es el ancho tipográfico y las
 columnas del díptico); easing `--ease-out`; nada de rebote en controles; nada de bajar la opacidad del contenido que todavía

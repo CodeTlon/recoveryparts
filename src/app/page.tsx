@@ -9,6 +9,7 @@ import HeroVideo from '@/components/public/HeroVideo'
 import SiteFooter from '@/components/layout/SiteFooter'
 import CursoCard, { AREA_COLOR, Cupos, horarioTexto } from '@/components/public/CursoCard'
 import DestacadosFiltro, { type FiltroDestacados } from '@/components/public/DestacadosFiltro'
+import FilaDeslizable from '@/components/public/FilaDeslizable'
 import CircuitField from '@/components/ui/CircuitField'
 import TituloExpandido from '@/components/ui/TituloExpandido'
 import Magnetico from '@/components/ui/Magnetico'
@@ -228,7 +229,8 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 7 · Testimonios: una cita grande y el resto en una fila deslizable (la del centro toma foco con el scroll). */}
+        {/* 7 · Testimonios: una cita grande y el resto en una fila con flechas, alineada con el título. Sin foto no se
+            dibuja el círculo (quedaba como una imagen rota). */}
         {principal && (
           <section aria-labelledby="t-testimonios" className="py-16 md:py-28">
             <div className="mx-auto max-w-[1280px] px-4 md:px-12">
@@ -237,24 +239,26 @@ export default async function Home() {
                 {estrellas(principal.puntaje, 20)}
                 <blockquote className="display mt-5 text-[clamp(1.5rem,3.2vw,2.5rem)] font-semibold leading-snug [font-stretch:100%]">«{principal.texto}»</blockquote>
                 <figcaption className="mt-6 flex items-center gap-3">
-                  <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-container-high">{principal.foto_url && <Image src={principal.foto_url} alt="" fill sizes="48px" className="object-cover" />}</span>
+                  {principal.foto_url && <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-container-high"><Image src={principal.foto_url} alt="" fill sizes="48px" className="object-cover" /></span>}
                   <span><span className="block font-semibold">{principal.nombre}</span>{principal.curso && <span className="text-sm text-on-surface-variant">{principal.curso}</span>}</span>
                 </figcaption>
               </figure>
             </div>
             {otrosTestimonios.length > 0 && (
-              <ul aria-label="Más opiniones" className="fila-foco mt-14 flex snap-x snap-mandatory gap-5 overflow-x-auto px-[max(1rem,calc(50%-11.5rem))] pb-6">
-                {otrosTestimonios.map((t) => (
-                  <li key={t.id} className="card flex w-[min(84vw,23rem)] shrink-0 snap-center flex-col p-6">
-                    {estrellas(t.puntaje, 16)}
-                    <blockquote className="mt-3 flex-1 text-on-surface-variant">{t.texto}</blockquote>
-                    <p className="mt-4 flex items-center gap-3">
-                      <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-surface-container-high">{t.foto_url && <Image src={t.foto_url} alt="" fill sizes="36px" className="object-cover" />}</span>
-                      <span><span className="block text-sm font-semibold">{t.nombre}</span>{t.curso && <span className="text-xs text-on-surface-variant">{t.curso}</span>}</span>
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-14">
+                <FilaDeslizable titulo="Más opiniones">
+                  {otrosTestimonios.map((t) => (
+                    <li key={t.id} className="card flex w-[min(82vw,22rem)] shrink-0 snap-start flex-col p-6">
+                      {estrellas(t.puntaje, 16)}
+                      <blockquote className="mt-3 flex-1 text-on-surface-variant">{t.texto}</blockquote>
+                      <p className="mt-5 flex items-center gap-3 border-t border-outline-variant/60 pt-4">
+                        {t.foto_url && <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-surface-container-high"><Image src={t.foto_url} alt="" fill sizes="36px" className="object-cover" /></span>}
+                        <span><span className="block text-sm font-semibold">{t.nombre}</span>{t.curso && <span className="text-xs text-on-surface-variant">{t.curso}</span>}</span>
+                      </p>
+                    </li>
+                  ))}
+                </FilaDeslizable>
+              </div>
             )}
           </section>
         )}
