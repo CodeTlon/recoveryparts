@@ -4,7 +4,7 @@
 
 # CURRENT_STATE — Recovery Parts
 
-**Actualización 2026-11-02 (v0.18.3, testimonios):** rama `feature/dev2-testimonios`: las demás opiniones de la portada en un carrusel con flechas alineado con el título (`src/components/public/FilaDeslizable.tsx`), sin efecto de foco ni círculos vacíos. En `dev`/`test`; falta `main` con OK de Mateo.
+**Actualización 2026-11-02 (v0.18.3, testimonios):** rama `feature/dev2-testimonios`: las demás opiniones de la portada en un carrusel con flechas alineado con el título (`src/components/public/FilaDeslizable.tsx`), sin efecto de foco ni círculos vacíos. En `main` desde el 2026-11-02 (PR #31, checks en verde).
 
 **Actualización 2026-11-02 (v0.18.2, egresados sin personas):** rama `feature/dev2-egresados-sin-fotos`: migración `0032` convierte los egresados de la demo (personas con retrato) en un grupo por curso sin foto; tarjetas vacías con el curso cuando no hay foto real del grupo; ícono en vez de iniciales en el campus. En `main` desde el 2026-11-02 (PR #30) y **verificado en producción** (https://recoveryparts.51.91.253.54.sslip.io): la migración 0032 corrió (6 tarjetas de grupo sin foto, ningún retrato), `/galeria` redirige, sin scroll horizontal a 390 px ni errores de consola. Capturas en `screenshots/produccion-2026-11-02/`. Producción lleva la carga de demo para el cliente (admin Maxi Escaroni). Después del deploy: subir fotos reales de grupos desde Campus › Sitio web › Egresados.
 
