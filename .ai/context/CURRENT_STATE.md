@@ -4,6 +4,8 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualización 2026-11-02 (v0.18.2, egresados sin personas):** rama `feature/dev2-egresados-sin-fotos`: migración `0032` convierte los egresados de la demo (personas con retrato) en un grupo por curso sin foto; tarjetas vacías con el curso cuando no hay foto real del grupo; ícono en vez de iniciales en el campus. En `dev`/`test`; falta `main` con OK de Mateo. Después del deploy: subir fotos reales de grupos desde Campus › Sitio web › Egresados.
+
 **Actualización 2026-10-30 (v0.18.1, egresados por grupo):** rama `feature/dev2-egresados-grupos`: «Construyendo profesionales» pasa a una grilla tipo galería con fotos de grupos por curso o taller, rótulo del curso y visor (migración `0031`, corre sola al arrancar); el visor de fotos (también `/aulas`) ya no pierde Escape, flechas ni foco al abrir. Si producción tiene egresados cargados como personas, hay que reescribirlos en Campus › Sitio web › Egresados. En `main` desde el 2026-11-02 (PR #29, checks en verde). **Sin verificar:** deploy de producción y que la migración 0031 haya corrido.
 
 **Actualización 2026-10-30 (v0.17.1–v0.18.0 en `main`):** PR #28 (`test → main`) mergeado con todos los checks en verde (tipos y build, migraciones, E2E en 3 tamaños, Firefox y Safari, imagen Docker). Coolify despliega `main` solo. **Sin verificar:** que producción haya levantado la versión nueva (el título de la portada con espacios, `/galeria` → inicio, Campus › Sitio web) y homologación.
