@@ -94,6 +94,25 @@ test.describe('Público: galería fuera y pie', () => {
     await expect(page).toHaveURL(/\/$/) // no navega
   })
 
+  test('las demás opiniones: fila alineada con el título, sin tarjetas apagadas y con flechas en pantallas grandes', async ({ page }) => {
+    await page.goto('/')
+    const seccion = page.locator('section[aria-labelledby="t-testimonios"]')
+    const fila = seccion.getByRole('list', { name: 'Más opiniones' })
+    test.skip(await fila.count() === 0, 'sin testimonios cargados (CI sin base)')
+    await fila.scrollIntoViewIfNeeded()
+    const x = async (l: import('@playwright/test').Locator) => (await l.boundingBox())!.x
+    expect(Math.abs(await x(fila.locator('li').first()) - await x(page.locator('#t-testimonios')))).toBeLessThanOrEqual(2)
+    for (const op of await fila.locator('li').evaluateAll((lis) => lis.map((li) => Number(getComputedStyle(li).opacity))))
+      expect(op).toBe(1)
+    const anterior = seccion.getByRole('button', { name: 'Anterior' }), siguiente = seccion.getByRole('button', { name: 'Siguiente' })
+    if ((page.viewportSize()?.width ?? 0) < 768) { await expect(siguiente).toBeHidden(); return }
+    test.skip(!(await siguiente.isVisible()), 'todas las opiniones entran en pantalla')
+    await expect(anterior).toBeDisabled()
+    await siguiente.click()
+    await expect.poll(() => fila.evaluate((u) => u.scrollLeft)).toBeGreaterThan(0)
+    await expect(anterior).toBeEnabled()
+  })
+
   test('«Construyendo profesionales» es una grilla de grupos por curso: con foto se amplía, sin foto queda la tarjeta', async ({ page }) => {
     await page.goto('/')
     const seccion = page.locator('section[aria-labelledby="t-egresados"]')
