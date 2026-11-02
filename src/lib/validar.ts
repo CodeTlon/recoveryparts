@@ -25,6 +25,9 @@ export function imagenOpcional(v: string): string | null | undefined {
 /** href seguro para renderizar: solo http(s), si no `undefined` (el link no se muestra). */
 export const hrefSeguro = (u: string | null | undefined) => (esUrlHttp(u) ? u : undefined)
 
+/** Video para renderizar: un link http(s) o un archivo subido al sitio (`/media/…`), igual que valida el CMS. */
+export const videoSeguro = (u: string | null | undefined) => (esUrlHttp(u) || (u && imagenOpcional(u)) ? u : undefined)
+
 /** Firma real de la imagen (el `type` del File lo manda el cliente). Devuelve la extensión o null. */
 export function extensionImagen(b: Uint8Array): 'png' | 'jpg' | 'webp' | 'avif' | null {
   const ascii = (a: number, n: number) => String.fromCharCode(...b.slice(a, a + n))

@@ -39,11 +39,16 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 - `proxy.ts` corre delante de las server actions: Next le limita el cuerpo a 10 MB (`proxyClientMaxBodySize`). Toda subida por server action necesita ese tope en `next.config.js`, no solo `serverActions.bodySizeLimit`.
 - `db/bootstrap.sql` corre en CADA arranque (Coolify migra al iniciar): nada de `grant` amplios ahí, se reaplican siempre.
 - `npm run db:migrate` no corre `db/seed.sql` (solo con `--seed`); el seed de pruebas crea sus aulas.
+- E2E de subidas: esperar `networkidle` antes de `setInputFiles` en un `MediaField` (si React no hidrató, el `onChange` no corre y no sube nada), y esperar que la URL del input oculto CAMBIE (puede tener ya una `/media/…` de antes).
+- Un campo de video del CMS guarda `/media/…` (subido) o un link: para mostrarlo usar `videoSeguro()`, no `hrefSeguro()` (solo http(s); así se perdía el video de la portada).
+- `next start` no lee `.env.development`: para probar el build en local pasar `SESSION_SECRET` (y `DATABASE_URL`, `STORAGE_DIR`) por entorno.
 - Los textos con `uppercase` de CSS salen en mayúsculas en `innerText` (Playwright): comparar sin distinguir mayúsculas.
 
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-11-02 | feature/dev2-qa-subidas | v0.18.4 — QA de subidas (fotos, PDF, videos) en build de producción; arregla el video de la portada subido al sitio (no se veía), aviso en español para imágenes ilegibles (HEIC), medida 1600×1200 en la foto del curso. 133 E2E. |
+| 2026-11-02 | test → main | PR #31: v0.18.3 (testimonios) en `main` con los checks en verde. |
 | 2026-11-02 | feature/dev2-testimonios | v0.18.3 — testimonios: carrusel con flechas alineado al contenido (`FilaDeslizable`), sin `.fila-foco`, sin círculo vacío sin foto. 132 E2E. |
 | 2026-11-02 | test → main | PR #30: v0.18.2 en `main`, verificado en producción (https://recoveryparts.51.91.253.54.sslip.io). |
 | 2026-11-02 | feature/dev2-egresados-sin-fotos | v0.18.2 — migración 0032 (personas de la demo → grupos sin foto), tarjetas vacías sin foto, sin retratos en `public/images`, ícono en vez de iniciales en el campus. 129 E2E + revisión en celular. |
