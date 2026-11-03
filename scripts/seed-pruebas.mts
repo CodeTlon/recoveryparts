@@ -227,6 +227,14 @@ async function estructura(slug, curso_id, tipo, modulos, clases) {
 }
 for (const c of CURSOS) {
   const { horarios, modulos, kit, clases, cupo, fecha_inicio, aula_id, profesor_id, ...row } = c
+  // Duración en clases (0033), coherente con los horarios: «12 clases de 2 h · 1 vez por semana».
+  const [, desde, hasta] = horarios[0]
+  const horasClase = (Number(hasta.slice(0, 2)) * 60 + Number(hasta.slice(3, 5)) - Number(desde.slice(0, 2)) * 60 - Number(desde.slice(3, 5))) / 60
+  Object.assign(row, {
+    cantidad_clases: row.duracion_semanas * horarios.length,
+    horas_por_clase: horasClase,
+    frecuencia: horarios.length === 1 ? 'semanal' : row.tipo === 'taller' && row.duracion_semanas === 1 ? 'dias_seguidos' : `${horarios.length}_por_semana`,
+  })
   const data = ok(await sb.from('cursos').upsert(row, { onConflict: 'slug' }).select('id').single(), `curso ${c.slug}`)
   cid[c.slug] = data.id
   ok(await sb.from('kit_items').delete().eq('curso_id', data.id), 'del kit')
