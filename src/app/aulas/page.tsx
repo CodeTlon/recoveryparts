@@ -5,6 +5,7 @@ import SiteNav from '@/components/layout/SiteNav'
 import SiteFooter from '@/components/layout/SiteFooter'
 import EncabezadoPagina from '@/components/ui/EncabezadoPagina'
 import Galeria from '@/components/public/Lightbox'
+import { sinFoco } from '@/lib/foco'
 import { getAulasPublicas, getSettings } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
@@ -47,7 +48,7 @@ export default async function AulasPage() {
             {video && (
               <section aria-label="Video de las aulas" className="mx-auto max-w-[1280px] px-4 pt-14 md:px-12">
                 <div className="al-entrar overflow-hidden rounded-card border border-outline-variant">
-                  <video controls preload="metadata" playsInline poster={s.aulas.imagen_url || undefined} className="aspect-video w-full bg-black">
+                  <video controls preload="metadata" playsInline poster={sinFoco(s.aulas.imagen_url) || undefined} className="aspect-video w-full bg-black">
                     <source src={video} />
                     Tu navegador no puede reproducir este video.
                   </video>

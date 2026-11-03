@@ -1,3 +1,4 @@
+import { sinFoco } from './foco'
 import type { Metadata } from 'next'
 
 export const NOMBRE_SITIO = 'Recovery Parts'
@@ -17,7 +18,7 @@ export function recortar(texto: string | null | undefined, max = 160): string | 
  *  Next no fusiona `openGraph` en profundidad: si la página no lo define, hereda el de la home. */
 export function metaPagina({ titulo, descripcion, ruta, imagen }: { titulo: string; descripcion?: string; ruta: string; imagen?: string | null }): Metadata {
   const tituloSocial = `${titulo} · ${NOMBRE_SITIO}`
-  const imagenes = [imagen || IMAGEN_SOCIAL]
+  const imagenes = [sinFoco(imagen) || IMAGEN_SOCIAL] // sin el encuadre del admin (#foco=…)
   return {
     title: titulo,
     description: descripcion,

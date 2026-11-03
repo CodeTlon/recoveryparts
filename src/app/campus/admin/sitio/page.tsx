@@ -1,6 +1,7 @@
 import { ArrowUpRight, ChevronDown, Pencil, Plus, ChevronRight, DoorOpen, FileText, GraduationCap, HelpCircle, Home, Image as ImageIcon, LayoutList, Mail, MessageSquareQuote, Search } from 'lucide-react'
 import { TEXTOS_BASE, type TextosGuardados } from '@/lib/textos'
 import { MediaField } from '@/components/campus/MediaField'
+import { TamanoGrilla } from '@/components/campus/TamanoGrilla'
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth'
 import ImageUploader from '@/components/campus/ImageUploader'
@@ -149,13 +150,13 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         <div className="space-y-6">
         <Setting clave="hero" title="Portada" hint="Lo primero que se ve al entrar al sitio: título, subtítulo, imagen de fondo y botones.">
           <Field label="Título" name="titulo" placeholder="Ej: Aprendé un oficio con salida laboral" defaultValue={h.titulo} /><Field label="Subtítulo" name="subtitulo" placeholder="Ej: Cursos y talleres presenciales en Córdoba" rows={2} defaultValue={h.subtitulo} />
-          <MediaField tipo="imagen" label="Imagen de fondo" name="imagen_url" defaultValue={h.imagen_url} />
+          <MediaField tipo="imagen" label="Imagen de fondo" name="imagen_url" defaultValue={h.imagen_url} aspecto="16 / 9" />
           <MediaField tipo="video" label="Video de fondo (opcional)" name="video_url" defaultValue={h.video_url} hint="Se reproduce en la portada, sin sonido y en bucle. Hasta 60 s; se comprime solo a 720p." />
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Texto botón cursos" name="cta_cursos" placeholder="Ej: Ver cursos" defaultValue={h.cta_cursos} /><Field label="Texto botón WhatsApp" name="cta_whatsapp" placeholder="Ej: Consultar por WhatsApp" defaultValue={h.cta_whatsapp} /></div>
         </Setting>
         <Setting clave="areas" abierto={false} title="Las dos áreas" hint="Las dos tarjetas grandes del inicio que llevan al catálogo de cada área.">
           {AREAS.map(([k, l]) => <div key={k} className="space-y-3 border-b border-outline-variant pb-4"><p className="font-semibold">{l}</p>
-            <Field label="Título" name={`${k}.titulo`} defaultValue={a[k]?.titulo} /><Field label="Texto" name={`${k}.texto`} rows={2} defaultValue={a[k]?.texto} /><MediaField tipo="imagen" label="Imagen" name={`${k}.imagen_url`} defaultValue={a[k]?.imagen_url} /></div>)}
+            <Field label="Título" name={`${k}.titulo`} defaultValue={a[k]?.titulo} /><Field label="Texto" name={`${k}.texto`} rows={2} defaultValue={a[k]?.texto} /><MediaField tipo="imagen" aspecto="16 / 9" label="Imagen" name={`${k}.imagen_url`} defaultValue={a[k]?.imagen_url} /></div>)}
         </Setting>
         <Setting clave="textos" abierto={false} title="Títulos de las secciones" hint="Los títulos y bajadas de Próximos inicios, Destacadas, Egresados, Testimonios y Preguntas del inicio.">
           {ayudaTextos}
@@ -222,11 +223,11 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         </div>
       )}
       {actual[0] === 'egresados' && (
-        <Lista tipo="egresado" nombre="grupo" vacio="Todavía no hay grupos." nota="Una tarjeta por grupo que terminó un curso o taller. Subí solo una foto real del grupo (no flyers ni retratos); sin foto, la tarjeta queda vacía con el nombre del curso. En el inicio se ven las 5 primeras en una grilla tipo galería (las destacadas, primero; la primera va en grande). Se necesita el consentimiento de uso de imagen."
-          nuevo={<><Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" /><MediaField tipo="imagen" label="Foto del grupo (opcional)" name="foto_url" /><Check name="destacado" >Destacada (va primera y en grande)</Check></>}>
+        <Lista tipo="egresado" nombre="grupo" vacio="Todavía no hay grupos." nota="Una tarjeta por grupo que terminó un curso o taller. Subí solo una foto real del grupo (no flyers ni retratos); sin foto, la tarjeta queda vacía con el nombre del curso. En el inicio se ven las 5 primeras en una grilla tipo galería (las destacadas, primero); con los cuadraditos elegís cuánto ocupa cada foto en el celular y en la computadora. Se necesita el consentimiento de uso de imagen."
+          nuevo={<><Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" /><MediaField tipo="imagen" label="Foto del grupo (opcional)" name="foto_url" aspecto="4 / 3" /><TamanosEgresado /><Check name="destacado" >Destacada (va primera)</Check></>}>
           {(egr ?? []).map((r) => (
             <Item key={r.id} tipo="egresado" nombre="grupo" row={r} resumen={<>{r.curso}{r.destacado && <span className="ml-2"><Badge tone="warn">Destacada</Badge></span>}</>} detalle={r.promocion}>
-              <Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" defaultValue={r.curso} required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" defaultValue={r.promocion ?? ''} /><MediaField tipo="imagen" label="Foto del grupo (opcional)" name="foto_url" defaultValue={r.foto_url} /><Check name="destacado" defaultChecked={r.destacado}>Destacada (va primera y en grande)</Check>
+              <Field label="Curso o taller" name="curso" placeholder="Ej: Reparación de celulares" defaultValue={r.curso} required /><Field label="Promoción (opcional)" name="promocion" placeholder="Ej: Marzo 2026" defaultValue={r.promocion ?? ''} /><MediaField tipo="imagen" label="Foto del grupo (opcional)" name="foto_url" defaultValue={r.foto_url} aspecto="4 / 3" /><TamanosEgresado r={r} /><Check name="destacado" defaultChecked={r.destacado}>Destacada (va primera)</Check>
             </Item>
           ))}
         </Lista>
@@ -235,13 +236,13 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         <Lista tipo="testimonio" nombre="testimonio" vacio="Todavía no hay testimonios." nota="Sin curso elegido aparece en el inicio; con curso, en la ficha de ese curso."
           nuevo={<><Field label="Nombre" name="nombre" placeholder="Ej: María" required /><Field label="Curso (texto)" name="curso" placeholder="Ej: Reparación de celulares" />
                 <Field label="Texto" name="texto" placeholder="Escribí el texto acá…" rows={3} required /><Field label="Puntaje (1–5)" name="puntaje" placeholder="1 a 5" type="number" defaultValue={5} />
-                <MediaField tipo="imagen" label="Foto (opcional)" name="foto_url" />
+                <MediaField tipo="imagen" label="Foto (opcional)" name="foto_url" aspecto="1 / 1" />
                 <Select name="curso_id" label="Mostrar en la ficha de" empty="Solo en el inicio" options={opcionesCursos} /></>}>
           {(tes ?? []).map((r) => (
             <Item key={r.id} tipo="testimonio" nombre="testimonio" row={r} resumen={<>{r.nombre} <span className="text-sm font-normal text-on-surface-variant">· {r.curso_id ? `ficha de ${nombreCurso(r.curso_id)}` : 'inicio'}</span></>} detalle={r.texto}>
               <Field label="Nombre" name="nombre" placeholder="Ej: María" defaultValue={r.nombre} required /><Field label="Curso (texto)" name="curso" placeholder="Ej: Reparación de celulares" defaultValue={r.curso} />
                 <Field label="Texto" name="texto" placeholder="Escribí el texto acá…" rows={3} defaultValue={r.texto} required /><Field label="Puntaje (1–5)" name="puntaje" placeholder="1 a 5" type="number" defaultValue={r.puntaje ?? 5} />
-                <MediaField tipo="imagen" label="Foto (opcional)" name="foto_url" defaultValue={r.foto_url} />
+                <MediaField tipo="imagen" label="Foto (opcional)" name="foto_url" defaultValue={r.foto_url} aspecto="1 / 1" />
                 <Select name="curso_id" label="Mostrar en la ficha de" defaultValue={r.curso_id} empty="Solo en el inicio" options={opcionesCursos} />
             </Item>
           ))}
@@ -271,7 +272,7 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
           <Setting clave="aulas" title="Presentación" hint="Lo primero que se ve en la sección «Aulas»: un texto corto y, si querés, un video general de todas las aulas.">
             <Field label="Texto de presentación" name="texto" rows={3} placeholder="Ej: Cursás en aulas-taller pensadas para practicar…" defaultValue={presentacion.texto} />
             <MediaField tipo="video" label="Video general (opcional)" name="video_url" defaultValue={presentacion.video_url} hint="Un recorrido por todas las aulas, de 1 a 2 minutos. Se ve con controles: el visitante decide cuándo darle play. Se comprime solo." />
-            <MediaField tipo="imagen" label="Imagen de portada del video (opcional)" name="imagen_url" defaultValue={presentacion.imagen_url} hint="La que se ve antes de darle play. Si no cargás una, se usa el primer cuadro del video." />
+            <MediaField tipo="imagen" aspecto="16 / 9" label="Imagen de portada del video (opcional)" name="imagen_url" defaultValue={presentacion.imagen_url} hint="La que se ve antes de darle play. Si no cargás una, se usa el primer cuadro del video." />
           </Setting>
           <p className="text-sm text-on-surface-variant">
             Cada aula de la academia tiene su ficha para el sitio. El nombre y la capacidad se cambian en{' '}
@@ -307,5 +308,15 @@ export default async function Sitio({ searchParams }: { searchParams: Promise<{ 
         </div>
       )}
     </>
+  )
+}
+
+// Cuánto ocupa la foto del grupo en la grilla del inicio (0034): 2 columnas en el celular, 3 en la computadora.
+function TamanosEgresado({ r }: { r?: { cols_movil: number; filas_movil: number; cols: number; filas: number } }) {
+  return (
+    <div className="flex flex-wrap gap-8 sm:col-span-2">
+      <TamanoGrilla label="Tamaño en el celular" colsName="cols_movil" filasName="filas_movil" maxCols={2} maxFilas={2} cols={r?.cols_movil} filas={r?.filas_movil} />
+      <TamanoGrilla label="Tamaño en la computadora" colsName="cols" filasName="filas" maxCols={3} maxFilas={2} cols={r?.cols} filas={r?.filas} />
+    </div>
   )
 }

@@ -457,7 +457,7 @@ export function FotosEditor({ inicial }: { inicial: { imagen_url: string; alt: s
       {rows.map((r, i) => (
         <div key={r.key} className="grid gap-3 rounded-lg border border-outline-variant p-3 sm:grid-cols-2">
           {/* La key de la fila mantiene el estado del campo de imagen al reordenar. */}
-          <MediaField tipo="imagen" label={`Foto ${i + 1}`} name={`foto_url_${i}`} defaultValue={r.imagen_url} />
+          <MediaField tipo="imagen" aspecto="4 / 3" label={`Foto ${i + 1}`} name={`foto_url_${i}`} defaultValue={r.imagen_url} />
           <label className="block sm:col-span-2"><span className="label">Texto alternativo (accesibilidad)</span>
             <input name={`foto_alt_${i}`} className="input" maxLength={200} placeholder="Ej: Mesas de trabajo con lupas y estaciones de soldadura" value={r.alt} onChange={(e) => upd(i, { alt: e.target.value })} /></label>
           <div className="flex justify-end gap-2 sm:col-span-2">
