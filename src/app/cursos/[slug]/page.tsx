@@ -2,6 +2,7 @@ import { imagenCurso } from '@/lib/imagen-curso'
 import { duracionTexto } from '@/lib/fechas'
 import { ViewTransition } from 'react'
 import Image from 'next/image'
+import { estiloFoco, sinFoco } from '@/lib/foco'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -56,7 +57,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
   const jsonLd = {
     '@context': 'https://schema.org', '@type': 'Course',
     name: c.nombre, description: recortar(c.descripcion, 500), url: `${base}/cursos/${c.slug}`, inLanguage: 'es-AR',
-    ...(foto ? { image: foto.startsWith('/') ? `${base}${foto}` : foto } : {}),
+    ...(foto ? { image: foto.startsWith('/') ? `${base}${sinFoco(foto)}` : sinFoco(foto) } : {}),
     ...(c.nivel ? { educationalLevel: c.nivel } : {}),
     provider: { '@type': 'EducationalOrganization', name: NOMBRE_SITIO, url: base },
     hasCourseInstance: ediciones.map((e) => ({
@@ -85,7 +86,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
           {foto && (
             <ViewTransition name={`curso-foto-${c.slug}`} share="morph" default="none">
               <div className="relative h-64 overflow-hidden rounded-card border border-outline-variant bg-surface-container sm:h-80 lg:col-span-5 lg:h-[400px]">
-                <Image src={foto} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 560px" className="object-cover" />
+                <Image src={sinFoco(foto)} style={estiloFoco(foto)} alt={c.nombre} fill priority sizes="(max-width:1024px) 100vw, 560px" className="object-cover" />
               </div>
             </ViewTransition>
           )}
@@ -123,7 +124,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                 <div className="card flex flex-col gap-5 p-6 sm:flex-row">
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-outline-variant bg-surface-container-high">
                     {c.profesor_foto
-                      ? <Image src={c.profesor_foto} alt={c.profesor_nombre} fill sizes="96px" className="object-cover" />
+                      ? <Image src={sinFoco(c.profesor_foto)} style={estiloFoco(c.profesor_foto)} alt={c.profesor_nombre} fill sizes="96px" className="object-cover" />
                       : <span aria-hidden className="grid h-full w-full place-items-center text-2xl font-bold text-on-surface-variant">{c.profesor_nombre.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}</span>}
                   </div>
                   <div>
@@ -139,7 +140,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
               <section>
                 <h2 className="display mb-4 text-3xl [font-stretch:108%]">Conocé las clases</h2>
                 {/\.(mp4|webm)(\?|$)/i.test(c.video_url)
-                  ? <video src={hrefSeguro(c.video_url)} poster={c.imagen_url || undefined} controls playsInline preload="metadata" className="max-h-[70vh] w-full rounded-card bg-black" />
+                  ? <video src={hrefSeguro(c.video_url)} poster={sinFoco(c.imagen_url) || undefined} controls playsInline preload="metadata" className="max-h-[70vh] w-full rounded-card bg-black" />
                   : <a href={hrefSeguro(c.video_url)} target="_blank" rel="noopener noreferrer" className="btn-outline">Ver video <ExternalLink size={16} /></a>}
               </section>
             )}

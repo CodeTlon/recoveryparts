@@ -292,3 +292,58 @@ test('la foto del curso y el video de la portada se suben desde el admin y se ve
   await expect.poll(async () => { await pub.goto('/'); return pub.locator('main video').count() }, { timeout: 15_000 }).toBe(0)
   await ctx.close()
 })
+
+// Pedido del cliente (2026-11-03): la foto de un grupo de egresados se sube con encuadre y zoom, elige cuánto ocupa en
+// la grilla del inicio (columnas × filas) y, al tocarla, el visor muestra la foto (antes quedaba vacío mientras cargaba).
+test('egresados: encuadre, zoom y tamaño en la grilla, y el visor muestra la foto', async ({ browser, baseURL }, info) => {
+  test.skip(info.project.name !== 'desktop', 'cambia la portada compartida: corre en un solo tamaño para no pisarse')
+  test.setTimeout(90_000)
+  const ctx = await browser.newContext(); await entrarComo(ctx, baseURL, e.admin)
+  const page = await ctx.newPage()
+  await page.goto('/campus/admin/sitio?tab=egresados'); await page.waitForLoadState('networkidle')
+  const jpg = await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 1200; c.height = 900; const x = c.getContext('2d')!
+    x.fillStyle = '#1060c0'; x.fillRect(0, 0, 1200, 900); x.fillStyle = '#c05010'; x.fillRect(600, 0, 600, 900)
+    const b = await new Promise<Blob>((ok) => c.toBlob((v) => ok(v!), 'image/jpeg', 0.9))
+    const a = new Uint8Array(await b.arrayBuffer()); let s = ''; for (let i = 0; i < a.length; i += 32768) s += String.fromCharCode(...a.subarray(i, i + 32768)); return btoa(s)
+  })
+  const curso = `E2E grupo ${Date.now()}`
+  await page.getByRole('button', { name: 'Agregar grupo' }).click()
+  const modal = page.getByRole('dialog')
+  await modal.getByLabel('Curso o taller').fill(curso)
+  await modal.getByLabel('Orden').fill('0')
+  await modal.locator('input[type=file]').setInputFiles({ name: 'grupo.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(jpg, 'base64') })
+  const oculto = modal.locator('input[type=hidden][name=foto_url]')
+  await expect.poll(() => oculto.inputValue(), { timeout: 30_000 }).toMatch(/^\/media\//)
+  // Recién subida se abre el encuadre: tocar el borde derecho y subir el zoom a 2×.
+  const vista = modal.getByRole('slider', { name: 'Punto de la foto que queda a la vista' })
+  const caja = (await vista.boundingBox())!
+  await page.mouse.click(caja.x + caja.width * 0.9, caja.y + caja.height * 0.5)
+  await modal.locator('input[type=range]').fill('2')
+  await expect(oculto).toHaveValue(/#foco=(8\d|9\d),50,2$/)
+  // 2 columnas × 2 filas en la computadora.
+  await modal.getByRole('group', { name: 'Tamaño en la computadora' }).getByRole('button', { name: '2 columnas × 2 filas' }).click()
+  await modal.getByRole('button', { name: 'Agregar', exact: true }).click()
+  await expect.poll(async () => (await e.sql<{ n: number }[]>`select count(*)::int n from cms_egresados where curso = ${curso} and cols = 2 and filas = 2 and foto_url like '%#foco=%'`)[0].n, { timeout: 10_000 }).toBe(1)
+
+  try {
+    const pub = await ctx.newPage()
+    const tarjeta = pub.locator('section[aria-labelledby="t-egresados"] button', { has: pub.locator(`img[alt^="Grupo de egresados de ${curso}"]`) })
+    await expect.poll(async () => { await pub.goto('/'); return tarjeta.count() }, { timeout: 15_000 }).toBe(1)
+    await expect(tarjeta).toHaveClass(/lg:col-span-2/)
+    await expect(tarjeta).toHaveClass(/lg:row-span-2/)
+    const img = tarjeta.locator('img')
+    expect(await img.getAttribute('src')).not.toContain('foco') // el optimizador recibe la URL limpia
+    expect(await img.evaluate((i) => getComputedStyle(i).transform)).not.toBe('none')
+    await tarjeta.click()
+    const visor = pub.getByRole('dialog')
+    const grande = visor.locator('img')
+    await expect(grande).toHaveCSS('opacity', '1', { timeout: 15_000 })
+    expect((await grande.boundingBox())!.height).toBeGreaterThan(100)
+    await pub.keyboard.press('Escape')
+    await expect(visor).toBeHidden()
+  } finally {
+    await e.sql`delete from cms_egresados where curso = ${curso}`
+    await ctx.close()
+  }
+})

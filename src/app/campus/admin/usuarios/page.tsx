@@ -3,6 +3,7 @@ import Reveal from '@/components/ui/Reveal'
 import { requireRole } from '@/lib/auth'
 import { Mail, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
 import Paginacion, { corregirPagina, paginaDe, rango } from '@/components/campus/Paginacion'
+import { MediaField } from '@/components/campus/MediaField'
 import { ActionForm, Badge, Confirm, Empty, Field, ModalButton, PageHead, Select, SubmitButton } from '@/components/campus/ui'
 import { actualizarPerfil, cambiarEmail, crearUsuario, reenviarInvitacion, setEstadoCuenta } from '../actions'
 
@@ -71,7 +72,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                           </div>
                           <Field label="Teléfono" name="telefono" placeholder="Ej: 351 123 4567" defaultValue={u.telefono} />
                           {u.rol === 'profesor' && <>
-                            <Field label="Foto (URL)" name="foto_url" placeholder="https://…/foto.jpg" defaultValue={u.foto_url} hint="Subí la imagen en Sitio web › Imágenes y pegá la URL." />
+                            <MediaField tipo="imagen" aspecto="1 / 1" label="Foto (opcional)" name="foto_url" defaultValue={u.foto_url} hint="Se ve redonda en la ficha del curso: dejá la cara en el centro." />
                             <Field label="Experiencia" name="experiencia" placeholder="Contá brevemente su trayectoria" rows={3} defaultValue={u.experiencia} />
                             <Field label="Certificaciones" name="certificaciones" placeholder="Una por línea" rows={2} defaultValue={u.certificaciones} />
                           </>}

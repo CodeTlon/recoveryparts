@@ -621,8 +621,12 @@ export async function guardarItemCms(_: R, fd: FormData): Promise<R> {
   if (foto === undefined || imagen === undefined) return { error: 'Subí las imágenes desde el campo de imagen (las rutas deben ser del sitio, ej. /media/… o /images/…).' }
   if (tipo === 'foto' && !imagen) return { error: 'La foto de la galería necesita una imagen.' }
   if (tipo === 'egresado' && txt(fd, 'promocion').length > 80) return { error: 'La promoción admite hasta 80 caracteres.' }
+  // Tamaño en la grilla del inicio (0034). Sin el campo (formulario viejo), 1 × 1.
+  const tam = (k: string, max: number) => { const n = num(fd, k) ?? 1; return Number.isInteger(n) && n >= 1 && n <= max ? n : null }
+  const tamanos = { cols_movil: tam('cols_movil', 2), filas_movil: tam('filas_movil', 2), cols: tam('cols', 3), filas: tam('filas', 2) }
+  if (tipo === 'egresado' && Object.values(tamanos).includes(null)) return { error: 'Tamaño en la grilla inválido.' }
   const rows: Record<string, unknown> = {
-    egresado: { curso: txt(fd, 'curso'), promocion: txt(fd, 'promocion') || null, foto_url: foto, destacado: fd.get('destacado') === 'on', orden },
+    egresado: { curso: txt(fd, 'curso'), promocion: txt(fd, 'promocion') || null, foto_url: foto, destacado: fd.get('destacado') === 'on', orden, ...tamanos },
     testimonio: { nombre: txt(fd, 'nombre'), curso: txt(fd, 'curso') || null, texto: txt(fd, 'texto'), puntaje, foto_url: foto, curso_id: txt(fd, 'curso_id') || null, orden },
     faq: { pregunta: txt(fd, 'pregunta'), respuesta: txt(fd, 'respuesta'), orden },
     foto: { categoria: txt(fd, 'categoria'), area: txt(fd, 'area') || null, imagen_url: imagen ?? '', alt: txt(fd, 'alt'), descripcion: txt(fd, 'descripcion') || null, orden },
