@@ -71,7 +71,7 @@ export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPubli
           </span>
           <h3 className="display mb-4 text-xl leading-tight [font-stretch:108%]">{c.nombre}</h3>
           <ul className="mb-4 space-y-1.5 text-sm text-on-surface-variant">
-            <li className="flex items-center gap-2"><Clock size={15} aria-hidden className="shrink-0" /> {c.duracion_semanas ? duracionTexto(c.duracion_semanas) : 'Duración a confirmar'}</li>
+            <li className="flex items-center gap-2"><Clock size={15} aria-hidden className="shrink-0" /> {duracionTexto(c) ?? 'Duración a confirmar'}</li>
             {c.fecha_inicio
               ? <li className="flex items-center gap-2"><CalendarDays size={15} aria-hidden className="shrink-0" /> <span>Inicia el {fechaCorta(c.fecha_inicio)}{otras > 0 ? <span className="text-secondary"> · +{otras} fecha{otras === 1 ? '' : 's'} más</span> : null}</span></li>
               : <li className="flex items-center gap-2 font-semibold text-secondary"><CalendarDays size={15} aria-hidden className="shrink-0" /> Próximamente nuevas fechas</li>}

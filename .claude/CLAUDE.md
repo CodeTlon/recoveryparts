@@ -34,6 +34,7 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 - `npm audit` completo muestra `braces` (cadena de `eslint-config-next`): es de lint y no tiene parche; el gate es `npm audit --omit=dev` en 0.
 - Tailwind 4: sin clases pegadas a `${}` y sin utilidades propias llamadas `delay-`, `duration-`, etc.
 - `useRef` en React 19 exige valor inicial.
+- Windows: `npm run db:migrate`/`seed:dev` fallan (`ENV_FILE=…` no es sintaxis de cmd) y el migrador no lee un `.env.development` con CRLF: pasar `DATABASE_URL` por entorno y correr `node scripts/migrate.mjs`.
 - Producción: https://recoveryparts.51.91.253.54.sslip.io. El primer pedido después de un rato puede salir del caché viejo (60 s, se revalida en segundo plano): para verificar, pedir dos veces.
 - Con `<ViewTransition>`, React corre los `useEffect` recién al terminar la animación: listeners de teclado y foco de un diálogo que se abre con transición van en `useLayoutEffect` (pasó con el visor de fotos: Escape no cerraba).
 - `proxy.ts` corre delante de las server actions: Next le limita el cuerpo a 10 MB (`proxyClientMaxBodySize`). Toda subida por server action necesita ese tope en `next.config.js`, no solo `serverActions.bodySizeLimit`.
@@ -47,6 +48,8 @@ Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Pos
 ## Historial de Cambios
 | Fecha | Rama | Cambio |
 |-------|------|--------|
+| 2026-11-02 | feat/duracion-en-clases | v0.18.5 — duración del curso en clases (cantidad, horas por clase, frecuencia), migración 0033; semanas calculadas para `fin_edicion()`. Pedido de Maxi. |
+| 2026-11-02 | test → main | PR #32: v0.18.4 (QA de subidas) en `main` con los checks en verde; deploy verificado (health y páginas públicas). |
 | 2026-11-02 | feature/dev2-qa-subidas | v0.18.4 — QA de subidas (fotos, PDF, videos) en build de producción; arregla el video de la portada subido al sitio (no se veía), aviso en español para imágenes ilegibles (HEIC), medida 1600×1200 en la foto del curso. 133 E2E. |
 | 2026-11-02 | test → main | PR #31: v0.18.3 (testimonios) en `main` con los checks en verde. |
 | 2026-11-02 | feature/dev2-testimonios | v0.18.3 — testimonios: carrusel con flechas alineado al contenido (`FilaDeslizable`), sin `.fila-foco`, sin círculo vacío sin foto. 132 E2E. |
