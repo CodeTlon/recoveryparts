@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { videoSeguro } from '@/lib/validar'
 import Image from 'next/image'
+import { estiloFoco, sinFoco } from '@/lib/foco'
 import Link from 'next/link'
 import Galeria from '@/components/public/Lightbox'
 import { ArrowRight, ArrowUpRight, Star, Plus, Search } from 'lucide-react'
@@ -29,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = 'force-dynamic'
 
-type Egresado = { id: string; curso: string; promocion: string | null; foto_url: string | null; destacado: boolean }
+type Egresado = { id: string; curso: string; promocion: string | null; foto_url: string | null; destacado: boolean; cols_movil: number; filas_movil: number; cols: number; filas: number }
 type Testimonio = { id: string; nombre: string; curso: string | null; texto: string; puntaje: number; foto_url: string | null }
 type Faq = { id: string; pregunta: string; respuesta: string }
 
@@ -84,8 +85,8 @@ export default async function Home() {
       <main id="contenido" tabIndex={-1}>
         {/* 1 · Hero: foto o video del CMS, velo navy y el circuito vivo encima (reacciona al puntero y al clic). */}
         <section className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden pt-28">
-          {s.hero.imagen_url && <Image src={s.hero.imagen_url} alt="" fill priority sizes="100vw" className="object-cover" />}
-          {videoSeguro(s.hero.video_url) && <HeroVideo src={videoSeguro(s.hero.video_url)!} poster={s.hero.imagen_url || undefined} />}
+          {s.hero.imagen_url && <Image src={sinFoco(s.hero.imagen_url)} style={estiloFoco(s.hero.imagen_url)} alt="" fill priority sizes="100vw" className="object-cover" />}
+          {videoSeguro(s.hero.video_url) && <HeroVideo src={videoSeguro(s.hero.video_url)!} poster={sinFoco(s.hero.imagen_url) || undefined} />}
           <div aria-hidden className="absolute inset-0 bg-linear-to-r from-surface via-surface/85 to-surface/45" />
           <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-surface" />
           <CircuitField modo="hero" />
@@ -124,7 +125,7 @@ export default async function Home() {
               const color = AREA_COLOR[a]
               return (
                 <Link key={a} href={`/cursos?area=${a}`} className={`al-entrar group relative flex min-h-[260px] flex-col justify-end overflow-hidden rounded-card border border-outline-variant bg-surface-container-low p-7 transition-colors ${color.bordeHover} md:min-h-[460px] md:p-10`}>
-                  {cfg.imagen_url && <span aria-hidden className="absolute inset-0 overflow-hidden"><Image src={cfg.imagen_url} alt="" fill sizes="(max-width:768px) 100vw, 720px" className="paralaje object-cover opacity-45 grayscale-[35%] transition-[opacity,filter] duration-700 group-hover:opacity-60 group-hover:grayscale-0" /></span>}
+                  {cfg.imagen_url && <span aria-hidden className="absolute inset-0 overflow-hidden"><Image src={sinFoco(cfg.imagen_url)} style={estiloFoco(cfg.imagen_url)} alt="" fill sizes="(max-width:768px) 100vw, 720px" className="paralaje object-cover opacity-45 grayscale-[35%] transition-[opacity,filter] duration-700 group-hover:opacity-60 group-hover:grayscale-0" /></span>}
                   <span aria-hidden className="absolute inset-0 bg-linear-to-t from-surface-container-lowest via-surface-container-lowest/75 to-transparent" />
                   <span aria-hidden className={`absolute inset-x-0 top-0 h-1 origin-left scale-x-25 transition-transform duration-700 ease-(--ease-out) group-hover:scale-x-100 ${color.fondo}`} />
                   <div className="relative">
@@ -198,6 +199,7 @@ export default async function Home() {
             <SectionTitle id="t-egresados" bajada={t.egresados_bajada}>{t.egresados_titulo}</SectionTitle>
             <Galeria densa prioridad={false} fotos={egresados.map((e) => ({
               id: e.id, imagen_url: e.foto_url, etiqueta: e.curso, descripcion: e.promocion,
+              tam: { cols_movil: e.cols_movil, filas_movil: e.filas_movil, cols: e.cols, filas: e.filas },
               alt: `Grupo de egresados de ${e.curso}${e.promocion ? `, ${e.promocion}` : ''}`,
             }))} />
           </section>
@@ -239,7 +241,7 @@ export default async function Home() {
                 {estrellas(principal.puntaje, 20)}
                 <blockquote className="display mt-5 text-[clamp(1.5rem,3.2vw,2.5rem)] font-semibold leading-snug [font-stretch:100%]">«{principal.texto}»</blockquote>
                 <figcaption className="mt-6 flex items-center gap-3">
-                  {principal.foto_url && <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-container-high"><Image src={principal.foto_url} alt="" fill sizes="48px" className="object-cover" /></span>}
+                  {principal.foto_url && <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-container-high"><Image src={sinFoco(principal.foto_url)} style={estiloFoco(principal.foto_url)} alt="" fill sizes="48px" className="object-cover" /></span>}
                   <span><span className="block font-semibold">{principal.nombre}</span>{principal.curso && <span className="text-sm text-on-surface-variant">{principal.curso}</span>}</span>
                 </figcaption>
               </figure>
@@ -252,7 +254,7 @@ export default async function Home() {
                       {estrellas(t.puntaje, 16)}
                       <blockquote className="mt-3 flex-1 text-on-surface-variant">{t.texto}</blockquote>
                       <p className="mt-5 flex items-center gap-3 border-t border-outline-variant/60 pt-4">
-                        {t.foto_url && <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-surface-container-high"><Image src={t.foto_url} alt="" fill sizes="36px" className="object-cover" /></span>}
+                        {t.foto_url && <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-surface-container-high"><Image src={sinFoco(t.foto_url)} style={estiloFoco(t.foto_url)} alt="" fill sizes="36px" className="object-cover" /></span>}
                         <span><span className="block text-sm font-semibold">{t.nombre}</span>{t.curso && <span className="text-xs text-on-surface-variant">{t.curso}</span>}</span>
                       </p>
                     </li>

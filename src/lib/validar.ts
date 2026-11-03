@@ -1,3 +1,4 @@
+import { FRAGMENTO_VALIDO } from './foco'
 // Validaciones compartidas. Una URL que se guarda y después se renderiza en un href tiene que ser http(s):
 // React 18 no bloquea `javascript:` en los href.
 
@@ -19,7 +20,10 @@ export function urlOpcional(v: string): string | null | undefined {
  * Se rechazan `//host` (protocolo relativo), `..`, barras invertidas y caracteres fuera de [A-Za-z0-9._-/]. */
 export function imagenOpcional(v: string): string | null | undefined {
   if (!v) return null
-  return /^\/(?!\/)[A-Za-z0-9._\-/]+$/.test(v) && !v.includes('..') ? v : undefined
+  // Puede llevar el encuadre elegido en el admin (`#foco=x,y,zoom`, ver lib/foco.ts).
+  const [ruta, ...resto] = v.split('#')
+  if (resto.length > 1 || (resto.length && !FRAGMENTO_VALIDO.test(`#${resto[0]}`))) return undefined
+  return /^\/(?!\/)[A-Za-z0-9._\-/]+$/.test(ruta) && !ruta.includes('..') ? v : undefined
 }
 
 /** href seguro para renderizar: solo http(s), si no `undefined` (el link no se muestra). */
