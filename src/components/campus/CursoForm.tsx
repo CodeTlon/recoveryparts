@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ActionForm, Check } from './forms'
 import { Field, Select } from './forms'
 import { guardarCurso, type R } from '@/app/campus/admin/actions'
+import { FRECUENCIA_LABEL } from '@/lib/types'
 
 type Curso = Record<string, any>
 
@@ -24,7 +25,9 @@ export default function CursoForm({ curso }: { curso?: Curso }) {
         <Select name="area" label="Área" defaultValue={c.area ?? 'tecnico'} options={[['diseno', 'Creación y Diseño'], ['tecnico', 'Reparación y Tecnología']]} />
         <Select name="tipo" label="Tipo" defaultValue={c.tipo ?? 'curso'} options={[['curso', 'Curso'], ['taller', 'Taller (formato corto: 1 jornada, días seguidos o 1–2 semanas)']]} />
         <Select name="nivel" label="Nivel" defaultValue={c.nivel ?? ''} empty="Sin nivel" options={[['Inicial', 'Inicial'], ['Intermedio', 'Intermedio'], ['Avanzado', 'Avanzado']]} />
-        <Field label="Duración (semanas)" name="duracion_semanas" placeholder="Ej: 12" type="number" min={1} max={104} defaultValue={c.duracion_semanas} />
+        <Field label="Cantidad de clases" name="cantidad_clases" placeholder="Ej: 12" type="number" min={1} max={300} defaultValue={c.cantidad_clases} hint={!c.cantidad_clases && c.duracion_semanas ? `Hoy el sitio muestra «${c.duracion_semanas} semanas». Cargá las clases para mostrarlas en su lugar.` : 'En el sitio: «12 clases de 2 h · 1 vez por semana».'} />
+        <Field label="Horas por clase" name="horas_por_clase" placeholder="Ej: 2" type="number" min={0.5} max={12} step={0.5} defaultValue={c.horas_por_clase == null ? undefined : Number(c.horas_por_clase)} />
+        <Select name="frecuencia" label="Frecuencia" defaultValue={c.frecuencia ?? ''} empty="Sin indicar" options={Object.entries(FRECUENCIA_LABEL) as [string, string][]} />
         <Field label="Precio (ARS) — solo se muestra" name="precio" placeholder="Ej: 90000" type="number" min={0} max={100000000} step={100} defaultValue={c.precio} hint="Un solo precio para todas las ediciones." />
         <Field label="Descuento (%)" name="descuento_pct" placeholder="Ej: 10" type="number" min={0} max={100} defaultValue={c.descuento_pct} />
         <MediaField tipo="imagen" label="Imagen del curso" name="imagen_url" defaultValue={c.imagen_url} hint="Horizontal 4:3, ideal 1600 × 1200 px. Dejá lo importante en el centro: en la ficha se recorta más apaisada. Se achica sola a WebP." />

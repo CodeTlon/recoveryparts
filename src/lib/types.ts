@@ -1,6 +1,10 @@
 export type Rol = 'admin' | 'profesor' | 'alumno'
 export type Area = 'diseno' | 'tecnico'
 export type TipoCurso = 'curso' | 'taller'
+export type Frecuencia = 'semanal' | '2_por_semana' | '3_por_semana' | 'dias_seguidos'
+export const FRECUENCIA_LABEL: Record<Frecuencia, string> = {
+  semanal: '1 vez por semana', '2_por_semana': '2 veces por semana', '3_por_semana': '3 veces por semana', dias_seguidos: 'Días seguidos',
+}
 
 // Etiquetas públicas. La academia no presta servicio técnico: "tecnico" es el área de
 // cursos de reparación y tecnología.
@@ -16,6 +20,8 @@ export interface CursoPublico {
   id: string; slug: string; nombre: string; area: Area; tipo: TipoCurso; nivel: string | null
   descripcion: string | null; requisitos: string | null; imagen_url: string | null; video_url: string | null
   duracion_semanas: number | null
+  // Duración en clases (0033). `horas_por_clase` es numeric: postgres.js lo trae como texto.
+  cantidad_clases: number | null; horas_por_clase: number | string | null; frecuencia: Frecuencia | null
   precio: number | null; descuento_pct: number | null; precio_actualizado_en: string | null
   destacado: boolean
   edicion_id: string | null; fecha_inicio: string | null; cupo: number | null; cupos_disponibles: number | null; aula: string | null

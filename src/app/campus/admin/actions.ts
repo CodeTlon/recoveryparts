@@ -7,9 +7,9 @@ import { enviarLinkAcceso, invitarUsuario, cambiarEmailUsuario, eliminarUsuario 
 import { clienteAdmin } from '@/lib/db'
 import { enviarMail } from '@/lib/mail'
 import { mailCambiosClases, mailAgregadoCurso } from '@/lib/mail-templates'
-import { DIAS } from '@/lib/types'
+import { DIAS, FRECUENCIA_LABEL, type Frecuencia } from '@/lib/types'
 import { urlOpcional, imagenOpcional, extensionImagen, esUrlHttp } from '@/lib/validar'
-import { hoyAR, momentoEdicion } from '@/lib/fechas'
+import { hoyAR, momentoEdicion, semanasDeClases } from '@/lib/fechas'
 import { guardarArchivo, urlPublica } from '@/lib/storage'
 
 export type R = { ok?: boolean; error?: string }
@@ -139,10 +139,13 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
   const nombre = txt(fd, 'nombre')
   if (!nombre || nombre.length > 120) return { error: 'Poné un nombre de hasta 120 caracteres.' }
   const precio = num(fd, 'precio')
-  const dur = num(fd, 'duracion_semanas'), desc = num(fd, 'descuento_pct'), orden = num(fd, 'orden') ?? 0
+  const clases = num(fd, 'cantidad_clases'), horas = num(fd, 'horas_por_clase'), frecuencia = txt(fd, 'frecuencia') || null
+  const desc = num(fd, 'descuento_pct'), orden = num(fd, 'orden') ?? 0
   if (precio !== null && (!Number.isFinite(precio) || precio < 0 || precio > 100_000_000)) return { error: 'El precio tiene que ser un número entre 0 y 100.000.000.' }
   if (desc !== null && !(Number.isFinite(desc) && desc >= 0 && desc <= 100)) return { error: 'El descuento debe estar entre 0 y 100%.' }
-  if (dur !== null && !(Number.isInteger(dur) && dur >= 1 && dur <= 104)) return { error: 'La duración debe ser de 1 a 104 semanas.' }
+  if (clases !== null && !(Number.isInteger(clases) && clases >= 1 && clases <= 300)) return { error: 'La cantidad de clases debe ser un número entero de 1 a 300.' }
+  if (horas !== null && !(Number.isFinite(horas) && horas > 0 && horas <= 12 && Number.isInteger(horas * 2))) return { error: 'Las horas por clase van de 0,5 a 12 (de a media hora).' }
+  if (frecuencia !== null && !Object.hasOwn(FRECUENCIA_LABEL, frecuencia)) return { error: 'Frecuencia inválida.' }
   if (!(Number.isInteger(orden) && orden >= 0 && orden <= 9999)) return { error: 'El orden debe ser un número entero entre 0 y 9999.' }
   if (!['diseno', 'tecnico'].includes(txt(fd, 'area')) || !['curso', 'taller'].includes(txt(fd, 'tipo'))) return { error: 'Área o tipo inválidos.' }
   const imagen = imagenOpcional(txt(fd, 'imagen_url')), video = urlOpcional(txt(fd, 'video_url'))
@@ -155,9 +158,12 @@ export async function guardarCurso(_: R, fd: FormData): Promise<R & { id?: strin
     area: txt(fd, 'area'), tipo: txt(fd, 'tipo'), nivel: txt(fd, 'nivel') || null,
     descripcion: txt(fd, 'descripcion') || null, requisitos: txt(fd, 'requisitos') || null,
     imagen_url: imagen, video_url: video,
-    duracion_semanas: dur, precio, descuento_pct: desc,
+    cantidad_clases: clases, horas_por_clase: horas, frecuencia, precio, descuento_pct: desc,
     destacado: fd.get('destacado') === 'on', orden,
   } as Record<string, unknown>
+  // Las semanas ya no se cargan: salen de las clases (fin de una edición sin calendario, 0020/0033).
+  // Sin clases cargadas se conservan las de antes.
+  if (clases !== null) row.duracion_semanas = semanasDeClases(clases, frecuencia as Frecuencia | null)
   // La fecha «precios actualizados al…» de la ficha solo se mueve si el precio cambió de verdad.
   if (precio == null) row.precio_actualizado_en = null
   else if (!id) row.precio_actualizado_en = hoyAR()

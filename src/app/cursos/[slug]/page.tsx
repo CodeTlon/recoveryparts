@@ -197,7 +197,7 @@ export default async function CursoPage({ params }: { params: Promise<{ slug: st
                   {c.descuento_pct ? <span className="badge bg-accent/15 text-accent">-{c.descuento_pct}%</span> : null}
                 </div>
                 <div className="h-px bg-outline-variant" />
-                {c.duracion_semanas && <p className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {duracionTexto(c.duracion_semanas)} · La Rioja 345</p>}
+                {duracionTexto(c) && <p className={row}><Clock size={18} className="mt-0.5 shrink-0" /> {duracionTexto(c)} · La Rioja 345</p>}
                 <div>
                   <h3 className="dato mb-3">Próximas fechas</h3>
                   {!ediciones.length ? (

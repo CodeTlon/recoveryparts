@@ -28,7 +28,7 @@ Resumen del dominio. El esquema real está en `db/migrations/0001_schema.sql`; l
 | Orden flexible por edición: adelantar (fecha antes que otras) o saltear una clase; no avisa por mail | RF-58 | `guardarClases` |
 | Guía general (admin) + estructura propia por edición: copy-on-write al primer guardado; nueva edición = guía; «Volver a la guía general» devuelve calendario y material propio a la clase de origen (sin origen: se pierde la fecha / queda general) | RF-58 | `guardar_estructura` (solo admin), `guardar_estructura_edicion`, `restablecer_estructura`, `estructura_edicion` |
 | Calendario, material y liberación usan la estructura efectiva de la edición | RF-58 | triggers `clases_before_write`, `materiales_integridad`, `materiales_liberados_integridad` |
-| El profesor solo accede a ediciones vigentes (activas y cuyo fin no pasó; el fin es la última clase, o inicio + duración del curso si todavía no hay calendario); misma regla en `momentoEdicion()` (TS) y `fin_edicion()`/`edicion_vigente()` (SQL, 0020) | RF-04 | `es_profesor_de`, RLS `ediciones_profesor` |
+| El profesor solo accede a ediciones vigentes (activas y cuyo fin no pasó; el fin es la última clase, o inicio + duración del curso si todavía no hay calendario; esas semanas salen de cantidad de clases y frecuencia, 0033); misma regla en `momentoEdicion()` (TS) y `fin_edicion()`/`edicion_vigente()` (SQL, 0020) | RF-04 | `es_profesor_de`, RLS `ediciones_profesor` |
 | El profesor borra solo el material que subió para su edición; el base no. No lee el kit en el campus | RF-05 | RLS `mat_profesor_*`; sin `kit_profesor` |
 | No superar el cupo ni bajarlo de los inscriptos | — | trigger |
 | No superponer aula ni profesor en mismo día y horario | — | trigger |
