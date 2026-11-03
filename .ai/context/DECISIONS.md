@@ -4,6 +4,7 @@ Una línea por decisión: qué, por qué. Las más nuevas arriba.
 
 | Fecha | Decisión | Motivo |
 |---|---|---|
+| 2026-11-02 | **Duración del curso en clases** (cantidad, horas por clase, frecuencia), migración 0033 | Pedido de Maxi: «8 semanas» no explica un taller de una clase de 4 h. Mateo eligió campos separados (no texto libre): siempre se escriben igual y se validan. `duracion_semanas` queda solo para el fin de una edición sin calendario (0020) y la calcula `semanasDeClases()`. Los cursos existentes no se completan solos: hasta cargarles las clases el sitio sigue diciendo «N semanas» |
 | 2026-11-02 | Testimonios: carrusel con flechas alineado al contenido, sin efecto de foco (`view(inline)`) | Mateo sentía raro el scroll: la fila arrancaba a mitad de pantalla, las tarjetas de los costados se veían apagadas y con mouse no había cómo moverla. |
 | 2026-11-02 | Egresados sin foto real del grupo = tarjeta vacía con el curso; migración 0032 convierte las personas de la demo en grupos sin foto | Mateo: las imágenes tienen que ser de grupos de egresados de la academia o no tener imagen. Un flyer o un retrato no sirven. |
 | 2026-11-02 | Campus: ícono de usuario en vez de iniciales | «Maxi Escaroni» daba «ME», que se lee como la palabra «me». |
