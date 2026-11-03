@@ -542,7 +542,7 @@ sequenceDiagram
 
 | ID | Descripción | Estado | Rol |
 |---|---|:-:|:-:|
-| RF-16 | Al crear un curso se definen día(s), horario, aula, duración (semanas) y cupo máximo. **Desde v0.11:** el curso (contenido, precio, plan de clases, material) se carga una vez; día(s), horario, aula, cupo y fecha de inicio son de cada **edición** (cada vez que se dicta). | 🟢 | 🛡️ |
+| RF-16 | Al crear un curso se definen día(s), horario, aula, duración y cupo máximo. **Desde v0.18.5** la duración se carga en clases: cantidad, horas por clase y frecuencia («12 clases de 2 h · 1 vez por semana»); las semanas se calculan. **Desde v0.11:** el curso (contenido, precio, plan de clases, material) se carga una vez; día(s), horario, aula, cupo y fecha de inicio son de cada **edición** (cada vez que se dicta). | 🟢 | 🛡️ |
 | RF-17 | Se valida la superposición de horario y aula antes de crear. Entre ediciones, solo si sus períodos se superponen. | 🟢 | ⚙️ |
 | RF-18 | Cada curso o taller tiene **un único** profesor **por edición**. | 🟢 | — |
 | RF-19 | Modalidad presencial. | 🟢 | — |

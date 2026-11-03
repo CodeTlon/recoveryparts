@@ -1,11 +1,30 @@
+import { FRECUENCIA_LABEL, type Frecuencia } from './types'
+
 // El servidor corre en UTC; la academia está en Córdoba. Desde las 21:00 (UTC-3) `new Date()` ya es "mañana".
 const TZ = 'America/Argentina/Cordoba'
 
 /** Fecha de hoy en Córdoba como AAAA-MM-DD (misma que devuelve hoy_ar() en la base). */
 export const hoyAR = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date())
 
-/** "1 semana" / "12 semanas" (los talleres cortos duran 1 o 2). */
-export const duracionTexto = (n: number) => `${n} ${n === 1 ? 'semana' : 'semanas'}`
+type Duracion = { cantidad_clases?: number | null; horas_por_clase?: number | string | null; frecuencia?: Frecuencia | null; duracion_semanas?: number | null }
+
+/** «12 clases de 2 h · 1 vez por semana», «1 clase de 4 h». Sin clases cargadas, las semanas de antes («8 semanas»). */
+export function duracionTexto(c: Duracion): string | null {
+  if (c.cantidad_clases) {
+    const n = c.cantidad_clases, h = Number(c.horas_por_clase)
+    let t = `${n} ${n === 1 ? 'clase' : 'clases'}`
+    if (h > 0) t += ` de ${String(h).replace('.', ',')} h`
+    if (c.frecuencia && n > 1) t += ` · ${FRECUENCIA_LABEL[c.frecuencia].toLowerCase()}`
+    return t
+  }
+  return c.duracion_semanas ? `${c.duracion_semanas} ${c.duracion_semanas === 1 ? 'semana' : 'semanas'}` : null
+}
+
+/** Semanas que ocupa un curso de `n` clases (para fin_edicion() sin calendario cargado). Sin frecuencia: 1 por semana. */
+export function semanasDeClases(n: number, f: Frecuencia | null): number {
+  const porSemana = f === 'dias_seguidos' ? 7 : f === '3_por_semana' ? 3 : f === '2_por_semana' ? 2 : 1
+  return Math.max(1, Math.ceil(n / porSemana))
+}
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 /** Nombre corto de una edición por su fecha de inicio: "sep 2026" (sin fecha: "sin fecha"). */
