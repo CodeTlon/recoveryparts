@@ -4,6 +4,8 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualización 2026-11-03 (v0.18.6, fotos: encuadre, tamaño en la grilla y visor):** rama `feat/seed-clases-y-fotos`: todas las subidas de fotos del admin (curso, portada, áreas, testimonios, egresados, aulas y ahora también la foto del profesor, que antes era una URL pegada) ofrecen encuadre y zoom; cada foto de egresados elige cuánto ocupa en la grilla del inicio (migración `0034`); el visor de fotos ya no queda vacío mientras carga la foto ampliada (en producción se veía solo el rótulo); el seed de pruebas trae los cursos con duración en clases.
+
 **Actualización 2026-11-02 (v0.18.5, duración en clases):** rama `feat/duracion-en-clases`: el curso se carga en clases (cantidad, horas por clase, frecuencia) y el sitio muestra «12 clases de 2 h · 1 vez por semana»; migración `0033` (corre sola al arrancar). **Pendiente del cliente:** cargar las clases en cada curso existente desde Campus › Cursos › Datos; mientras tanto el sitio sigue mostrando «N semanas».
 
 **Actualización 2026-11-02 (v0.18.4, QA de subidas):** rama `feature/dev2-qa-subidas`: QA de todas las subidas del admin (fotos, PDF, videos) contra el build de producción; arregla el video de fondo de la portada subido al sitio (no se mostraba: `videoSeguro()`), aviso en español cuando el navegador no puede leer la imagen, medida recomendada en la foto del curso (1600 × 1200, 4:3). E2E nuevo de subidas. En `main` desde el 2026-11-02 (PR #32, checks en verde) y desplegado en producción.

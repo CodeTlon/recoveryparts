@@ -3,6 +3,7 @@ import { duracionTexto } from '@/lib/fechas'
 import { fechaCorta } from '@/lib/types'
 import Link from 'next/link'
 import Image from 'next/image'
+import { estiloFoco, sinFoco } from '@/lib/foco'
 import { imagenCurso } from '@/lib/imagen-curso'
 import Inclinable from '@/components/ui/Inclinable'
 import { Clock, Flame, CalendarDays, Wrench, BookOpen, ArrowUpRight } from 'lucide-react'
@@ -53,7 +54,7 @@ export default function CursoCard({ c, horarios, modulos = [] }: { c: CursoPubli
           <ViewTransition name={`curso-foto-${c.slug}`} share="morph" default="none">
             <div className="inclinable-capa absolute inset-0">
               {foto
-                ? <Image src={foto} alt={c.nombre} fill sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,400px" className="object-cover" />
+                ? <Image src={sinFoco(foto)} style={estiloFoco(foto)} alt={c.nombre} fill sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,400px" className="object-cover" />
                 : <div className="flex h-full items-center justify-center text-outline-variant"><Wrench size={48} aria-hidden /></div>}
             </div>
           </ViewTransition>
