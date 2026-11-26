@@ -18,7 +18,7 @@ Sin `DATABASE_URL` el sitio compila y muestra vacíos; el campus redirige a `/lo
 **desarrollo** (local) → **homologación** (`test`, Coolify de pruebas) → **producción** (`main`). Ramas `feature/* → dev → test → main`: `feature → dev` y `dev → test` son **merge** directo; solo `test → main` es **PR**. Nunca commit directo a `dev`/`test`/`main`. Detalle: `docs/ENTORNOS.md`.
 
 ## Versiones que no hay que subir a ciegas
-Node 22 (Dockerfile y CI). Versiones de la flota (Next 16.4.2, React 19.3.1, Tailwind 4.3.3, TS 6.0.3, ESLint 10.13.0): `codetlon-cloud/.claude/modules/stack-versions.md`. `postgres` (postgres.js) está fijado en **3.4.5**. No hay ORM ni Supabase: el acceso a datos es `src/lib/db` (ver `.ai/context/ARCHITECTURE.md`).
+Node 22 (Dockerfile y CI). Versiones de la flota (Next 16.4.6, React 19.3.1, Tailwind 4.3.3, TS 6.0.3, ESLint 10.13.0): `codetlon-cloud/.claude/modules/stack-versions.md`. `postgres` (postgres.js) está fijado en **3.4.5**. No hay ORM ni Supabase: el acceso a datos es `src/lib/db` (ver `.ai/context/ARCHITECTURE.md`).
 
 ## Seguridad (inamovible)
 1. Autorización **en el servidor** y en la base: `proxy.ts` (antes `middleware.ts`) + `requireRole()` + RLS en todas las tablas. Ocultar un botón no alcanza.
