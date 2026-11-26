@@ -3,7 +3,7 @@
 Mapa para mantenimiento, vigente al 2026-10-28. El detalle esta en `.ai/context/` (empezar por `00_INDEX.md`) y `docs/ARQUITECTURA.md`. No releas el repo entero: busca tu tipo de cambio abajo.
 
 ## Stack
-Next.js 16.4.2 (App Router, `output: 'standalone'`) · React 19.3.1 · TypeScript 6 · Tailwind 4 (tokens en `@theme` de `src/app/globals.css`) · Postgres 16 plano (`postgres.js` 3.4.5, sin ORM) con RLS · sesion propia (`SESSION_SECRET`) · SMTP (`nodemailer`) · archivos en volumen (`STORAGE_DIR`). Node 22. Coolify con `docker-compose.coolify.yml`.
+Next.js 16.4.6 (App Router, `output: 'standalone'`) · React 19.3.1 · TypeScript 6 · Tailwind 4 (tokens en `@theme` de `src/app/globals.css`) · Postgres 16 plano (`postgres.js` 3.4.5, sin ORM) con RLS · sesion propia (`SESSION_SECRET`) · SMTP (`nodemailer`) · archivos en volumen (`STORAGE_DIR`). Node 22. Coolify con `docker-compose.coolify.yml`.
 
 ## Capas
 Server Components leen con el rol y el usuario de la sesion (RLS aplica) · Server Actions y Route Handlers escriben y sirven archivos. `src/proxy.ts` (antes `middleware.ts`, Next 16): sin sesion va a `/login`, cuenta no activa queda afuera y cada rol solo entra a su `/campus/<rol>`; ademas aplica los encabezados de seguridad (`src/lib/security-headers.ts`) con una CSP de nonce por request: las paginas con scripts se renderizan siempre en cada request. La autorizacion real es `requireRole()` mas RLS en todas las tablas.
