@@ -4,6 +4,8 @@
 
 # CURRENT_STATE — Recovery Parts
 
+**Actualizacion 2026-11-26:** Next 16.4.2 → 16.4.6 por advisories de seguridad (rama `feature/dev1-next-16-4-6`, promovida a `dev` y `test`; `main` sin tocar). Verificado: type-check, 24 tests unitarios, spec:lint, lint (60 avisos, los mismos que en `dev`) y build; `npm audit --omit=dev` en 0. E2E en la CI de `dev`.
+
 **Actualización 2026-11-03 (v0.18.6, fotos: encuadre, tamaño en la grilla y visor):** rama `feat/seed-clases-y-fotos`: todas las subidas de fotos del admin (curso, portada, áreas, testimonios, egresados, aulas y ahora también la foto del profesor, que antes era una URL pegada) ofrecen encuadre y zoom; cada foto de egresados elige cuánto ocupa en la grilla del inicio (migración `0034`); el visor de fotos ya no queda vacío mientras carga la foto ampliada (en producción se veía solo el rótulo); el seed de pruebas trae los cursos con duración en clases y la migración `0035` se la carga a los cursos de la demo en producción (solo a los que no la tenían).
 
 **Actualización 2026-11-02 (v0.18.5, duración en clases):** rama `feat/duracion-en-clases`: el curso se carga en clases (cantidad, horas por clase, frecuencia) y el sitio muestra «12 clases de 2 h · 1 vez por semana»; migración `0033` (corre sola al arrancar). **Pendiente del cliente:** cargar las clases en cada curso existente desde Campus › Cursos › Datos; mientras tanto el sitio sigue mostrando «N semanas».

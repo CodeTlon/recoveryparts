@@ -6,7 +6,7 @@
 Ramas `feature/* -> dev -> test` por merge directo; solo `test -> main` va por PR (despliega produccion, con OK de Mateo). Nunca commit directo a `dev`, `test` ni `main`.
 
 ## Stack vigente (2026-10-16)
-Next 16.4.2, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Postgres 16 (desplegado), Node 22. Excepciones: sesion propia y `postgres.js`. Fuente de versiones: `codetlon-cloud/.claude/modules/stack-versions.md`.
+Next 16.4.6, React 19.3.1, TypeScript 6.0.3, Tailwind 4.3.3, ESLint 10.13.0, Postgres 16 (desplegado), Node 22. Excepciones: sesion propia y `postgres.js`. Fuente de versiones: `codetlon-cloud/.claude/modules/stack-versions.md`.
 
 ## Quirks
 - **UI: leer `design.md` antes de tocar pantallas** (sistema fijado en v0.17.0). Nada de `uppercase tracking-*`, `<em>` resaltado en títulos ni efectos tipo aurora/spotlight.
