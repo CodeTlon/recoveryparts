@@ -18,5 +18,6 @@ Detalle y flujo de ramas: `docs/ENTORNOS.md`. Despliegue: `docs/DESPLIEGUE-COOLI
 
 ## Workflows y variables (2026-10-15)
 - `ci.yml`: tipos + build, migraciones/reglas, imagen Docker y E2E (3 viewports). `entornos.yml`: push a `test` → espera el deploy (`started_at` de `/api/health`) y corre E2E contra la variable de repo `TEST_URL`; sin ella o con `test` apagado no hace nada. `produccion.yml` y `backup-check.yml`: llave `PRODUCCION_HABILITADA=true`, Environment `prod-coolify` (`PROD_URL`, `SMOKE_RUTAS`, `BACKUP_BUCKET`, `BACKUP_PROJECT`, claves de B2 solo lectura en secrets).
+- Desde 2026-11-27 (ahorro de minutos de Actions): `ci.yml` corre tipos/lint/build en cada push a `dev` y `test`; E2E e imagen solo en push a `test`, en PR a `main` y a mano (`workflow_dispatch`). Ya no corre en push a `main` (lo cubre el PR) y los cambios que solo tocan `*.md`, `docs/`, `screenshots/`, `.ai/` o `.claude/` no la disparan.
 - Video: `TRANSCODE_API_KEY` (y `TRANSCODE_SERVICE_URL`, opcional con valor por defecto) solo en las variables del recurso de Coolify; vacías = se guarda el video como llega. Ver `docker-compose.yml`.
 - Backup de prod: B2 con `backup-coolify.sh` (cron en el VPS, `FILES_MODE=volume`). Clave B2 compartida por la flota; nunca en el repo.
